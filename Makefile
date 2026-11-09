@@ -11,6 +11,7 @@ export
 
 COMPOSE := docker compose -f deploy/compose.yaml --env-file .env
 UV := uv run
+GITLEAKS_IMAGE := ghcr.io/gitleaks/gitleaks:v8.30.1
 
 .PHONY: help install up down status reset migrate migrate-down lint typecheck test \
         migration-check secret-scan check
@@ -67,12 +68,20 @@ test:
 
 migration-check:
 	@echo "==> migration-check"
-	@echo "not implemented yet"; exit 1
+	$(UV) python -m scripts.migration_check
 
 secret-scan:
 	@echo "==> secret-scan"
-	@echo "not implemented yet"; exit 1
+	docker run --rm -v "$(CURDIR):/repo" $(GITLEAKS_IMAGE) dir /repo \
+		--config /repo/.gitleaks.toml --redact --no-banner
 
+# Runs every check in order and stops at the first failure; the failing step is the last
+# "==> <target>" line printed.
 check:
 	@echo "==> check"
-	@echo "not implemented yet"; exit 1
+	@$(MAKE) --no-print-directory lint
+	@$(MAKE) --no-print-directory typecheck
+	@$(MAKE) --no-print-directory test
+	@$(MAKE) --no-print-directory migration-check
+	@$(MAKE) --no-print-directory secret-scan
+	@echo "==> check passed"

@@ -165,14 +165,14 @@ the migration service and needs validated settings.
 
 ### Tests for User Story 5 (write first, must fail) ⚠️
 
-- [ ] T049 [P] [US5] Write `tests/unit/test_build_contract.py`: `Makefile` defines every target in contracts/make-targets.md; `.github/workflows/ci.yml` has exactly one `run:` step that invokes `make` and it is `make check` (setup steps such as uv install excepted); no test or lint command appears in the workflow outside `make`
+- [X] T049 [P] [US5] Write `tests/unit/test_build_contract.py`: `Makefile` defines every target in contracts/make-targets.md; `.github/workflows/ci.yml` has exactly one `run:` step that invokes `make` and it is `make check` (setup steps such as uv install excepted); no test or lint command appears in the workflow outside `make`
 
 ### Implementation for User Story 5
 
-- [ ] T050 [US5] Implement `scripts/migration_check.py`: start a fresh testcontainers `postgres:16` with the init script, then run upgrade head → downgrade base → upgrade head as owner, then assert the four schemas and both ledger triggers exist; exit 1 naming the failed step. Wire it to `make migration-check`
-- [ ] T051 [P] [US5] Create `.gitleaks.toml` that extends the default rules and allowlists only the documented placeholders (`REPLACE_ME`, `REPLACE_WITH_HASH`) and test fixture passwords under `tests/`; implement `make secret-scan` as `docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:<pinned v8 tag> dir /repo --config /repo/.gitleaks.toml --redact`
-- [ ] T052 [US5] Implement `make check` in `Makefile` to run `lint typecheck test migration-check secret-scan` in order, stopping at the first failure; set pytest coverage in `pyproject.toml` to `--cov=adlc.config --cov=adlc.identity --cov=adlc.db --cov-fail-under=80` (core modules, constitution IX), with a report for the whole `adlc` package shown but not gated
-- [ ] T053 [US5] Create `.github/workflows/ci.yml`: on `pull_request` and `push` to `main`; `ubuntu-latest`; checkout, `astral-sh/setup-uv` (pinned major), `make install`, `make check`
+- [X] T050 [US5] Implement `scripts/migration_check.py`: start a fresh testcontainers `postgres:16` with the init script, then run upgrade head → downgrade base → upgrade head as owner, then assert the four schemas and both ledger triggers exist; exit 1 naming the failed step. Wire it to `make migration-check`
+- [X] T051 [P] [US5] Create `.gitleaks.toml` that extends the default rules and allowlists only the documented placeholders (`REPLACE_ME`, `REPLACE_WITH_HASH`) and test fixture passwords under `tests/`; implement `make secret-scan` as `docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:<pinned v8 tag> dir /repo --config /repo/.gitleaks.toml --redact`
+- [X] T052 [US5] Implement `make check` in `Makefile` to run `lint typecheck test migration-check secret-scan` in order, stopping at the first failure; set pytest coverage in `pyproject.toml` to `--cov=adlc.config --cov=adlc.identity --cov=adlc.db --cov-fail-under=80` (core modules, constitution IX), with a report for the whole `adlc` package shown but not gated
+- [X] T053 [US5] Create `.github/workflows/ci.yml`: on `pull_request` and `push` to `main`; `ubuntu-latest`; checkout, `astral-sh/setup-uv` (pinned major), `make install`, `make check`
 
 **Checkpoint**: one command gates every change, locally and in CI.
 
