@@ -1,0 +1,96 @@
+# One environment definition for dev and the demo host (SA §15, FR-001, FR-002).
+# Values come from .env (see .env.example); no secret literal appears here.
+# Inside containers, DB host/port and the account file path are overridden
+# (contracts/settings.md "Host and container values").
+name: adlc
+
+x-db-settings: &db-settings
+  ADLC_ENV: ${ADLC_ENV:?ADLC_ENV is required}
+  ADLC_DB_HOST: postgres
+  ADLC_DB_PORT: "5432"
+  ADLC_DB_NAME: ${ADLC_DB_NAME:-adlc}
+  ADLC_DB_APP_USER: ${ADLC_DB_APP_USER:-adlc_app}
+  ADLC_DB_OWNER_USER: ${ADLC_DB_OWNER_USER:-adlc_owner}
+
+services:
+  postgres:
+    image: postgres:16.15
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      ADLC_DB_NAME: ${ADLC_DB_NAME:-adlc}
+      ADLC_DB_APP_USER: ${ADLC_DB_APP_USER:-adlc_app}
+      ADLC_DB_APP_PASSWORD: ${ADLC_DB_APP_PASSWORD:?ADLC_DB_APP_PASSWORD is required}
+      ADLC_DB_OWNER_USER: ${ADLC_DB_OWNER_USER:-adlc_owner}
+      ADLC_DB_OWNER_PASSWORD: ${ADLC_DB_OWNER_PASSWORD:?ADLC_DB_OWNER_PASSWORD is required}
+    volumes:
+      - adlc-pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "${ADLC_DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U postgres -d ${ADLC_DB_NAME:-adlc}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  jaeger:
+    image: jaegertracing/jaeger:2.22.0
+    ports:
+      - "${ADLC_JAEGER_UI_PORT:-16686}:16686"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:13133/status"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  migrate:
+    image: adlc-api:0.1.0
+    build:
+      context: ..
+      dockerfile: deploy/api.Dockerfile
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      <<: *db-settings
+      ADLC_DB_OWNER_PASSWORD: ${ADLC_DB_OWNER_PASSWORD:?ADLC_DB_OWNER_PASSWORD is required}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    image: adlc-api:0.1.0
+    environment:
+      <<: *db-settings
+      ADLC_DB_APP_PASSWORD: ${ADLC_DB_APP_PASSWORD:?ADLC_DB_APP_PASSWORD is required}
+      ADLC_DB_CONNECT_TIMEOUT: ${ADLC_DB_CONNECT_TIMEOUT:-60s}
+      ADLC_SESSION_SECRET: ${ADLC_SESSION_SECRET:?ADLC_SESSION_SECRET is required}
+      ADLC_SESSION_TTL: ${ADLC_SESSION_TTL:-8h}
+      ADLC_ACCOUNTS_FILE: /run/adlc/accounts.yaml
+      ADLC_ROLE_CATALOGUE: adlc-specs/shared/roles.yaml
+      ADLC_OTLP_ENDPOINT: http://jaeger:4318
+      ADLC_LOG_LEVEL: ${ADLC_LOG_LEVEL:-INFO}
+    volumes:
+      - ${ADLC_ACCOUNTS_FILE:?ADLC_ACCOUNTS_FILE is required}:/run/adlc/accounts.yaml:ro
+    ports:
+      - "${ADLC_API_PORT:-8000}:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      jaeger:
+        condition: service_started
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).status == 200 else 1)"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  adlc-pgdata:

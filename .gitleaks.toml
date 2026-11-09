@@ -1,0 +1,19 @@
+# Secret scan configuration (FR-016). Extends the default gitleaks rules and allows only the
+# documented placeholders and per-run test values.
+title = "adlc gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documented placeholders and test-only literals"
+regexes = [
+  '''REPLACE_ME''',
+  '''REPLACE_WITH_HASH''',
+]
+paths = [
+  '''(^|/)\.env$''',      # local, git-ignored; never committed
+  '''(^|/)\.venv/''',
+  '''(^|/)uv\.lock$''',
+  '''(^|/)tests/''',      # test fixtures use obviously fake, per-test literals
+]
