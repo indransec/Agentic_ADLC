@@ -5,12 +5,13 @@ import sys
 import uvicorn
 
 from adlc.api.app import create_app
+from adlc.config.errors import load_settings_or_exit
 from adlc.config.settings import Settings
 from adlc.db.engine import DatabaseUnavailable, wait_for_database
 
 
 def main() -> None:
-    settings = Settings()  # type: ignore[call-arg]  # values come from the environment
+    settings = load_settings_or_exit(Settings)
     app = create_app(settings)
     try:
         wait_for_database(app.state.engine, settings.db_connect_timeout)

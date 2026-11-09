@@ -1,0 +1,35 @@
+# Role catalogue (Terminal Design Specification §3). Human roles referenced by
+# actors.human_roles, authorities.sign_off, set_by and notify in terminal specs.
+# Schema validation for this file arrives in feature 002; its shape stays the same.
+schema_version: "1.0.0"
+roles:
+  - id: business_owner
+    description: Use-case sponsor; owns value and terminate decision
+  - id: product_owner
+    description: Owns requirements, KPIs, backlog
+  - id: solution_architect
+    description: Owns T2 design and deviations
+  - id: engineering_lead
+    description: Owns build quality
+  - id: qa_eval_lead
+    description: Owns datasets, test and eval evidence
+  - id: security_officer
+    description: Security assurance
+  - id: privacy_officer
+    description: Privacy / DPO
+  - id: rai_officer
+    description: Responsible AI assurance
+  - id: compliance_officer
+    description: Regulatory mapping
+  - id: risk_owner
+    description: Accepts residual risk on behalf of the business
+  - id: release_manager
+    description: Release readiness and change
+  - id: service_owner
+    description: Run-state accountability
+  - id: sre
+    description: Platform reliability and deployment
+  - id: data_owner
+    description: Approves data use, retention and disposal
+  - id: adlc_coe
+    description: Owns specs, playbooks, checklists

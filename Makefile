@@ -22,21 +22,26 @@ install:
 	@echo "==> install"
 	uv sync --locked
 
-up:
+up: .env
 	@echo "==> up"
-	@echo "not implemented yet"; exit 1
+	$(COMPOSE) up -d --build --wait
 
-down:
+down: .env
 	@echo "==> down"
-	@echo "not implemented yet"; exit 1
+	$(COMPOSE) down
 
-status:
+status: .env
 	@echo "==> status"
-	@echo "not implemented yet"; exit 1
+	$(COMPOSE) ps -a
 
-reset:
+reset: .env
 	@echo "==> reset"
-	@echo "not implemented yet"; exit 1
+	@deploy/confirm-env.sh "Reset removes the data volume and wipes ALL data"
+	$(COMPOSE) down -v
+	$(MAKE) up
+
+.env:
+	@echo "missing .env: copy .env.example to .env and fill in every REPLACE_ME" >&2; exit 1
 
 migrate:
 	@echo "==> migrate"

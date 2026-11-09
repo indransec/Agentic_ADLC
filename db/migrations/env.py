@@ -4,6 +4,7 @@ from logging.config import fileConfig
 
 from alembic import context
 
+from adlc.config.errors import load_settings_or_exit
 from adlc.config.settings import DatabaseSettings
 from adlc.db.engine import owner_engine
 
@@ -13,7 +14,7 @@ if config.config_file_name is not None and not config.attributes.get("skip_loggi
 
 
 def run_migrations_online() -> None:
-    settings = DatabaseSettings()  # type: ignore[call-arg]  # values come from the environment
+    settings = load_settings_or_exit(DatabaseSettings)
     engine = owner_engine(settings)
     try:
         with engine.connect() as connection:
