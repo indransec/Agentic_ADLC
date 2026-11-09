@@ -186,12 +186,12 @@ the migration service and needs validated settings.
 
 ### Tests for User Story 6 (write first, must fail) ⚠️
 
-- [ ] T054 [P] [US6] Write `tests/unit/test_tracing.py` using `InMemorySpanExporter`: a request to a protected route creates one server span with `service.name = adlc-api`; `/health` creates no span; no span attribute key or value contains `authorization` or the bearer token; with an exporter that raises on export, the request still returns its normal status and a WARNING record is logged
+- [X] T054 [P] [US6] Write `tests/unit/test_tracing.py` using `InMemorySpanExporter`: a request to a protected route creates one server span with `service.name = adlc-api`; `/health` creates no span; no span attribute key or value contains `authorization` or the bearer token; with an exporter that raises on export, the request still returns its normal status and a WARNING record is logged
 
 ### Implementation for User Story 6
 
-- [ ] T055 [US6] Implement `setup_tracing(app, settings, exporter=None)` in `src/adlc/observability/tracing.py`: `TracerProvider` with resource `service.name=adlc-api`, `BatchSpanProcessor` around an `OTLPSpanExporter(endpoint=f"{settings.otlp_endpoint}/v1/traces")` (or the injected exporter), `FastAPIInstrumentor.instrument_app(app, excluded_urls="/health")` with header capture off; a logging filter turns exporter errors into a single WARNING per failure burst. Call it from `create_app`
-- [ ] T056 [US6] Set `ADLC_OTLP_ENDPOINT=http://jaeger:4318` for `api` in `deploy/compose.yaml`, then walk quickstart.md step 7 (trace visible within 30 s; Jaeger stopped → requests still 200, WARNING logged)
+- [X] T055 [US6] Implement `setup_tracing(app, settings, exporter=None)` in `src/adlc/observability/tracing.py`: `TracerProvider` with resource `service.name=adlc-api`, `BatchSpanProcessor` around an `OTLPSpanExporter(endpoint=f"{settings.otlp_endpoint}/v1/traces")` (or the injected exporter), `FastAPIInstrumentor.instrument_app(app, excluded_urls="/health")` with header capture off; a logging filter turns exporter errors into a single WARNING per failure burst. Call it from `create_app`
+- [X] T056 [US6] Set `ADLC_OTLP_ENDPOINT=http://jaeger:4318` for `api` in `deploy/compose.yaml`, then walk quickstart.md step 7 (trace visible within 30 s; Jaeger stopped → requests still 200, WARNING logged)
 
 **Checkpoint**: traces flow to Jaeger, ready for `run_id` tagging in 003–006.
 

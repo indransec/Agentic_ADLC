@@ -20,12 +20,16 @@ class SensitiveAttributeFilter(logging.Filter):
         return True
 
 
+class _AdlcHandler(logging.StreamHandler):  # type: ignore[type-arg]
+    """Marker type so repeated configuration replaces only our own handler."""
+
+
 def configure_logging(level: str) -> None:
-    handler = logging.StreamHandler(sys.stderr)
+    handler = _AdlcHandler(sys.stderr)
     handler.setFormatter(logging.Formatter(LOG_FORMAT))
     handler.addFilter(SensitiveAttributeFilter())
     root = logging.getLogger()
-    root.handlers[:] = [handler]
+    root.handlers[:] = [h for h in root.handlers if not isinstance(h, _AdlcHandler)] + [handler]
     root.setLevel(level)
     # uvicorn's access log prints the request line only (no headers); keep it.
     for name in ("uvicorn", "uvicorn.error", "uvicorn.access"):

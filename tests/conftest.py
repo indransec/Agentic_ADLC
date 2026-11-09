@@ -18,3 +18,5 @@ def _isolated_settings_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for key in list(os.environ):
         if key.startswith("ADLC_"):
             monkeypatch.delenv(key)
+    # Tests never export traces; tests/unit/test_tracing.py re-enables the SDK explicitly.
+    monkeypatch.setenv("OTEL_SDK_DISABLED", "true")
