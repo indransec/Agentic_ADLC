@@ -62,6 +62,9 @@ for every DB identity (spec clarification 1); no terminal- or use-case-specific 
 | PostgreSQL 16 (image `postgres:16`) | Database | PostgreSQL Licence |
 | Jaeger v2 (image `jaegertracing/jaeger`) | Trace collector + viewer | Apache-2.0 |
 | gitleaks (image `ghcr.io/gitleaks/gitleaks`) | Secret scan | MIT |
+| hatchling | Build backend for the `adlc` package | MIT |
+| Image `python:3.12-slim` | API image base | PSF-2.0 (Python); Debian packages under their own OSI licences |
+| Image `ghcr.io/astral-sh/uv` | uv binary copied into the API image | MIT OR Apache-2.0 |
 | GitHub Action `actions/checkout` | CI checkout | MIT |
 | GitHub Action `astral-sh/setup-uv` | CI uv install | MIT |
 

@@ -59,7 +59,7 @@ explicit_package_bases = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = ["integration: needs Docker (testcontainers PostgreSQL)"]
-addopts = "-ra --cov=adlc.config --cov=adlc.identity --cov=adlc.db --cov-report=term-missing:skip-covered --cov-fail-under=80"
+addopts = "-ra --cov=adlc --cov-report=term:skip-covered"
 filterwarnings = ["ignore:Using `httpx` with `starlette.testclient` is deprecated:DeprecationWarning"]
 
 [dependency-groups]

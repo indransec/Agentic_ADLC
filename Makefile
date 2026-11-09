@@ -62,9 +62,14 @@ typecheck:
 	@echo "==> typecheck"
 	$(UV) mypy
 
+# Whole-package coverage is reported; the core modules (constitution IX) are gated at 80%.
+CORE_MODULES := */adlc/config/*,*/adlc/identity/*,*/adlc/db/*
+
 test:
 	@echo "==> test"
 	$(UV) pytest
+	@echo "core-module coverage (gate 80%):"
+	$(UV) coverage report --include='$(CORE_MODULES)' --skip-covered --fail-under=80
 
 migration-check:
 	@echo "==> migration-check"
