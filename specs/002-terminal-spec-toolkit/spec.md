@@ -409,7 +409,9 @@ validation step.
   An unknown key MUST return an explicit empty result.
 - **FR-025**: The read interface MUST be the only way platform modules read spec data (no YAML
   parsing at run time), and MUST sit behind an interface so its storage can change
-  (constitution VII).
+  (constitution VII). One scoped exception: the identity module (feature 001) may read the
+  role catalogue file, so that account checks work without a data store. At API start, the
+  file's content hash MUST match the active registered `roles` catalogue, or startup stops.
 
 **Editor and CI**
 
@@ -436,6 +438,8 @@ validation step.
 - **Playbook / checklist**: a versioned file referenced by id and version. Checklists hold the
   reviewer's item ids and text.
 - **Validation finding**: level, rule id, severity, file, location, message.
+- **Catalogue registry entry**: catalogue name, version, status, normalised content, content
+  hash; registered and immutable like terminal versions.
 - **Registry entry**: terminal id, version, status (active, deprecated, retired), original and
   normalised content, content hash, trigger events, emitted events, registered time.
 - **Projection rows**: trigger subscription (event → terminal version), outcome route

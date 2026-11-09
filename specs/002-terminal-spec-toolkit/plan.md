@@ -74,6 +74,7 @@ empty store in < 30 s (SC-005)
 | ↳ pendulum, python-dateutil | celpy runtime types | MIT; BSD-3-Clause / Apache-2.0 |
 | ↳ google-re2 | celpy regex support | BSD-3-Clause |
 | ↳ pyyaml, jmespath, tomli | celpy runtime | MIT |
+| types-networkx, types-jsonschema (dev) | Type stubs for mypy strict | Apache-2.0 |
 
 ## Constitution Check
 
