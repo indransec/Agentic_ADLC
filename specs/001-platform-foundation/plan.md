@@ -62,6 +62,8 @@ for every DB identity (spec clarification 1); no terminal- or use-case-specific 
 | PostgreSQL 16 (image `postgres:16`) | Database | PostgreSQL Licence |
 | Jaeger v2 (image `jaegertracing/jaeger`) | Trace collector + viewer | Apache-2.0 |
 | gitleaks (image `ghcr.io/gitleaks/gitleaks`) | Secret scan | MIT |
+| GitHub Action `actions/checkout` | CI checkout | MIT |
+| GitHub Action `astral-sh/setup-uv` | CI uv install | MIT |
 
 Password hashing uses stdlib `hashlib.scrypt` (no extra dependency). Exact versions are pinned
 in `pyproject.toml` / `uv.lock`, and image tags are pinned to exact versions in
@@ -114,15 +116,17 @@ specs/001-platform-foundation/
 ### Source Code (repository root)
 
 ```text
-pyproject.toml  uv.lock  Makefile  .env.example  .gitleaks.toml  README.md
+pyproject.toml  uv.lock  Makefile  alembic.ini  .env.example  .gitleaks.toml  README.md
+scripts/migration_check.py  # fresh-DB upgrade/downgrade/upgrade check (make migration-check)
 src/adlc/
 ├── __init__.py
-├── config/                 # Settings (pydantic-settings), env selection, validation
+├── config/                 # settings.py (DatabaseSettings, Settings), durations.py, errors.py
 ├── db/                     # engine/session factory, connection wait
 ├── identity/               # IdentityProvider Protocol, LocalIdentityProvider,
 │                           #   scrypt hashing, session tokens, role catalogue loader
-├── observability/          # OpenTelemetry setup (non-blocking exporter)
-├── api/                    # FastAPI app factory, /health, /auth/*, auth dependency
+├── observability/          # logging.py, tracing.py (non-blocking OTLP exporter)
+├── api/                    # app.py factory, __main__.py, auth.py dependency,
+│                           #   routes/health.py, routes/auth.py
 ├── cli/                    # Typer app: `adlc-account hash`, `adlc-account check`
 ├── spec_toolkit/  orchestration/  policy/  ledger/  agents/  ui/   # README placeholders
 adlc-specs/
@@ -132,6 +136,7 @@ db/migrations/              # Alembic env.py + versions/0001_baseline.py
 deploy/
 ├── compose.yaml            # postgres, jaeger, migrate (one-shot), api
 ├── api.Dockerfile
+├── confirm-env.sh          # typed env-name confirmation for reset / migrate-down
 ├── postgres/init/01-roles.sh   # creates owner + app login roles from env
 └── accounts.example.yaml   # placeholder hashes only
 mcp_servers/  pilot/        # README placeholders

@@ -25,6 +25,18 @@ the keys below. Duration form: `<int><unit>` with unit `s`, `min`, `h` or `d`.
 | `ADLC_JAEGER_UI_PORT` | no | no | int | `16686` | compose host port |
 | `ADLC_LOG_LEVEL` | no | no | `DEBUG` \| `INFO` \| `WARNING` \| `ERROR` | `INFO` | api |
 
+## Host and container values
+
+`.env` holds the values that tools run on the host need (`make migrate`, `adlc-account
+check`, tests). Containers reach things by different names, so `deploy/compose.yaml` overrides
+three settings in the container environment. Nothing else is overridden.
+
+| Variable | In `.env` (host) | Inside `migrate` / `api` containers |
+| --- | --- | --- |
+| `ADLC_DB_HOST` | `localhost` | `postgres` (service name) |
+| `ADLC_DB_PORT` | published host port, e.g. `5432` (also the compose port mapping `${ADLC_DB_PORT}:5432`) | `5432` |
+| `ADLC_ACCOUNTS_FILE` | host path of the account file (also the mount source) | `/run/adlc/accounts.yaml` (api only, read-only mount) |
+
 ## Failure output (FR-014)
 
 Startup stops with exit code 2 before binding a port and writes to stderr:
