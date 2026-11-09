@@ -1,0 +1,1 @@
+- {file: terminals/T0.yaml, op: set, path: /terminal/prerequisites/0/evidence_ref, value: nowhere.field}

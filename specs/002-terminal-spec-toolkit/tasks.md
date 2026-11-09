@@ -131,34 +131,34 @@ and CI). L4 rules need the catalogues, and registration needs validated specs.
 
 ### Tests for US1 (write first) ⚠️
 
-- [ ] T028 [P] [US1] Add negative fixtures for the L2 and L3 rules: S-01 (unknown field `rul`; wrong type; missing `timeline.clarification_sla`), S-03 (playbook missing `version`; checklist item without `text`), V-01 (duplicate `CTL-` id in one spec), V-04, V-05 (sign-off role holds only C), V-07, V-08, V-09, V-11 (bad CEL), V-14 (conditional without `when`), V-15 (reviewer holds `pass`; orchestrator holds `terminate`), V-20 and V-21, under `tests/fixtures/specs/<id>-*/`
-- [ ] T029 [P] [US1] Add negative fixtures for the L4 rules: V-01 (two files, same id), V-02 (reference to an unknown column; reference to a terminal that cannot reach the referrer), V-03, V-05 (unknown role), V-06, V-10 (missing playbook version; checklist item id not in file), V-12 (unknown `param.`; unknown predicate; unknown evidence source; unknown root cause), V-13 (wrong arity), V-16 (allow spans build+deploy), V-17, V-18 (spec-side `CTL` id pattern; agent id not kebab-case), V-22, V-23 (unused predicate gives `info`) and V-26 (proposed default gives `warning`)
-- [ ] T030 [P] [US1] Write `tests/unit/spec_toolkit/test_versioning.py` using a temporary git repo:
+- [X] T028 [P] [US1] Add negative fixtures for the L2 and L3 rules: S-01 (unknown field `rul`; wrong type; missing `timeline.clarification_sla`), S-03 (playbook missing `version`; checklist item without `text`), V-01 (duplicate `CTL-` id in one spec), V-04, V-05 (sign-off role holds only C), V-07, V-08, V-09, V-11 (bad CEL), V-14 (conditional without `when`), V-15 (reviewer holds `pass`; orchestrator holds `terminate`), V-20 and V-21, under `tests/fixtures/specs/<id>-*/`
+- [X] T029 [P] [US1] Add negative fixtures for the L4 rules: V-01 (two files, same id), V-02 (reference to an unknown column; reference to a terminal that cannot reach the referrer), V-03, V-05 (unknown role), V-06, V-10 (missing playbook version; checklist item id not in file), V-12 (unknown `param.`; unknown predicate; unknown evidence source; unknown root cause), V-13 (wrong arity), V-16 (allow spans build+deploy), V-17, V-18 (spec-side `CTL` id pattern; agent id not kebab-case), V-22, V-23 (unused predicate gives `info`) and V-26 (proposed default gives `warning`)
+- [X] T030 [P] [US1] Write `tests/unit/spec_toolkit/test_versioning.py` using a temporary git repo:
   - V-24: content change without bump, at each bump level in the R-10 table.
   - V-25: version decrease.
   - A new file passes.
   - A missing baseline ref gives a V-24 `warning`.
   - `--no-baseline` skips.
-- [ ] T031 [P] [US1] Write `tests/unit/spec_toolkit/test_expressions.py`:
+- [X] T031 [P] [US1] Write `tests/unit/spec_toolkit/test_expressions.py`:
   - `parse(expr)` returns the identifier roots and call names for each expression shape in research R-01.
   - A malformed expression gives a parse error with its column.
   - The CEL macros `all`, `exists` and `exists_one` used as methods are not reported as unknown functions.
-- [ ] T032 [P] [US1] Write `tests/unit/spec_toolkit/test_cli_validate.py` (Typer `CliRunner`): exit 0, 1 and 2; `--format json` matches the contract shape; `--min-severity error` hides warnings without changing the exit code
+- [X] T032 [P] [US1] Write `tests/unit/spec_toolkit/test_cli_validate.py` (Typer `CliRunner`): exit 0, 1 and 2; `--format json` matches the contract shape; `--min-severity error` hides warnings without changing the exit code
 
 ### Implementation for US1
 
-- [ ] T033 [US1] Write `adlc-specs/schema/terminal.schema.json` and `adlc-specs/schema/checklist.schema.json` (draft 2020-12).
+- [X] T033 [US1] Write `adlc-specs/schema/terminal.schema.json` and `adlc-specs/schema/checklist.schema.json` (draft 2020-12).
   - Cover the full TDS Annex B dictionary, with `$defs` for B.1 types, plus every addition in research R-16.
   - Use `additionalProperties: false` everywhere.
   - Patterns per Annex A.2 for `PRE-`, `CTL-`, `CHK-`, `PB-` and `MON-` ids and agent ids.
   - Also write `adlc-specs/schema/playbook-front-matter.schema.json`.
-- [ ] T034 [US1] Implement S-01 and S-03 in `src/adlc/spec_toolkit/schema.py`; complete `tests/fixtures/specs/_valid/` so it passes S-01 to S-03
-- [ ] T035 [US1] Implement `parse_expression(text) -> ParsedExpression(roots, calls, members)` in `src/adlc/spec_toolkit/expressions.py` with `celpy.celparser.CELParser` (parse only), so T031 passes
-- [ ] T036 [US1] Implement the L3 rules V-01 (within spec), V-04, V-05 (sign-off A/R), V-07, V-08, V-09, V-11, V-14, V-15, V-18 (spec-side patterns not covered by schema), V-20 and V-21 in `src/adlc/spec_toolkit/rules/single_spec.py`. Iterate generically over spec content; no terminal ids in code.
-- [ ] T037 [US1] Implement the event and route graph in `src/adlc/spec_toolkit/graph.py` per research R-06: terminal and event nodes, special destination sinks, and the emitted events derived from each spec. Add tests in `tests/unit/spec_toolkit/test_graph.py` for the `_valid` bundle.
-- [ ] T038 [US1] Implement the L4 rules V-01 (across files), V-02 (column and emitted-value resolution plus `nx.has_path`), V-03, V-05 (roles exist), V-06, V-10, V-12, V-13, V-16, V-17, V-22, V-23 and V-26 in `src/adlc/spec_toolkit/rules/cross_spec.py`
-- [ ] T039 [US1] Implement the L5 rules V-24 and V-25 in `src/adlc/spec_toolkit/rules/versioning.py`: git baseline through `git show <ref>:<path>` (subprocess, no shell) and change classification per the research R-10 table, comparing normalised JSON by section. Expose `compare(baseline_json, current_json) -> BumpLevel` for reuse by registration.
-- [ ] T040 [US1] Implement `adlc-spec validate` in `src/adlc/spec_toolkit/cli.py` per contracts/adlc-spec-cli.md (options, exit codes, `ADLC_SPEC_BASELINE_REF`) so T032 passes. Run `make lint typecheck` and every US1 test.
+- [X] T034 [US1] Implement S-01 and S-03 in `src/adlc/spec_toolkit/schema.py`; complete `tests/fixtures/specs/_valid/` so it passes S-01 to S-03
+- [X] T035 [US1] Implement `parse_expression(text) -> ParsedExpression(roots, calls, members)` in `src/adlc/spec_toolkit/expressions.py` with `celpy.celparser.CELParser` (parse only), so T031 passes
+- [X] T036 [US1] Implement the L3 rules V-01 (within spec), V-04, V-05 (sign-off A/R), V-07, V-08, V-09, V-11, V-14, V-15, V-18 (spec-side patterns not covered by schema), V-20 and V-21 in `src/adlc/spec_toolkit/rules/single_spec.py`. Iterate generically over spec content; no terminal ids in code.
+- [X] T037 [US1] Implement the event and route graph in `src/adlc/spec_toolkit/graph.py` per research R-06: terminal and event nodes, special destination sinks, and the emitted events derived from each spec. Add tests in `tests/unit/spec_toolkit/test_graph.py` for the `_valid` bundle.
+- [X] T038 [US1] Implement the L4 rules V-01 (across files), V-02 (column and emitted-value resolution plus `nx.has_path`), V-03, V-05 (roles exist), V-06, V-10, V-12, V-13, V-16, V-17, V-22, V-23 and V-26 in `src/adlc/spec_toolkit/rules/cross_spec.py`
+- [X] T039 [US1] Implement the L5 rules V-24 and V-25 in `src/adlc/spec_toolkit/rules/versioning.py`: git baseline through `git show <ref>:<path>` (subprocess, no shell) and change classification per the research R-10 table, comparing normalised JSON by section. Expose `compare(baseline_json, current_json) -> BumpLevel` for reuse by registration.
+- [X] T040 [US1] Implement `adlc-spec validate` in `src/adlc/spec_toolkit/cli.py` per contracts/adlc-spec-cli.md (options, exit codes, `ADLC_SPEC_BASELINE_REF`) so T032 passes. Run `make lint typecheck` and every US1 test.
 
 **Checkpoint**: every rule fixture is caught (SC-002); `_valid` is clean.
 

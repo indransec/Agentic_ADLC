@@ -1,0 +1,1 @@
+- {file: checklists/t0.yaml, op: delete, path: /items/0/text}

@@ -1,0 +1,1 @@
+- {rule_id: S-01, file: terminals/T0.yaml, path_contains: /terminal/timeline/max_rework_cycles}

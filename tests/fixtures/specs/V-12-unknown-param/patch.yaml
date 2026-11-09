@@ -1,0 +1,1 @@
+- {file: terminals/T1.yaml, op: set, path: /terminal/controls/automated/0/rule, value: 'column_min(T1.scores, "score_pct") >= param.no_such_limit'}

@@ -1,0 +1,1 @@
+- {rule_id: V-17, file: terminals/T1.yaml, path_contains: /terminal/outcome_model/rework/route_by_root_cause}

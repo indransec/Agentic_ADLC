@@ -1,0 +1,1 @@
+- {file: terminals/T0.yaml, op: set, path: /terminal/controls/automated/0/rul, value: x}

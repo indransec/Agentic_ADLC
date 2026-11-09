@@ -1,0 +1,1 @@
+- {rule_id: S-03, file: checklists/t0.yaml, path_contains: /items/0}

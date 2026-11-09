@@ -28,13 +28,13 @@ code list the same ids. Ids V-01 to V-10 keep their TDS Annex B.5 meaning.
 | V-14 | L3 | error | Every artifact has `applicability`; `conditional` has `when`; `mandatory` has no `when` | `T9 retirement_record conditional without when` |
 | V-15 | L3 | error | Status rights follow constitution III: `human` may hold pass, rework, exception, terminate; `reviewer` only recommend; `orchestrator` only escalate and `rework_on_auto_rollback`; `agent` only `raise_event`; `set_by` lists roles only | `reviewer has pass` |
 | V-16 | L4 | error | One terminal's `allow` permissions do not match more than one duty group in `permissions.yaml` | `T3 allow spans build and deploy` |
-| V-17 | L4 | error | Each `route_by_root_cause: {cause: T<k>}` targets a terminal whose `trigger.on` includes `T<n>.rework.<cause>` (or `T<n>.rework` handled by itself) | `T4 rework.design → T2 but T2 does not subscribe to T4.rework.design` |
+| V-17 | L4 | error | Every pass, exception and root-cause route to another terminal targets a terminal that subscribes to the matching event (`T<n>.pass`, `T<n>.exception`, `T<n>.rework.<cause>`); routes to itself need no subscription | `T4 rework.design → T2 but T2 does not subscribe to T4.rework.design` |
 | V-18 | L3/L4 | error | Annex A naming: ids (`PRE-`, `CTL-`, `CHK-`, `PB-`, `MON-`), agent ids, permissions, scopes, metrics (`_rate`, unit suffixes), guardrails (`_min`/`_max`), columns (unit suffixes for numeric columns flagged in the metric catalogue) | `guardrail max_injection_success: expected <measure>_<min\|max>` |
 | V-19 | L4 | error | Tighten-only guardrails are monotonic across tiers (research R-08) | `injection_success_max high 0.05 > low 0.02` |
 | V-20 | L3 | error | File name matches `metadata.id` | `T3.yaml has metadata.id T4` |
 | V-21 | L3 | error | `human_roles` has exactly one A per scope | `two A roles for whole terminal` |
-| V-22 | L4 | error | Every terminal can reach a terminating destination (`terminate`, `lifecycle_closed`) in the route graph | `T6 cannot reach a terminating outcome` |
-| V-23 | L4 | info | Catalogue entry not used by any spec (predicate, metric, MCP server) | `predicate is_frozen unused` |
+| V-22 | L4 | error | Every terminal is reachable from an external event and can reach a terminating destination (`terminate`, `lifecycle_closed`) in the route graph | `T6 cannot reach a terminating outcome` |
+| V-23 | L4 | info | Predicate or MCP server not used by any spec (metrics are used by use-case profiles, not specs) | `predicate is_frozen unused` |
 | V-24 | L5 | error | Content changed versus baseline requires a version bump of at least the level in research R-10; a missing baseline ref gives a `warning` | `T0 changed (route) needs major bump; 1.0.0 → 1.0.1` |
 | V-25 | L5 | error | Version never decreases versus baseline | `T3 1.2.0 → 1.1.0` |
 | V-26 | L4 | warning | Guardrail or tiering value marked `proposed_default` (reported so owners can confirm; does not fail) | `param.judge_agreement_min is a proposed default` |

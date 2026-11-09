@@ -1,0 +1,1 @@
+- {file: terminals/T0.yaml, op: set, path: /terminal/controls/automated/0/rule, value: frobnicate(T0.intake_card)}

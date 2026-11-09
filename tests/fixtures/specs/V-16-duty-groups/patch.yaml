@@ -1,0 +1,2 @@
+- {file: terminals/T0.yaml, op: append, path: /terminal/authorities/allow, value: 'write:repo.feature_branch'}
+- {file: terminals/T0.yaml, op: append, path: /terminal/authorities/allow, value: 'set:traffic_split'}

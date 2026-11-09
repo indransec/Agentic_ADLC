@@ -1,0 +1,3 @@
+- {file: terminals/T1.yaml, op: set, path: /terminal/trigger/on, value: [T5.pass]}
+- {file: terminals/T0.yaml, op: set, path: /terminal/outcome_model/pass/route, value: lifecycle_closed}
+- {file: terminals/T0.yaml, op: set, path: /terminal/outcome_model/exception/route, value: lifecycle_closed}

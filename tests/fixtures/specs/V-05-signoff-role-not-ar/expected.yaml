@@ -1,0 +1,1 @@
+- {rule_id: V-05, file: terminals/T0.yaml, path_contains: /terminal/authorities/sign_off}
