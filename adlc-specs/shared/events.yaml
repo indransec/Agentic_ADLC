@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../schema/catalogues/events.schema.json
+# Event catalogue (TDS §14, SA Annex A.3). The orchestrator accepts only these events.
+catalogue: events
+version: "1.0.0"
+patterns:
+  - {pattern: "T<n>.<status>", description: "Terminal outcome: pass, exception, escalate, terminate"}
+  - {pattern: "T<n>.rework.<root_cause>", description: "Rework with the human-tagged root cause"}
+  - {pattern: "T9.reentry.T<n>", description: "Lifecycle re-entry decided by T9 change classification"}
+  - {pattern: "T8.event.<event_name>", description: "Operational event raised by a T8 monitor"}
+  - {pattern: "T<n>.rollback", description: "Automatic production rollback"}
+external:
+  - {id: usecase.submitted, description: "A business owner submitted a use case in the intake form"}
+  - {id: change.requested, description: "A change to a live agent was requested"}
+  - {id: lifecycle.review_due, description: "The scheduled lifecycle review is due"}
+operational:
+  - {id: safety_breach, description: "Safety or autonomy boundary breached"}
+  - {id: incident, description: "Reliability incident"}
+  - {id: drift, description: "Online quality dropped below the T4 baseline"}
+  - {id: cost_overrun, description: "Cost per task above budget"}
+  - {id: kpi_shortfall, description: "Business KPI below target"}
+  - {id: upstream_change, description: "Model or tool deprecation notice"}
+  - {id: waiver_expiring, description: "A waiver expires soon"}

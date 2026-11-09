@@ -1,0 +1,1142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://adlc.local/schema/terminal.schema.json",
+  "title": "ADLC terminal spec (dictionary 1.1.0)",
+  "description": "TDS Annex B plus the additions in schema/DICTIONARY-CHANGES.md",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "terminal"
+  ],
+  "properties": {
+    "terminal": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "metadata": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "$ref": "#/$defs/terminal_id"
+            },
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "$ref": "#/$defs/semver"
+            },
+            "schema_version": {
+              "const": "1.1.0"
+            },
+            "purpose": {
+              "type": "string",
+              "minLength": 1
+            },
+            "owner_role": {
+              "$ref": "#/$defs/role"
+            },
+            "status": {
+              "enum": [
+                "draft",
+                "active",
+                "deprecated",
+                "retired"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "version",
+            "schema_version",
+            "purpose",
+            "owner_role",
+            "status"
+          ]
+        },
+        "trigger": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "on": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/event"
+              },
+              "minItems": 1
+            },
+            "mode": {
+              "enum": [
+                "event",
+                "scheduled",
+                "continuous"
+              ]
+            },
+            "schedule": {
+              "type": "string",
+              "minLength": 1
+            },
+            "window": {
+              "$ref": "#/$defs/template"
+            },
+            "review_schedule": {
+              "$ref": "#/$defs/tiered_string"
+            },
+            "lifecycle_review": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "every": {
+                  "$ref": "#/$defs/duration"
+                }
+              },
+              "required": [
+                "every"
+              ]
+            }
+          },
+          "required": [
+            "on",
+            "mode"
+          ]
+        },
+        "prerequisites": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^PRE-T[0-9]+-[0-9]{2}$"
+              },
+              "evidence_ref": {
+                "$ref": "#/$defs/evidence_ref"
+              },
+              "condition": {
+                "$ref": "#/$defs/expr"
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              },
+              "on_missing": {
+                "enum": [
+                  "block",
+                  "warn"
+                ]
+              }
+            },
+            "required": [
+              "id",
+              "evidence_ref",
+              "condition",
+              "on_missing"
+            ]
+          },
+          "minItems": 1
+        },
+        "actors": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "agent": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^t[0-9]+-[a-z]+(-[a-z]+)*-agent$"
+                },
+                "model_tier": {
+                  "$ref": "#/$defs/snake"
+                }
+              },
+              "required": [
+                "id",
+                "model_tier"
+              ]
+            },
+            "subagents": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^[a-z]+(-[a-z]+)*$"
+                  },
+                  "responsibility": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "id",
+                  "responsibility"
+                ]
+              }
+            },
+            "reviewer": {
+              "type": "string",
+              "pattern": "^[a-z]+(-[a-z]+)*$"
+            },
+            "human_roles": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "role": {
+                    "$ref": "#/$defs/role"
+                  },
+                  "raci": {
+                    "enum": [
+                      "R",
+                      "A",
+                      "C",
+                      "I"
+                    ]
+                  },
+                  "scope": {
+                    "$ref": "#/$defs/snake"
+                  }
+                },
+                "required": [
+                  "role",
+                  "raci"
+                ]
+              },
+              "minItems": 1
+            }
+          },
+          "required": [
+            "agent",
+            "reviewer",
+            "human_roles"
+          ]
+        },
+        "authorities": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "allow": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/permission"
+              },
+              "minItems": 1
+            },
+            "deny": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/permission"
+              }
+            },
+            "emergency": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "allow": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/permission"
+                  },
+                  "minItems": 1
+                },
+                "when": {
+                  "$ref": "#/$defs/expr"
+                },
+                "notify": {
+                  "$ref": "#/$defs/roles"
+                }
+              },
+              "required": [
+                "allow",
+                "when"
+              ]
+            },
+            "retirement": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "allow": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/permission"
+                  },
+                  "minItems": 1
+                },
+                "requires": {
+                  "$ref": "#/$defs/role"
+                }
+              },
+              "required": [
+                "allow",
+                "requires"
+              ]
+            },
+            "data_access": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "max_class": {
+                  "type": "string",
+                  "pattern": "^[a-z][A-Za-z0-9_]*$"
+                }
+              },
+              "required": [
+                "max_class"
+              ]
+            },
+            "tool_scopes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/scope"
+              }
+            },
+            "sign_off": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/sign_off_rule"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "by_tier": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "low": {
+                          "$ref": "#/$defs/sign_off_rule"
+                        },
+                        "medium": {
+                          "$ref": "#/$defs/sign_off_rule"
+                        },
+                        "high": {
+                          "$ref": "#/$defs/sign_off_rule"
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "by_tier"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "by_mode": {
+                      "type": "object",
+                      "minProperties": 1,
+                      "additionalProperties": {
+                        "$ref": "#/$defs/sign_off_rule"
+                      }
+                    }
+                  },
+                  "required": [
+                    "by_mode"
+                  ]
+                }
+              ]
+            },
+            "status_rights": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "agent": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+                  }
+                },
+                "reviewer": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+                  }
+                },
+                "human": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+                  }
+                },
+                "orchestrator": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "allow",
+            "deny",
+            "data_access",
+            "tool_scopes",
+            "sign_off",
+            "status_rights"
+          ]
+        },
+        "playbooks": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "procedures": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^PB-(T[0-9]+|SH)-[0-9]{2}$"
+                  },
+                  "ref": {
+                    "type": "string",
+                    "pattern": "^playbooks/[a-z0-9/-]+\\.md$"
+                  },
+                  "version": {
+                    "$ref": "#/$defs/semver"
+                  },
+                  "applies_when": {
+                    "$ref": "#/$defs/expr"
+                  }
+                },
+                "required": [
+                  "id",
+                  "ref",
+                  "version"
+                ]
+              },
+              "minItems": 1
+            },
+            "grounding": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "mcp": {
+                    "$ref": "#/$defs/snake"
+                  },
+                  "scope": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "mcp",
+                  "scope"
+                ]
+              }
+            }
+          },
+          "required": [
+            "procedures"
+          ]
+        },
+        "monitors": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^MON-[0-9]{2}$"
+              },
+              "signal": {
+                "type": "string",
+                "minLength": 1
+              },
+              "threshold": {
+                "$ref": "#/$defs/expr"
+              },
+              "raises": {
+                "$ref": "#/$defs/event"
+              },
+              "description": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "signal",
+              "threshold",
+              "raises"
+            ]
+          }
+        },
+        "controls": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "automated": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "pattern": "^CTL-T[0-9]+-[0-9]{2}$"
+                  },
+                  "rule": {
+                    "$ref": "#/$defs/expr"
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "severity": {
+                    "enum": [
+                      "blocking",
+                      "advisory"
+                    ]
+                  },
+                  "applies": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/tier"
+                    },
+                    "minItems": 1
+                  }
+                },
+                "required": [
+                  "id",
+                  "rule",
+                  "severity"
+                ]
+              },
+              "minItems": 1
+            },
+            "auto_rollback_on": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^CTL-T[0-9]+-[0-9]{2}$"
+              }
+            },
+            "checklist": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "ref": {
+                  "type": "string",
+                  "pattern": "^checklists/t[0-9]+\\.yaml$"
+                },
+                "version": {
+                  "$ref": "#/$defs/semver"
+                },
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^CHK-T[0-9]+-[0-9]{2}$"
+                  },
+                  "minItems": 1
+                }
+              },
+              "required": [
+                "ref",
+                "version",
+                "items"
+              ]
+            },
+            "tiering": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "low": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "array",
+                      "null"
+                    ]
+                  }
+                },
+                "medium": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "array",
+                      "null"
+                    ]
+                  }
+                },
+                "high": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "array",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "required": [
+            "automated",
+            "checklist"
+          ]
+        },
+        "change_classes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "examples": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 1
+              },
+              "reentry": {
+                "$ref": "#/$defs/terminal_id"
+              },
+              "path": {
+                "oneOf": [
+                  {
+                    "const": "full"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  }
+                ]
+              },
+              "retrospective": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/terminal_id"
+                }
+              },
+              "within": {
+                "$ref": "#/$defs/duration"
+              },
+              "alternative": {
+                "$ref": "#/$defs/destination"
+              }
+            },
+            "required": [
+              "examples",
+              "reentry"
+            ]
+          }
+        },
+        "retirement_procedure": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/snake"
+          },
+          "minItems": 1
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "artifacts": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "id": {
+                    "$ref": "#/$defs/snake"
+                  },
+                  "format": {
+                    "enum": [
+                      "table",
+                      "diagram+table",
+                      "document",
+                      "reference",
+                      "signed_record"
+                    ]
+                  },
+                  "columns": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/$defs/snake"
+                    },
+                    "minItems": 1
+                  },
+                  "applicability": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "mode": {
+                        "enum": [
+                          "mandatory",
+                          "conditional",
+                          "optional"
+                        ]
+                      },
+                      "when": {
+                        "$ref": "#/$defs/expr"
+                      },
+                      "reason": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "mode"
+                    ]
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "id",
+                  "format",
+                  "columns",
+                  "applicability"
+                ]
+              },
+              "minItems": 1
+            },
+            "ledger": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "key": {
+                  "$ref": "#/$defs/template"
+                },
+                "immutable": {
+                  "const": true
+                },
+                "retention": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/$defs/duration"
+                    },
+                    {
+                      "const": "per_tier"
+                    }
+                  ]
+                },
+                "bound_to": {
+                  "$ref": "#/$defs/evidence_ref"
+                }
+              },
+              "required": [
+                "key",
+                "immutable",
+                "retention"
+              ]
+            }
+          },
+          "required": [
+            "artifacts",
+            "ledger"
+          ]
+        },
+        "outcome_model": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pass": {
+              "$ref": "#/$defs/outcome"
+            },
+            "rework": {
+              "$ref": "#/$defs/outcome"
+            },
+            "exception": {
+              "$ref": "#/$defs/outcome"
+            },
+            "escalate": {
+              "$ref": "#/$defs/outcome"
+            },
+            "terminate": {
+              "$ref": "#/$defs/outcome"
+            },
+            "event_routes": {
+              "type": "object",
+              "additionalProperties": {
+                "$ref": "#/$defs/event_route"
+              }
+            }
+          },
+          "required": [
+            "pass",
+            "rework",
+            "exception",
+            "escalate",
+            "terminate"
+          ]
+        },
+        "timeline": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "expected_duration": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/tiered_duration"
+                },
+                {
+                  "const": "continuous"
+                }
+              ]
+            },
+            "retirement_duration": {
+              "$ref": "#/$defs/tiered_duration"
+            },
+            "review_due": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reminder_after": {
+              "$ref": "#/$defs/duration"
+            },
+            "escalate_after": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/duration"
+                },
+                {
+                  "const": "window_end"
+                }
+              ]
+            },
+            "max_rework_cycles": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "clarification_sla": {
+              "$ref": "#/$defs/duration"
+            },
+            "max_clarification_rounds": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max_auto_retries": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "expected_duration",
+            "reminder_after",
+            "escalate_after",
+            "max_rework_cycles",
+            "clarification_sla",
+            "max_clarification_rounds"
+          ]
+        }
+      },
+      "required": [
+        "metadata",
+        "trigger",
+        "prerequisites",
+        "actors",
+        "authorities",
+        "playbooks",
+        "controls",
+        "evidence",
+        "outcome_model",
+        "timeline"
+      ]
+    }
+  },
+  "$defs": {
+    "semver": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "duration": {
+      "type": "string",
+      "pattern": "^[0-9]+(h|d|w|m)$",
+      "description": "TDS B.1: integer + h|d|w|m (m = months)"
+    },
+    "tier": {
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ]
+    },
+    "tiered_duration": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/duration"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "low": {
+              "$ref": "#/$defs/duration"
+            },
+            "medium": {
+              "$ref": "#/$defs/duration"
+            },
+            "high": {
+              "$ref": "#/$defs/duration"
+            }
+          }
+        }
+      ]
+    },
+    "tiered_string": {
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "low": {
+              "type": "string",
+              "minLength": 1
+            },
+            "medium": {
+              "type": "string",
+              "minLength": 1
+            },
+            "high": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      ]
+    },
+    "expr": {
+      "type": "string",
+      "minLength": 1,
+      "description": "CEL expression (research R-01)"
+    },
+    "event": {
+      "type": "string",
+      "pattern": "^(T[0-9]+\\.[a-z_]+(\\.[A-Za-z0-9_]+)?|[a-z][a-z_]*\\.[a-z][a-z_]*)$"
+    },
+    "permission": {
+      "type": "string",
+      "pattern": "^[a-z]+:[A-Za-z0-9_.*-]+$"
+    },
+    "scope": {
+      "type": "string",
+      "pattern": "^mcp:[a-z][a-z0-9_]*:[a-z][a-z0-9_]*$"
+    },
+    "role": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+      },
+      "minItems": 1
+    },
+    "terminal_id": {
+      "type": "string",
+      "pattern": "^T[0-9]+$"
+    },
+    "evidence_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z0-9_]+)+$"
+    },
+    "destination": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Terminal id, event, route destination from route_destinations.yaml, or ${...} template"
+    },
+    "template": {
+      "type": "string",
+      "pattern": "\\$\\{[^}]+\\}"
+    },
+    "snake": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+    },
+    "sign_off_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "roles": {
+          "$ref": "#/$defs/roles"
+        },
+        "min_approvers": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "plus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "role": {
+                "$ref": "#/$defs/role"
+              },
+              "when": {
+                "$ref": "#/$defs/expr"
+              }
+            },
+            "required": [
+              "role",
+              "when"
+            ]
+          }
+        },
+        "board": {
+          "$ref": "#/$defs/snake"
+        },
+        "external": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "body": {
+              "$ref": "#/$defs/snake"
+            },
+            "when": {
+              "$ref": "#/$defs/expr"
+            }
+          },
+          "required": [
+            "body"
+          ]
+        },
+        "stage_approval": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/role"
+          }
+        }
+      },
+      "required": [
+        "roles",
+        "min_approvers"
+      ]
+    },
+    "outcome": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "route": {
+          "$ref": "#/$defs/destination"
+        },
+        "route_by_root_cause": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/destination"
+          }
+        },
+        "alternatives": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/destination"
+          }
+        },
+        "on": {
+          "$ref": "#/$defs/snake"
+        },
+        "emits": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "requires": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/snake"
+          }
+        },
+        "when": {
+          "$ref": "#/$defs/expr"
+        },
+        "set_by": {
+          "$ref": "#/$defs/roles"
+        },
+        "recheck_at": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/terminal_id"
+          }
+        },
+        "not_allowed": {
+          "type": "boolean"
+        },
+        "notify": {
+          "$ref": "#/$defs/roles"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "event_route": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "route": {
+          "$ref": "#/$defs/destination"
+        },
+        "immediate": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/snake"
+          }
+        },
+        "then": {
+          "$ref": "#/$defs/destination"
+        },
+        "then_when": {
+          "$ref": "#/$defs/expr"
+        },
+        "notify": {
+          "$ref": "#/$defs/roles"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "route"
+      ]
+    }
+  }
+}

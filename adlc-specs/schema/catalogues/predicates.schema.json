@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://adlc.local/schema/catalogues/predicates.schema.json",
+  "title": "ADLC catalogue: predicates",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "catalogue": {
+      "const": "predicates"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "predicates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+          },
+          "params": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+                },
+                "kind": {
+                  "enum": [
+                    "evidence_ref",
+                    "terminal_list",
+                    "string",
+                    "string_list",
+                    "number",
+                    "duration",
+                    "role",
+                    "any"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "kind"
+              ]
+            }
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "returns": {
+            "enum": [
+              "bool",
+              "number"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "params",
+          "description",
+          "returns"
+        ]
+      }
+    }
+  },
+  "required": [
+    "catalogue",
+    "version",
+    "predicates"
+  ]
+}

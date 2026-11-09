@@ -1,0 +1,73 @@
+# yaml-language-server: $schema=../schema/terminal.schema.json
+# Minimal valid fixture terminal (feature 002 tests). Not a real lifecycle terminal.
+terminal:
+  metadata:
+    id: T1
+    name: Fixture Requirements
+    version: "1.0.0"
+    schema_version: "1.1.0"
+    purpose: What exactly must the agent achieve?
+    owner_role: adlc_coe
+    status: active
+  trigger:
+    on: [T0.pass, T0.exception]
+    mode: event
+  prerequisites:
+    - id: PRE-T1-01
+      evidence_ref: T0.status
+      condition: T0.status in ["pass", "exception"]
+      on_missing: block
+    - id: PRE-T1-02
+      evidence_ref: T0.risk_classification.tier
+      condition: evidence_exists(T0.risk_classification.tier)
+      on_missing: block
+  actors:
+    agent: {id: t1-requirements-agent, model_tier: reasoning}
+    reviewer: common-terminal-reviewer
+    human_roles:
+      - {role: product_owner, raci: A}
+      - {role: business_owner, raci: R}
+  authorities:
+    allow: ["read:ledger.T0", "write:T1.artifacts"]
+    deny: ["write:ledger.T0"]
+    data_access: {max_class: internal}
+    tool_scopes: ["mcp:jira:read"]
+    sign_off: {roles: [product_owner, business_owner], min_approvers: 2}
+    status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
+  playbooks:
+    procedures:
+      - {id: PB-T1-01, ref: playbooks/t1-requirements.md, version: "1.0.0"}
+  controls:
+    automated:
+      - id: CTL-T1-01
+        rule: column_min(T1.scores, "score_pct") >= param.unit_coverage_min
+        description: every score meets the coverage floor
+        severity: blocking
+    checklist: {ref: checklists/t1.yaml, version: "1.0.0", items: [CHK-T1-01]}
+    tiering:
+      low: {review_depth: light}
+      medium: {review_depth: standard}
+      high: {review_depth: full}
+  evidence:
+    artifacts:
+      - {id: scores, format: table, columns: [item, score_pct], applicability: {mode: mandatory}}
+      - id: notes
+        format: document
+        columns: [section]
+        applicability: {mode: conditional, when: run.risk_tier == "high", reason: only for high tier}
+    ledger: {key: "${usecase_id}/T1/${run_version}", immutable: true, retention: per_tier}
+  outcome_model:
+    pass: {route: lifecycle_closed}
+    rework:
+      route_by_root_cause: {requirement: T1, qualification: T0}
+      requires: [owner_comment]
+    exception: {route: lifecycle_closed, requires: [waiver_owner, expiry, compensating_control]}
+    escalate: {when: run.rework_count > timeline.max_rework_cycles, route: human_completion}
+    terminate: {set_by: [business_owner], requires: [reason]}
+  timeline:
+    expected_duration: {low: 3d, medium: 5d, high: 8d}
+    reminder_after: 2d
+    escalate_after: 10d
+    max_rework_cycles: 3
+    clarification_sla: 2d
+    max_clarification_rounds: 2

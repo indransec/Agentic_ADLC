@@ -1,0 +1,1 @@
+- {rule_id: V-19, file: shared/guardrails.yaml, path_contains: /guardrails/7/values}

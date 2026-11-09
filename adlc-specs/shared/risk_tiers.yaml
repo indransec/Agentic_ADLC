@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../schema/catalogues/risk_tiers.schema.json
+# Risk tiers (TDS §3), set at T0 and read by every later tiering and timeline block.
+catalogue: risk_tiers
+version: "1.0.0"
+risk_tiers:
+  - {id: low, rank: 1, description: "Internal users, no PII, read-only tools, autonomy <= L2"}
+  - {id: medium, rank: 2, description: "Customer-facing or PII, limited write actions"}
+  - {id: high, rank: 3, description: "Regulated data (PHI, financial), autonomous write actions, autonomy >= L3"}

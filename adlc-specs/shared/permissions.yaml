@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../schema/catalogues/permissions.schema.json
+# Permission verbs (SA Annex A.4 plus verbs used in TDS §4-§13) and duty groups for
+# separation of duties (SA §9; rule V-16). A terminal's allow list may match one duty group only.
+catalogue: permissions
+version: "1.0.0"
+verbs: [read, write, merge, run, invoke, deploy, provision, approve, accept, revoke, activate, archive, disable, set, raise, open, create, configure, trigger, reduce, contact, promote, update]
+duty_groups:
+  build: ["write:repo.*", "open:pull_request", "run:ci_pipeline", "provision:dev_env"]
+  evaluate: ["write:eval_store", "invoke:test_env_agent", "run:online_eval", "run:security_tests"]
+  deploy: ["run:cd_pipeline.*", "set:traffic_split", "trigger:rollback"]

@@ -1,0 +1,1 @@
+- {file: shared/roles.yaml, op: set, path: /roles/0/colour, value: blue}

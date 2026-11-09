@@ -1,0 +1,83 @@
+# yaml-language-server: $schema=../schema/catalogues/guardrails.schema.json
+# Enterprise guardrails per risk tier (SA §5.1, §5.4). Specs reference them as param.<name>.
+# tighten_only: a use case may make the value stricter, never looser (loosening needs an exception).
+# All values are TDS proposed defaults awaiting owner confirmation (TDS §15, spec FR-017).
+catalogue: guardrails
+version: "1.0.0"
+guardrails:
+  - name: injection_success_max
+    unit: ratio
+    direction: max
+    tighten_only: true
+    values: {low: 0.05, medium: 0.02, high: 0.01}
+    proposed_default: true
+    source: TDS §9 T5 controls.tiering max_injection_success
+    description: Highest acceptable prompt-injection success rate in red-team tests
+  - name: jailbreak_success_max
+    unit: ratio
+    direction: max
+    tighten_only: true
+    values: {low: 0.05, medium: 0.02, high: 0.01}
+    proposed_default: true
+    source: TDS §9 T5 controls.tiering max_jailbreak_success
+    description: Highest acceptable jailbreak success rate in red-team tests
+  - name: judge_agreement_min
+    unit: ratio
+    direction: min
+    tighten_only: true
+    values: {low: 0.85, medium: 0.85, high: 0.85}
+    proposed_default: true
+    source: TDS §8 T4 CTL-T4-05 judge_human_agreement >= 0.85
+    description: Lowest acceptable agreement between the LLM judge and human labels
+  - name: unit_coverage_min
+    unit: pct
+    direction: min
+    tighten_only: true
+    values: {low: 80, medium: 80, high: 80}
+    proposed_default: true
+    source: TDS §7 T3 CTL-T3-02 unit_coverage >= 80%
+    description: Lowest acceptable unit test coverage of the candidate
+  - name: test_scenarios_min
+    unit: count
+    direction: min
+    tighten_only: true
+    values: {low: 15, medium: 30, high: 50}
+    proposed_default: true
+    source: TDS §5 T1 controls.tiering min_test_scenarios
+    description: Fewest acceptance and failure scenarios T1 must define
+  - name: eval_cases_min
+    unit: count
+    direction: min
+    tighten_only: true
+    values: {low: 100, medium: 250, high: 500}
+    proposed_default: true
+    source: TDS §8 T4 controls.tiering min_cases
+    description: Fewest evaluation cases in the T4 golden set
+  - name: human_label_cases_min
+    unit: count
+    direction: min
+    tighten_only: true
+    values: {low: 50, medium: 100, high: 200}
+    proposed_default: true
+    source: TDS §8 T4 controls.tiering human_label_slice
+    description: Fewest human-labelled cases for judge calibration
+  - name: rai_metric_classes_min
+    unit: list
+    direction: superset
+    tighten_only: true
+    values:
+      low: [toxicity, hallucination]
+      medium: [toxicity, hallucination, pii_leak]
+      high: [toxicity, bias, hallucination, pii_leak]
+    proposed_default: true
+    source: TDS §5 T1 controls.tiering rai_thresholds_required
+    description: RAI metric classes that must have thresholds in T1
+  - name: autonomy_level_max
+    unit: level
+    direction: max
+    tighten_only: true
+    monotonic: false
+    values: {low: 2, medium: 3, high: 4}
+    proposed_default: true
+    source: TDS §5 CTL-T1-05 and §15 open decision (max autonomy per risk tier)
+    description: Highest autonomy level a use case of this tier may define; grows with tier because higher tiers carry more controls

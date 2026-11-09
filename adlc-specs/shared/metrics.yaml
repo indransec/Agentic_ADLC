@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=../schema/catalogues/metrics.schema.json
+# Metric catalogue (SA §5.3). One shared definition per metric; T1 selects metrics and
+# proposes targets into the use-case profile. Names follow SA Annex A.4 (_rate, unit suffixes).
+catalogue: metrics
+version: "1.0.0"
+metrics:
+  - {name: task_success_rate, class: quality, unit: ratio, direction: higher_is_better, method: "Share of golden-set tasks completed correctly, judged per case", description: "Share of golden-set tasks completed correctly, judged per case"}
+  - {name: answer_correctness_rate, class: quality, unit: ratio, direction: higher_is_better, method: "Share of answers judged correct against reference", description: "Share of answers judged correct against reference"}
+  - {name: groundedness_rate, class: quality, unit: ratio, direction: higher_is_better, method: "Share of claims supported by cited sources", description: "Share of claims supported by cited sources"}
+  - {name: tool_call_success_rate, class: reliability, unit: ratio, direction: higher_is_better, method: "Share of tool calls that returned without error", description: "Share of tool calls that returned without error"}
+  - {name: safe_fail_rate, class: safety, unit: ratio, direction: higher_is_better, method: "Share of failure-mode scenarios handled safely", description: "Share of failure-mode scenarios handled safely"}
+  - {name: toxicity_rate, class: rai, unit: ratio, direction: lower_is_better, method: "Share of outputs flagged toxic by the classifier", description: "Share of outputs flagged toxic by the classifier"}
+  - {name: bias_gap_rate, class: rai, unit: ratio, direction: lower_is_better, method: "Largest outcome gap between persona slices", description: "Largest outcome gap between persona slices"}
+  - {name: hallucination_rate, class: rai, unit: ratio, direction: lower_is_better, method: "Share of outputs with unsupported claims", description: "Share of outputs with unsupported claims"}
+  - {name: pii_leak_count, class: rai, unit: count, direction: lower_is_better, method: "Number of outputs leaking planted test PII", description: "Number of outputs leaking planted test PII"}
+  - {name: policy_violation_rate, class: safety, unit: ratio, direction: lower_is_better, method: "Share of interactions violating policy", description: "Share of interactions violating policy"}
+  - {name: injection_success_rate, class: safety, unit: ratio, direction: lower_is_better, method: "Share of prompt-injection attempts that succeeded", description: "Share of prompt-injection attempts that succeeded"}
+  - {name: jailbreak_success_rate, class: safety, unit: ratio, direction: lower_is_better, method: "Share of jailbreak attempts that succeeded", description: "Share of jailbreak attempts that succeeded"}
+  - {name: judge_agreement_rate, class: quality, unit: ratio, direction: higher_is_better, method: "Agreement between LLM judge and human labels", description: "Agreement between LLM judge and human labels"}
+  - {name: cost_per_task_usd, class: cost, unit: usd, direction: lower_is_better, method: "Model and tool cost per completed task", description: "Model and tool cost per completed task"}
+  - {name: tokens_per_task_count, class: cost, unit: count, direction: lower_is_better, method: "Tokens consumed per task", description: "Tokens consumed per task"}
+  - {name: p50_latency_ms, class: latency, unit: ms, direction: lower_is_better, method: "Median end-to-end task latency", description: "Median end-to-end task latency"}
+  - {name: p95_latency_ms, class: latency, unit: ms, direction: lower_is_better, method: "95th percentile end-to-end task latency", description: "95th percentile end-to-end task latency"}
+  - {name: availability_pct, class: reliability, unit: pct, direction: higher_is_better, method: "Share of time the agent answered health checks", description: "Share of time the agent answered health checks"}
+  - {name: error_rate, class: reliability, unit: ratio, direction: lower_is_better, method: "Share of tasks ending in error", description: "Share of tasks ending in error"}
+  - {name: online_eval_score, class: quality, unit: score, direction: higher_is_better, method: "Online evaluation score on sampled live traffic", description: "Online evaluation score on sampled live traffic"}
+  - {name: unit_coverage_pct, class: engineering, unit: pct, direction: higher_is_better, method: "Unit test line coverage of the candidate", description: "Unit test line coverage of the candidate"}
+  - {name: human_override_rate, class: business_kpi, unit: ratio, direction: lower_is_better, method: "Share of agent decisions overridden by humans", description: "Share of agent decisions overridden by humans"}
+  - {name: escalation_rate, class: business_kpi, unit: ratio, direction: lower_is_better, method: "Share of tasks escalated to a human", description: "Share of tasks escalated to a human"}
+  - {name: handling_time_ms, class: business_kpi, unit: ms, direction: lower_is_better, method: "Time to handle one case end to end", description: "Time to handle one case end to end"}
+  - {name: user_satisfaction_score, class: business_kpi, unit: score, direction: higher_is_better, method: "Average user rating", description: "Average user rating"}

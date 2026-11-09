@@ -24,10 +24,10 @@ and CI). L4 rules need the catalogues, and registration needs validated specs.
 
 ## Phase 1: Setup
 
-- [ ] T001 Add dependencies with `uv add jsonschema networkx cel-python` and `uv add --dev types-networkx types-jsonschema`. Add a `[[tool.mypy.overrides]]` with `module = ["celpy", "celpy.*"]` and `ignore_missing_imports = true` (celpy only) to `pyproject.toml`, then run `uv lock`; confirm `make install lint typecheck` still pass
-- [ ] T002 [P] Create module skeleton `src/adlc/spec_toolkit/{__init__,cli,loader,schema,expressions,catalogues,graph,findings,normalise,projections,register,registry}.py` and `src/adlc/spec_toolkit/rules/{__init__,single_spec,cross_spec,versioning}.py` (empty typed stubs); replace `src/adlc/spec_toolkit/README.md` placeholder with module purpose
-- [ ] T003 [P] Add console script `adlc-spec = "adlc.spec_toolkit.cli:app"` to `pyproject.toml`
-- [ ] T004 [P] Create the fixture harness `tests/support/spec_fixtures.py`:
+- [X] T001 Add dependencies with `uv add jsonschema networkx cel-python` and `uv add --dev types-networkx types-jsonschema`. Add a `[[tool.mypy.overrides]]` with `module = ["celpy", "celpy.*"]` and `ignore_missing_imports = true` (celpy only) to `pyproject.toml`, then run `uv lock`; confirm `make install lint typecheck` still pass
+- [X] T002 [P] Create module skeleton `src/adlc/spec_toolkit/{__init__,cli,loader,schema,expressions,catalogues,graph,findings,normalise,projections,register,registry}.py` and `src/adlc/spec_toolkit/rules/{__init__,single_spec,cross_spec,versioning}.py` (empty typed stubs); replace `src/adlc/spec_toolkit/README.md` placeholder with module purpose
+- [X] T003 [P] Add console script `adlc-spec = "adlc.spec_toolkit.cli:app"` to `pyproject.toml`
+- [X] T004 [P] Create the fixture harness `tests/support/spec_fixtures.py`:
   - `build_bundle(tmp_path, patches)` copies the minimal valid bundle `tests/fixtures/specs/_valid/` into `tmp_path`, then applies patch operations from `tests/fixtures/specs/<rule-id>/patch.yaml` (`{file, op: set|delete|append|write_text, path, value}`).
   - `expected.yaml` beside each patch lists the expected `rule_id`, `file` and `path` substring.
 
@@ -37,30 +37,30 @@ and CI). L4 rules need the catalogues, and registration needs validated specs.
 
 **⚠️ No story work starts before this phase is done.**
 
-- [ ] T005 [P] Write failing tests for `tests/unit/spec_toolkit/test_findings.py`:
+- [X] T005 [P] Write failing tests for `tests/unit/spec_toolkit/test_findings.py`:
   - A `Finding` has `rule_id`, `level` (`L1`–`L5`), `severity` (`error`|`warning`|`info`), `file`, `path` (JSON pointer), `line`, `column` and `message`.
   - The text reporter sorts by file and line and ends with the summary line `"<e> errors, <w> warnings, <i> info in <n> files (<t> s)"`.
   - The JSON reporter emits `{"summary": {...}, "findings": [...]}` per contracts/adlc-spec-cli.md.
   - `has_errors()` is true only when an `error` is present.
-- [ ] T006 [P] Implement `Finding`, `Severity` and `Level` plus the text and JSON reporters in `src/adlc/spec_toolkit/findings.py` so T005 passes
-- [ ] T007 [P] Write failing tests for `tests/unit/spec_toolkit/test_loader.py`:
+- [X] T006 [P] Implement `Finding`, `Severity` and `Level` plus the text and JSON reporters in `src/adlc/spec_toolkit/findings.py` so T005 passes
+- [X] T007 [P] Write failing tests for `tests/unit/spec_toolkit/test_loader.py`:
   - Loading a folder yields a `SpecBundle` with terminals keyed by file, catalogues keyed by `catalogue` name, checklists, and playbooks with parsed front matter.
   - A YAML syntax error gives P-01 with line and column, and that file is marked `parse_failed`.
   - A missing catalogue file or a misnamed terminal file gives P-02.
   - `bundle.location(file, json_pointer)` returns the line and column of a node.
-- [ ] T008 Implement the loader in `src/adlc/spec_toolkit/loader.py` so T007 passes: ruamel.yaml round-trip loader, `CommentedMap.lc` location index, and front matter split on `---` for playbooks (research R-04)
-- [ ] T009 [P] Write failing tests for `tests/unit/spec_toolkit/test_normalise.py`:
+- [X] T008 Implement the loader in `src/adlc/spec_toolkit/loader.py` so T007 passes: ruamel.yaml round-trip loader, `CommentedMap.lc` location index, and front matter split on `---` for playbooks (research R-04)
+- [X] T009 [P] Write failing tests for `tests/unit/spec_toolkit/test_normalise.py`:
   - Normalised JSON is identical for files that differ only in comments, key order and whitespace.
   - `content_hash` matches `^sha256:[0-9a-f]{64}$`.
   - A changed value changes the hash.
   - Playbook hashing uses the full file bytes (research R-09).
-- [ ] T010 [P] Implement `normalise(data) -> str` and `content_hash(...)` in `src/adlc/spec_toolkit/normalise.py` so T009 passes
-- [ ] T011 Write failing tests, then implement the rule registry in `src/adlc/spec_toolkit/rules/__init__.py`.
+- [X] T010 [P] Implement `normalise(data) -> str` and `content_hash(...)` in `src/adlc/spec_toolkit/normalise.py` so T009 passes
+- [X] T011 Write failing tests, then implement the rule registry in `src/adlc/spec_toolkit/rules/__init__.py`.
   - Tests go in `tests/unit/spec_toolkit/test_rule_registry.py`.
   - A `@rule(id, level, severity, summary)` decorator registers rules, and duplicate ids are refused.
   - `run_rules(bundle)` runs rules in level order and skips files with L1/L2 errors for L3+, emitting one `info` finding "skipped (earlier errors)" per skipped file and level.
-- [ ] T012 Write `tests/unit/spec_toolkit/test_rules_documented.py`: the set of rule ids in the registry equals the set of ids in the first column of `specs/002-terminal-spec-toolkit/contracts/validation-rules.md` (excluding R-* registration refusals)
-- [ ] T013 [P] Create the minimal valid fixture bundle `tests/fixtures/specs/_valid/`.
+- [X] T012 Write `tests/unit/spec_toolkit/test_rules_documented.py`: the set of rule ids in the registry equals the set of ids in the first column of `specs/002-terminal-spec-toolkit/contracts/validation-rules.md` (excluding R-* registration refusals)
+- [X] T013 [P] Create the minimal valid fixture bundle `tests/fixtures/specs/_valid/`.
   - Two terminals, `terminals/T0.yaml` and `terminals/T1.yaml`, routing to each other.
   - The smallest catalogue files, one checklist each, and one playbook each.
   - Together they must pass every rule. The file is built incrementally as the rules land, and its final form is asserted in T034.
@@ -77,8 +77,8 @@ and CI). L4 rules need the catalogues, and registration needs validated specs.
 
 ### Tests for US2 (write first) ⚠️
 
-- [ ] T014 [P] [US2] Add negative fixtures for S-02 (missing `unit` on a metric; unknown field on a role), V-18 (guardrail named `max_injection_success`; metric ratio not ending `_rate`), V-19 (`injection_success_max` high > low) under `tests/fixtures/specs/S-02-*/`, `V-18-*/` and `V-19-*/`, plus `tests/unit/spec_toolkit/test_rule_fixtures.py`, which parametrises over every fixture folder and asserts the expected finding
-- [ ] T015 [P] [US2] Write `tests/unit/spec_toolkit/test_catalogue_views.py`. The typed views in `catalogues.py` expose:
+- [X] T014 [P] [US2] Add negative fixtures for S-02 (missing `unit` on a metric; unknown field on a role), V-18 (guardrail named `max_injection_success`; metric ratio not ending `_rate`), V-19 (`injection_success_max` high > low) under `tests/fixtures/specs/S-02-*/`, `V-18-*/` and `V-19-*/`, plus `tests/unit/spec_toolkit/test_rule_fixtures.py`, which parametrises over every fixture folder and asserts the expected finding
+- [X] T015 [P] [US2] Write `tests/unit/spec_toolkit/test_catalogue_views.py`. The typed views in `catalogues.py` expose:
   - role ids, risk tier ranks, event patterns and external events
   - root causes, change classes, data class ranks, model tiers
   - MCP server scopes, permission verbs and duty groups
@@ -87,26 +87,26 @@ and CI). L4 rules need the catalogues, and registration needs validated specs.
 
 ### Implementation for US2
 
-- [ ] T016 [P] [US2] Write the catalogue JSON Schemas in `adlc-specs/schema/catalogues/`, one per catalogue in contracts/spec-files.md (`roles`, `risk_tiers`, `events`, `root_causes`, `change_classes`, `data_classes`, `model_tiers`, `mcp_servers`, `permissions`, `evidence_sources`, `route_destinations`, `predicates`, `metrics`, `guardrails`).
+- [X] T016 [P] [US2] Write the catalogue JSON Schemas in `adlc-specs/schema/catalogues/`, one per catalogue in contracts/spec-files.md (`roles`, `risk_tiers`, `events`, `root_causes`, `change_classes`, `data_classes`, `model_tiers`, `mcp_servers`, `permissions`, `evidence_sources`, `route_destinations`, `predicates`, `metrics`, `guardrails`).
   - Use draft 2020-12 with `additionalProperties: false`.
   - Top-level `catalogue` is a const of the file name and `version` is a quoted semver.
   - Ids are unique: enforce in code (V-01) because JSON Schema cannot express it.
-- [ ] T017 [US2] Update `adlc-specs/shared/roles.yaml` to the catalogue format (add `catalogue: roles`, `version: "1.0.0"`, keep `schema_version` out, keep the `roles` list). Keep `src/adlc/identity/catalogue.py` working, and run `tests/unit/test_role_catalogue.py`.
-- [ ] T018 [P] [US2] Write `adlc-specs/shared/risk_tiers.yaml` (`low` rank 1, `medium` rank 2, `high` rank 3; TDS §3), `root_causes.yaml` (the 11 values of TDS B.2 `root_cause`), `change_classes.yaml` (5 values of TDS B.2), `data_classes.yaml` (6 values of B.2 with rank order public < internal < synthetic_or_masked < confidential_masked < confidential < restricted, plus special `per_T2_prod_design` documented as a resolver) and `model_tiers.yaml` (`reasoning`, `coding`, `standard`)
-- [ ] T019 [P] [US2] Write `adlc-specs/shared/events.yaml`.
+- [X] T017 [US2] Update `adlc-specs/shared/roles.yaml` to the catalogue format (add `catalogue: roles`, `version: "1.0.0"`, keep `schema_version` out, keep the `roles` list). Keep `src/adlc/identity/catalogue.py` working, and run `tests/unit/test_role_catalogue.py`.
+- [X] T018 [P] [US2] Write `adlc-specs/shared/risk_tiers.yaml` (`low` rank 1, `medium` rank 2, `high` rank 3; TDS §3), `root_causes.yaml` (the 11 values of TDS B.2 `root_cause`), `change_classes.yaml` (5 values of TDS B.2), `data_classes.yaml` (6 values of B.2 with rank order public < internal < synthetic_or_masked < confidential_masked < confidential < restricted, plus special `per_T2_prod_design` documented as a resolver) and `model_tiers.yaml` (`reasoning`, `coding`, `standard`)
+- [X] T019 [P] [US2] Write `adlc-specs/shared/events.yaml`.
   - Patterns per Annex A.3: `T<n>.<status>`, `T<n>.rework.<root_cause>`, `T9.reentry.T<n>`, `T8.event.<event_name>`, `T7.rollback`, `T9.retire`.
   - External events: `usecase.submitted`, `change.requested` and `lifecycle.review_due`, each with a description.
   - The list of `T8.event` names: `safety_breach`, `incident`, `drift`, `cost_overrun`, `kpi_shortfall`, `upstream_change`, `waiver_expiring`.
-- [ ] T020 [P] [US2] Write `adlc-specs/shared/mcp_servers.yaml` with every server and scope used in TDS §4–§13, each with `owner_role` and a description: `sharepoint`, `confluence`, `portfolio`, `jira`, `arch_repo`, `mcp_registry`, `git`, `ci`, `prompt_registry`, `artifact_store`, `harness`, `eval_store`, `dataset_registry`, `redteam_harness`, `iam`, `dlp_scanner`, `control_library`, `grc`, `servicenow`, `cmdb`, `monitoring`, `cd`, `traffic_manager`, `agent_registry`, `observability`, `feedback`, `kill_switch`
-- [ ] T021 [P] [US2] Write `adlc-specs/shared/permissions.yaml`:
+- [X] T020 [P] [US2] Write `adlc-specs/shared/mcp_servers.yaml` with every server and scope used in TDS §4–§13, each with `owner_role` and a description: `sharepoint`, `confluence`, `portfolio`, `jira`, `arch_repo`, `mcp_registry`, `git`, `ci`, `prompt_registry`, `artifact_store`, `harness`, `eval_store`, `dataset_registry`, `redteam_harness`, `iam`, `dlp_scanner`, `control_library`, `grc`, `servicenow`, `cmdb`, `monitoring`, `cd`, `traffic_manager`, `agent_registry`, `observability`, `feedback`, `kill_switch`
+- [X] T021 [P] [US2] Write `adlc-specs/shared/permissions.yaml`:
   - Verbs per Annex A.4 plus those the TDS uses (`open`, `create`, `configure`, `trigger`, `invoke`, `reduce`, `contact`, `promote`, `disable`, `update`).
   - Duty groups (research R-07):
     - `build`: `write:repo.*`, `open:pull_request`, `run:ci_pipeline`, `provision:dev_env`
     - `evaluate`: `write:eval_store`, `invoke:test_env_agent`, `run:online_eval`
     - `deploy`: `run:cd_pipeline.*`, `set:traffic_split`, `trigger:rollback`
-- [ ] T022 [P] [US2] Write `adlc-specs/shared/evidence_sources.yaml` (`intake`, `env`, `change`, `template`, `dataset`, `trigger`, `release`, `telemetry`, with the fields the TDS uses, and `profile` with the use-case profile fields of SA §5.1: `applicable_artifacts`, `metric_thresholds`, `kpis`, `autonomy_levels`, `autonomy_level_max`, `token_budget`, `parameters`) and `route_destinations.yaml` (`human_completion`, `owning_terminal`, `owning_terminal_owner`, `lifecycle_closed`, `continue`, `itsm`, `rai_board`, `release_board`, `incident_bridge`, `adlc_coe`, with kinds per contracts/spec-files.md)
-- [ ] T023 [P] [US2] Write `adlc-specs/shared/metrics.yaml` with every metric the converted specs reference, named per Annex A.4 (for example `task_success_rate`, `injection_success_rate`, `jailbreak_success_rate`, `judge_agreement_rate`, `unit_coverage_pct`, `cost_per_task_usd`, `p95_latency_ms`, `safe_fail_rate`, `pii_leak_count`, `policy_violation_rate`, `availability_pct`, `online_eval_score`), each with class, unit, direction and method
-- [ ] T024 [P] [US2] Write `adlc-specs/shared/guardrails.yaml` per research R-08. Mark every entry `proposed_default: true` and give it a `source` (TDS section).
+- [X] T022 [P] [US2] Write `adlc-specs/shared/evidence_sources.yaml` (`intake`, `env`, `change`, `template`, `dataset`, `trigger`, `release`, `telemetry`, with the fields the TDS uses, and `profile` with the use-case profile fields of SA §5.1: `applicable_artifacts`, `metric_thresholds`, `kpis`, `autonomy_levels`, `autonomy_level_max`, `token_budget`, `parameters`) and `route_destinations.yaml` (`human_completion`, `owning_terminal`, `owning_terminal_owner`, `lifecycle_closed`, `continue`, `itsm`, `rai_board`, `release_board`, `incident_bridge`, `adlc_coe`, with kinds per contracts/spec-files.md)
+- [X] T023 [P] [US2] Write `adlc-specs/shared/metrics.yaml` with every metric the converted specs reference, named per Annex A.4 (for example `task_success_rate`, `injection_success_rate`, `jailbreak_success_rate`, `judge_agreement_rate`, `unit_coverage_pct`, `cost_per_task_usd`, `p95_latency_ms`, `safe_fail_rate`, `pii_leak_count`, `policy_violation_rate`, `availability_pct`, `online_eval_score`), each with class, unit, direction and method
+- [X] T024 [P] [US2] Write `adlc-specs/shared/guardrails.yaml` per research R-08. Mark every entry `proposed_default: true` and give it a `source` (TDS section).
   - `injection_success_max` {0.05, 0.02, 0.01}
   - `jailbreak_success_max` {0.05, 0.02, 0.01}
   - `judge_agreement_min` {0.85 ×3}
@@ -115,9 +115,9 @@ and CI). L4 rules need the catalogues, and registration needs validated specs.
   - `eval_cases_min_count` {100, 250, 500}
   - `human_label_cases_min_count` {50, 100, 200}
   - `rai_metric_classes_required` with direction `superset`: {[toxicity, hallucination], [toxicity, hallucination, pii_leak], [toxicity, bias, hallucination, pii_leak]}
-- [ ] T025 [US2] Write `adlc-specs/shared/predicates.yaml`. Each predicate has typed params and a description. Fill it while converting (US3), starting with `evidence_exists`, `is_signed`, `is_frozen`, `is_provisioned`, `is_pinned`, `in_directory`, `all_rows_have`, `all_rows_numeric`, `all_metrics_meet_thresholds`, `every_req_traced`, `hash_matches`, `within_window`, `no_expired_waivers`, `any_design_deviation`
-- [ ] T026 [US2] Implement typed catalogue views in `src/adlc/spec_toolkit/catalogues.py` so T015 passes
-- [ ] T027 [US2] Implement S-02 in `src/adlc/spec_toolkit/schema.py` (catalogue schema validation, mapping jsonschema `absolute_path` to `bundle.location`), V-18 (catalogue-side naming) and V-19 (tighten-only monotonicity, including `superset` direction) in `src/adlc/spec_toolkit/rules/cross_spec.py`. Make the US2 fixtures pass.
+- [X] T025 [US2] Write `adlc-specs/shared/predicates.yaml`. Each predicate has typed params and a description. Fill it while converting (US3), starting with `evidence_exists`, `is_signed`, `is_frozen`, `is_provisioned`, `is_pinned`, `in_directory`, `all_rows_have`, `all_rows_numeric`, `all_metrics_meet_thresholds`, `every_req_traced`, `hash_matches`, `within_window`, `no_expired_waivers`, `any_design_deviation`
+- [X] T026 [US2] Implement typed catalogue views in `src/adlc/spec_toolkit/catalogues.py` so T015 passes
+- [X] T027 [US2] Implement S-02 in `src/adlc/spec_toolkit/schema.py` (catalogue schema validation, mapping jsonschema `absolute_path` to `bundle.location`), V-18 (catalogue-side naming) and V-19 (tighten-only monotonicity, including `superset` direction) in `src/adlc/spec_toolkit/rules/cross_spec.py`. Make the US2 fixtures pass.
 
 **Checkpoint**: catalogues validate cleanly; their negative fixtures are caught.
 

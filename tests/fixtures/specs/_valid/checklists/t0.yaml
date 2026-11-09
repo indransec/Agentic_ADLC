@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../schema/checklist.schema.json
+checklist: t0
+version: "1.0.0"
+items:
+  - {id: CHK-T0-01, text: Problem is measurable}

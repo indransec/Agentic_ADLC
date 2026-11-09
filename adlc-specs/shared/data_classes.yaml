@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=../schema/catalogues/data_classes.schema.json
+# Data classes (TDS Annex B.2), ranked from least to most sensitive.
+catalogue: data_classes
+version: "1.0.0"
+data_classes:
+  - {id: public, rank: 1, description: "Public information"}
+  - {id: internal, rank: 2, description: "Internal, non-personal information"}
+  - {id: synthetic_or_masked, rank: 3, description: "Synthetic data or masked copies of real data"}
+  - {id: confidential_masked, rank: 4, description: "Confidential data with masking applied"}
+  - {id: confidential, rank: 5, description: "Confidential data"}
+  - {id: restricted, rank: 6, description: "Regulated data such as PHI or financial records"}
+resolvers:
+  - {id: per_T2_prod_design, description: "Ceiling taken from the use case's T2 data strategy for production"}

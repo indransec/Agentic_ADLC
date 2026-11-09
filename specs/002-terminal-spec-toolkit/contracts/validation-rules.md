@@ -8,6 +8,7 @@ code list the same ids. Ids V-01 to V-10 keep their TDS Annex B.5 meaning.
 | --- | --- | --- | --- | --- |
 | P-01 | L1 | error | File parses as YAML (or as front matter for playbooks) | `T2.yaml:14:3 mapping values are not allowed here` |
 | P-02 | L1 | error | Expected layout: each catalogue file present once; terminal files named `T<n>.yaml`; checklist files `t<n>.yaml` | `shared/predicates.yaml missing` |
+| P-03 | L1 | info | Later checks (L3–L5) skipped for a file that has L1 or L2 errors, so the skip is visible rather than silent | `terminals/T2.yaml: L3–L5 checks skipped (earlier errors)` |
 | S-01 | L2 | error | Terminal spec matches `terminal.schema.json` (unknown fields refused) | `/terminal/controls/automated/0/rul: unknown field` |
 | S-02 | L2 | error | Catalogue matches its schema | `shared/metrics.yaml /metrics/3/unit: required` |
 | S-03 | L2 | error | Checklist and playbook front matter match their schemas | `playbooks/t0-intake.md: version missing` |

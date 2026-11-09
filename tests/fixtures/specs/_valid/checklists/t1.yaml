@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../schema/checklist.schema.json
+checklist: t1
+version: "1.0.0"
+items:
+  - {id: CHK-T1-01, text: Requirements traceable to T0 problem}

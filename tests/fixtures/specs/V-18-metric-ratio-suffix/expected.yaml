@@ -1,0 +1,1 @@
+- {rule_id: V-18, file: shared/metrics.yaml, path_contains: /metrics/0/name}

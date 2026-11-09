@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../schema/catalogues/change_classes.schema.json
+# Change classes (TDS Annex B.2), ranked so controls can say "class >= moderate".
+catalogue: change_classes
+version: "1.0.0"
+change_classes:
+  - {id: minor, rank: 1, description: "Prompt wording, retrieval tuning, threshold-neutral config"}
+  - {id: moderate, rank: 2, description: "Model version upgrade, new tool, memory change"}
+  - {id: major, rank: 3, description: "Autonomy raised, new scope, new data class"}
+  - {id: strategic, rank: 4, description: "Business case no longer holds"}
+  - {id: emergency, rank: 5, description: "Sev1 fix or safety patch, with retrospective validation"}

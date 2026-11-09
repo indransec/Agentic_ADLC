@@ -1,0 +1,1 @@
+- {file: shared/guardrails.yaml, op: set, path: /guardrails/7/values/high, value: [toxicity]}
