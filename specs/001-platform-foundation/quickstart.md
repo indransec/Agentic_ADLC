@@ -18,7 +18,8 @@ cp .env.example .env                                  # fill every REPLACE_ME va
 mkdir -p ~/.config/adlc
 cp deploy/accounts.example.yaml ~/.config/adlc/accounts.dev.yaml
 uv run adlc-account hash                              # paste output into credential_hash
-uv run adlc-account check                             # expect: OK, n accounts
+set -a; source .env; set +a
+uv run adlc-account check                             # expect: OK, n accounts (dev)
 ```
 
 **Expect**: `adlc-account check` exits 0. With `ADLC_ENV=demo` and a placeholder left in, it
@@ -38,7 +39,8 @@ Run `make down && make up`, then confirm that data written in step 4 is still th
 ## 3. Missing setting (US3)
 
 ```bash
-ADLC_SESSION_SECRET= uv run adlc-api      # or remove it from .env and run make up
+set -a; source .env; set +a
+ADLC_SESSION_SECRET= uv run adlc-api      # empty counts as missing
 ```
 
 **Expect**: exit code 2 and the line `ADLC_SESSION_SECRET: missing; …`, with no secret
@@ -49,10 +51,10 @@ values printed.
 Insert one row as `adlc_app`, then try to change it as both identities:
 
 ```bash
-docker compose -f deploy/compose.yaml exec postgres psql -U adlc_app -d adlc -c \
+docker compose -f deploy/compose.yaml --env-file .env exec postgres psql -U adlc_app -d adlc -c \
   "INSERT INTO ledger.ledger_record (ledger_key, content_hash) VALUES ('qs/1', 'sha256:$(printf '0%.0s' {1..64})');"
-docker compose -f deploy/compose.yaml exec postgres psql -U adlc_app   -d adlc -c "UPDATE ledger.ledger_record SET ledger_key='x';"
-docker compose -f deploy/compose.yaml exec postgres psql -U adlc_owner -d adlc -c "DELETE FROM ledger.ledger_record;"
+docker compose -f deploy/compose.yaml --env-file .env exec postgres psql -U adlc_app   -d adlc -c "UPDATE ledger.ledger_record SET ledger_key='x';"
+docker compose -f deploy/compose.yaml --env-file .env exec postgres psql -U adlc_owner -d adlc -c "DELETE FROM ledger.ledger_record;"
 ```
 
 **Expect**: the insert succeeds. The UPDATE as `adlc_app` and the DELETE as `adlc_owner` both
@@ -85,7 +87,7 @@ password or token.
 ## 7. Tracing (US6)
 
 Open `http://localhost:16686`, choose service `adlc-api` and find the `/auth/me` request
-within 30 seconds. Then run `docker compose -f deploy/compose.yaml stop jaeger`, call
+within 30 seconds. Then run `docker compose -f deploy/compose.yaml --env-file .env stop jaeger`, call
 `/auth/me` again, and confirm it still returns 200 and the API logs a WARNING about the
 exporter.
 
@@ -107,3 +109,20 @@ make reset         # type the env name when prompted
 
 **Expect**: the prompt names the environment, data from step 4 is gone, and the stack comes
 back healthy with empty schemas.
+
+## Validation run (2026-11-09, T061)
+
+These results are from a macOS laptop running Docker Desktop. Ports 8000 and 8001 were taken
+by other projects there, so `ADLC_API_PORT=8010` was used.
+
+| Step | Result |
+| --- | --- |
+| 1 Configure | `adlc-account check` → `OK, 1 account (dev)` |
+| 2 Start / health / restart | All services healthy about 20 s after `make up`; `/health` ok; a ledger row survived `make down && make up` |
+| 3 Missing setting | Exit 2, `ADLC_SESSION_SECRET: missing; …`, no values printed (also covered by `tests/integration/test_startup_config.py`) |
+| 4 Ledger immutability | Insert ok; UPDATE (app), DELETE and TRUNCATE (owner) refused with `ledger.ledger_record is append-only`; row unchanged |
+| 5 Migration round trip | `make migration-check` passed |
+| 6 Sign-in | `/auth/me` returned both roles with a token and 401 without one |
+| 7 Tracing | Spans for sign-in and `/auth/me` in Jaeger (query API `/api/v3/traces`); `/health` not traced; no authorization attributes; with Jaeger stopped, requests returned 200 in about 2 ms and a WARNING was logged |
+| 8 Shared checks | `make check` passed in about 12 s; a planted type error failed at `==> typecheck`, and a planted token was caught by `secret-scan` |
+| 9 Reset | A wrong confirmation changed nothing; the right one emptied the ledger and the stack came back healthy |
