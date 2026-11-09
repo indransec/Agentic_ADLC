@@ -69,8 +69,8 @@ are refused; roll back all migrations and confirm the store is empty again.
 2. **Given** a migrated store, **When** migrations are rolled back to the beginning, **Then**
    the four areas and their tables no longer exist.
 3. **Given** a record in the ledger area, **When** the application identity or the
-   schema-owner identity tries to update or delete it, **Then** the data store refuses the
-   change and the record is unchanged.
+   schema-owner identity tries to update, delete or truncate it, **Then** the data store
+   refuses the change with an error and the record is unchanged.
 4. **Given** a record in the ledger area, **When** the application identity inserts a new
    record, **Then** the insert succeeds (append-only, not read-only).
 5. **Given** the migrations have already been applied, **When** they are applied again,
@@ -194,8 +194,8 @@ that request's trace in the trace viewer.
   reset operation only; it removes the ledger table as a whole through the schema-owner
   identity after confirmation, never edits individual records, and is never available to the
   application identity.
-- The reset command is run on the demo host by mistake: it requires explicit confirmation and
-  states which environment it is about to wipe.
+- The reset command is run on the demo host by mistake: it requires the operator to type the
+  environment name, states which environment it is about to wipe, and does nothing otherwise.
 - A required port is already in use on the host: start fails with a message naming the
   service and the port.
 - Two local accounts share the same name: startup stops and names the duplicate.
@@ -236,8 +236,8 @@ that request's trace in the trace viewer.
 - **FR-010**: The platform MUST use two distinct data store identities: a schema-owner identity
   used only by migrations, and an application identity used by running services.
 - **FR-011**: The application identity MUST be able to insert and read ledger records. Every
-  data store identity, including the schema owner, MUST be refused on any update or delete of
-  an individual ledger record, enforced by the data store itself, not by application code
+  data store identity, including the schema owner, MUST be refused, with an error rather than
+  a silent no-op, on any update, delete or truncate of ledger records, enforced by the data store itself, not by application code
   (constitution V; SA §10 immutability, §11 "no update rights for any role"). Ledger data can
   only be removed as a whole table, by reset or full rollback through the schema-owner
   identity after explicit confirmation.
@@ -252,7 +252,8 @@ that request's trace in the trace viewer.
   requests if a required setting is missing or invalid, with a message naming the setting and
   the expected form.
 - **FR-015**: Secret settings MUST never be printed in logs, error messages, traces or health
-  output.
+  output. Session tokens and the request header that carries them MUST never be recorded in
+  logs or traces.
 - **FR-016**: The shared checks MUST include a secret scan of the repository that fails the
   build if a secret is found.
 
@@ -276,7 +277,11 @@ that request's trace in the trace viewer.
   time, never the credential.
 - **FR-021**: All platform API endpoints other than health checks and sign-in MUST require a
   valid signed-in session (deny by default, constitution XI); sessions MUST expire after a
-  configured period.
+  configured period. Sign-out MUST refuse the session for the rest of its lifetime while the
+  API keeps running; for the MVP, a sign-out made before an API restart is not remembered
+  after it, so that session stays usable until it expires (accepted limit, see Assumptions).
+- **FR-021a**: Repeated failed sign-in attempts MUST NOT lock an account in the MVP; every
+  failed attempt MUST be logged (FR-020) so repeated failures are visible.
 
 **Shared checks and CI**
 
@@ -338,7 +343,7 @@ that request's trace in the trace viewer.
 - **SC-003**: Migrations apply to an empty store and roll back to empty with zero errors in
   10 out of 10 consecutive runs.
 - **SC-004**: 100% of attempts by any data store identity (application or schema owner) to
-  update or delete a ledger record are refused by the data store.
+  update, delete or truncate ledger records are refused by the data store.
 - **SC-005**: For every required setting, removing it causes startup to stop with a message
   that names that setting (verified for each required setting).
 - **SC-006**: A configured local user can sign in and see their roles in under 10 seconds;
@@ -360,8 +365,21 @@ that request's trace in the trace viewer.
   only; schema validation of catalogues arrives in feature 002.
 - A person may hold several roles (in the demo, one person may act as several owners).
 - Default session lifetime is 8 hours; the value is a setting.
-- Reset and full rollback are development and demo-preparation operations; they need explicit
-  confirmation and use the schema-owner identity.
+- Reset and full rollback are development and demo-preparation operations. They are allowed in
+  both `dev` and `demo` (demo rehearsals need a clean start), need the operator to type the
+  environment name to confirm, and use the schema-owner identity. Anyone with shell access to
+  the host can run them; no further restriction applies in the MVP.
+- The data store superuser credential is infrastructure-only: it is used once to create the two
+  platform identities, is set per environment outside the repository, and is never configured
+  in any platform service. A superuser can bypass ledger immutability; this is an accepted MVP
+  risk, mitigated later by signed evidence and write-once storage (SA §11 target state).
+- Sign-out not surviving an API restart (FR-021) is accepted for the MVP: one API process on a
+  private demo host, sessions of at most the configured lifetime. Moving to an OIDC provider
+  removes the limit.
+- No account lockout after failed sign-ins in the MVP (FR-021a); synthetic data and a private
+  host make the risk low, and the failures are logged.
+- Traffic is plain HTTP on the single private demo network for the MVP (SA §11: only the web
+  app is exposed); encryption in transit for the API and the data store is post-MVP.
 - The demo host is a single machine able to run containers (SA C-5, §15); its hosting target
   (ADR-07) is undecided and does not affect this feature.
 - The object store for artifacts is not part of this feature; it arrives with the ledger in

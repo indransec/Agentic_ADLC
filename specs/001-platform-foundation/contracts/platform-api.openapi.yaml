@@ -1,0 +1,126 @@
+openapi: 3.1.0
+info:
+  title: ADLC Platform API (foundation)
+  version: 0.1.0
+  description: >
+    Endpoints delivered by feature 001. Every path except /health and /auth/sign-in requires
+    a valid session (deny by default, FR-021). Later features add paths under the same rule.
+servers:
+  - url: http://localhost:8000
+security:
+  - session: []
+paths:
+  /health:
+    get:
+      summary: Service health
+      security: []
+      responses:
+        "200":
+          description: All checks pass
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Health"}
+              example: {status: ok, checks: {database: ok}}
+        "503":
+          description: At least one check fails; the failing check is named
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Health"}
+              example: {status: unavailable, checks: {database: unavailable}}
+  /auth/sign-in:
+    post:
+      summary: Sign in with a local account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: "#/components/schemas/SignInRequest"}
+      responses:
+        "200":
+          description: Signed in
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/SignInResponse"}
+        "401":
+          description: >
+            Unknown account, wrong password or placeholder credential. The body is identical
+            in all three cases (FR-020).
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Error"}
+              example: {detail: invalid credentials}
+        "422":
+          description: Malformed request body
+  /auth/sign-out:
+    post:
+      summary: Revoke the current session
+      responses:
+        "204": {description: Session revoked}
+        "401": {$ref: "#/components/responses/Unauthorized"}
+  /auth/me:
+    get:
+      summary: The signed-in person and their roles
+      responses:
+        "200":
+          description: Current person
+          content:
+            application/json:
+              schema: {$ref: "#/components/schemas/Person"}
+              example:
+                account_name: alex
+                display_name: Alex Example
+                roles: [business_owner, product_owner]
+        "401": {$ref: "#/components/responses/Unauthorized"}
+components:
+  securitySchemes:
+    session:
+      type: http
+      scheme: bearer
+      description: Signed, expiring session token returned by /auth/sign-in
+  responses:
+    Unauthorized:
+      description: Missing, invalid, expired or revoked session
+      content:
+        application/json:
+          schema: {$ref: "#/components/schemas/Error"}
+          example: {detail: not authenticated}
+  schemas:
+    Health:
+      type: object
+      required: [status, checks]
+      properties:
+        status: {type: string, enum: [ok, unavailable]}
+        checks:
+          type: object
+          additionalProperties: {type: string, enum: [ok, unavailable]}
+    SignInRequest:
+      type: object
+      required: [account_name, password]
+      additionalProperties: false
+      properties:
+        account_name: {type: string, minLength: 1, maxLength: 40}
+        password: {type: string, minLength: 1, writeOnly: true}
+    SignInResponse:
+      type: object
+      required: [token, token_type, expires_at, person]
+      properties:
+        token: {type: string}
+        token_type: {type: string, const: bearer}
+        expires_at: {type: string, format: date-time}
+        person: {$ref: "#/components/schemas/Person"}
+    Person:
+      type: object
+      required: [account_name, display_name, roles]
+      properties:
+        account_name: {type: string}
+        display_name: {type: string}
+        roles:
+          type: array
+          minItems: 1
+          items: {type: string, description: Role id from adlc-specs/shared/roles.yaml}
+    Error:
+      type: object
+      required: [detail]
+      properties:
+        detail: {type: string}
