@@ -199,11 +199,11 @@ the migration service and needs validated settings.
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [ ] T057 [P] Write `tests/unit/test_no_hardcoded_values.py` (constitution I, II): scan `src/adlc/**/*.py` and fail on any role id from `adlc-specs/shared/roles.yaml`, any terminal id matching `\bT[0-9]\b`, or any event name matching `\bT[0-9]\.[a-z]`
-- [ ] T058 [P] Write module READMEs: `src/adlc/config/README.md`, `src/adlc/db/README.md`, `src/adlc/identity/README.md` and `src/adlc/observability/README.md` (purpose, public interface, settings used)
-- [ ] T059 Write the root `README.md`: prerequisites, setup (quickstart.md steps 1–2), `make` targets, the two database identities, and the accepted MVP limits from the spec Assumptions (superuser can bypass immutability, sign-out not kept across API restart, no lockout, plain HTTP, reset allowed on `demo`)
-- [ ] T060 Update `claude.md`: replace "Run `make test`" with "Run `make check`", and add the location of the account file and the ADLC env selection
-- [ ] T061 Run `make check` and the full quickstart.md (steps 1–9) on a clean clone; record the results in `specs/001-platform-foundation/quickstart.md` under a "Validation run" note and fix anything that fails
+- [X] T057 [P] Write `tests/unit/test_no_hardcoded_values.py` (constitution I, II): scan `src/adlc/**/*.py` and fail on any role id from `adlc-specs/shared/roles.yaml`, any terminal id matching `\bT[0-9]\b`, or any event name matching `\bT[0-9]\.[a-z]`
+- [X] T058 [P] Write module READMEs: `src/adlc/config/README.md`, `src/adlc/db/README.md`, `src/adlc/identity/README.md` and `src/adlc/observability/README.md` (purpose, public interface, settings used)
+- [X] T059 Write the root `README.md`: prerequisites, setup (quickstart.md steps 1–2), `make` targets, the two database identities, and the accepted MVP limits from the spec Assumptions (superuser can bypass immutability, sign-out not kept across API restart, no lockout, plain HTTP, reset allowed on `demo`)
+- [X] T060 Update `claude.md`: replace "Run `make test`" with "Run `make check`", and add the location of the account file and the ADLC env selection
+- [X] T061 Run `make check` and the full quickstart.md (steps 1–9) on a clean clone; record the results in `specs/001-platform-foundation/quickstart.md` under a "Validation run" note and fix anything that fails
 
 ---
 
