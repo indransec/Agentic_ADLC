@@ -268,4 +268,4 @@ dependency licence is in plan.md, module READMEs are written, and quickstart.md 
 
 - [X] T063 CRITICAL: record the licences of build backend `hatchling` (MIT) and image dependencies `python:3.12-slim` (PSF-2.0) and `ghcr.io/astral-sh/uv` (MIT OR Apache-2.0) in the plan.md dependency table per Constitution VIII (missing)
 - [X] T064 Show an ungated coverage report for the whole `adlc` package next to the gated core-module coverage in `Makefile`/`pyproject.toml` per tasks T052 (partial)
-- [ ] T065 After the branch is pushed to a Git remote, confirm `.github/workflows/ci.yml` runs `make check` green for the same commit that passes locally, and record the result in `specs/001-platform-foundation/quickstart.md` per SC-007 (partial)
+- [X] T065 After the branch is pushed to a Git remote, confirm `.github/workflows/ci.yml` runs `make check` green for the same commit that passes locally, and record the result in `specs/001-platform-foundation/quickstart.md` per SC-007 (partial)

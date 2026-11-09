@@ -126,3 +126,6 @@ by other projects there, so `ADLC_API_PORT=8010` was used.
 | 7 Tracing | Spans for sign-in and `/auth/me` in Jaeger (query API `/api/v3/traces`); `/health` not traced; no authorization attributes; with Jaeger stopped, requests returned 200 in about 2 ms and a WARNING was logged |
 | 8 Shared checks | `make check` passed in about 12 s; a planted type error failed at `==> typecheck`, and a planted token was caught by `secret-scan` |
 | 9 Reset | A wrong confirmation changed nothing; the right one emptied the ledger and the stack came back healthy |
+
+**CI (T065, SC-007)**: GitHub Actions run 42690049117 on PR #1 ran `make check` on commit
+`e1bb8fd` and succeeded. That is the same commit that passes `make check` locally.
