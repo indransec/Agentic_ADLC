@@ -1,0 +1,15 @@
+# Example local account file (contracts/files.md). Copy it OUTSIDE the repository, e.g.
+#   $HOME/.config/adlc/accounts.dev.yaml
+# set ADLC_ACCOUNTS_FILE to that absolute path, and replace each credential_hash with the
+# output of:  uv run adlc-account hash
+# Roles must be ids from adlc-specs/shared/roles.yaml. In ADLC_ENV=demo the platform refuses
+# to start while any placeholder remains.
+accounts:
+  - account_name: owner.business
+    display_name: Demo Business Owner
+    roles: [business_owner]
+    credential_hash: REPLACE_WITH_HASH
+  - account_name: coe.lead
+    display_name: Demo CoE Lead
+    roles: [adlc_coe]
+    credential_hash: REPLACE_WITH_HASH
