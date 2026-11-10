@@ -20,3 +20,19 @@ def _isolated_settings_env(monkeypatch: pytest.MonkeyPatch) -> None:
             monkeypatch.delenv(key)
     # Tests never export traces; tests/unit/test_tracing.py re-enables the SDK explicitly.
     monkeypatch.setenv("OTEL_SDK_DISABLED", "true")
+
+
+@pytest.fixture(autouse=True)
+def _no_model_network(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """006 (R-13): tests never reach a model provider. Only ``litellm_contract`` tests load
+    LiteLLM, and they intercept its HTTP with respx."""
+    if request.node.get_closest_marker("litellm_contract") is not None:
+        return
+    import adlc.agents.gateway as gateway
+
+    def blocked() -> object:
+        raise RuntimeError(
+            "LiteLLM is blocked in tests; use FakeGateway or a litellm_contract test"
+        )
+
+    monkeypatch.setattr(gateway, "_litellm", blocked)

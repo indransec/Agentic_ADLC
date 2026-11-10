@@ -130,8 +130,8 @@ P2).
 
 ### Tests first
 
-- [ ] T013 [P] [US1] Write failing unit tests in `tests/unit/agents/test_catalogue.py`: profile selection (an unknown profile is refused); the tier's ordered entries; data-class rank comparison (an unresolvable ceiling counts as the highest rank); the context-window check; `max_tokens` capped at the entry's `max_output_tokens`.
-- [ ] T014 [P] [US1] Write failing unit tests in `tests/unit/agents/test_gateway_rules.py`, with a scripted transport (contracts/gateway.md):
+- [X] T013 [P] [US1] Write failing unit tests in `tests/unit/agents/test_catalogue.py`: profile selection (an unknown profile is refused); the tier's ordered entries; data-class rank comparison (an unresolvable ceiling counts as the highest rank); the context-window check; `max_tokens` capped at the entry's `max_output_tokens`.
+- [X] T014 [P] [US1] Write failing unit tests in `tests/unit/agents/test_gateway_rules.py`, with a scripted transport (contracts/gateway.md):
   - outage (rate limit, timeout, connection, 5xx, auth) moves to the next entry;
   - refusal, truncated and request error return without fallback;
   - skips for `no_key`, `data_class` and `context` give `skipped` rows;
@@ -141,24 +141,24 @@ P2).
   - one record per request, outages included;
   - the answering call's `tried` lists the earlier entries with outcome and reason (US1 AC2);
   - a response without usage figures is recorded with counted tokens and `usage_estimated = true`.
-- [ ] T015 [P] [US1] Write failing contract tests in `tests/unit/agents/test_litellm_contract.py` (marker `litellm_contract`, `respx`). For the Anthropic, OpenAI and Gemini HTTP shapes:
+- [X] T015 [P] [US1] Write failing contract tests in `tests/unit/agents/test_litellm_contract.py` (marker `litellm_contract`, `respx`). For the Anthropic, OpenAI and Gemini HTTP shapes:
   - the request body has no `temperature`, `top_p`, `top_k`, thinking budget, `reasoning_effort`, `response_format` or `tool_choice`;
   - the key is passed per call and does not appear in the process environment;
   - mapping of success with usage, a refusal (`stop_reason` `refusal`, `finish_reason` `content_filter`), a 429, a timeout and a 400 to `ok`, `refusal`, `outage`, `outage` and `request_error`.
 
   Importing LiteLLM makes no network call (`LITELLM_LOCAL_MODEL_COST_MAP`).
-- [ ] T016 [P] [US1] Add an autouse no-network guard in `tests/conftest.py`: `litellm.completion` fails the test unless it is marked `litellm_contract`.
+- [X] T016 [P] [US1] Add an autouse no-network guard in `tests/conftest.py`: `litellm.completion` fails the test unless it is marked `litellm_contract`.
 
 ### Implementation
 
-- [ ] T017 [US1] Implement `src/adlc/agents/catalogue.py` (T013) and `src/adlc/agents/store.py` (SQL for `run.model_call`, `run.agent_attempt` and `run.cost_alert`, each in its own short transaction).
-- [ ] T018 [US1] Implement `src/adlc/agents/gateway.py`:
+- [X] T017 [US1] Implement `src/adlc/agents/catalogue.py` (T013) and `src/adlc/agents/store.py` (SQL for `run.model_call`, `run.agent_attempt` and `run.cost_alert`, each in its own short transaction).
+- [X] T018 [US1] Implement `src/adlc/agents/gateway.py`:
   - the `ModelGateway` protocol and `ModelRequest` / `ModelResponse`;
   - `LiteLLMGateway`: classification per research R-02; `num_retries=0`; no Router or callbacks; telemetry off; local cost map; keys per call; one `adlc.model.call` span per request with allow-listed attributes only;
   - `src/adlc/agents/fake.py`: `FakeGateway`, with scripted outcomes per model and recorded requests.
 
   This makes T014 and T015 pass.
-- [ ] T019 [US1] Start-up check (FR-018): building the orchestrator with any `model` agent or `ADLC_REVIEWER_MODE=model` is refused when the selected profile has no keyed entry for a needed tier. The error message names the tier and the profile. Tests are in `tests/unit/agents/test_startup.py`.
+- [X] T019 [US1] Start-up check (FR-018): building the orchestrator with any `model` agent or `ADLC_REVIEWER_MODE=model` is refused when the selected profile has no keyed entry for a needed tier. The error message names the tier and the profile. Tests are in `tests/unit/agents/test_startup.py`.
 
 **Checkpoint**: the gateway is testable alone, and every call is recorded.
 

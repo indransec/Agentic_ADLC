@@ -226,6 +226,15 @@ class OrchestratorSettings(RuntimeSettings):
         json_schema_extra=_meta("comma-separated USD amounts, e.g. 5,20,50"),
     )
 
+    def provider_keys(self) -> dict[str, str | None]:
+        """Provider (as the model catalogue names it) to API key; None means no key (006)."""
+        keys = {
+            "anthropic": self.anthropic_api_key,
+            "openai": self.openai_api_key,
+            "gemini": self.gemini_api_key,
+        }
+        return {p: None if k is None else k.get_secret_value() for p, k in keys.items()}
+
     @field_validator("agent_limits", mode="after")
     @classmethod
     def _merge_tier_defaults(
