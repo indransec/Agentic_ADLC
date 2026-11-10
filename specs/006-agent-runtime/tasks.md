@@ -344,5 +344,5 @@ Run `make check` and commit at every checkpoint.
 
 ## Phase 9: Convergence
 
-- [ ] T043 Add an integration test in `tests/integration/agents/test_reviewer.py`: a full outage during the model review defers the run (no retry used, `model_unavailable_since` set), then escalates with `model_unavailable` after the outage limit, per FR-006 / US1/AC5 (partial)
-- [ ] T044 Record the runtime's `adlc.agent.attempt` span (nested in the engine's `adlc.agent.build`) in research R-12 and `src/adlc/agents/README.md`, per plan: R-12 (unrequested)
+- [X] T043 Add an integration test in `tests/integration/agents/test_reviewer.py`: a full outage during the model review defers the run (no retry used, `model_unavailable_since` set), then escalates with `model_unavailable` after the outage limit, per FR-006 / US1/AC5 (partial)
+- [X] T044 Record the runtime's `adlc.agent.attempt` span (nested in the engine's `adlc.agent.build`) in research R-12 and `src/adlc/agents/README.md`, per plan: R-12 (unrequested)

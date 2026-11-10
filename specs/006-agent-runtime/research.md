@@ -299,7 +299,9 @@ state machine stays pure, and the time comparison happens in the engine.
 ## R-12 Tracing
 
 **Decision**: the spans are `adlc.model.call`, `adlc.agent.build` and `adlc.agent.review`, built
-with the existing `tracing.span` helper. Their attributes are:
+with the existing `tracing.span` helper. Inside the engine's `adlc.agent.build` span, the runtime
+adds `adlc.agent.attempt`, which carries the attempt's outcome, steps, tokens and limit reached
+(added during implementation; convergence T044). Their attributes are:
 
 - ids: run, use case, terminal, agent, attempt;
 - `tier`, `provider`, `model`;

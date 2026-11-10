@@ -176,6 +176,19 @@ resource come from the tool binding's `permission` in `agents.yaml`, for example
 - Output reaches the model as a data block.
 - Real tools (MCP servers) arrive with features 008 and 010.
 
+## Traces
+
+| Span | Covers | Attributes |
+| --- | --- | --- |
+| `adlc.agent.build` | The engine's build step | — |
+| `adlc.agent.attempt` | One build attempt by the runtime | outcome, steps, tokens, corrections, limit reached |
+| `adlc.reviewer.review` | The engine's review step | — |
+| `adlc.agent.review` | One review attempt | as for build attempts |
+| `adlc.model.call` | One gateway request | tier, provider, model, tokens, cost, outcome, fallback, latency |
+
+Attributes come from the allow list in `telemetry.py`, each value at most 200 characters, and
+never include content.
+
 ## Cost
 
 Totals per run, terminal and use case come from the views `run.v_run_cost`, `run.v_terminal_cost`

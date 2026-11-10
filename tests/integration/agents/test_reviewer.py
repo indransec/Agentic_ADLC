@@ -3,6 +3,7 @@
 import json
 import re
 from collections.abc import Callable, Mapping, Sequence
+from datetime import timedelta
 from typing import Any
 
 import pytest
@@ -206,3 +207,19 @@ def test_stub_mode_is_recorded(reviewing: Any) -> None:
     assert [a["implementation"] for a in review] == ["stub"]
     assert h.run(t1).recommendation["reviewer"] == "stub"
     assert gateway.fake.calls == []  # no model calls in stub mode
+
+
+def test_reviewer_outage_defers_then_escalates(reviewing: Any) -> None:
+    """FR-006 for review steps: an outage waits (no retry used), then escalates."""
+    h, gateway = reviewing(lambda m: reply("", outcome="outage", reason="server"))
+    down = reply("", outcome="outage", reason="server")
+    gateway.fake.script = {e.model: down for e in MODELS.entries("reasoning")}  # whole tier
+    usecase = h.submit()
+    t0 = h.active(usecase, "T0")
+    assert t0.state == "reviewing" and t0.model_unavailable_since is not None
+    assert t0.auto_retries == 0
+    for _ in range(7):
+        h.clock.advance(timedelta(minutes=5, seconds=1))
+        h.drain()
+    run = h.run(t0.run_id)
+    assert (run.state, run.escalation_trigger) == ("escalated", "model_unavailable")
