@@ -1,11 +1,13 @@
 """Build the agent runtime for the orchestrator process and the test harness (006 T028)."""
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+from decimal import Decimal
 from pathlib import Path
 
 from sqlalchemy import Engine, text
 
 from adlc.agents.catalogue import AgentCatalogue, load_catalogues
+from adlc.agents.cost import CostAlerts
 from adlc.agents.gateway import LiteLLMTransport, ModelGateway, RoutingGateway
 from adlc.agents.prompts import SpecTexts, SqlSpecTexts
 from adlc.agents.runner import RuntimeDeps
@@ -47,6 +49,7 @@ def build_runtime(
     texts: SpecTexts | None = None,
     check_keys: bool = True,
     tools: Mapping[str, Tool] | None = None,
+    cost_alert_levels: Sequence[Decimal] = (),
 ) -> RuntimeDeps:
     models, registered_agents = load_catalogues(registry, profile)
     agents = agents or registered_agents
@@ -59,7 +62,14 @@ def build_runtime(
         agents=agents,
         texts=texts or SqlSpecTexts(engine, spec_dir),
         gateway=gateway
-        or RoutingGateway(models, keys, LiteLLMTransport(), SqlCallRecorder(engine), clock),
+        or RoutingGateway(
+            models,
+            keys,
+            LiteLLMTransport(),
+            SqlCallRecorder(engine),
+            clock,
+            after_record=CostAlerts(engine, cost_alert_levels).check,
+        ),
         policy=policy,
         limits=limits,
         overrides=dict(overrides or {}),

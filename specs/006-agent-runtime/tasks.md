@@ -270,15 +270,15 @@ P2).
 
 ### Tests first
 
-- [ ] T034 [P] [US5] Write failing integration tests in `tests/integration/agents/test_cost.py`:
+- [X] T034 [P] [US5] Write failing integration tests in `tests/integration/agents/test_cost.py`:
   - `run.v_run_cost`, `run.v_terminal_cost` and `run.v_usecase_cost` equal the sums of `run.model_call` to the cent (SC-007), with unknown-price calls counted separately and fallback answers counted;
   - crossing `5` then `20` USD writes one `run.cost_alert` per level, never twice;
   - SC-001: a full T0–T8 walk with `ADLC_REVIEWER_MODE=model` and `FakeGateway` gives exactly one `run.model_call` row per gateway request the fake received, and every row has provider, model, tokens and cost (or `cost_known = false`).
-- [ ] T035 [P] [US5] Write failing tests in `tests/unit/agents/test_spans.py` with an in-memory span exporter: `adlc.model.call`, `adlc.agent.build` and `adlc.agent.review` carry only allow-listed attributes, each value at most 200 characters. The marker strings used in prompts and outputs never appear in any span.
+- [X] T035 [P] [US5] Write failing tests in `tests/unit/agents/test_spans.py` with an in-memory span exporter: `adlc.model.call`, `adlc.agent.build` and `adlc.agent.review` carry only allow-listed attributes, each value at most 200 characters. The marker strings used in prompts and outputs never appear in any span.
 
 ### Implementation
 
-- [ ] T036 [US5] Implement `src/adlc/agents/cost.py` (cost per call, alert check after each recorded call, and readers over the three views, for features 007 and 013), and the span attribute allow list in `gateway.py`, `runner.py` and `reviewer.py`. This makes T034 and T035 pass.
+- [X] T036 [US5] Implement `src/adlc/agents/cost.py` (cost per call, alert check after each recorded call, and readers over the three views, for features 007 and 013), and the span attribute allow list in `gateway.py`, `runner.py` and `reviewer.py`. This makes T034 and T035 pass.
 
 ---
 

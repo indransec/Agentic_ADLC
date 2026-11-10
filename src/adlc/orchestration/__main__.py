@@ -73,6 +73,7 @@ def run() -> None:
             limits=settings.agent_limits,
             overrides=settings.agent_limit_overrides,
             corrections=settings.agent_corrections,
+            cost_alert_levels=settings.cost_alert_levels,
         )
     except (MissingModelKey, UnknownProfile) as exc:
         print(f"adlc: configuration error\n  {exc}", file=sys.stderr)
