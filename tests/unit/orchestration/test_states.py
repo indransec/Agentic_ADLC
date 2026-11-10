@@ -24,6 +24,7 @@ from adlc.orchestration.states import (
     RecordEvent,
     RecordSignOff,
     RunState,
+    SetControlsPending,
     SetReturnState,
     Signal,
     SignalKind,
@@ -480,12 +481,26 @@ def test_artifact_edited_keeps_the_state() -> None:
     edit = sig(K.ARTIFACT_EDITED, {"artifacts": {}})
     assert go(S.AWAITING_SIGN_OFF, edit) == (
         S.AWAITING_SIGN_OFF,
-        (StoreArtifacts(), ClearApprovals()),
+        (StoreArtifacts(), ClearApprovals(), SetControlsPending(True)),
     )
     assert go(S.AWAITING_SIGN_OFF, edit, TransitionContext(pending_waiver=True)) == (
         S.AWAITING_SIGN_OFF,
-        (StoreArtifacts(), ClearApprovals(), WithdrawWaiver()),
+        (StoreArtifacts(), ClearApprovals(), WithdrawWaiver(), SetControlsPending(True)),
     )
     assert go(S.ESCALATED, edit) == (S.ESCALATED, (StoreArtifacts(), ClearApprovals()))
     recheck = sig(K.CONTROLS_RECHECKED, {"results": []})
-    assert go(S.AWAITING_SIGN_OFF, recheck) == (S.AWAITING_SIGN_OFF, (StoreControls(),))
+    assert go(S.AWAITING_SIGN_OFF, recheck) == (
+        S.AWAITING_SIGN_OFF,
+        (StoreControls(), SetControlsPending(False)),
+    )
+
+
+def test_no_pass_or_exception_while_controls_are_pending() -> None:
+    """005 FR-010: decisions are made on re-checked content; rework and terminate stay open."""
+    pending = TransitionContext(rule_roles=frozenset({"owner"}), controls_pending=True)
+    for decision in ("pass", "exception"):
+        payload = {"decision": decision, "role": "owner"}
+        with pytest.raises(InvalidTransition, match="re-run after an edit"):
+            transition(S.AWAITING_SIGN_OFF, sig(K.DECIDE, payload), pending)
+    rework = sig(K.DECIDE, {"decision": "rework", "role": "owner"})
+    assert transition(S.AWAITING_SIGN_OFF, rework, pending).next_state == S.CLOSED

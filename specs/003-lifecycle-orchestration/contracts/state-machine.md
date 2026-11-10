@@ -30,7 +30,7 @@ sign-offs so far.
 | `open_escalated` | orchestrator | trigger (rework limit at open) |
 | `step_interrupted` | orchestrator | — (an automatic step's lease expired: crash or restart) |
 | `lifecycle_ended` | human (the person who terminated) | reason (another run of the use case was terminated, or the lifecycle closed) |
-| `artifact_edited` | human | artifacts, attachments (added by feature 005) |
+| `artifact_edited` | human | artifacts, attachments, edited (added by feature 005) |
 | `controls_rechecked` | orchestrator | control results after an edit (added by feature 005) |
 
 ## Transition table
@@ -70,8 +70,9 @@ The `escalate_after` timer starts when the run is opened (`engine.open_in`), so 
 | any automatic state | `step_interrupted`, retries < max | same | `auto_retries += 1` (FR-030a) |
 | any automatic state | `step_interrupted`, retries ≥ max | escalated | trigger `retry_limit` |
 | any open state | `lifecycle_ended` | closed | CancelAllTimers; CloseRun(terminate): ledger record only, no outcome event (FR-018c) |
-| awaiting_sign_off, escalated | `artifact_edited` | same | StoreArtifacts (a person's version); ClearApprovals (earlier pass approvals no longer count); WithdrawWaiver when one is pending (005 FR-010) |
-| awaiting_sign_off, escalated | `controls_rechecked` | same | StoreControls (005 FR-010) |
+| awaiting_sign_off, escalated | `artifact_edited` | same | StoreArtifacts (a person's version); ClearApprovals (earlier pass approvals no longer count); WithdrawWaiver when one is pending; SetControlsPending(true) when awaiting sign-off (005 FR-010) |
+| awaiting_sign_off, escalated | `controls_rechecked` | same | StoreControls; SetControlsPending(false) (005 FR-010) |
+| awaiting_sign_off, controls pending | `decide` pass or exception | refused | "controls are being re-run after an edit" (005 FR-010); rework and terminate are allowed |
 | any automatic or waiting state | `event_received` | same | record event in context |
 
 Entering `escalated` also writes the outbox event `T<n>.escalate` (with the trigger) in the same transaction.
@@ -97,3 +98,5 @@ run is ignored.
 4. `clarification_answered` and `escalation_completed` never change `rework_count`.
 5. `artifact_edited` and `controls_rechecked` never change the state, never close and never
    escalate a run (feature 005).
+6. Between `artifact_edited` (at sign-off) and `controls_rechecked`, no `decide` closes a run as
+   pass or proposes a waiver (feature 005).

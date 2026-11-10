@@ -88,3 +88,24 @@ def test_append_only(app_engine: Engine, owner_engine: Engine) -> None:
 def test_round_trip(migrated_db: PlatformDatabase) -> None:
     alembic(migrated_db, "downgrade", "0004")
     alembic(migrated_db, "upgrade", "head")
+
+
+def test_columns_added_to_existing_tables(owner_engine: Engine) -> None:
+    """0005 adds run columns for the profile, edits and control re-checks (data-model.md)."""
+    with owner_engine.connect() as conn:
+        rows = conn.execute(
+            text(
+                "SELECT table_name, column_name, data_type, is_nullable, column_default "
+                "FROM information_schema.columns WHERE table_schema = 'run' AND "
+                "(table_name, column_name) IN (('terminal_run', 'profile_version'), "
+                "('terminal_run', 'approvals_after_sign_off_id'), "
+                "('terminal_run', 'controls_pending'), ('policy_decision', 'attempt')) "
+                "ORDER BY table_name, column_name"
+            )
+        ).all()
+    assert [tuple(r) for r in rows] == [
+        ("policy_decision", "attempt", "integer", "YES", None),
+        ("terminal_run", "approvals_after_sign_off_id", "bigint", "YES", None),
+        ("terminal_run", "controls_pending", "boolean", "NO", "false"),
+        ("terminal_run", "profile_version", "integer", "NO", "0"),
+    ]

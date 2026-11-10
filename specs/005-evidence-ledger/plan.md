@@ -129,7 +129,12 @@ src/adlc/ledger/
 └── store.py         # SQL for the new tables
 db/migrations/versions/0005_evidence_ledger.py
 src/adlc/orchestration/engine.py   # close writes v2 records via ledger; StoreArtifacts writes versions;
-                                   # open records profile_version; review writes checklist results
+                                   # open records profile_version; review writes checklist results;
+                                   # re-runs controls for runs with controls_pending (worker lease)
+src/adlc/orchestration/states.py   # artifact_edited and controls_rechecked signals; no pass or
+                                   # exception while controls_pending
+src/adlc/orchestration/store.py    # terminal_run columns; lease includes controls_pending runs
+src/adlc/policy/store.py, engine.py # policy_decision.attempt from EvalContext.attempt
 src/adlc/policy/evidence.py        # profile source from the run's profile version
 tests/unit/ledger/  tests/integration/ledger/
 ```

@@ -1,9 +1,10 @@
 """Ledger service operations (contracts/artifacts.md, verification.md; FR-010 to FR-012, FR-019).
 
-Feature 007 exposes these over HTTP. An edit is two steps: the edited version is committed with
-the ``artifact_edited`` signal (approvals reset, a pending waiver withdrawn, the run's version
-bumped), then the automated controls are re-run on the committed content and stored with the
-``controls_rechecked`` signal, so approvers see the result before deciding.
+Feature 007 exposes these over HTTP. An edit commits the person's version with the
+``artifact_edited`` signal: approvals reset, a pending waiver withdrawn, the run's version
+bumped and, at sign-off, ``controls_pending`` set. The orchestrator worker then re-runs the
+automated controls on the committed content (``controls_rechecked``); until it has, a pass or
+exception decision is refused, and a re-check lost to a crash is simply picked up again.
 """
 
 from collections.abc import Mapping, Sequence
@@ -18,8 +19,7 @@ from adlc.ledger.storage import FileRef, LedgerContentStore
 from adlc.ledger.verify import Report, Verifier
 from adlc.orchestration import spec_view
 from adlc.orchestration import store as run_store
-from adlc.orchestration.engine import ORCHESTRATOR_ID, PostgresTerminalRun, UnknownRun
-from adlc.orchestration.interfaces import EvalContext
+from adlc.orchestration.engine import PostgresTerminalRun, UnknownRun
 from adlc.orchestration.service import Actor, NotAuthorised
 from adlc.orchestration.states import (
     ActorType,
@@ -55,7 +55,7 @@ class LedgerService:
     def edit_artifact(
         self, actor: Actor, run_id: str, artifact_id: str, rows: Any, uploads: Sequence[Upload] = ()
     ) -> RunRow:
-        run, spec = self._editable(actor, run_id, artifact_id)
+        run, _ = self._editable(actor, run_id, artifact_id)
         with self.runs.engine.connect() as conn:
             current = {v["artifact_id"]: v for v in ledger_store.latest_versions(conn, run_id)}
         previous = current.get(artifact_id)
@@ -74,25 +74,19 @@ class LedgerService:
                     SignalKind.ARTIFACT_EDITED,
                     ActorType.HUMAN,
                     actor.account_name,
-                    {"artifacts": {artifact_id: rows}, "attachments": {artifact_id: files}},
+                    {
+                        "artifacts": {artifact_id: rows},
+                        "attachments": {artifact_id: files},
+                        # kept on the run's activity record
+                        "edited": {
+                            "artifact_id": artifact_id,
+                            "attachments": [f["name"] for f in files],
+                        },
+                    },
                 ),
                 expected_version=run.version,
             )
-            now = self.runs.clock.now()
-            run_store.insert_activity(
-                conn,
-                run_id,
-                "sign_off",
-                "human",
-                actor.account_name,
-                now,
-                now,
-                "edited",
-                {"artifact_id": artifact_id, "attachments": [f["name"] for f in files]},
-            )
-        if edited.state == RunState.AWAITING_SIGN_OFF:
-            return self._recheck_controls(edited, spec)
-        return edited
+        return edited  # at sign-off the worker re-runs the controls next (controls_pending)
 
     def upload_spreadsheet(
         self, actor: Actor, run_id: str, artifact_id: str, data: bytes, file_name: str
@@ -162,35 +156,6 @@ class LedgerService:
         if not actor.roles & allowed:
             raise NotAuthorised(f"editing needs one of {sorted(allowed)}")
         return run, spec
-
-    def _recheck_controls(self, run: RunRow, spec: Mapping[str, Any]) -> RunRow:
-        """Re-run the automated controls on the committed edited content (FR-010)."""
-        results = []
-        for check in spec_view.controls(spec):
-            result = self.runs.policy.evaluate(
-                check.expression, EvalContext(run.terminal_id, check.id, run.run_id, run.usecase_id)
-            )
-            results.append(
-                {
-                    "id": check.id,
-                    "passed": result.passed,
-                    "blocking": check.blocking,
-                    "reason": result.reason,
-                    "synthetic": result.synthetic,
-                }
-            )
-        with self.runs.engine.begin() as conn:
-            return self.runs.apply_in(
-                conn,
-                run.run_id,
-                Signal(
-                    SignalKind.CONTROLS_RECHECKED,
-                    ActorType.ORCHESTRATOR,
-                    ORCHESTRATOR_ID,
-                    {"results": results},
-                ),
-                expected_version=run.version,
-            )
 
 
 def _file_entry(ref: FileRef, name: str) -> dict[str, Any]:

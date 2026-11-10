@@ -53,8 +53,11 @@ An edit has two steps.
    - Earlier pass approvals stop counting (`approvals_after_sign_off_id`).
    - A pending waiver is withdrawn: status `rejected`, comment `withdrawn: artifact edited`.
    - The run version goes up, so a decision made on the old content is stale.
-2. **Re-run the controls.** The automated controls run on the committed content. The
-   `controls_rechecked` signal stores their results.
+   - At sign-off, `controls_pending` is set: `pass` and `exception` are refused until step 2.
+2. **Re-run the controls.** The orchestrator worker leases runs with `controls_pending`, runs the
+   automated controls on the committed content and stores the results with `controls_rechecked`.
+   A re-check lost to a crash is picked up again when its lease expires. In the run view these
+   control results keep the edited build attempt and are flagged `recheck`.
 
 Who may edit: a person who holds one of the terminal's sign-off roles, required conditional roles
 or accountable roles. Edits are allowed only while the run waits for sign-off or is escalated.

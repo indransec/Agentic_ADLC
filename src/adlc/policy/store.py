@@ -30,6 +30,7 @@ class PolicyDecision:
     synthetic: bool = False
     fail_safe: bool = False
     duration_ms: float = 0.0
+    attempt: int | None = None  # 005: build attempt of a control check
 
 
 class DecisionSink(Protocol):
@@ -59,9 +60,9 @@ class SqlDecisionSink:
                 text(
                     "INSERT INTO run.policy_decision (kind, run_id, usecase_id, terminal_id, "
                     "check_id, rule, actor, passed, value, reason, inputs, synthetic, fail_safe, "
-                    "duration_ms) VALUES (:kind, :run_id, :usecase_id, :terminal_id, :check_id, "
-                    ":rule, :actor, :passed, CAST(:value AS jsonb), :reason, "
-                    "CAST(:inputs AS jsonb), :synthetic, :fail_safe, :duration_ms)"
+                    "duration_ms, attempt) VALUES (:kind, :run_id, :usecase_id, :terminal_id, "
+                    ":check_id, :rule, :actor, :passed, CAST(:value AS jsonb), :reason, "
+                    "CAST(:inputs AS jsonb), :synthetic, :fail_safe, :duration_ms, :attempt)"
                 ),
                 {
                     "kind": decision.kind,
@@ -78,6 +79,7 @@ class SqlDecisionSink:
                     "synthetic": decision.synthetic,
                     "fail_safe": decision.fail_safe,
                     "duration_ms": round(decision.duration_ms, 3),
+                    "attempt": decision.attempt,
                 },
             )
 

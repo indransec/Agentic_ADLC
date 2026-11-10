@@ -140,6 +140,12 @@ def upgrade(**kwargs: Any) -> None:
     op.execute("ALTER TABLE run.terminal_run ADD COLUMN profile_version integer NOT NULL DEFAULT 0")
     # Approvals with a sign_off_id at or below this no longer count (an artifact was edited).
     op.execute("ALTER TABLE run.terminal_run ADD COLUMN approvals_after_sign_off_id bigint NULL")
+    # Set by an edit at sign-off; the worker re-runs the controls and clears it (FR-010).
+    op.execute(
+        "ALTER TABLE run.terminal_run ADD COLUMN controls_pending boolean NOT NULL DEFAULT false"
+    )
+    # The build attempt a control decision was made for (null for other checks).
+    op.execute("ALTER TABLE run.policy_decision ADD COLUMN attempt integer NULL")
     op.execute(
         """
         CREATE VIEW run.v_run_step AS
@@ -199,6 +205,8 @@ def upgrade(**kwargs: Any) -> None:
 def downgrade(**kwargs: Any) -> None:
     for view in reversed(VIEWS):
         op.execute(f"DROP VIEW {view}")
+    op.execute("ALTER TABLE run.policy_decision DROP COLUMN attempt")
+    op.execute("ALTER TABLE run.terminal_run DROP COLUMN controls_pending")
     op.execute("ALTER TABLE run.terminal_run DROP COLUMN approvals_after_sign_off_id")
     op.execute("ALTER TABLE run.terminal_run DROP COLUMN profile_version")
     for table in (

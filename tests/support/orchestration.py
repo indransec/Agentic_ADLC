@@ -142,6 +142,7 @@ class Harness:
         Emitted values that are not artifacts (FR-018a) are typed in by the approver: the test's
         ``fields`` first, else a placeholder.
         """
+        self.drain()  # 005: an edit's controls are re-run before anyone can pass
         run = self.run(run_id)
         spec = self.orch.runs.entry(run.terminal_id, run.spec_version).spec
         given = dict(fields or {})

@@ -100,6 +100,7 @@ class CelPolicyEngine:
                     synthetic=inputs.synthetic,
                     fail_safe=fail_safe,
                     duration_ms=elapsed_ms,
+                    attempt=context.attempt,
                 )
             )
             return EvalResult(

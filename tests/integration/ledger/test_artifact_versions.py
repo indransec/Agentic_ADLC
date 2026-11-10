@@ -1,10 +1,12 @@
 """T016: versions, edits, uploads and attachments (US2; FR-005 to FR-012; SC-004, SC-006)."""
 
 import io
+from datetime import timedelta
 from pathlib import Path
 
 import pytest
 from openpyxl import Workbook
+from sqlalchemy import text
 
 from adlc.ledger.service import LedgerService, UnknownArtifact
 from adlc.ledger.spreadsheet import InvalidUpload
@@ -72,9 +74,12 @@ def test_person_edit_creates_a_derived_version(h: Harness, ledger: LedgerService
     assert ledger.edit_artifact(PO, t1, "kpis", rows).version == run.version  # unchanged: no-op
     assert len(ledger.artifact_history(t1, "kpis")) == 2
     activity = h.sql(
-        "SELECT outcome FROM run.run_activity WHERE run_id = :r AND step = 'sign_off'", r=t1
+        "SELECT actor_id, detail FROM run.run_activity WHERE run_id = :r AND step = 'sign_off'",
+        r=t1,
     )
-    assert [a[0] for a in activity] == ["edited"]
+    assert [tuple(a) for a in activity] == [
+        ("product_owner-person", {"edited": {"artifact_id": "kpis", "attachments": []}})
+    ]
     h.pass_run(t1)
     record = h.sql("SELECT content_json FROM ledger.ledger_record WHERE run_id = :r", r=t1)[0][0]
     kpis = [a for a in record["artifacts"] if a["id"] == "kpis"][0]
@@ -108,7 +113,11 @@ def test_edit_resets_approvals_and_rechecks_controls(h: Harness, ledger: LedgerS
     rows = _kpis(h, t1)
     rows[0]["baseline"] = "n/a"
     edited = ledger.edit_artifact(person("business_owner"), t1, "kpis", rows)
-    failing = [c for c in edited.control_results if not c["passed"]]
+    assert edited.controls_pending
+    h.drain()  # the worker re-runs the controls on the edited content
+    rechecked = h.run(t1)
+    assert not rechecked.controls_pending
+    failing = [c for c in rechecked.control_results if not c["passed"]]
     assert (
         failing
         and failing[0]["id"] == "CTL-T1-02"
@@ -200,3 +209,49 @@ def test_human_edit_share(h: Harness, ledger: LedgerService) -> None:
         r=t1,
     )[0][0]
     assert share == pytest.approx(1 / 9)
+
+
+def test_no_pass_until_the_controls_are_re_run(h: Harness, ledger: LedgerService) -> None:
+    """FR-010: between the edit and its re-check, pass and exception are refused."""
+    usecase, t1 = walk_to(h, "T1")
+    rows = _kpis(h, t1)
+    rows[0]["target"] = 6
+    ledger.edit_artifact(PO, t1, "kpis", rows)
+    with pytest.raises(InvalidTransition, match="re-run after an edit"):
+        h.service.decide(PO, t1, "pass")
+    waiver = {
+        "risk_acceptance": "a",
+        "expiry": "2099-01-01",
+        "compensating_control": "c",
+        "waiver_owner": "x",
+    }
+    with pytest.raises(InvalidTransition, match="re-run after an edit"):
+        h.service.decide(PO, t1, "exception", reason="r", fields=waiver)
+    h.drain()
+    h.service.decide(PO, t1, "pass")
+    assert h.sql("SELECT count(*) FROM run.sign_off WHERE run_id = :r", r=t1)[0][0] == 1
+
+
+def test_a_lost_re_check_is_picked_up_again(h: Harness, ledger: LedgerService) -> None:
+    """A worker that leased the re-check and crashed: once the lease expires, it is redone."""
+    usecase, t1 = walk_to(h, "T1")
+    rows = _kpis(h, t1)
+    rows[0]["baseline"] = "n/a"
+    ledger.edit_artifact(PO, t1, "kpis", rows)
+    with h.app.begin() as conn:  # the crashed worker's lease, still running
+        conn.execute(
+            text("UPDATE run.terminal_run SET lease_until = :l WHERE run_id = :r"),
+            {"l": h.clock.now() + timedelta(minutes=5), "r": t1},
+        )
+    h.drain()
+    assert h.run(t1).controls_pending  # not stolen while the lease holds
+    h.clock.advance(timedelta(minutes=6))
+    h.drain()
+    run = h.run(t1)
+    assert not run.controls_pending and run.state == "awaiting_sign_off"
+    assert any(not c["passed"] for c in run.control_results)
+    steps = h.sql(
+        "SELECT step, outcome FROM run.run_activity WHERE run_id = :r ORDER BY run_activity_id",
+        r=t1,
+    )
+    assert ("controls", "awaiting_sign_off") in [tuple(x) for x in steps][-2:]

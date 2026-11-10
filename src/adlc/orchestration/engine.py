@@ -57,6 +57,7 @@ from adlc.orchestration.states import (
     RecordEvent,
     RecordSignOff,
     RunState,
+    SetControlsPending,
     SetReturnState,
     Signal,
     SignalKind,
@@ -90,6 +91,8 @@ _STEP_BY_SIGNAL = {
     SignalKind.TIMER: "timer",
     SignalKind.OPEN_ESCALATED: "escalation",
     SignalKind.LIFECYCLE_ENDED: "close",
+    SignalKind.ARTIFACT_EDITED: "sign_off",
+    SignalKind.CONTROLS_RECHECKED: "controls",
 }
 _STEP_BY_STATE = {
     RunState.OPENED: "prerequisites",
@@ -283,6 +286,7 @@ class PostgresTerminalRun:
             rule_roles=rule.roles,
             required_plus_roles=required_plus,
             approvals=approvals,
+            controls_pending=run.controls_pending,
         )
 
     def apply_in(
@@ -384,6 +388,8 @@ class PostgresTerminalRun:
                     conn, run.run_id, run.auto_retries + 1, checklist_rows(recommendation)
                 )
                 return replace(run, recommendation=recommendation)
+            case SetControlsPending(pending=pending):
+                return replace(run, controls_pending=pending)
             case ClearApprovals():
                 return replace(
                     run, approvals_after_sign_off_id=store.max_sign_off_id(conn, run.run_id)
@@ -749,7 +755,7 @@ class PostgresTerminalRun:
                 store.insert_activity(
                     conn,
                     run_id,
-                    _STEP_BY_STATE[run.state],
+                    _STEP_BY_STATE.get(run.state, "controls"),
                     signal.actor_type.value,
                     signal.actor_id,
                     started,
@@ -758,6 +764,23 @@ class PostgresTerminalRun:
                     {"reason": str(exc)},
                 )
         return True
+
+    def _control_results(self, run: RunRow, spec: Mapping[str, Any]) -> list[dict[str, Any]]:
+        return [
+            {
+                "id": check.id,
+                "passed": result.passed,
+                "blocking": check.blocking,
+                "reason": result.reason,
+                "synthetic": result.synthetic,
+            }
+            for check in spec_view.controls(spec)
+            for result in (
+                self.policy.evaluate(
+                    check.expression, self._eval(run, check.id, run.auto_retries + 1)
+                ),
+            )
+        ]
 
     def scaled_lease(self) -> timedelta:
         return self.config.lease
@@ -788,23 +811,19 @@ class PostgresTerminalRun:
                 f"agent:{run.run_id}",
                 _agent_payload(result),
             )
+        if run.controls_pending:  # 005: re-check an edit's content before anyone decides
+            with span("policy", "controls", **ids_):
+                rechecked = self._control_results(run, spec)
+            return Signal(
+                SignalKind.CONTROLS_RECHECKED,
+                ActorType.ORCHESTRATOR,
+                ORCHESTRATOR_ID,
+                {"results": rechecked},
+            )
         if run.state == RunState.CHECKING:
             with span("policy", "controls", **ids_):
-                checks = [
-                    (check, self.policy.evaluate(check.expression, self._eval(run, check.id)))
-                    for check in spec_view.controls(spec)
-                ]
-            control_results = [
-                {
-                    "id": c.id,
-                    "passed": r.passed,
-                    "blocking": c.blocking,
-                    "reason": r.reason,
-                    "synthetic": r.synthetic,
-                }
-                for c, r in checks
-            ]
-            failed = [c.id for c, r in checks if not r.passed and c.blocking]
+                control_results = self._control_results(run, spec)
+            failed = [c["id"] for c in control_results if not c["passed"] and c["blocking"]]
             return Signal(
                 SignalKind.CONTROLS_RESULT,
                 ActorType.ORCHESTRATOR,
@@ -829,9 +848,9 @@ class PostgresTerminalRun:
             _review_payload(review),
         )
 
-    def _eval(self, run: RunRow, check_id: str) -> EvalContext:
+    def _eval(self, run: RunRow, check_id: str, attempt: int | None = None) -> EvalContext:
         # Evidence (run, terminals, intake, ...) is read by the policy engine's provider.
-        return EvalContext(run.terminal_id, check_id, run.run_id, run.usecase_id)
+        return EvalContext(run.terminal_id, check_id, run.run_id, run.usecase_id, attempt=attempt)
 
     def _build_context(
         self, conn: Connection, run: RunRow, spec: Mapping[str, Any]
@@ -915,5 +934,6 @@ def _detail(signal: Signal) -> dict[str, Any]:
         "event_type",
         "approve",
         "clarification_id",
+        "edited",
     )
     return json_dict({k: signal.payload[k] for k in keep if k in signal.payload})

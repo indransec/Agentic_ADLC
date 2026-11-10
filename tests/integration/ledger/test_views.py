@@ -53,7 +53,10 @@ def test_lifecycle_views(orch_template: PlatformDatabase, tmp_path: Path) -> Non
             for s in view["timeline"]
         )
         checks = view["checks"]
-        assert checks and {c["attempt"] for c in checks} == {1}
+        controls = [c for c in checks if c["check_id"].startswith("CTL-")]
+        others = [c for c in checks if not c["check_id"].startswith("CTL-")]
+        assert controls and {(c["attempt"], c["recheck"]) for c in controls} == {(1, False)}
+        assert others and {(c["attempt"], c["recheck"]) for c in others} == {(None, False)}
         assert all(c["reason"] for c in checks)
         assert any(c["check_id"].startswith("CTL-T1") for c in checks)
         assert [(c["item_id"], c["score"], c["finding"]) for c in view["checklist"]] == [
@@ -90,6 +93,24 @@ def test_checklist_rows_per_review(orch_template: PlatformDatabase) -> None:
             r=t1,
         )
         assert checks[0][0] == 2  # controls ran for both attempts
+        attempts = {
+            (c["attempt"], c["recheck"])
+            for c in ledger_views(h, t1)
+            if c["check_id"].startswith("CTL-")
+        }
+        assert attempts == {(1, False), (2, False)}
+
+
+def test_a_recheck_after_an_edit_keeps_the_attempt(h: Harness, tmp_path: Path) -> None:
+    usecase, t1 = walk_to(h, "T1")
+    ledger = ledger_service(h, tmp_path / "files")
+    rows = [dict(r) for r in h.run(t1).artifacts["kpis"]]
+    rows[0]["target"] = 6
+    ledger.edit_artifact(person("product_owner"), t1, "kpis", rows)
+    h.drain()
+    controls = [c for c in ledger.run_view(t1)["checks"] if c["check_id"].startswith("CTL-")]
+    assert {(c["attempt"], c["recheck"]) for c in controls} == {(1, False), (1, True)}
+    assert len([c for c in controls if c["recheck"]]) == len(controls) // 2
 
 
 def test_open_run_counts_to_now(orch_template: PlatformDatabase) -> None:
@@ -104,3 +125,8 @@ def test_open_run_counts_to_now(orch_template: PlatformDatabase) -> None:
 def ledger_rows(h: Harness, usecase: str) -> list[dict[str, Any]]:
     with h.app.connect() as conn:
         return views.usecase_summary(conn, usecase)
+
+
+def ledger_views(h: Harness, run_id: str) -> list[dict[str, Any]]:
+    with h.app.connect() as conn:
+        return views.run_checks(conn, run_id)

@@ -43,11 +43,14 @@ def run_timeline(conn: Connection, run_id: str) -> list[dict[str, Any]]:
 
 
 def run_checks(conn: Connection, run_id: str) -> list[dict[str, Any]]:
-    """Prerequisite and control decisions; ``attempt`` numbers each check's evaluations."""
+    """Policy decisions of the run. Controls carry the build ``attempt`` they checked (as agent
+    versions and checklist results do); a control evaluated again within the same attempt is a
+    ``recheck`` after a person's edit. Prerequisites and conditions have no attempt."""
     return _rows(
         conn,
-        "SELECT check_id, rule, passed, reason, synthetic, fail_safe, decided_at, "
-        "row_number() OVER (PARTITION BY check_id ORDER BY policy_decision_id) AS attempt "
+        "SELECT check_id, rule, passed, reason, synthetic, fail_safe, decided_at, attempt, "
+        "(attempt IS NOT NULL AND row_number() OVER (PARTITION BY check_id, attempt "
+        "ORDER BY policy_decision_id) > 1) AS recheck "
         "FROM run.policy_decision WHERE run_id = :r AND kind = 'evaluate' "
         "ORDER BY policy_decision_id",
         r=run_id,

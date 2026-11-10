@@ -108,6 +108,7 @@ class TransitionContext:
     rule_roles: frozenset[str] = frozenset()
     required_plus_roles: frozenset[str] = frozenset()
     approvals: tuple[tuple[str, str], ...] = ()  # (person, role) of pass sign-offs so far
+    controls_pending: bool = False  # 005: an edit's controls have not been re-run yet
 
 
 # ------------------------------------------------------------------ effects
@@ -194,6 +195,13 @@ class ClearApprovals:
 
 
 @dataclass(frozen=True)
+class SetControlsPending:
+    """005: after an edit at sign-off, nobody can pass until the controls are re-run."""
+
+    pending: bool
+
+
+@dataclass(frozen=True)
 class WithdrawWaiver:
     """005: an edit while a waiver is pending withdraws it (the approvers decide again)."""
 
@@ -216,6 +224,7 @@ Effect = (
     | RecordEvent
     | WithdrawWaiver
     | ClearApprovals
+    | SetControlsPending
 )
 
 
@@ -348,6 +357,8 @@ def _edited(state: RunState) -> Callable[[Mapping[str, Any], TransitionContext],
         effects: tuple[Effect, ...] = (StoreArtifacts(), ClearApprovals())
         if ctx.pending_waiver:
             effects += (WithdrawWaiver(),)
+        if state == RunState.AWAITING_SIGN_OFF:
+            effects += (SetControlsPending(True),)
         return Outcome(state, effects)
 
     return handle
@@ -355,7 +366,7 @@ def _edited(state: RunState) -> Callable[[Mapping[str, Any], TransitionContext],
 
 def _rechecked(state: RunState) -> Callable[[Mapping[str, Any], TransitionContext], Outcome]:
     def handle(p: Mapping[str, Any], ctx: TransitionContext) -> Outcome:
-        return Outcome(state, (StoreControls(),))
+        return Outcome(state, (StoreControls(), SetControlsPending(False)))
 
     return handle
 
@@ -397,6 +408,8 @@ def _decide(state: RunState, signal: Signal, ctx: TransitionContext) -> Outcome 
         return None
     if decision == "rework":
         return Outcome(RunState.CLOSED, (RecordSignOff("rework"), CloseRun("rework")))
+    if ctx.controls_pending:  # 005 FR-010: decide on checked content only
+        raise InvalidTransition("controls are being re-run after an edit; decide once they finish")
     if decision == "exception":
         return Outcome(RunState.AWAITING_SIGN_OFF, (RecordSignOff("exception"), ProposeWaiver()))
     role = str(signal.payload.get("role"))

@@ -91,8 +91,26 @@ unchanged.
 
 ### `run.terminal_run`
 
-Adds `profile_version integer NOT NULL DEFAULT 0`: the profile version current when the run
-opened.
+Adds three columns:
+
+| Column | Type | Rule |
+| --- | --- | --- |
+| `profile_version` | integer NOT NULL DEFAULT 0 | The profile version current when the run opened |
+| `approvals_after_sign_off_id` | bigint null | Set by an artifact edit to the highest `run.sign_off` id at that time; pass approvals at or below it no longer count (FR-010) |
+| `controls_pending` | boolean NOT NULL DEFAULT false | Set by an edit while awaiting sign-off; cleared when the worker re-runs the controls. While set, `pass` and `exception` are refused, and the worker leases the run to re-check it, including after a crash (FR-010) |
+
+### `run.policy_decision` (feature 004)
+
+Adds `attempt integer NULL`: the build attempt (`auto_retries + 1`) a control decision checked.
+It is null for prerequisites and conditions. A second evaluation within one attempt is a
+re-check after an edit (FR-020).
+
+### Signals (feature 003 state machine)
+
+| Signal | Actor | Effect |
+| --- | --- | --- |
+| `artifact_edited` | human | StoreArtifacts (person version); ClearApprovals; WithdrawWaiver when one is pending; SetControlsPending(true) at sign-off. The state does not change. |
+| `controls_rechecked` | orchestrator | StoreControls; SetControlsPending(false). The state does not change. |
 
 ### Views
 

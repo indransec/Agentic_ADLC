@@ -8,6 +8,7 @@ from hypothesis import strategies as st
 
 from adlc.orchestration.states import (
     ActorType,
+    ClearApprovals,
     CloseRun,
     DecideWaiver,
     Effect,
@@ -18,10 +19,12 @@ from adlc.orchestration.states import (
     RecordClarification,
     RecordSignOff,
     RunState,
+    SetControlsPending,
     SetReturnState,
     Signal,
     SignalKind,
     TransitionContext,
+    WithdrawWaiver,
     transition,
 )
 
@@ -82,8 +85,12 @@ def _apply_context(
             ctx = replace(ctx, return_state=effect.state)
         elif isinstance(effect, ProposeWaiver):
             ctx = replace(ctx, pending_waiver=True)
-        elif isinstance(effect, DecideWaiver):
+        elif isinstance(effect, DecideWaiver | WithdrawWaiver):
             ctx = replace(ctx, pending_waiver=False)
+        elif isinstance(effect, ClearApprovals):
+            ctx = replace(ctx, approvals=())
+        elif isinstance(effect, SetControlsPending):
+            ctx = replace(ctx, controls_pending=effect.pending)
         elif isinstance(effect, RecordSignOff) and effect.decision == "pass":
             role = str(signal.payload["role"])
             ctx = replace(ctx, approvals=(*ctx.approvals, (signal.actor_id, role)))
@@ -170,3 +177,19 @@ def test_edits_never_close_or_escalate(ctx: TransitionContext, sequence: list[Si
             assert state == previous
             assert not any(isinstance(e, CloseRun | Escalate) for e in effects)
         previous = state
+
+
+@settings(max_examples=300, deadline=None)
+@given(contexts, st.lists(signals, max_size=40))
+def test_no_pass_close_while_controls_are_pending(
+    ctx: TransitionContext, sequence: list[Signal]
+) -> None:
+    """005: between an edit and its control re-check, no sign-off closes the run as pass."""
+    pending = False
+    for _, signal, effects in _run(ctx, sequence):
+        if signal.kind == SignalKind.DECIDE and pending:
+            assert not any(isinstance(e, CloseRun) and e.status == "pass" for e in effects)
+            assert not any(isinstance(e, ProposeWaiver) for e in effects)
+        for effect in effects:
+            if isinstance(effect, SetControlsPending):
+                pending = effect.pending
