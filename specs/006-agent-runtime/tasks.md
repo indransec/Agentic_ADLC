@@ -56,7 +56,7 @@ P2).
 - [ ] T003 [P] Write failing migration tests in `tests/integration/agents/test_migration_0006.py`, following data-model.md:
   - `spec.prompt_registry`: `prompt_id` `^[a-z][a-z0-9]*(-[a-z0-9]+)*$`, `content_hash` `^sha256:[0-9a-f]{64}$`, UNIQUE (`prompt_id`, `version`);
   - `run.agent_attempt`: `kind` in (`build`, `review`); `attempt ≥ 1`; `implementation` in (`stub`, `model`); `outcome` in (`artifacts`, `clarification`, `recommendation`, `budget_exceeded`, `failed`, `model_unavailable`); `limit_reached` null or in (`steps`, `tokens`, `timeout`); `reason` at most 2,000 characters;
-  - `run.model_call`: `outcome` in (`ok`, `outage`, `refusal`, `truncated`, `request_error`, `skipped`); `cost_usd numeric(14,6)` null; `cost_known` boolean;
+  - `run.model_call`: `outcome` in (`ok`, `outage`, `refusal`, `truncated`, `request_error`, `skipped`); `cost_usd numeric(14,6)` null; `cost_known` boolean; `tried jsonb NOT NULL DEFAULT '[]'` (the entries tried before this one, each `{model, outcome, reason}`);
   - `run.cost_alert`: UNIQUE (`usecase_id`, `level_usd`);
   - `run.terminal_run.model_unavailable_since timestamptz NULL`;
   - the escalation-trigger check accepts `model_unavailable` and `reviewer_failed`;
@@ -78,7 +78,7 @@ P2).
 - [ ] T007 [P] Write failing spec-toolkit tests in `tests/unit/spec_toolkit/test_agent_catalogues.py`:
   - **Model catalogue:** must have a `default` profile; every profile covers every tier of `model_tiers`; every tier has at least one entry.
   - **Entries:** `provider`, `model`, `input_per_mtok`, `output_per_mtok` (number or null), `max_output_tokens`, `context_tokens` and `max_data_class` (a known data class); optional `params`.
-  - **Agents catalogue:** ids unique; `implementation` is `stub` or `model`; `prompt` required for `model`; `tools[].permission` matches `^[a-z_]+:[A-Za-z0-9_.*]+$`.
+  - **Agents catalogue:** ids unique; `implementation` is `stub` or `model`; `prompt` required for `model`; `tools[].permission` matches `^[a-z_]+:[A-Za-z0-9_.*:/-]+$`, and is split at the first colon into action and resource, so MCP scopes such as `mcp:confluence:read` (action `mcp`, resource `confluence:read`) are accepted, as feature 004 authorizes them.
   - **Cross-spec rules:** every terminal's `actors.agent.id` and `actors.reviewer` are in `agents`; the agent's `model_tier` equals the spec's; every prompt reference resolves.
   - **Prompts:** front matter `id`, `version`, `agent`, `status`; a changed body with an unchanged version is refused, as for playbooks.
 - [ ] T008 [P] Write failing state-machine tests in `tests/unit/orchestration/test_states.py` and `tests/unit/orchestration/test_state_properties.py` (contracts/state-machine-additions.md):
@@ -110,7 +110,7 @@ P2).
     - the 0–3 scale;
     - that `terminate` is never recommended;
     - that a clarification needs `looked_in`.
-  - Bump `model_tiers.yaml` if required by the L5 versioning rule. Run `adlc-spec validate`, then register into the test template database.
+  - Run `adlc-spec validate` with no findings, then confirm the test template database registers the new catalogues and the prompt.
 - [ ] T011 Feature 003 interface and state-machine additions so T008 passes:
   - `src/adlc/orchestration/interfaces.py`: `AttemptFailed(reason)` and `ModelUnavailable(detail)` added to `AgentResult` and `ReviewResult`; `Recommendation` gains `reason: str = ""`, `root_cause: str | None = None`, `reviewer: str = "stub"`;
   - `src/adlc/orchestration/states.py`: the new `result` values;
@@ -138,7 +138,9 @@ P2).
   - all skipped for availability gives `unavailable`; all skipped for data class or context gives `request_error`;
   - `fallback` is true only when an entry after the first runnable one answered;
   - cost from the catalogue prices, unknown price gives `cost_known=false`, failed calls cost zero unless usage was reported;
-  - one record per request, outages included.
+  - one record per request, outages included;
+  - the answering call's `tried` lists the earlier entries with outcome and reason (US1 AC2);
+  - a response without usage figures is recorded with counted tokens and `usage_estimated = true`.
 - [ ] T015 [P] [US1] Write failing contract tests in `tests/unit/agents/test_litellm_contract.py` (marker `litellm_contract`, `respx`). For the Anthropic, OpenAI and Gemini HTTP shapes:
   - the request body has no `temperature`, `top_p`, `top_k`, thinking budget, `reasoning_effort`, `response_format` or `tool_choice`;
   - the key is passed per call and does not appear in the process environment;
@@ -185,8 +187,9 @@ P2).
 - [ ] T022 [P] [US2] Write failing unit tests in `tests/unit/agents/test_limits.py`: tier limits with terminal overrides; every call counts as a step, corrections included; tokens accumulate input plus output; the per-call timeout is the time left; a pack larger than the token budget gives `BudgetExceeded("tokens")` before any call.
 - [ ] T023 [P] [US2] Write failing integration tests in `tests/integration/agents/test_runtime.py` (`FakeGateway`, an agent switched to `implementation: model` in a test catalogue):
   - a T1 build returns valid artifacts and writes one `run.agent_attempt` row with the hashes and totals;
-  - invalid output is corrected twice, then the run returns to `building` with `auto_retries + 1`, and escalates with `retry_limit` at the limit;
-  - reaching the step, token or time limit escalates with `budget`, and the attempt row names the limit;
+  - invalid output is corrected twice, then the run returns to `building` with `auto_retries + 1`, and escalates with `retry_limit` at the limit. No artifact version, control decision or review exists for the failed attempt (SC-004);
+  - reaching the step, token or time limit escalates with `budget` after a single drain (SC-005), and the attempt row names the limit;
+  - a step interrupted after two model calls (a fault hook before the signal is applied) keeps both `run.model_call` rows, and their cost counts in the views after the step is redone;
   - a refusal three times gives a failed attempt with no fallback rows;
   - a full outage records `deferred`, leases the run with back-off and sets `model_unavailable_since`; after 30 minutes (fake clock) the run escalates with `model_unavailable`; a later success clears the column.
 
@@ -269,7 +272,8 @@ P2).
 
 - [ ] T034 [P] [US5] Write failing integration tests in `tests/integration/agents/test_cost.py`:
   - `run.v_run_cost`, `run.v_terminal_cost` and `run.v_usecase_cost` equal the sums of `run.model_call` to the cent (SC-007), with unknown-price calls counted separately and fallback answers counted;
-  - crossing `5` then `20` USD writes one `run.cost_alert` per level, never twice.
+  - crossing `5` then `20` USD writes one `run.cost_alert` per level, never twice;
+  - SC-001: a full T0–T8 walk with `ADLC_REVIEWER_MODE=model` and `FakeGateway` gives exactly one `run.model_call` row per gateway request the fake received, and every row has provider, model, tokens and cost (or `cost_known = false`).
 - [ ] T035 [P] [US5] Write failing tests in `tests/unit/agents/test_spans.py` with an in-memory span exporter: `adlc.model.call`, `adlc.agent.build` and `adlc.agent.review` carry only allow-listed attributes, each value at most 200 characters. The marker strings used in prompts and outputs never appear in any span.
 
 ### Implementation
@@ -280,7 +284,7 @@ P2).
 
 ## Phase 8: Polish and cross-cutting
 
-- [ ] T037 [P] Extend `tests/unit/test_no_hardcoded_values.py` so `src/adlc/agents/` is also checked for terminal ids, role ids, route destinations, and provider or model ids (taken from `model_catalogue.yaml`).
+- [ ] T037 [P] Extend `tests/unit/test_no_hardcoded_values.py` so `src/adlc/agents/` is also checked for terminal ids, role ids, route destinations, and provider or model ids (taken from `model_catalogue.yaml`). Add a check that `litellm` is imported only in `src/adlc/agents/gateway.py` (FR-001).
 - [ ] T038 [P] Write `src/adlc/agents/README.md`, covering:
   - the gateway rules;
   - profiles (`dev` puts GPT-4o mini first);

@@ -62,6 +62,7 @@ One row per request to a provider, including the ones that failed.
 | `outcome` | text | `ok`, `outage`, `refusal`, `truncated`, `request_error`, `skipped` |
 | `reason` | text null | e.g. `rate_limit`, `timeout`, `no_key`, `data_class`, `auth` |
 | `fallback` | boolean | true when this answer did not come from the first runnable entry |
+| `tried` | jsonb NOT NULL DEFAULT '[]' | the entries tried before this one, each `{model, outcome, reason}` (FR-007) |
 | `called_at` | timestamptz | |
 
 ## `run.cost_alert`
