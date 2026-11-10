@@ -41,7 +41,11 @@ ModelResponse:
    - `outage`: move to the next entry.
    - `refusal`, `truncated` and `request_error`: return immediately. Never move to another
      entry.
-3. **Full outage:** when no entry answers, return `outcome = unavailable`.
+3. **No answer:** when no entry answers:
+   - if any entry was skipped or failed for a key, auth or outage reason, return
+     `outcome = unavailable`;
+   - if every entry was skipped for its data class or context window, return
+     `outcome = request_error`, because the attempt cannot succeed by waiting.
 4. **Records:** every request writes one `run.model_call` row in its own transaction, including
    outage rows. After each recorded `ok` call, the use case's cost alerts are checked.
 5. **Request body:** the gateway never sends `temperature`, `top_p`, `top_k`, a thinking budget,

@@ -331,6 +331,30 @@ validate, correct, run gated tools. LangGraph is not added in 006.
 plan's mention of "LangGraph for agent graphs (006)" moves to the feature that introduces
 subagents. The build plan row is updated with ADR-02.
 
+## R-16 Gate 2 defaults (approved 2026-11-10)
+
+- **Start-up:** model agents or the model reviewer with no keyed entry for a needed tier are
+  refused at start-up (FR-018).
+- **Data classes:** compared by rank. An unresolvable ceiling counts as the highest rank. If
+  every entry is skipped for its data class or context window, the attempt fails rather than
+  defers (FR-005).
+- **People's text:** clarification answers, rework comments and edits are data blocks (FR-012).
+- **Evidence:** prerequisite evidence carries the content of the referenced artifact versions. A
+  pack larger than the token budget gives `BudgetExceeded("tokens")` (FR-009, FR-014).
+- **Corrections:** each correction counts as a step (FR-014).
+- **Outage start:** stored on the run (`model_unavailable_since`), so it survives restarts
+  (FR-006).
+- **Reviewer:** the reason and root cause are stored with the recommendation (FR-017).
+- **Tools:** tool bindings declare `action:resource` (FR-020).
+- **Cost:** failed calls cost zero unless usage was reported. Calls with unknown prices are
+  counted separately (FR-021).
+- **Spans:** attributes come from an allow list, each value at most 200 characters (FR-023).
+- **Never-sent settings:** promoted from the contract to FR-004.
+- **Synthetic data:** the synthetic artifacts match their declared columns exactly (checked: 0
+  differences), so stub agents pass the strict rule.
+- **Unconfirmed models:** a fallback model the CoE does not confirm is removed; every tier keeps
+  at least one model (FR-002).
+
 ## R-15 ADR-02 in the documents
 
 **Decision**:

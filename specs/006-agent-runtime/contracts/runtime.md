@@ -67,7 +67,8 @@ tier.
 ## Tool gate
 
 ```text
-ToolGate.call(run_id, usecase_id, terminal_id, tool, action, resource, arguments)
+ToolGate.call(run_id, usecase_id, terminal_id, tool, arguments)
+  # action and resource come from the tool binding's declared permission ("action:resource")
   -> ToolOutput(text) | ToolRefused(reason)
 ```
 

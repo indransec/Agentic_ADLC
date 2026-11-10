@@ -304,24 +304,32 @@ without content.
   OpenAI and then Gemini follow as fallbacks per tier.
 
   The catalogue holds named **profiles**, each a full tier-to-models map. `default` is the order
-  above. `dev` puts OpenAI GPT-4o mini first for every tier, then Gemini 2.5 Flash, then the default
-  entries. A
-  setting selects the profile per environment (default `default`). An unknown profile is refused
-  at start-up.
+  above. `dev` puts OpenAI GPT-4o mini first for every tier, then Gemini 2.5 Flash, then the
+  default entries. A setting selects the profile per environment (default `default`). An unknown
+  profile is refused at start-up. Every tier of every profile keeps at least one model. A model
+  the CoE does not confirm is removed from the catalogue.
 - **FR-003**: The tier for a call MUST come from the terminal spec's `actors.agent.model_tier`
   (the reviewer uses `reasoning`). There is no runtime choice of model by content.
 - **FR-004**: The gateway MUST move to the next model in the list only on a provider error, a
   rate limit or a timeout. A refusal, an empty answer or output that does not fit MUST be
   retried on the same model up to a configured number of times, and then fail the step with the
-  reason.
+  reason. The gateway MUST NOT send settings that could change which answers pass (sampling
+  settings, a thinking budget, forced tool choice, a response format), and MUST NOT enable a
+  provider's own fallback on refusal, beyond what a catalogue entry explicitly holds.
 - **FR-005**: The gateway MUST skip a model:
   - whose provider has no key configured;
   - whose approved data class is below the run's data ceiling (the terminal's
-    `authorities.data_access.max_class`).
+    `authorities.data_access.max_class`), compared by rank in the data-class catalogue. A
+    ceiling that cannot be resolved (a resolver such as `per_T2_prod_design` with no value yet)
+    counts as the highest rank, so it fails closed;
+  - whose context window is smaller than the request.
 
-  If no model of the tier can run, the step behaves as a full outage (FR-006).
+  If no model ran because of keys or availability, the step behaves as a full outage (FR-006).
+  If every model was skipped for its data class or context window, nothing will change by
+  waiting, so the attempt fails (FR-013).
 - **FR-006**: When no model of the tier is available, the step MUST NOT count as an attempt. The
-  run stays in its state and is retried after a back-off. It escalates with reason
+  run stays in its state and is retried after a back-off (30 s, doubling, at most 5 minutes).
+  The start of the outage is stored with the run, so it survives a worker restart. It escalates with reason
   `model_unavailable` once the outage limit has passed (default 30 minutes, configurable per
   environment).
 - **FR-007**: Each model call MUST be recorded (append-only) with:
@@ -340,8 +348,8 @@ without content.
 - **FR-009**: The runtime MUST build a context pack for each agent attempt, containing:
   - the pinned terminal spec, resolved for the use case;
   - the profile version the run opened with;
-  - the earlier evidence named in the spec's prerequisites (by ledger record and artifact
-    version);
+  - the earlier evidence named in the spec's prerequisites: the ledger record reference and the
+    content of the artifact versions it references;
   - the trigger evidence;
   - answered clarifications;
   - the previous attempt's failed controls;
@@ -358,7 +366,8 @@ without content.
   A prompt registry MUST hold versioned prompts. Both are folders in the repository, loaded and
   checked at registration (SA §7.3 MVP form). Each run uses the agent named in its pinned spec.
 - **FR-012**: Grounding documents, tool outputs and other retrieved text MUST reach a model only
-  inside blocks labelled as data. The system prompt states that such blocks are not
+  inside blocks labelled as data. This includes text written by people (clarification answers,
+  rework comments, edits) and artifact content. The system prompt states that such blocks are not
   instructions (SA §7.4).
 
 **Structured output and limits**
@@ -371,8 +380,10 @@ without content.
   feature 003).
 - **FR-014**: Each agent run MUST have a step limit, a token budget and a timeout from
   configuration, per model tier, with optional overrides per terminal. The use-case profile's
-  `token_budget` is not used for lifecycle agents. Reaching any of them MUST
-  end the attempt with `BudgetExceeded` naming the limit, so the run escalates (feature 003).
+  `token_budget` is not used for lifecycle agents. Reaching any of them MUST end the attempt with
+  `BudgetExceeded` naming the limit, so the run escalates (feature 003). Every model call counts
+  as a step, corrections included. A context pack larger than the attempt's token budget ends the
+  attempt with `BudgetExceeded("tokens")` before any call.
 - **FR-015**: The agent timeout MUST be shorter than the orchestrator's step lease. Settings that
   break this MUST be refused at start-up.
 
@@ -395,9 +406,12 @@ without content.
   - a root cause from the root-cause catalogue when the outcome is `rework`.
 
   Output that does not fit MUST be corrected as in FR-013. After the last correction, the run
-  MUST escalate with reason `reviewer_failed`.
+  MUST escalate with reason `reviewer_failed`. The reason and root cause are stored with the
+  recommendation (so in the run and its ledger record), for people deciding in feature 007.
 - **FR-018**: A configuration switch MUST select the stub reviewer instead (for tests, and for
-  runs without provider keys). The ledger and trace MUST show which reviewer was used.
+  runs without provider keys). The ledger and trace MUST show which reviewer was used. Selecting
+  the model reviewer, or any model agent, MUST be refused at start-up when the selected catalogue
+  profile has no entry with a configured key for a tier that is needed.
 
 **Clarifications and tool access**
 
@@ -405,14 +419,17 @@ without content.
   addressed role (or none, so feature 003's default role applies) and where it looked. One
   without the places it looked does not fit (FR-013).
 - **FR-020**: Every tool or data access an agent asks for MUST first pass the policy engine's
-  run-scoped authorize (feature 004). A refused access MUST NOT be performed. The refusal and
+  run-scoped authorize (feature 004). Each tool binding in the agents catalogue declares its
+  permission as `action:resource` (for example `read:knowledge_base`), which is what is
+  authorized. A refused access MUST NOT be performed. The refusal and
   its reason are given back to the agent.
 
 **Cost and tracing**
 
 - **FR-021**: Cost MUST be computed per call from the catalogue prices and recorded. Totals per
   run, terminal and use case MUST be readable (for features 007 and 013). A call with an unknown
-  price has cost "unknown", not zero.
+  price has cost "unknown", not zero, and totals count such calls separately. A failed call costs
+  zero unless the provider reported usage.
 - **FR-022**: A lifecycle cost alert level per use case MUST be configurable. When a use case's
   total first reaches a level, one alert is recorded. Alerts do not stop runs; budgets per agent
   run (FR-014) do.
@@ -422,7 +439,8 @@ without content.
   - tokens and cost;
   - outcome and fallback.
 
-  Span attributes MUST NOT contain prompt text, model output or artifact content.
+  Span attributes MUST NOT contain prompt text, model output or artifact content: only the
+  attributes on a fixed list are set, and each value is at most 200 characters.
 
 **Stubs and compatibility**
 
