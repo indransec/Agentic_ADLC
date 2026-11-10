@@ -302,7 +302,7 @@ P2).
 - [X] T039 Run the 003, 004, 005 and 006 scenario and integration suites 10 times in a row, and record the result (SC-008).
 - [X] T040 Measure runtime overhead per attempt, excluding model time, with `FakeGateway` (SC-009: under 200 ms), in `tests/integration/agents/test_overhead.py`.
 - [X] T041 Run `make check` and fix any failure, including the 80% core coverage gate that now includes `agents/`.
-- [ ] T042 Live check in dev (quickstart §5), only if the user provides `ADLC_OPENAI_API_KEY`. With `ADLC_MODEL_PROFILE=dev` and `ADLC_REVIEWER_MODE=model`, run `make up` and `scripts.demo_drive`. Then check that:
+- [X] T042 Live check in dev (quickstart §5), only if the user provides `ADLC_OPENAI_API_KEY`. With `ADLC_MODEL_PROFILE=dev` and `ADLC_REVIEWER_MODE=model`, run `make up` and `scripts.demo_drive`. Then check that:
   - the reviews come from `openai/gpt-4o-mini` with `fallback = false`;
   - costs appear in `run.v_usecase_cost`;
   - `adlc.model.call` spans appear in Jaeger without content;

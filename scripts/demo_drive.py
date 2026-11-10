@@ -35,7 +35,7 @@ INTAKE = (
     "an assessor. We want an assistant that reads the claim, looks up the policy and history, "
     "and proposes a triage category for the handler to confirm."
 )
-WAIT = timedelta(seconds=30)
+WAIT = timedelta(seconds=180)  # a real model reviewer (006) takes longer than the stub
 
 
 def person(role: str) -> Actor:
@@ -74,8 +74,11 @@ def main() -> int:
             roles = sorted(ctx.required_plus_roles - {r for _, r in ctx.approvals})
             roles += sorted(ctx.rule_roles)
             actor = next(person(r) for r in roles if person(r).account_name not in signed)
-            service.decide(actor, run_id, "pass", fields=fields)
-        print(f"  {run_id}: pass")
+            status = (current.recommendation or {}).get("status", "pass")
+            reason = None if status == "pass" else f"demo: passed despite a {status} recommendation"
+            service.decide(actor, run_id, "pass", fields=fields, reason=reason)
+        rec = _run(service, run_id).recommendation or {}
+        print(f"  {run_id}: pass (reviewer {rec.get('reviewer', '?')}: {rec.get('status', '?')})")
     runs = service.list_runs(usecase)
     print(f"\n{'run':<22} {'state':<18} {'status':<10} gap to next open")
     for current, nxt in zip(runs, [*runs[1:], None], strict=True):
