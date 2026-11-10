@@ -1,11 +1,15 @@
 from collections.abc import Iterator
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from sqlalchemy import Engine, create_engine
 
 from adlc.config.settings import Settings
 from tests.support.pg import REPO_ROOT, PlatformDatabase, alembic, platform_postgres
+
+if TYPE_CHECKING:
+    from tests.support.orchestration import Harness
 
 
 @pytest.fixture(scope="session")
@@ -59,3 +63,23 @@ def settings_for(db: PlatformDatabase, accounts_file: Path, **overrides: object)
     }
     values.update(overrides)
     return Settings.model_validate(values)
+
+
+# ------------------------------------------------------------------ orchestration and policy (003, 004)
+
+
+@pytest.fixture(scope="session")
+def orch_template(platform_db: PlatformDatabase) -> PlatformDatabase:
+    """Migrated database with the real adlc-specs registered, copied for each test."""
+    from tests.support.orchestration import build_template
+
+    build_template(platform_db)
+    return platform_db
+
+
+@pytest.fixture
+def h(orch_template: PlatformDatabase) -> Iterator["Harness"]:
+    from tests.support.orchestration import harness
+
+    with harness(orch_template) as built:
+        yield built

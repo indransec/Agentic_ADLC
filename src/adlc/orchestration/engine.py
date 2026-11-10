@@ -230,7 +230,8 @@ class PostgresTerminalRun:
         with self.engine.begin() as conn:
             return self.apply_in(conn, run_id, signal, expected_version)
 
-    def context(self, conn: Connection, run: RunRow) -> TransitionContext:
+    def context(self, conn: Connection, run: RunRow, *, sign_off: bool = True) -> TransitionContext:
+        """``sign_off=False`` skips the approver conditions (only decisions need them)."""
         entry = self.entry(run.terminal_id, run.spec_version)
         tier = self.tier(conn, run.usecase_id)
         timeline = self.timeline(run.terminal_id, tier, run.spec_version)
@@ -244,7 +245,7 @@ class PostgresTerminalRun:
         ):
             required_plus = frozenset(
                 p.role
-                for p in rule.plus
+                for p in (rule.plus if sign_off else ())
                 if self.policy.evaluate(
                     p.condition,
                     EvalContext(run.terminal_id, f"plus:{p.role}", run.run_id, run.usecase_id),
@@ -282,7 +283,8 @@ class PostgresTerminalRun:
             raise UnknownRun(run_id)
         if expected_version is not None and run.version != expected_version:
             raise StaleRun(f"{run_id} is at version {run.version}, not {expected_version}")
-        outcome = transition(run.state, signal, self.context(conn, run))
+        context = self.context(conn, run, sign_off=signal.kind == SignalKind.DECIDE)
+        outcome = transition(run.state, signal, context)
         new = replace(run, state=outcome.next_state)
         for effect in outcome.effects:
             new = self._effect(conn, run, new, signal, effect, now)
@@ -720,7 +722,13 @@ class PostgresTerminalRun:
                     for check in spec_view.controls(spec)
                 ]
             control_results = [
-                {"id": c.id, "passed": r.passed, "blocking": c.blocking, "reason": r.reason}
+                {
+                    "id": c.id,
+                    "passed": r.passed,
+                    "blocking": c.blocking,
+                    "reason": r.reason,
+                    "synthetic": r.synthetic,
+                }
                 for c, r in checks
             ]
             failed = [c.id for c, r in checks if not r.passed and c.blocking]

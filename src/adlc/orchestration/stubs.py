@@ -5,7 +5,7 @@ and 006 replace them without touching the orchestrator. Scripts are plain dictio
 
 * ``StubAgent(script={<terminal>: {1: Clarification(...)}})`` answers that terminal's first
   build with a clarification. A ``dict`` entry overrides artifact cells:
-  ``{<artifact>: {<column>: <value>}}``.
+  ``{<artifact>: {<column>: <value>}}``; ``{<artifact>: None}`` omits the artifact.
 * ``StubReviewer(script={<terminal>: {1: Recommendation("rework")}})``.
 * ``StubPolicy(script={(<terminal>, <check id>): False})``.
 """
@@ -27,7 +27,7 @@ from adlc.orchestration.interfaces import (
     ReviewResult,
 )
 
-AgentScript = Mapping[str, Mapping[int, AgentResult | Mapping[str, Mapping[str, Any]]]]
+AgentScript = Mapping[str, Mapping[int, AgentResult | Mapping[str, Mapping[str, Any] | None]]]
 
 
 class StubPolicy:
@@ -64,7 +64,7 @@ class StubAgent:
         entry = self.script.get(context.terminal_id, {}).get(self.calls[context.terminal_id])
         if entry is not None and not isinstance(entry, Mapping):
             return entry
-        overrides: Mapping[str, Mapping[str, Any]] = entry or {}
+        overrides: Mapping[str, Mapping[str, Any] | None] = entry or {}
         base = self.base.get(context.terminal_id, {})
         artifacts: dict[str, list[dict[str, Any]]] = {
             a.id: copy.deepcopy(base[a.id])
@@ -73,6 +73,9 @@ class StubAgent:
             for a in spec_view.artifacts(context.spec)
         }
         for artifact_id, cells in overrides.items():
+            if cells is None:  # the scripted agent omits this artifact
+                artifacts.pop(artifact_id, None)
+                continue
             empty: list[dict[str, Any]] = [{}]
             artifacts.setdefault(artifact_id, empty)[0].update(cells)
         return Artifacts(artifacts)

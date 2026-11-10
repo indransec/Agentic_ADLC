@@ -51,8 +51,8 @@ contracts/authorization.md. Writes a decision row with `kind=authorize`, in the 
 ## Parameters
 
 `param.<name>` comes from the run's frozen `run.run_parameter_set`, resolved on first use
-(research R-06). A guardrail with no value for the tier makes `param.<name>` not available
-(`parameter not resolved: <name>`).
+(research R-06). A guardrail with no value for the tier leaves `param.<name>` unresolved, so a
+rule that needs it fails with `evidence not available: param.<name>`.
 
 ## Start-up checks
 

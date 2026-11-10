@@ -71,6 +71,10 @@ def test_unneeded_missing_evidence_is_absorbed() -> None:
     )
 
 
+def test_several_missing_values_name_the_first() -> None:
+    assert _reason("ci.a == 1 && ci.b == 2 && sbom.x") == "evidence not available: ci"
+
+
 def test_false_rule() -> None:
     assert _reason("T0.status == 'rework'") == "rule is false: T0.status == 'rework'"
 

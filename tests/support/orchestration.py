@@ -10,6 +10,7 @@ from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy import Engine, create_engine, text
@@ -174,6 +175,7 @@ def harness(
     policy: StubPolicy | None = None,
     fault: FaultHook | None = None,
     time_scale: float = 1.0,
+    synthetic_dir: Path = SYNTHETIC,
 ) -> Iterator[Harness]:
     with fresh_database(db) as fresh:
         app = create_engine(fresh.app_url)
@@ -182,10 +184,10 @@ def harness(
         registry = SqlSpecRegistry(app)
         agent = agent or StubAgent()
         if not agent.base:
-            agent.base = load_synthetic_artifacts(SYNTHETIC)
+            agent.base = load_synthetic_artifacts(synthetic_dir)
         reviewer = reviewer or StubReviewer()
         engine_policy: PolicyEngine = policy or build_policy_engine(
-            app, registry, clock, synthetic_dir=SYNTHETIC
+            app, registry, clock, synthetic_dir=synthetic_dir
         )
         orch = build_orchestrator(
             app,

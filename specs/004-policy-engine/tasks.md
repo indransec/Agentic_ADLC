@@ -186,7 +186,7 @@ P2).
   - the set is written when the run opens (its first policy call) and read back unchanged by later checks of the run;
   - a rework run resolves its own set;
   - rejected values are stored in `rejected`;
-  - `param.<unresolved>` gives "parameter not resolved: <name>";
+  - `param.<unresolved>` gives "evidence not available: param.<name>";
   - US2/AC4: a control using `param.*` (CTL-T1-05, autonomy level at most the maximum) reads the resolved value for the use case's tier.
 
 ### Implementation

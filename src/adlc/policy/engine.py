@@ -140,11 +140,11 @@ class CelPolicyEngine:
         except act.TooLarge as exc:
             return Outcome(False, None, f"evidence too large: {exc}")
         except CELEvalError as exc:
-            return Outcome(False, None, _error_reason(exc, call))
+            return Outcome(False, None, _error_reason(exc, call, inputs))
         except Exception as exc:  # fail closed on anything else (FR-004)
             return Outcome(False, None, f"evaluation error: {type(exc).__name__}: {exc}")
         if isinstance(value, CELEvalError):
-            return Outcome(False, None, _error_reason(value, call))
+            return Outcome(False, None, _error_reason(value, call, inputs))
         if not isinstance(value, celtypes.BoolType | bool):
             return Outcome(False, value, f"rule did not return true/false: {to_json(value)!r}")
         if bool(value):
@@ -207,12 +207,15 @@ def _nested(context: EvalContext, check_id: str) -> EvalContext:
     )
 
 
-def _error_reason(exc: CELEvalError, call: CallContext) -> str:
+def _error_reason(exc: CELEvalError, call: CallContext, inputs: act.Inputs) -> str:
     message = str(exc.args[0]) if exc.args else str(exc)
     if message.startswith("evidence not available"):
         return message
     if call.reasons:
         return call.reasons[0]
+    missing = [path for path, read in inputs.read.items() if read["source"] == "not available"]
+    if missing:  # CEL folds several missing values into one operator error; name the first
+        return f"evidence not available: {missing[0]}"
     return f"evaluation error: {message}"
 
 
