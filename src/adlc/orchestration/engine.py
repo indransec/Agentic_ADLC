@@ -18,10 +18,10 @@ from uuid import UUID
 from sqlalchemy import Connection, Engine
 
 from adlc.ledger import artifacts as versions
-from adlc.ledger.artifacts import Change, Producer
+from adlc.ledger.artifacts import Change, NewAttachment, Producer
 from adlc.ledger.binding import resolve_bound_to
 from adlc.ledger.content import build_v2
-from adlc.ledger.storage import put_structured
+from adlc.ledger.storage import FileRef, put_structured
 from adlc.ledger.storage import versions_exist as store_versions_exist
 from adlc.orchestration import durations, ids, routing, spec_view, store
 from adlc.orchestration.interfaces import (
@@ -42,6 +42,7 @@ from adlc.orchestration.states import (
     ActorType,
     CancelAllTimers,
     CancelTimer,
+    ClearApprovals,
     CloseRun,
     DecideWaiver,
     Effect,
@@ -61,6 +62,7 @@ from adlc.orchestration.states import (
     StoreControls,
     StoreRecommendation,
     TransitionContext,
+    WithdrawWaiver,
     transition,
 )
 from adlc.orchestration.store import RunRow
@@ -68,6 +70,8 @@ from adlc.orchestration.tracing import span
 from adlc.spec_toolkit.registry import RegistryEntry, SpecRegistry, TimelinePolicy
 
 DEFAULT_TIER = "medium"
+WITHDRAWN_BY = "system:artifact-edited"
+WITHDRAWN_COMMENT = "withdrawn: artifact edited"
 ORCHESTRATOR_ID = "orchestrator"
 
 _STEP_BY_SIGNAL = {
@@ -257,10 +261,12 @@ class PostgresTerminalRun:
                     EvalContext(run.terminal_id, f"plus:{p.role}", run.run_id, run.usecase_id),
                 ).passed
             )
+        cutoff = run.approvals_after_sign_off_id or 0
         approvals = tuple(
             (str(s["person"]), str(s["role"]))
             for s in store.sign_offs(conn, run.run_id)
-            if s["decision"] == "pass"
+            # 005: approvals given before the last artifact edit no longer count (FR-010)
+            if s["decision"] == "pass" and int(s["sign_off_id"]) > cutoff
         )
         return TransitionContext(
             max_clarification_rounds=timeline.max_clarification_rounds if timeline else 2,
@@ -370,6 +376,16 @@ class PostgresTerminalRun:
                 return replace(run, control_results=list(p.get("results") or []))
             case StoreRecommendation():
                 return replace(run, recommendation=dict(p.get("recommendation") or {}))
+            case ClearApprovals():
+                return replace(
+                    run, approvals_after_sign_off_id=store.max_sign_off_id(conn, run.run_id)
+                )
+            case WithdrawWaiver():
+                if run.pending_waiver_id is not None:
+                    store.decide_waiver(
+                        conn, run.pending_waiver_id, False, WITHDRAWN_BY, WITHDRAWN_COMMENT, now
+                    )
+                return replace(run, pending_waiver_id=None)
             case RecordEvent():
                 received = {"event_type": p.get("event_type"), "event_id": str(p.get("event_id"))}
                 return replace(run, received_events=[*run.received_events, received])
@@ -570,7 +586,19 @@ class PostgresTerminalRun:
             producer = Producer("agent", signal.actor_id, attempt=run.auto_retries + 1)
         else:
             producer = Producer("person", signal.actor_id)
-        changes = {aid: Change(json_safe(rows)) for aid, rows in artifacts.items()}
+        files = signal.payload.get("attachments") or {}
+        changes = {
+            aid: Change(
+                json_safe(rows),
+                tuple(
+                    NewAttachment(
+                        FileRef(f["content_hash"], int(f["size"]), f["media_type"]), f["name"]
+                    )
+                    for f in files.get(aid, ())
+                ),
+            )
+            for aid, rows in artifacts.items()
+        }
         versions.record(conn, run.run_id, entry.spec, changes, producer, put_structured)
         return replace(run, artifacts={**run.artifacts, **json_safe(artifacts)})
 

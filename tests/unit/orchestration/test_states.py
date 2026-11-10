@@ -12,6 +12,7 @@ from adlc.orchestration.states import (
     ActorType,
     CancelAllTimers,
     CancelTimer,
+    ClearApprovals,
     CloseRun,
     DecideWaiver,
     Effect,
@@ -31,6 +32,7 @@ from adlc.orchestration.states import (
     StoreControls,
     StoreRecommendation,
     TransitionContext,
+    WithdrawWaiver,
     transition,
 )
 
@@ -410,6 +412,8 @@ SAMPLE_PAYLOADS: dict[SignalKind, list[dict[str, Any]]] = {
     K.OPEN_ESCALATED: [{"trigger": "rework_limit"}],
     K.STEP_INTERRUPTED: [{}],
     K.LIFECYCLE_ENDED: [{}],
+    K.ARTIFACT_EDITED: [{"artifacts": {}}],
+    K.CONTROLS_RECHECKED: [{"results": []}],
 }
 
 ALLOWED: set[tuple[RunState, SignalKind]] = {
@@ -428,6 +432,11 @@ ALLOWED: set[tuple[RunState, SignalKind]] = {
     *((s, K.EVENT_RECEIVED) for s in OPEN),
     *((s, K.STEP_INTERRUPTED) for s in AUTOMATIC),
     *((s, K.LIFECYCLE_ENDED) for s in OPEN),
+    *(
+        (s, k)
+        for s in (S.AWAITING_SIGN_OFF, S.ESCALATED)
+        for k in (K.ARTIFACT_EDITED, K.CONTROLS_RECHECKED)
+    ),
 }
 
 
@@ -464,3 +473,19 @@ def test_unknown_timer_and_decision_values_are_refused() -> None:
         go(S.BLOCKED, sig(K.TIMER, {"kind": "review_due"}))
     with pytest.raises(InvalidTransition):
         go(S.AWAITING_SIGN_OFF, sig(K.DECIDE, {"decision": "escalate", "role": "owner"}))
+
+
+def test_artifact_edited_keeps_the_state() -> None:
+    """005: an edit stores the person's version and withdraws a pending waiver; no state change."""
+    edit = sig(K.ARTIFACT_EDITED, {"artifacts": {}})
+    assert go(S.AWAITING_SIGN_OFF, edit) == (
+        S.AWAITING_SIGN_OFF,
+        (StoreArtifacts(), ClearApprovals()),
+    )
+    assert go(S.AWAITING_SIGN_OFF, edit, TransitionContext(pending_waiver=True)) == (
+        S.AWAITING_SIGN_OFF,
+        (StoreArtifacts(), ClearApprovals(), WithdrawWaiver()),
+    )
+    assert go(S.ESCALATED, edit) == (S.ESCALATED, (StoreArtifacts(), ClearApprovals()))
+    recheck = sig(K.CONTROLS_RECHECKED, {"results": []})
+    assert go(S.AWAITING_SIGN_OFF, recheck) == (S.AWAITING_SIGN_OFF, (StoreControls(),))

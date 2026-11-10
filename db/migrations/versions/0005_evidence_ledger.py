@@ -138,6 +138,8 @@ def upgrade(**kwargs: Any) -> None:
         """
     )
     op.execute("ALTER TABLE run.terminal_run ADD COLUMN profile_version integer NOT NULL DEFAULT 0")
+    # Approvals with a sign_off_id at or below this no longer count (an artifact was edited).
+    op.execute("ALTER TABLE run.terminal_run ADD COLUMN approvals_after_sign_off_id bigint NULL")
     op.execute(
         """
         CREATE VIEW run.v_run_step AS
@@ -197,6 +199,7 @@ def upgrade(**kwargs: Any) -> None:
 def downgrade(**kwargs: Any) -> None:
     for view in reversed(VIEWS):
         op.execute(f"DROP VIEW {view}")
+    op.execute("ALTER TABLE run.terminal_run DROP COLUMN approvals_after_sign_off_id")
     op.execute("ALTER TABLE run.terminal_run DROP COLUMN profile_version")
     for table in (
         "run.checklist_result",

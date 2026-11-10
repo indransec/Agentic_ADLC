@@ -47,6 +47,8 @@ PAYLOADS: dict[SignalKind, list[dict[str, Any]]] = {
     SignalKind.OPEN_ESCALATED: [{"trigger": "rework_limit"}],
     SignalKind.STEP_INTERRUPTED: [{}],
     SignalKind.LIFECYCLE_ENDED: [{}],
+    SignalKind.ARTIFACT_EDITED: [{"artifacts": {}}],
+    SignalKind.CONTROLS_RECHECKED: [{"results": []}],
 }
 
 signals = st.builds(
@@ -156,3 +158,15 @@ def test_answers_and_completion_never_count_as_rework(
     for _, signal, effects in _run(ctx, sequence):
         if signal.kind in (SignalKind.CLARIFICATION_ANSWERED, SignalKind.ESCALATION_COMPLETED):
             assert not any(isinstance(e, CloseRun | IncrementAutoRetry) for e in effects)
+
+
+@settings(max_examples=300, deadline=None)
+@given(contexts, st.lists(signals, max_size=40))
+def test_edits_never_close_or_escalate(ctx: TransitionContext, sequence: list[Signal]) -> None:
+    """005: artifact_edited and controls_rechecked never change the run's state."""
+    previous = RunState.OPENED
+    for state, signal, effects in _run(ctx, sequence):
+        if signal.kind in (SignalKind.ARTIFACT_EDITED, SignalKind.CONTROLS_RECHECKED):
+            assert state == previous
+            assert not any(isinstance(e, CloseRun | Escalate) for e in effects)
+        previous = state
