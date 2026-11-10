@@ -83,7 +83,7 @@ unchanged.
 | --- | --- | --- |
 | `checklist_result_id` | bigint identity PK | |
 | `run_id` | text FK | |
-| `attempt` | integer | |
+| `attempt` | integer | `auto_retries + 1` when the review completed |
 | `item_id` | text | |
 | `score` | integer null | |
 | `finding` | text null | |

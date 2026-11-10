@@ -74,8 +74,9 @@
 
 ## R-06 Profile versions
 
-- **Decision**: `ledger.profile_version`, with PK `(usecase_id, version)`, columns `values`
-  jsonb, `source_run_id` and `created_at`; append-only.
+- **Decision**: `ledger.profile_version`, with PK `(usecase_id, version)`, columns
+  `profile_values` jsonb (not `values`, an SQL keyword), `source_run_id` and `created_at`;
+  append-only.
   - **On close**: a close with `pass` or `exception` and a non-empty `emitted` writes version
     `n+1` = version `n`'s values plus the emitted values, in the same transaction.
   - **On open**: a run records `profile_version` (the current `n`, 0 when none).
