@@ -16,7 +16,7 @@ from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness
 from tests.support.pg import PlatformDatabase
 
-from .test_runtime import BUNDLE, GOOD, MODELS, PRIMARY, T1_AGENT
+from .support import BUNDLE, GOOD, MODELS, PRIMARY, T1_AGENT
 
 KB = FakeTool("KPI baselines come from the 2026 finance extract")
 WRITER = FakeTool("should never run")

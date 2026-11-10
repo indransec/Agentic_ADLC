@@ -53,6 +53,7 @@ ORCHESTRATION = sorted(
         *(ROOT / "src" / "adlc" / "orchestration").rglob("*.py"),
         *(ROOT / "src" / "adlc" / "policy").rglob("*.py"),
         *(ROOT / "src" / "adlc" / "ledger").rglob("*.py"),
+        *(ROOT / "src" / "adlc" / "agents").rglob("*.py"),
     ]
 )
 
@@ -71,7 +72,7 @@ def _destination_ids() -> set[str]:
 
 @pytest.mark.parametrize("path", ORCHESTRATION, ids=lambda p: str(p.relative_to(ROOT)))
 def test_orchestration_names_no_route_destination(path: Path) -> None:
-    """003 T072, 004 T050, 005 T033: destinations are handled by kind, never by name
+    """003 T072, 004 T050, 005 T033, 006 T037: destinations are handled by kind, never by name
     (constitution I)."""
     pattern = re.compile(r"\b(" + "|".join(sorted(_destination_ids())) + r")\b")
     hits = [
@@ -80,3 +81,48 @@ def test_orchestration_names_no_route_destination(path: Path) -> None:
         if pattern.search(line)
     ]
     assert hits == []
+
+
+AGENTS = sorted((ROOT / "src" / "adlc" / "agents").rglob("*.py"))
+
+
+def _catalogue_names() -> set[str]:
+    """Provider names and model ids from the model catalogue (006)."""
+    from ruamel.yaml import YAML
+
+    data = YAML(typ="safe").load(
+        (ROOT / "adlc-specs" / "shared" / "model_catalogue.yaml").read_text()
+    )
+    names: set[str] = set()
+    for tiers in data["profiles"].values():
+        for entries in tiers.values():
+            for entry in entries:
+                names.add(str(entry["provider"]))
+                names.add(str(entry["model"]))
+                names.add(str(entry["model"]).split("/", 1)[1])
+    return names
+
+
+@pytest.mark.parametrize("path", AGENTS, ids=lambda p: str(p.relative_to(ROOT)))
+def test_agents_name_no_provider_or_model(path: Path) -> None:
+    """006 T037: providers and models come from the model catalogue only (constitution I, II)."""
+    names = sorted(_catalogue_names(), key=len, reverse=True)
+    pattern = re.compile(
+        r"(?<![A-Za-z0-9_-])(" + "|".join(re.escape(n) for n in names) + r")(?![A-Za-z0-9_-])"
+    )
+    hits = [
+        f"{path.name}:{number}: {line.strip()}"
+        for number, line in _code_lines(path)
+        if pattern.search(line)
+    ]
+    assert hits == []
+
+
+def test_only_the_gateway_imports_litellm() -> None:
+    """006 FR-001: no other module calls a provider."""
+    importers = [
+        str(p.relative_to(ROOT))
+        for p in SOURCES
+        if re.search(r"^\s*(import litellm|from litellm)", p.read_text(), re.MULTILINE)
+    ]
+    assert importers == ["src/adlc/agents/gateway.py"]

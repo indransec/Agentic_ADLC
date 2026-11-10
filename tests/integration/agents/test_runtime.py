@@ -1,84 +1,21 @@
 """T023: model agents in the orchestrator, with scripted models (US2; FR-006, FR-010, FR-013,
 FR-014; SC-003 to SC-005)."""
 
-import json
 from collections.abc import Mapping, Sequence
 from datetime import timedelta
 from typing import Any
 
 import pytest
 
-from adlc.agents.catalogue import AgentCatalogue, ModelCatalogue, load_catalogues
-from adlc.agents.fake import FakeGateway, reply
+from adlc.agents.fake import reply
 from adlc.agents.gateway import ProviderReply
-from adlc.agents.store import SqlCallRecorder, attempts, model_calls
+from adlc.agents.store import attempts, model_calls
 from adlc.config.settings import DEFAULT_AGENT_LIMITS, AgentLimit
 from adlc.policy.synthetic import load_synthetic_artifacts
-from adlc.spec_toolkit.loader import load_bundle
-from adlc.spec_toolkit.registry import InMemorySpecRegistry
 from tests.support.lifecycle import walk_to
-from tests.support.orchestration import SPECS, SYNTHETIC, Harness, harness
-from tests.support.pg import PlatformDatabase
+from tests.support.orchestration import SYNTHETIC
 
-BUNDLE = load_bundle(SPECS)
-MODELS, AGENTS = load_catalogues(InMemorySpecRegistry.from_bundle(BUNDLE), "default")
-PRIMARY = MODELS.entries("reasoning")[0].model
-T1_AGENT = "t1-requirements-agent"
-GOOD = json.dumps({"artifacts": load_synthetic_artifacts(SYNTHETIC)["T1"]})
-BAD = json.dumps({"artifacts": {"kpis": [{"kpi": "x"}]}})
-
-
-def _model_t1() -> AgentCatalogue:
-    content = BUNDLE.catalogue_data("agents")
-    agents = []
-    for a in content["agents"]:
-        if a["id"] == T1_AGENT:
-            a = {
-                **a,
-                "implementation": "model",
-                "prompt": {"id": "common-terminal-reviewer", "version": "1.0.0"},
-            }
-        agents.append(a)
-    return AgentCatalogue.from_content({"agents": agents})
-
-
-def _gateway(
-    h_engine: Any, script: Mapping[str, Any], catalogue: ModelCatalogue = MODELS
-) -> FakeGateway:
-    return FakeGateway(catalogue, script, recorder=SqlCallRecorder(h_engine))
-
-
-def _run(db: PlatformDatabase, script: Mapping[str, Any], **kwargs: Any) -> Any:
-    """A harness whose T1 agent is a model agent answered by ``script``."""
-
-    class Late:
-        """The gateway needs the harness engine; bind it once the harness exists."""
-
-        gateway: FakeGateway | None = None
-
-        def complete(self, request: Any) -> Any:
-            assert self.gateway is not None
-            return self.gateway.complete(request)
-
-    late = Late()
-    ctx = harness(db, gateway=late, agents=_model_t1(), **kwargs)
-    h = ctx.__enter__()
-    late.gateway = _gateway(h.app, script)
-    return ctx, h, late
-
-
-@pytest.fixture
-def model_harness(orch_template: PlatformDatabase) -> Any:
-    opened: list[Any] = []
-
-    def make(script: Mapping[str, Any], **kwargs: Any) -> tuple[Harness, Any]:
-        ctx, h, late = _run(orch_template, script, **kwargs)
-        opened.append(ctx)
-        return h, late
-
-    yield make
-    for ctx in opened:
-        ctx.__exit__(None, None, None)
+from .support import BAD, GOOD, MODELS, PRIMARY, T1_AGENT
 
 
 def test_model_build_records_the_attempt(model_harness: Any) -> None:

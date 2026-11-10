@@ -284,8 +284,8 @@ P2).
 
 ## Phase 8: Polish and cross-cutting
 
-- [ ] T037 [P] Extend `tests/unit/test_no_hardcoded_values.py` so `src/adlc/agents/` is also checked for terminal ids, role ids, route destinations, and provider or model ids (taken from `model_catalogue.yaml`). Add a check that `litellm` is imported only in `src/adlc/agents/gateway.py` (FR-001).
-- [ ] T038 [P] Write `src/adlc/agents/README.md`, covering:
+- [X] T037 [P] Extend `tests/unit/test_no_hardcoded_values.py` so `src/adlc/agents/` is also checked for terminal ids, role ids, route destinations, and provider or model ids (taken from `model_catalogue.yaml`). Add a check that `litellm` is imported only in `src/adlc/agents/gateway.py` (FR-001).
+- [X] T038 [P] Write `src/adlc/agents/README.md`, covering:
   - the gateway rules;
   - profiles (`dev` puts GPT-4o mini first);
   - keys;
@@ -299,9 +299,9 @@ P2).
   - how feature 008 switches an agent to `implementation: model`.
 
   Also note GPT-4o mini's retirement on 2027-01-14.
-- [ ] T039 Run the 003, 004, 005 and 006 scenario and integration suites 10 times in a row, and record the result (SC-008).
-- [ ] T040 Measure runtime overhead per attempt, excluding model time, with `FakeGateway` (SC-009: under 200 ms), in `tests/integration/agents/test_overhead.py`.
-- [ ] T041 Run `make check` and fix any failure, including the 80% core coverage gate that now includes `agents/`.
+- [X] T039 Run the 003, 004, 005 and 006 scenario and integration suites 10 times in a row, and record the result (SC-008).
+- [X] T040 Measure runtime overhead per attempt, excluding model time, with `FakeGateway` (SC-009: under 200 ms), in `tests/integration/agents/test_overhead.py`.
+- [X] T041 Run `make check` and fix any failure, including the 80% core coverage gate that now includes `agents/`.
 - [ ] T042 Live check in dev (quickstart §5), only if the user provides `ADLC_OPENAI_API_KEY`. With `ADLC_MODEL_PROFILE=dev` and `ADLC_REVIEWER_MODE=model`, run `make up` and `scripts.demo_drive`. Then check that:
   - the reviews come from `openai/gpt-4o-mini` with `fallback = false`;
   - costs appear in `run.v_usecase_cost`;

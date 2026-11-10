@@ -12,8 +12,8 @@ from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness
 from tests.support.pg import PlatformDatabase
 
+from .support import MODELS, PRIMARY
 from .test_reviewer import _items, _review
-from .test_runtime import MODELS, PRIMARY
 
 
 @pytest.fixture

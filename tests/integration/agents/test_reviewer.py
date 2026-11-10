@@ -15,7 +15,7 @@ from tests.support.lifecycle import walk_to
 from tests.support.orchestration import SYNTHETIC, Harness, harness, person
 from tests.support.pg import PlatformDatabase
 
-from .test_runtime import MODELS, PRIMARY, _model_t1
+from .support import MODELS, PRIMARY, _model_t1
 
 ITEMS = ["CHK-T1-01", "CHK-T1-02", "CHK-T1-03", "CHK-T1-04", "CHK-T1-05"]
 MARKER = "BUILDER-REASONING-MARKER-7731"
