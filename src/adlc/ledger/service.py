@@ -14,6 +14,7 @@ from adlc.ledger import artifacts as versions
 from adlc.ledger import store as ledger_store
 from adlc.ledger.spreadsheet import read_rows
 from adlc.ledger.storage import FileRef, LedgerContentStore
+from adlc.ledger.verify import Report, Verifier
 from adlc.orchestration import spec_view
 from adlc.orchestration import store as run_store
 from adlc.orchestration.engine import ORCHESTRATOR_ID, PostgresTerminalRun, UnknownRun
@@ -119,6 +120,11 @@ class LedgerService:
     def artifact_history(self, run_id: str, artifact_id: str) -> list[dict[str, Any]]:
         with self.runs.engine.connect() as conn:
             return versions.history(conn, run_id, artifact_id)
+
+    def verify(self, actor: Actor, scope: str = "all") -> Report:
+        """Any signed-in person may verify (FR-019); each call is recorded."""
+        verifier = Verifier(self.runs.engine, self.runs.registry, self.content.open_file)
+        return verifier.verify(scope, actor.account_name)
 
     def open_attachment(self, content_hash: str) -> bytes | None:
         """The stored bytes; feature 007 serves them as a download only (FR-012)."""

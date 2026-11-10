@@ -1,6 +1,5 @@
 """T021: profile merge rules (FR-013, FR-015)."""
 
-
 from typing import Any
 
 from adlc.ledger.profile import merge, proposed_parameter
