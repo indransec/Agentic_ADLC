@@ -3,11 +3,11 @@
 They implement the same protocols as the real components (constitution VII), so features 004
 and 006 replace them without touching the orchestrator. Scripts are plain dictionaries:
 
-* ``StubAgent(script={"T2": {1: Clarification(...)}})`` answers the first build of T2 with a
-  clarification. A ``dict`` entry overrides artifact cells:
-  ``{"change_impact_assessment": {"reentry_terminal": "T2"}}``.
-* ``StubReviewer(script={"T1": {1: Recommendation("rework")}})``.
-* ``StubPolicy(script={("T1", "PRE-T1-01"): False})``.
+* ``StubAgent(script={<terminal>: {1: Clarification(...)}})`` answers that terminal's first
+  build with a clarification. A ``dict`` entry overrides artifact cells:
+  ``{<artifact>: {<column>: <value>}}``.
+* ``StubReviewer(script={<terminal>: {1: Recommendation("rework")}})``.
+* ``StubPolicy(script={(<terminal>, <check id>): False})``.
 """
 
 from collections import defaultdict

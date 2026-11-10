@@ -490,6 +490,7 @@ class PostgresTerminalRun:
                     "status": status,
                     "root_cause": root_cause,
                     "comment": p.get("comment"),
+                    "decision_fields": fields,
                     "target_terminal": open_terminal,
                     "reentry_terminal": reentry,
                     "waiver_id": run.pending_waiver_id,

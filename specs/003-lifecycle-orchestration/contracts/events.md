@@ -14,6 +14,7 @@
     "status": "rework",
     "root_cause": "implementation",
     "comment": "Tool timeout on claim lookup",
+    "decision_fields": {"defect_log": "DEF-7 claim lookup times out"},
     "target_terminal": null,
     "emits": {"risk_tier": "medium"}
   }

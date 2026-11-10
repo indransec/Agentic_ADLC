@@ -90,7 +90,7 @@ def _run_tables() -> None:
             usecase_id text PRIMARY KEY CHECK (usecase_id ~ '^UC-[0-9]{4}$'),
             name text NOT NULL CHECK (length(name) BETWEEN 1 AND 200),
             intake_text text NOT NULL,
-            business_owner text NOT NULL,
+            submitted_by text NOT NULL,
             risk_tier text NULL CHECK (risk_tier IN ('low', 'medium', 'high')),
             status text NOT NULL DEFAULT 'active'
                 CHECK (status IN ('active', 'terminated', 'closed')),
@@ -370,7 +370,7 @@ def _guards() -> None:
         LANGUAGE plpgsql AS $$
         BEGIN
             IF TG_OP = 'DELETE' OR NEW.usecase_id <> OLD.usecase_id OR NEW.name <> OLD.name
-               OR NEW.intake_text <> OLD.intake_text OR NEW.business_owner <> OLD.business_owner
+               OR NEW.intake_text <> OLD.intake_text OR NEW.submitted_by <> OLD.submitted_by
                OR NEW.created_at <> OLD.created_at THEN
                 RAISE EXCEPTION 'use case %: only risk_tier, status, closed_at may change',
                     OLD.usecase_id USING ERRCODE = '42501';

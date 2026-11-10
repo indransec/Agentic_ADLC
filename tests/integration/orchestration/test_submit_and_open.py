@@ -13,7 +13,7 @@ def test_submit_pins_and_opens_t0(h: Harness) -> None:
     usecase = h.submit("Claims triage")
     assert usecase == "UC-0001"
     record = h.service.get_usecase(usecase)
-    assert (record.business_owner, record.status, record.risk_tier) == (
+    assert (record.submitted_by, record.status, record.risk_tier) == (
         "business_owner-person",
         "active",
         None,

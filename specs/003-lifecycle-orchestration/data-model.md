@@ -12,7 +12,7 @@ Migration `0003`. Names follow SA Annex A.6. Grants are listed per table. The ap
 | `usecase_id` | text PK | `^UC-[0-9]{4}$`, from sequence `run.usecase_seq` |
 | `name` | text | First line of the intake, max 200 characters |
 | `intake_text` | text | Free text as submitted |
-| `business_owner` | text | Account name of the submitter |
+| `submitted_by` | text | Account name of the submitter, who is the business owner (named for the account, not the role, so no role id appears in code) |
 | `risk_tier` | text null | `low` \| `medium` \| `high`; set when T0 closes with emitted `risk_tier` |
 | `status` | text | `active` \| `terminated` \| `closed` |
 | `created_at`, `closed_at` | timestamptz | |

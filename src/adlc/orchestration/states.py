@@ -73,7 +73,7 @@ ALLOWED_ACTOR: Mapping[SignalKind, ActorType] = {
     SignalKind.TIMER: ActorType.ORCHESTRATOR,
     SignalKind.OPEN_ESCALATED: ActorType.ORCHESTRATOR,
     SignalKind.STEP_INTERRUPTED: ActorType.ORCHESTRATOR,
-    # A terminate decision (or lifecycle_closed route) ends the other runs of the use case;
+    # A terminate decision (or a terminating route) ends the other runs of the use case;
     # the deciding person is the actor (FR-018c).
     SignalKind.LIFECYCLE_ENDED: ActorType.HUMAN,
 }

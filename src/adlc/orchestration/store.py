@@ -29,7 +29,7 @@ class UseCaseRow:
     usecase_id: str
     name: str
     intake_text: str
-    business_owner: str
+    submitted_by: str
     risk_tier: str | None
     status: str
 
@@ -43,7 +43,7 @@ def insert_usecase(
 ) -> None:
     conn.execute(
         text(
-            "INSERT INTO run.usecase (usecase_id, name, intake_text, business_owner) "
+            "INSERT INTO run.usecase (usecase_id, name, intake_text, submitted_by) "
             "VALUES (:u, :n, :i, :o)"
         ),
         {"u": usecase_id, "n": name, "i": intake_text, "o": owner},
@@ -52,10 +52,10 @@ def insert_usecase(
 
 def load_usecase(conn: Connection, usecase_id: str, *, lock: bool = False) -> UseCaseRow | None:
     sql = (
-        "SELECT usecase_id, name, intake_text, business_owner, risk_tier, status "
+        "SELECT usecase_id, name, intake_text, submitted_by, risk_tier, status "
         "FROM run.usecase WHERE usecase_id = :u FOR UPDATE"
         if lock
-        else "SELECT usecase_id, name, intake_text, business_owner, risk_tier, status "
+        else "SELECT usecase_id, name, intake_text, submitted_by, risk_tier, status "
         "FROM run.usecase WHERE usecase_id = :u"
     )
     row = conn.execute(text(sql), {"u": usecase_id}).mappings().first()

@@ -27,7 +27,15 @@ from adlc.orchestration.tracing import span
 
 FaultHook = Callable[[EventRow], None]
 
-_CONTEXT_KEYS = ("comment", "root_cause", "ledger_key", "status", "emits", "reentry_terminal")
+_CONTEXT_KEYS = (
+    "comment",
+    "root_cause",
+    "decision_fields",
+    "ledger_key",
+    "status",
+    "emits",
+    "reentry_terminal",
+)
 
 
 class Router(Protocol):

@@ -117,7 +117,7 @@ class OrchestratorService:
                 usecase_id=usecase,
                 correlation_id=ids.correlation_id(usecase),
                 causation_run_id=None,
-                payload={"usecase_id": usecase, "business_owner": actor.account_name},
+                payload={"usecase_id": usecase, "submitted_by": actor.account_name},
                 now=self._now,
             )
         return usecase

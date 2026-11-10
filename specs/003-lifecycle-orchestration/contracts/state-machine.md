@@ -28,14 +28,18 @@ sign-offs so far.
 | `escalation_completed` | human | artifacts |
 | `timer` | orchestrator | `escalate_after` \| `clarification_sla` |
 | `open_escalated` | orchestrator | trigger (rework limit at open) |
+| `step_interrupted` | orchestrator | — (an automatic step's lease expired: crash or restart) |
+| `lifecycle_ended` | human (the person who terminated) | reason (another run of the use case was terminated, or the lifecycle closed) |
 
 ## Transition table
 
 | From | Signal / condition | To | Effects |
 | --- | --- | --- | --- |
-| opened | `open_escalated` | escalated | `escalation_trigger=rework_limit`; StartTimer(escalate_after) |
-| opened | `prerequisites_result` met | building | StartTimer(escalate_after) |
-| opened | `prerequisites_result` blocked | blocked | StartTimer(escalate_after) |
+| opened | `open_escalated` | escalated | `escalation_trigger=rework_limit` |
+| opened | `prerequisites_result` met | building | — |
+| opened | `prerequisites_result` blocked | blocked | — |
+
+The `escalate_after` timer starts when the run is opened (`engine.open_in`), so it is measured from the open.
 | blocked | `event_received` | opened | (re-check prerequisites) |
 | blocked | `timer` escalate_after | escalated | trigger `timer` |
 | blocked | `decide` terminate | closed | CloseRun(terminate) |
@@ -60,7 +64,10 @@ sign-offs so far.
 | awaiting_sign_off | `decide` terminate | closed | RecordSignOff; CloseRun(terminate) |
 | escalated | `escalation_completed` | awaiting_sign_off | store artifacts |
 | escalated | `decide` terminate | closed | CloseRun(terminate) |
-| any open waiting state | `timer` escalate_after | escalated | trigger `timer` (not from `escalated`) |
+| any open state except `escalated` | `timer` escalate_after | escalated | trigger `timer`. An escalated run ignores it (FR-021) |
+| any automatic state | `step_interrupted`, retries < max | same | `auto_retries += 1` (FR-030a) |
+| any automatic state | `step_interrupted`, retries ≥ max | escalated | trigger `retry_limit` |
+| any open state | `lifecycle_ended` | closed | CancelAllTimers; CloseRun(terminate): ledger record only, no outcome event (FR-018c) |
 | any automatic or waiting state | `event_received` | same | record event in context |
 
 Entering `escalated` also writes the outbox event `T<n>.escalate` (with the trigger) in the same transaction.

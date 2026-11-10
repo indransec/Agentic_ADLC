@@ -54,7 +54,7 @@ def app(app_engine: Engine) -> Iterator[Connection]:
 def _seed(conn: Connection) -> None:
     conn.execute(
         text(
-            "INSERT INTO run.usecase (usecase_id, name, intake_text, business_owner) "
+            "INSERT INTO run.usecase (usecase_id, name, intake_text, submitted_by) "
             "VALUES ('UC-0001', 'Claims triage', 'intake', 'alice')"
         )
     )
@@ -119,7 +119,7 @@ def test_app_grants_are_exact(app: Connection) -> None:
 def test_identifier_patterns(app: Connection) -> None:
     _refused(
         app,
-        "INSERT INTO run.usecase (usecase_id, name, intake_text, business_owner) "
+        "INSERT INTO run.usecase (usecase_id, name, intake_text, submitted_by) "
         "VALUES ('UC-1', 'x', 'y', 'z')",
     )
     _seed(app)
