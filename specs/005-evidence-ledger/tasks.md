@@ -246,7 +246,7 @@ tasks come first in each phase and must fail before their implementation.
 
 ### Tests first
 
-- [ ] T030 [P] [US5] Write failing integration tests in `tests/integration/ledger/test_views.py`:
+- [X] T030 [P] [US5] Write failing integration tests in `tests/integration/ledger/test_views.py`:
   - US5/AC1: `run_timeline(run_id)` lists activity steps in order, with durations.
   - US5/AC2: `run_checks(run_id)` lists prerequisite and control decisions per attempt (from `run.policy_decision`), plus `checklist_results(run_id)`.
   - US5/AC3: `usecase_summary(usecase_id)` gives per terminal the counts of runs, reworks, clarification rounds and escalations, with `automatic_seconds` and `waiting_seconds`; an open run counts to now.
@@ -254,8 +254,8 @@ tasks come first in each phase and must fail before their implementation.
 
 ### Implementation
 
-- [ ] T031 [US5] Write `run.checklist_result` rows (attempt = `auto_retries + 1` at review time, as for agent versions) when `StoreRecommendation` is applied, in `src/adlc/orchestration/engine.py` through `src/adlc/ledger/store.py`, on the same connection
-- [ ] T032 [US5] Implement `src/adlc/ledger/views.py` (typed queries over `run.v_run_step`, `run.v_usecase_terminal_summary`, `run.policy_decision`, `run.checklist_result`, `run.artifact_version` and `ledger.ledger_record`) and expose `run_view(run_id)` and `usecase_summary(usecase_id)` on `LedgerService` (T030)
+- [X] T031 [US5] Write `run.checklist_result` rows (attempt = `auto_retries + 1` at review time, as for agent versions) when `StoreRecommendation` is applied, in `src/adlc/orchestration/engine.py` through `src/adlc/ledger/store.py`, on the same connection
+- [X] T032 [US5] Implement `src/adlc/ledger/views.py` (typed queries over `run.v_run_step`, `run.v_usecase_terminal_summary`, `run.policy_decision`, `run.checklist_result`, `run.artifact_version` and `ledger.ledger_record`) and expose `run_view(run_id)` and `usecase_summary(usecase_id)` on `LedgerService` (T030)
 
 **Checkpoint**: all stories pass.
 

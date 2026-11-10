@@ -19,11 +19,13 @@ from sqlalchemy import Connection, Engine
 
 from adlc.ledger import artifacts as versions
 from adlc.ledger import profile as profiles
+from adlc.ledger import store as ledger_store
 from adlc.ledger.artifacts import Change, NewAttachment, Producer
 from adlc.ledger.binding import resolve_bound_to
 from adlc.ledger.content import build_v2
 from adlc.ledger.storage import FileRef, put_structured
 from adlc.ledger.storage import versions_exist as store_versions_exist
+from adlc.ledger.views import checklist_rows
 from adlc.orchestration import durations, ids, routing, spec_view, store
 from adlc.orchestration.interfaces import (
     AgentRunner,
@@ -377,7 +379,11 @@ class PostgresTerminalRun:
             case StoreControls():
                 return replace(run, control_results=list(p.get("results") or []))
             case StoreRecommendation():
-                return replace(run, recommendation=dict(p.get("recommendation") or {}))
+                recommendation = dict(p.get("recommendation") or {})
+                ledger_store.insert_checklist_results(
+                    conn, run.run_id, run.auto_retries + 1, checklist_rows(recommendation)
+                )
+                return replace(run, recommendation=recommendation)
             case ClearApprovals():
                 return replace(
                     run, approvals_after_sign_off_id=store.max_sign_off_id(conn, run.run_id)

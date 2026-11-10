@@ -12,6 +12,7 @@ from typing import Any
 
 from adlc.ledger import artifacts as versions
 from adlc.ledger import store as ledger_store
+from adlc.ledger import views
 from adlc.ledger.spreadsheet import read_rows
 from adlc.ledger.storage import FileRef, LedgerContentStore
 from adlc.ledger.verify import Report, Verifier
@@ -125,6 +126,14 @@ class LedgerService:
         """Any signed-in person may verify (FR-019); each call is recorded."""
         verifier = Verifier(self.runs.engine, self.runs.registry, self.content.open_file)
         return verifier.verify(scope, actor.account_name)
+
+    def run_view(self, run_id: str) -> dict[str, Any]:
+        with self.runs.engine.connect() as conn:
+            return views.run_view(conn, run_id)
+
+    def usecase_summary(self, usecase_id: str) -> list[dict[str, Any]]:
+        with self.runs.engine.connect() as conn:
+            return views.usecase_summary(conn, usecase_id)
 
     def open_attachment(self, content_hash: str) -> bytes | None:
         """The stored bytes; feature 007 serves them as a download only (FR-012)."""

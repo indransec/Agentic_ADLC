@@ -111,3 +111,16 @@ def insert_attachment(conn: Connection, row: dict[str, Any]) -> None:
         ),
         row,
     )
+
+
+def insert_checklist_results(
+    conn: Connection, run_id: str, attempt: int, rows: list[dict[str, Any]]
+) -> None:
+    for row in rows:
+        conn.execute(
+            text(
+                "INSERT INTO run.checklist_result (run_id, attempt, item_id, score, finding) "
+                "VALUES (:r, :a, :item_id, :score, :finding)"
+            ),
+            {"r": run_id, "a": attempt, **row},
+        )
