@@ -182,3 +182,20 @@ def test_orchestrator_invalid_values_name_the_setting(
     assert name in message
     if len(value) > 3:  # short numbers can appear in the expected form ("greater than zero")
         assert value not in message.replace(name, "")
+
+
+def test_orchestrator_synthetic_dir_and_accounts(
+    orchestrator_env: None, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from adlc.config.settings import OrchestratorSettings
+
+    s = OrchestratorSettings()  # type: ignore[call-arg]
+    assert s.synthetic_dir == Path("data/synthetic")
+    assert s.accounts_file is None
+    monkeypatch.setenv("ADLC_SYNTHETIC_DIR", "off")
+    accounts = tmp_path / "a.yaml"
+    accounts.write_text("accounts: []\n")
+    monkeypatch.setenv("ADLC_ACCOUNTS_FILE", str(accounts))
+    s = OrchestratorSettings()  # type: ignore[call-arg]
+    assert s.synthetic_dir is None
+    assert s.accounts_file == accounts

@@ -1,5 +1,3 @@
-# policy
+# adlc.policy
 
-Placeholder created by feature 001-platform-foundation.
-
-Filled by feature **004-policy-engine**: CEL `evaluate`, `authorize`, predicates, parameter resolution.
+Policy engine (feature 004). Full description: written in task T051.

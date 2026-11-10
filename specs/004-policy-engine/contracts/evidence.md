@@ -47,8 +47,8 @@ A terminal with no closed run is `NOT_AVAILABLE`, unless it is the run's own ter
 
 ## Synthetic provider
 
-- **Data**: read from `ADLC_SYNTHETIC_DIR` (default `data/synthetic`). An empty value disables
-  it.
+- **Data**: read from `ADLC_SYNTHETIC_DIR` (default `data/synthetic`). The value `off`
+  disables it.
 - **Layering**: `CompositeEvidenceProvider(real, synthetic)` uses a real value when there is
   one, otherwise the synthetic one, which it marks `synthetic=True`.
 - **Labelling**: a decision with any synthetic input is labelled synthetic (FR-025).

@@ -749,19 +749,8 @@ class PostgresTerminalRun:
         )
 
     def _eval(self, run: RunRow, check_id: str) -> EvalContext:
-        return EvalContext(
-            run.terminal_id,
-            check_id,
-            run.run_id,
-            run.usecase_id,
-            {
-                "run": {
-                    "rework_count": run.rework_count,
-                    "mode": run.mode,
-                    "usecase_id": run.usecase_id,
-                }
-            },
-        )
+        # Evidence (run, terminals, intake, ...) is read by the policy engine's provider.
+        return EvalContext(run.terminal_id, check_id, run.run_id, run.usecase_id)
 
     def _build_context(
         self, conn: Connection, run: RunRow, spec: Mapping[str, Any]

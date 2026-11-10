@@ -74,7 +74,7 @@
 ## R-05 Synthetic data (clarification 2026-11-10)
 
 - **Decision**: synthetic data is enabled in dev and demo; the setting `ADLC_SYNTHETIC_DIR`
-  (default `data/synthetic`) points at the data, and an empty value disables it.
+  (default `data/synthetic`) points at the data, and the value `off` disables it.
   - **`data/synthetic/evidence.yaml`** holds values per source, with consistent hashes across
     sources (for example `env.test.deployed_hash` = the synthetic T3 package hash =
     `release.package_sha256`).

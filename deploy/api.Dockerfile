@@ -19,6 +19,7 @@ COPY src ./src
 COPY db ./db
 COPY alembic.ini ./
 COPY adlc-specs ./adlc-specs
+COPY data ./data
 RUN uv sync --locked --no-dev
 
 RUN useradd --system --uid 10001 --no-create-home adlc

@@ -17,9 +17,11 @@ authorize_decision(actor, action, resource, context) -> (bool, reason)   # same 
    gives not passed: `evaluation error: <message>`.
 2. **Check references.** The expression's references are found (002 `expressions`). For each
    reference, the evidence provider is asked for the root, and the full path is followed
-   (`T0.risk_classification.tier`). If the root is `NOT_AVAILABLE`, or a member along the path
-   is missing, the result is not passed, `evidence not available: <path as far as it
-   resolved>.<missing member>`, and the expression is not evaluated.
+   (`T0.risk_classification.tier`; a path into a table reads the first row). A root that is
+   `NOT_AVAILABLE`, or a member that is missing, is bound as an error value,
+   `evidence not available: <path>`. CEL's own logic then decides whether the rule needed it:
+   `run.mode != "retire" || retirement.x` is true in evolve mode without retirement evidence,
+   while any rule whose result depends on the missing value fails with that reason.
 3. **Activate.** The activation is built: `T<n>`, `run`, `intake`, `trigger`, `timeline`, `tier`,
    `param` and the external sources, as CEL values (contracts/evidence.md).
 4. **Evaluate.** Predicates record a failure reason as they run.

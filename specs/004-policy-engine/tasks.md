@@ -30,7 +30,7 @@ P2).
 
 ## Phase 1: Setup
 
-- [ ] T001 Add `synthetic_dir: Path | None` (`ADLC_SYNTHETIC_DIR`, default `data/synthetic`, empty value = disabled) and `accounts_file: Path | None` (optional for the orchestrator) to `OrchestratorSettings` in `src/adlc/config/settings.py`; tests first in `tests/unit/test_settings.py`; document both in `.env.example` and keep `tests/unit/test_env_example.py` passing
+- [ ] T001 Add `synthetic_dir: Path | None` (`ADLC_SYNTHETIC_DIR`, default `data/synthetic`, `off` = disabled) and `accounts_file: Path | None` (optional for the orchestrator) to `OrchestratorSettings` in `src/adlc/config/settings.py`; tests first in `tests/unit/test_settings.py`; document both in `.env.example` and keep `tests/unit/test_env_example.py` passing
 - [ ] T002 [P] Write failing migration tests in `tests/integration/policy/test_migration_0004.py`:
   - `run.policy_decision` has every column in data-model.md, with `kind` in (`evaluate`, `authorize`) and `reason` NOT NULL with "up to 2,000 characters", plus the index `(run_id, decided_at, policy_decision_id)`.
   - `run.run_parameter_set` has `run_id` as PK and FK to `run.terminal_run`, and every other column in data-model.md.
@@ -238,7 +238,7 @@ P2).
   - `SyntheticEvidenceProvider` reads `data/synthetic/evidence.yaml`;
   - the stub agent artifact loader reads `data/synthetic/artifacts/T<n>.yaml` and falls back to placeholders when a file is missing;
   - hashes are consistent across sources (the synthetic T3 package hash equals `env.test.deployed_hash`, `env.prod.deployed_hash` and `release.package_sha256`);
-  - an empty `ADLC_SYNTHETIC_DIR` disables both.
+  - `ADLC_SYNTHETIC_DIR=off` disables both.
 - [ ] T040 [P] [US5] Write a failing test in `tests/integration/policy/test_orchestrator_wiring.py`:
   - the harness, built with `CelPolicyEngine`, passes T0→T8;
   - each `control_results` entry carries `synthetic`;
