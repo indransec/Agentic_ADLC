@@ -4,7 +4,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from adlc.orchestration.interfaces import EvalContext
-from adlc.orchestration.stubs import StubAgent
+from adlc.orchestration.stubs import StubAgent, StubPolicy
 from adlc.policy.factory import build_policy_engine
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 from tests.support.lifecycle import walk_to
@@ -16,7 +16,7 @@ class Profile:
     def __init__(self, values: Mapping[str, Any]) -> None:
         self._values = values
 
-    def values(self, usecase_id: str) -> Mapping[str, Any]:
+    def values(self, usecase_id: str, run_id: str | None = None) -> Mapping[str, Any]:
         return self._values
 
 
@@ -60,24 +60,25 @@ def test_rework_run_resolves_its_own_set(h: Harness) -> None:
     )
 
 
-def test_profile_values_within_and_outside_guardrails(h: Harness) -> None:
-    usecase, t1 = walk_to(h, "T1")
-    engine = build_policy_engine(
-        h.app,
-        SqlSpecRegistry(h.app),
-        h.clock,
-        profile=Profile({"autonomy_level_max": 5, "test_scenarios_min": 40}),
-    )
-    # A fresh run of another terminal resolves with the profile.
-    h.pass_run(t1)
-    t2 = h.active(h.run(t1).usecase_id, "T2").run_id
-    h.sql("SELECT 1")
-    engine.evaluate("param.test_scenarios_min == 40", EvalContext("T2", "x", t2, usecase))
-    tier, parameters, rejected = _set(h, t2)
-    assert (
-        parameters["test_scenarios_min"] == {"value": 30, "source": "guardrail"}
-        or parameters["test_scenarios_min"]["source"] == "usecase"
-    )
+def test_profile_values_within_and_outside_guardrails(orch_template: PlatformDatabase) -> None:
+    """With a stub policy nothing is frozen yet, so the profile-aware engine resolves first."""
+    with harness(orch_template, policy=StubPolicy()) as h:
+        usecase, t1 = walk_to(h, "T1")
+        engine = build_policy_engine(
+            h.app,
+            SqlSpecRegistry(h.app),
+            h.clock,
+            profile=Profile({"autonomy_level_max": {"value": 2}, "test_scenarios_min": 10}),
+        )
+        result = engine.evaluate(
+            "param.autonomy_level_max == 2", EvalContext("T1", "x", t1, usecase)
+        )
+        assert result.passed, result.reason
+        tier, parameters, rejected = _set(h, t1)
+        assert parameters["autonomy_level_max"] == {"value": 2, "source": "usecase"}
+        assert parameters["test_scenarios_min"] == {"value": 30, "source": "guardrail"}
+        assert [r["name"] for r in rejected] == ["test_scenarios_min"]
+        assert "looser" in rejected[0]["reason"]
 
 
 def test_unresolved_parameter(h: Harness) -> None:

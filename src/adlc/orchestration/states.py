@@ -6,7 +6,7 @@ effects in the same database transaction. Outcome rights are part of the table: 
 only from humans, escalation only from the orchestrator.
 """
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
@@ -58,6 +58,8 @@ class SignalKind(StrEnum):
     OPEN_ESCALATED = "open_escalated"
     STEP_INTERRUPTED = "step_interrupted"
     LIFECYCLE_ENDED = "lifecycle_ended"
+    ARTIFACT_EDITED = "artifact_edited"  # 005: a person edited an artifact
+    CONTROLS_RECHECKED = "controls_rechecked"  # 005: controls re-run on edited content
 
 
 ALLOWED_ACTOR: Mapping[SignalKind, ActorType] = {
@@ -76,6 +78,8 @@ ALLOWED_ACTOR: Mapping[SignalKind, ActorType] = {
     # A terminate decision (or a terminating route) ends the other runs of the use case;
     # the deciding person is the actor (FR-018c).
     SignalKind.LIFECYCLE_ENDED: ActorType.HUMAN,
+    SignalKind.ARTIFACT_EDITED: ActorType.HUMAN,
+    SignalKind.CONTROLS_RECHECKED: ActorType.ORCHESTRATOR,
 }
 
 DECISIONS = frozenset({"pass", "rework", "exception", "terminate"})
@@ -104,6 +108,7 @@ class TransitionContext:
     rule_roles: frozenset[str] = frozenset()
     required_plus_roles: frozenset[str] = frozenset()
     approvals: tuple[tuple[str, str], ...] = ()  # (person, role) of pass sign-offs so far
+    controls_pending: bool = False  # 005: an edit's controls have not been re-run yet
 
 
 # ------------------------------------------------------------------ effects
@@ -184,6 +189,23 @@ class RecordEvent:
     pass
 
 
+@dataclass(frozen=True)
+class ClearApprovals:
+    """005: approvals given before an artifact edit no longer count."""
+
+
+@dataclass(frozen=True)
+class SetControlsPending:
+    """005: after an edit at sign-off, nobody can pass until the controls are re-run."""
+
+    pending: bool
+
+
+@dataclass(frozen=True)
+class WithdrawWaiver:
+    """005: an edit while a waiver is pending withdraws it (the approvers decide again)."""
+
+
 Effect = (
     StartTimer
     | CancelTimer
@@ -200,6 +222,9 @@ Effect = (
     | StoreControls
     | StoreRecommendation
     | RecordEvent
+    | WithdrawWaiver
+    | ClearApprovals
+    | SetControlsPending
 )
 
 
@@ -324,6 +349,28 @@ def _completed(p: Mapping[str, Any], ctx: TransitionContext) -> Outcome:
     return Outcome(RunState.AWAITING_SIGN_OFF, (StoreArtifacts(),))
 
 
+def _edited(state: RunState) -> Callable[[Mapping[str, Any], TransitionContext], Outcome]:
+    """Stores the person's version; approvals given before it no longer count; a pending waiver
+    is withdrawn. The state is unchanged."""
+
+    def handle(p: Mapping[str, Any], ctx: TransitionContext) -> Outcome:
+        effects: tuple[Effect, ...] = (StoreArtifacts(), ClearApprovals())
+        if ctx.pending_waiver:
+            effects += (WithdrawWaiver(),)
+        if state == RunState.AWAITING_SIGN_OFF:
+            effects += (SetControlsPending(True),)
+        return Outcome(state, effects)
+
+    return handle
+
+
+def _rechecked(state: RunState) -> Callable[[Mapping[str, Any], TransitionContext], Outcome]:
+    def handle(p: Mapping[str, Any], ctx: TransitionContext) -> Outcome:
+        return Outcome(state, (StoreControls(), SetControlsPending(False)))
+
+    return handle
+
+
 _HANDLERS = {
     (RunState.OPENED, SignalKind.OPEN_ESCALATED): _open_escalated,
     (RunState.OPENED, SignalKind.PREREQUISITES_RESULT): _prerequisites,
@@ -333,6 +380,12 @@ _HANDLERS = {
     (RunState.AWAITING_CLARIFICATION, SignalKind.CLARIFICATION_ANSWERED): _answered,
     (RunState.AWAITING_SIGN_OFF, SignalKind.WAIVER_DECISION): _waiver,
     (RunState.ESCALATED, SignalKind.ESCALATION_COMPLETED): _completed,
+    (RunState.AWAITING_SIGN_OFF, SignalKind.ARTIFACT_EDITED): _edited(RunState.AWAITING_SIGN_OFF),
+    (RunState.ESCALATED, SignalKind.ARTIFACT_EDITED): _edited(RunState.ESCALATED),
+    (RunState.AWAITING_SIGN_OFF, SignalKind.CONTROLS_RECHECKED): _rechecked(
+        RunState.AWAITING_SIGN_OFF
+    ),
+    (RunState.ESCALATED, SignalKind.CONTROLS_RECHECKED): _rechecked(RunState.ESCALATED),
 }
 
 
@@ -355,6 +408,8 @@ def _decide(state: RunState, signal: Signal, ctx: TransitionContext) -> Outcome 
         return None
     if decision == "rework":
         return Outcome(RunState.CLOSED, (RecordSignOff("rework"), CloseRun("rework")))
+    if ctx.controls_pending:  # 005 FR-010: decide on checked content only
+        raise InvalidTransition("controls are being re-run after an edit; decide once they finish")
     if decision == "exception":
         return Outcome(RunState.AWAITING_SIGN_OFF, (RecordSignOff("exception"), ProposeWaiver()))
     role = str(signal.payload.get("role"))

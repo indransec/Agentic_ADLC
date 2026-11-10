@@ -9,6 +9,7 @@ from typing import Any
 
 from sqlalchemy import Engine
 
+from adlc.ledger.profile import SqlProfileSource
 from adlc.orchestration import store as run_store
 from adlc.orchestration.interfaces import Clock, EvalContext
 from adlc.policy.directory import Directory
@@ -32,12 +33,14 @@ def build_policy_engine(
     sink: DecisionSink | None = None,
 ) -> CelPolicyEngine:
     guardrails = _catalogue(registry, "guardrails") or {}
+    profile = profile or SqlProfileSource(engine)  # 005: the versioned use-case profile
     real = SqlEvidenceProvider(
         engine,
         registry,
         clock,
         directory=directory,
         parameters=ParameterService(engine, guardrails, profile),
+        profile=profile,
     )
     synthetic = SyntheticEvidenceProvider.from_dir(synthetic_dir) if synthetic_dir else None
     return CelPolicyEngine(

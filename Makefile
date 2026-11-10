@@ -66,7 +66,7 @@ typecheck:
 	$(UV) mypy
 
 # Whole-package coverage is reported; the core modules (constitution IX) are gated at 80%.
-CORE_MODULES := */adlc/config/*,*/adlc/identity/*,*/adlc/db/*,*/adlc/spec_toolkit/*,*/adlc/orchestration/*,*/adlc/policy/*
+CORE_MODULES := */adlc/config/*,*/adlc/identity/*,*/adlc/db/*,*/adlc/spec_toolkit/*,*/adlc/orchestration/*,*/adlc/policy/*,*/adlc/ledger/*
 
 test:
 	@echo "==> test"

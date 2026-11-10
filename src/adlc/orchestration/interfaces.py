@@ -26,6 +26,7 @@ class EvalContext:
     run_id: str | None = None
     usecase_id: str | None = None
     variables: Mapping[str, Any] = field(default_factory=dict)
+    attempt: int | None = None  # 005: the build attempt a control is checked for
 
 
 @dataclass(frozen=True)

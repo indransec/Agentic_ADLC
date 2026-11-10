@@ -84,8 +84,10 @@ services:
       ADLC_ROLE_CATALOGUE: adlc-specs/shared/roles.yaml
       ADLC_OTLP_ENDPOINT: http://jaeger:4318
       ADLC_LOG_LEVEL: ${ADLC_LOG_LEVEL:-INFO}
+      ADLC_FILE_STORE_DIR: /var/lib/adlc/files
     volumes:
       - ${ADLC_ACCOUNTS_FILE:?ADLC_ACCOUNTS_FILE is required}:/run/adlc/accounts.yaml:ro
+      - adlc-files:/var/lib/adlc/files
     ports:
       - "${ADLC_API_PORT:-8000}:8000"
     depends_on:
@@ -124,8 +126,11 @@ services:
       ADLC_SYNTHETIC_DIR: ${ADLC_SYNTHETIC_DIR:-data/synthetic}
       # The enterprise directory for in_directory checks (feature 004), read-only.
       ADLC_ACCOUNTS_FILE: /run/adlc/accounts.yaml
+      # Evidence ledger file store (feature 005): back this volume up with the database.
+      ADLC_FILE_STORE_DIR: /var/lib/adlc/files
     volumes:
       - ${ADLC_ACCOUNTS_FILE:?ADLC_ACCOUNTS_FILE is required}:/run/adlc/accounts.yaml:ro
+      - adlc-files:/var/lib/adlc/files
     depends_on:
       register:
         condition: service_completed_successfully
@@ -141,3 +146,4 @@ services:
 
 volumes:
   adlc-pgdata:
+  adlc-files:

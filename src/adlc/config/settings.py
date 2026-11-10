@@ -6,17 +6,30 @@ error formatter in :mod:`adlc.config.errors` prints field names and expected for
 """
 
 import os
+import re
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import Field, SecretStr, ValidationInfo, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from adlc.config.durations import DURATION_FORM, Duration
 from adlc.identity.catalogue import load_role_ids
 
 ENV_PREFIX = "ADLC_"
+# Attachments the ledger accepts by default (005 contracts/storage.md); no macro formats.
+DEFAULT_ATTACHMENT_TYPES = frozenset(
+    {
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/pdf",
+        "image/png",
+        "image/svg+xml",
+        "text/plain",
+        "text/markdown",
+    }
+)
 
 
 def _meta(form: str, *, secret: bool = False) -> dict[str, Any]:
@@ -71,10 +84,37 @@ class RuntimeSettings(DatabaseSettings):
         default="INFO", json_schema_extra=_meta("DEBUG, INFO, WARNING or ERROR")
     )
 
+    file_store_dir: Path = Field(
+        default=Path("data/files"), json_schema_extra=_meta("path to the file store folder")
+    )
+    attachment_max: int = Field(
+        default=25_000_000, gt=0, json_schema_extra=_meta("bytes, or a number with kB or MB")
+    )
+    attachment_types: Annotated[frozenset[str], NoDecode] = Field(
+        default=DEFAULT_ATTACHMENT_TYPES, json_schema_extra=_meta("comma-separated media types")
+    )
+
     @field_validator("role_catalogue")
     @classmethod
     def _readable_catalogue(cls, value: Path) -> Path:
         return _readable(value)
+
+    @field_validator("attachment_max", mode="before")
+    @classmethod
+    def _bytes(cls, value: object) -> object:
+        if isinstance(value, str):
+            match = re.fullmatch(r"\s*([0-9]+)\s*(kB|MB)?\s*", value)
+            if match is None:
+                raise ValueError("expected bytes, or a number with kB or MB")
+            return int(match[1]) * {None: 1, "kB": 1_000, "MB": 1_000_000}[match[2]]
+        return value
+
+    @field_validator("attachment_types", mode="before")
+    @classmethod
+    def _media_types(cls, value: object) -> object:
+        if isinstance(value, str):
+            return frozenset(part.strip() for part in value.split(",") if part.strip())
+        return value
 
 
 class Settings(RuntimeSettings):

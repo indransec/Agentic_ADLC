@@ -17,6 +17,15 @@ from uuid import UUID
 
 from sqlalchemy import Connection, Engine
 
+from adlc.ledger import artifacts as versions
+from adlc.ledger import profile as profiles
+from adlc.ledger import store as ledger_store
+from adlc.ledger.artifacts import Change, NewAttachment, Producer
+from adlc.ledger.binding import resolve_bound_to
+from adlc.ledger.content import build_v2
+from adlc.ledger.storage import FileRef, put_structured
+from adlc.ledger.storage import versions_exist as store_versions_exist
+from adlc.ledger.views import checklist_rows
 from adlc.orchestration import durations, ids, routing, spec_view, store
 from adlc.orchestration.interfaces import (
     AgentRunner,
@@ -31,11 +40,12 @@ from adlc.orchestration.interfaces import (
     ReviewContext,
     Reviewer,
 )
-from adlc.orchestration.ledger import build_record_content, make_record
+from adlc.orchestration.ledger import make_record
 from adlc.orchestration.states import (
     ActorType,
     CancelAllTimers,
     CancelTimer,
+    ClearApprovals,
     CloseRun,
     DecideWaiver,
     Effect,
@@ -47,6 +57,7 @@ from adlc.orchestration.states import (
     RecordEvent,
     RecordSignOff,
     RunState,
+    SetControlsPending,
     SetReturnState,
     Signal,
     SignalKind,
@@ -55,6 +66,7 @@ from adlc.orchestration.states import (
     StoreControls,
     StoreRecommendation,
     TransitionContext,
+    WithdrawWaiver,
     transition,
 )
 from adlc.orchestration.store import RunRow
@@ -62,6 +74,8 @@ from adlc.orchestration.tracing import span
 from adlc.spec_toolkit.registry import RegistryEntry, SpecRegistry, TimelinePolicy
 
 DEFAULT_TIER = "medium"
+WITHDRAWN_BY = "system:artifact-edited"
+WITHDRAWN_COMMENT = "withdrawn: artifact edited"
 ORCHESTRATOR_ID = "orchestrator"
 
 _STEP_BY_SIGNAL = {
@@ -77,6 +91,8 @@ _STEP_BY_SIGNAL = {
     SignalKind.TIMER: "timer",
     SignalKind.OPEN_ESCALATED: "escalation",
     SignalKind.LIFECYCLE_ENDED: "close",
+    SignalKind.ARTIFACT_EDITED: "sign_off",
+    SignalKind.CONTROLS_RECHECKED: "controls",
 }
 _STEP_BY_STATE = {
     RunState.OPENED: "prerequisites",
@@ -185,6 +201,7 @@ class PostgresTerminalRun:
             rework_count=rework,
             now=now,
             due_at=None if expected is None else now + self.scaled(expected),
+            profile_version=profiles.current_version(conn, usecase_id)[0],
         )
         store.insert_transition(
             conn,
@@ -251,10 +268,12 @@ class PostgresTerminalRun:
                     EvalContext(run.terminal_id, f"plus:{p.role}", run.run_id, run.usecase_id),
                 ).passed
             )
+        cutoff = run.approvals_after_sign_off_id or 0
         approvals = tuple(
             (str(s["person"]), str(s["role"]))
             for s in store.sign_offs(conn, run.run_id)
-            if s["decision"] == "pass"
+            # 005: approvals given before the last artifact edit no longer count (FR-010)
+            if s["decision"] == "pass" and int(s["sign_off_id"]) > cutoff
         )
         return TransitionContext(
             max_clarification_rounds=timeline.max_clarification_rounds if timeline else 2,
@@ -267,6 +286,7 @@ class PostgresTerminalRun:
             rule_roles=rule.roles,
             required_plus_roles=required_plus,
             approvals=approvals,
+            controls_pending=run.controls_pending,
         )
 
     def apply_in(
@@ -359,11 +379,27 @@ class PostgresTerminalRun:
             case IncrementAutoRetry():
                 return replace(run, auto_retries=run.auto_retries + 1)
             case StoreArtifacts():
-                return replace(run, artifacts=dict(p.get("artifacts") or {}))
+                return self._store_artifacts(conn, run, signal)
             case StoreControls():
                 return replace(run, control_results=list(p.get("results") or []))
             case StoreRecommendation():
-                return replace(run, recommendation=dict(p.get("recommendation") or {}))
+                recommendation = dict(p.get("recommendation") or {})
+                ledger_store.insert_checklist_results(
+                    conn, run.run_id, run.auto_retries + 1, checklist_rows(recommendation)
+                )
+                return replace(run, recommendation=recommendation)
+            case SetControlsPending(pending=pending):
+                return replace(run, controls_pending=pending)
+            case ClearApprovals():
+                return replace(
+                    run, approvals_after_sign_off_id=store.max_sign_off_id(conn, run.run_id)
+                )
+            case WithdrawWaiver():
+                if run.pending_waiver_id is not None:
+                    store.decide_waiver(
+                        conn, run.pending_waiver_id, False, WITHDRAWN_BY, WITHDRAWN_COMMENT, now
+                    )
+                return replace(run, pending_waiver_id=None)
             case RecordEvent():
                 received = {"event_type": p.get("event_type"), "event_id": str(p.get("event_id"))}
                 return replace(run, received_events=[*run.received_events, received])
@@ -446,7 +482,7 @@ class PostgresTerminalRun:
         store.cancel_timers(conn, run.run_id, now)
         p = signal.payload
         if signal.kind == SignalKind.LIFECYCLE_ENDED:
-            self._write_ledger(conn, closed, entry, {}, now)
+            self._write_ledger(conn, closed, entry, {}, now)  # (key, emitted) not needed here
             return closed
 
         fields = dict(p.get("fields") or {})
@@ -484,7 +520,8 @@ class PostgresTerminalRun:
                 open_terminal = str(p.get("target_terminal"))
 
         bodies = self._notified_bodies(conn, closed, entry, now) if status == "pass" else []
-        record = self._write_ledger(conn, closed, entry, emitted, now)
+        record, emitted = self._write_ledger(conn, closed, entry, emitted, now)
+        profiles.on_close(conn, run.usecase_id, run.run_id, status, emitted)
         event_type = routing.outcome_event_type(run.terminal_id, status, root_cause, reentry)
         store.insert_event(
             conn,
@@ -555,6 +592,31 @@ class PostgresTerminalRun:
             )
         return bodies
 
+    def _store_artifacts(self, conn: Connection, run: RunRow, signal: Signal) -> RunRow:
+        """Agent results and escalation completion become artifact versions (005 FR-008, FR-009);
+        the run's inline artifacts are the latest versions' content."""
+        artifacts = dict(signal.payload.get("artifacts") or {})
+        entry = self.entry(run.terminal_id, run.spec_version)
+        if signal.actor_type == ActorType.AGENT:
+            producer = Producer("agent", signal.actor_id, attempt=run.auto_retries + 1)
+        else:
+            producer = Producer("person", signal.actor_id)
+        files = signal.payload.get("attachments") or {}
+        changes = {
+            aid: Change(
+                json_safe(rows),
+                tuple(
+                    NewAttachment(
+                        FileRef(f["content_hash"], int(f["size"]), f["media_type"]), f["name"]
+                    )
+                    for f in files.get(aid, ())
+                ),
+            )
+            for aid, rows in artifacts.items()
+        }
+        versions.record(conn, run.run_id, entry.spec, changes, producer, put_structured)
+        return replace(run, artifacts={**run.artifacts, **json_safe(artifacts)})
+
     def _write_ledger(
         self,
         conn: Connection,
@@ -562,11 +624,26 @@ class PostgresTerminalRun:
         entry: RegistryEntry,
         emitted: Mapping[str, Any],
         now: datetime,
-    ) -> str:
+    ) -> tuple[str, dict[str, Any]]:
+        """Version-2 record (005 contracts/record.md): artifacts by version and content hash,
+        profile version and package binding, chained to the use case's previous record."""
         store.load_usecase(conn, run.usecase_id, lock=True)  # one chain per use case (R-09)
         previous = store.latest_ledger_hash(conn, run.usecase_id)
+        if not store_versions_exist(conn, run.run_id) and run.artifacts:
+            # A run opened before feature 005: its inline artifacts become version 1.
+            changes = {aid: Change(rows) for aid, rows in run.artifacts.items()}
+            producer = Producer("agent", f"agent:{run.run_id}")
+            versions.record(conn, run.run_id, entry.spec, changes, producer, put_structured)
+        entries = versions.ledger_entries(conn, run.run_id, entry.spec)
+        emitted_refs = versions.enrich_emitted(json_safe(emitted), entries)
         waiver = store.load_waiver(conn, run.pending_waiver_id) if run.pending_waiver_id else None
-        content = build_record_content(
+
+        def record_of(terminal: str) -> Mapping[str, Any] | None:
+            if terminal == run.terminal_id:
+                return run.artifacts
+            return store.latest_closed_artifacts(conn, run.usecase_id, terminal) or None
+
+        content = build_v2(
             run_id=run.run_id,
             usecase_id=run.usecase_id,
             terminal_id=run.terminal_id,
@@ -580,18 +657,20 @@ class PostgresTerminalRun:
             final_status=str(run.final_status),
             decisions=json_safe(store.sign_offs(conn, run.run_id)),
             recommendation=run.recommendation,
-            artifacts=run.artifacts,
             control_results=run.control_results,
             clarifications=json_safe(store.clarifications(conn, run.run_id)),
             waiver=json_safe(waiver),
-            emitted=json_safe(emitted),
+            emitted=emitted_refs,
+            profile_version=run.profile_version,
+            artifacts=entries,
+            bound_to=json_safe(resolve_bound_to(entry.spec, record_of)),
         )
         key = spec_view.ledger_key(entry.spec, run.usecase_id, f"run-{run.run_number}")
         record = make_record(
             ledger_key=key, content=json_safe(content), previous_record_hash=previous
         )
         store.insert_ledger_record(conn, record, now)
-        return key
+        return key, emitted_refs
 
     def _schedule_review(
         self, conn: Connection, run: RunRow, entry: RegistryEntry, now: datetime
@@ -676,7 +755,7 @@ class PostgresTerminalRun:
                 store.insert_activity(
                     conn,
                     run_id,
-                    _STEP_BY_STATE[run.state],
+                    _STEP_BY_STATE.get(run.state, "controls"),
                     signal.actor_type.value,
                     signal.actor_id,
                     started,
@@ -685,6 +764,23 @@ class PostgresTerminalRun:
                     {"reason": str(exc)},
                 )
         return True
+
+    def _control_results(self, run: RunRow, spec: Mapping[str, Any]) -> list[dict[str, Any]]:
+        return [
+            {
+                "id": check.id,
+                "passed": result.passed,
+                "blocking": check.blocking,
+                "reason": result.reason,
+                "synthetic": result.synthetic,
+            }
+            for check in spec_view.controls(spec)
+            for result in (
+                self.policy.evaluate(
+                    check.expression, self._eval(run, check.id, run.auto_retries + 1)
+                ),
+            )
+        ]
 
     def scaled_lease(self) -> timedelta:
         return self.config.lease
@@ -715,23 +811,19 @@ class PostgresTerminalRun:
                 f"agent:{run.run_id}",
                 _agent_payload(result),
             )
+        if run.controls_pending:  # 005: re-check an edit's content before anyone decides
+            with span("policy", "controls", **ids_):
+                rechecked = self._control_results(run, spec)
+            return Signal(
+                SignalKind.CONTROLS_RECHECKED,
+                ActorType.ORCHESTRATOR,
+                ORCHESTRATOR_ID,
+                {"results": rechecked},
+            )
         if run.state == RunState.CHECKING:
             with span("policy", "controls", **ids_):
-                checks = [
-                    (check, self.policy.evaluate(check.expression, self._eval(run, check.id)))
-                    for check in spec_view.controls(spec)
-                ]
-            control_results = [
-                {
-                    "id": c.id,
-                    "passed": r.passed,
-                    "blocking": c.blocking,
-                    "reason": r.reason,
-                    "synthetic": r.synthetic,
-                }
-                for c, r in checks
-            ]
-            failed = [c.id for c, r in checks if not r.passed and c.blocking]
+                control_results = self._control_results(run, spec)
+            failed = [c["id"] for c in control_results if not c["passed"] and c["blocking"]]
             return Signal(
                 SignalKind.CONTROLS_RESULT,
                 ActorType.ORCHESTRATOR,
@@ -756,9 +848,9 @@ class PostgresTerminalRun:
             _review_payload(review),
         )
 
-    def _eval(self, run: RunRow, check_id: str) -> EvalContext:
+    def _eval(self, run: RunRow, check_id: str, attempt: int | None = None) -> EvalContext:
         # Evidence (run, terminals, intake, ...) is read by the policy engine's provider.
-        return EvalContext(run.terminal_id, check_id, run.run_id, run.usecase_id)
+        return EvalContext(run.terminal_id, check_id, run.run_id, run.usecase_id, attempt=attempt)
 
     def _build_context(
         self, conn: Connection, run: RunRow, spec: Mapping[str, Any]
@@ -842,5 +934,6 @@ def _detail(signal: Signal) -> dict[str, Any]:
         "event_type",
         "approve",
         "clarification_id",
+        "edited",
     )
     return json_dict({k: signal.payload[k] for k in keep if k in signal.payload})

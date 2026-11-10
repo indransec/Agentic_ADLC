@@ -23,6 +23,7 @@ DECISION_COLUMNS = {
     "fail_safe",
     "duration_ms",
     "decided_at",
+    "attempt",  # added by migration 0005 (the build attempt of a control decision)
 }
 PARAMETER_COLUMNS = {
     "run_id",

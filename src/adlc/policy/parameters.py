@@ -83,13 +83,15 @@ def resolve(
 
 
 class ProfileSource(Protocol):
-    def values(self, usecase_id: str) -> Mapping[str, Any]: ...
+    """Use-case values (005: the profile version the run opened with, when ``run_id`` is given)."""
+
+    def values(self, usecase_id: str, run_id: str | None = None) -> Mapping[str, Any]: ...
 
 
 class NoProfile:
     """Until feature 005 stores the use-case profile, there are no use-case values."""
 
-    def values(self, usecase_id: str) -> Mapping[str, Any]:
+    def values(self, usecase_id: str, run_id: str | None = None) -> Mapping[str, Any]:
         return {}
 
 
@@ -126,7 +128,9 @@ class ParameterService:
                     {"u": usecase_id},
                 ).scalar()
                 resolved = resolve(
-                    self.guardrails.get("guardrails", []), tier, self.profile.values(usecase_id)
+                    self.guardrails.get("guardrails", []),
+                    tier,
+                    _proposals(self.profile.values(usecase_id, run_id)),
                 )
                 parameters = {
                     name: {"value": value, "source": resolved.sources[name]}
@@ -151,3 +155,11 @@ class ParameterService:
                     {"r": run_id},
                 ).scalar_one()
         return {name: entry["value"] for name, entry in dict(row).items()}
+
+
+def _proposals(values: Mapping[str, Any]) -> dict[str, Any]:
+    """Profile values as guardrail proposals: a plain value, or a mapping's ``value`` (005)."""
+    return {
+        name: value["value"] if isinstance(value, Mapping) and "value" in value else value
+        for name, value in values.items()
+    }

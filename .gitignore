@@ -23,3 +23,5 @@ build/
 
 # Claude Code local settings (may hold personal or credential data)
 .claude/settings.local.json
+# 005 file store (local runs)
+data/files/

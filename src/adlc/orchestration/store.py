@@ -141,6 +141,9 @@ class RunRow:
     opened_at: datetime
     due_at: datetime | None
     closed_at: datetime | None
+    profile_version: int = 0  # 005: the profile version current when the run opened
+    approvals_after_sign_off_id: int | None = None  # 005: earlier approvals no longer count
+    controls_pending: bool = False  # 005: an edit's controls are not re-run yet
 
 
 def _run(row: Mapping[str, Any] | Any) -> RunRow:
@@ -158,7 +161,10 @@ def load_run(conn: Connection, run_id: str, *, lock: bool = False) -> RunRow | N
         "mode, trigger_event_id, trigger_event_type, trigger_context, rework_count, auto_retries, "
         "clarification_rounds, artifacts, control_results, recommendation, received_events, "
         "pending_waiver_id, escalation_trigger, escalation_destination, final_status, version, "
-        "lease_until, opened_at, due_at, closed_at FROM run.terminal_run WHERE run_id = :r"
+        "lease_until, opened_at, due_at, closed_at, profile_version, approvals_after_sign_off_id, "
+        "controls_pending "
+        "FROM run.terminal_run "
+        "WHERE run_id = :r"
     )
     if lock:
         # NO KEY UPDATE: serializes writers of the run, but lets rows that reference it (for
@@ -176,7 +182,10 @@ def runs_of_usecase(conn: Connection, usecase_id: str) -> list[RunRow]:
             "rework_count, auto_retries, clarification_rounds, artifacts, control_results, "
             "recommendation, received_events, pending_waiver_id, escalation_trigger, "
             "escalation_destination, final_status, version, lease_until, opened_at, due_at, "
-            "closed_at FROM run.terminal_run WHERE usecase_id = :u ORDER BY opened_at, run_id"
+            "closed_at, profile_version, approvals_after_sign_off_id, controls_pending "
+            "FROM run.terminal_run "
+            "WHERE usecase_id = :u "
+            "ORDER BY opened_at, run_id"
         ),
         {"u": usecase_id},
     ).mappings()
@@ -231,14 +240,16 @@ def insert_run(
     rework_count: int,
     now: datetime,
     due_at: datetime | None,
+    profile_version: int = 0,
 ) -> None:
     conn.execute(
         text(
             "INSERT INTO run.terminal_run (run_id, usecase_id, terminal_id, run_number, "
             "spec_version, state, mode, trigger_event_id, trigger_event_type, trigger_context, "
-            "rework_count, opened_at, due_at) VALUES (:run_id, :usecase_id, :terminal_id, "
-            ":run_number, :spec_version, 'opened', :mode, :trigger_event_id, "
-            ":trigger_event_type, CAST(:trigger_context AS jsonb), :rework_count, :now, :due_at)"
+            "rework_count, opened_at, due_at, profile_version) VALUES (:run_id, :usecase_id, "
+            ":terminal_id, :run_number, :spec_version, 'opened', :mode, :trigger_event_id, "
+            ":trigger_event_type, CAST(:trigger_context AS jsonb), :rework_count, :now, :due_at, "
+            ":profile_version)"
         ),
         {
             "run_id": run_id,
@@ -253,6 +264,7 @@ def insert_run(
             "rework_count": rework_count,
             "now": now,
             "due_at": due_at,
+            "profile_version": profile_version,
         },
     )
 
@@ -269,7 +281,8 @@ def save_run(conn: Connection, run: RunRow, now: datetime) -> None:
             "received_events = CAST(:received_events AS jsonb), "
             "pending_waiver_id = :pending_waiver_id, escalation_trigger = :escalation_trigger, "
             "escalation_destination = :escalation_destination, final_status = :final_status, "
-            "version = version + 1, lease_until = NULL, closed_at = :closed_at "
+            "version = version + 1, lease_until = NULL, closed_at = :closed_at, "
+            "approvals_after_sign_off_id = :approvals_after, controls_pending = :controls_pending "
             "WHERE run_id = :run_id"
         ),
         {
@@ -287,6 +300,8 @@ def save_run(conn: Connection, run: RunRow, now: datetime) -> None:
             "escalation_destination": run.escalation_destination,
             "final_status": run.final_status,
             "closed_at": run.closed_at if run.state == RunState.CLOSED else None,
+            "approvals_after": run.approvals_after_sign_off_id,
+            "controls_pending": run.controls_pending,
         },
     )
 
@@ -294,11 +309,16 @@ def save_run(conn: Connection, run: RunRow, now: datetime) -> None:
 def lease_next_automatic(
     conn: Connection, now: datetime, lease_until: datetime
 ) -> tuple[str, bool] | None:
-    """Lease one automatic run; ``True`` when its previous lease had expired (interrupted)."""
+    """Lease one automatic run; ``True`` when its previous lease had expired (interrupted).
+
+    005: a run waiting for people whose controls must be re-run after an edit is also due; an
+    expired lease there just means the re-check is done again (no interrupted step)."""
     row = conn.execute(
         text(
-            "SELECT run_id, lease_until FROM run.terminal_run "
-            "WHERE state IN ('opened', 'building', 'checking', 'reviewing') "
+            "SELECT run_id, CASE WHEN state IN ('opened', 'building', 'checking', 'reviewing') "
+            "THEN lease_until END FROM run.terminal_run "
+            "WHERE (state IN ('opened', 'building', 'checking', 'reviewing') "
+            "OR (state IN ('awaiting_sign_off', 'escalated') AND controls_pending)) "
             "AND (lease_until IS NULL OR lease_until < :now) "
             "ORDER BY opened_at, run_id LIMIT 1 FOR NO KEY UPDATE SKIP LOCKED"
         ),
@@ -415,7 +435,7 @@ def insert_sign_off(
 def sign_offs(conn: Connection, run_id: str) -> list[dict[str, Any]]:
     rows = conn.execute(
         text(
-            "SELECT role, person, decision, comment, root_cause, reason_differs, "
+            "SELECT sign_off_id, role, person, decision, comment, root_cause, reason_differs, "
             "target_terminal, fields, signed_at FROM run.sign_off WHERE run_id = :r "
             "ORDER BY sign_off_id"
         ),
@@ -802,3 +822,10 @@ def beat(conn: Connection, worker_id: str, now: datetime) -> None:
 def last_beat(conn: Connection) -> datetime | None:
     value = conn.execute(text("SELECT max(beat_at) FROM events.orchestrator_heartbeat")).scalar()
     return value if isinstance(value, datetime) else None
+
+
+def max_sign_off_id(conn: Connection, run_id: str) -> int | None:
+    value = conn.execute(
+        text("SELECT max(sign_off_id) FROM run.sign_off WHERE run_id = :r"), {"r": run_id}
+    ).scalar()
+    return None if value is None else int(value)

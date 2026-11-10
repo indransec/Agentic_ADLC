@@ -8,10 +8,11 @@ prefers real evidence and marks synthetic evidence, so decisions that read it ar
 import re
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from sqlalchemy import Connection, Engine
 
+from adlc.ledger.binding import resolve_bound_to
 from adlc.orchestration import durations, spec_view
 from adlc.orchestration import store as run_store
 from adlc.orchestration.interfaces import Clock, EvalContext
@@ -20,6 +21,9 @@ from adlc.policy import store as policy_store
 from adlc.policy.directory import Directory, UnavailableDirectory
 from adlc.policy.values import NOT_AVAILABLE, _NotAvailable
 from adlc.spec_toolkit.registry import SpecRegistry
+
+if TYPE_CHECKING:
+    from adlc.policy.parameters import ProfileSource
 
 
 @dataclass(frozen=True)
@@ -84,12 +88,14 @@ class SqlEvidenceProvider:
         *,
         directory: Directory | None = None,
         parameters: ParameterSource | None = None,
+        profile: "ProfileSource | None" = None,
     ) -> None:
         self.engine = engine
         self.registry = registry
         self.clock = clock
         self.directory = directory or UnavailableDirectory()
         self.parameters = parameters
+        self.profile = profile
 
     def get(self, source: str, context: EvalContext) -> Answer:
         variables = context.variables or {}
@@ -97,6 +103,12 @@ class SqlEvidenceProvider:
             return Evidence(variables[source], "caller")
         if source == "param":
             return NOT_AVAILABLE if self.parameters is None else self.parameters(context)
+        if source == "profile":
+            if self.profile is None or context.usecase_id is None:
+                return NOT_AVAILABLE
+            return Evidence(
+                dict(self.profile.values(context.usecase_id, context.run_id)), "profile"
+            )
         if source == "directory":
             names = self.directory.names()
             return NOT_AVAILABLE if names is None else Evidence(sorted(names), "directory")
@@ -197,22 +209,15 @@ class SqlEvidenceProvider:
     def _bound_to(
         self, conn: Connection, usecase_id: str, run: RunRow, ctx: EvalContext, depth: int
     ) -> Any:
-        """The spec's ``ledger.bound_to`` reference resolved in this use case (FR-008)."""
-        ledger = (spec_view.body(self._spec(run)).get("evidence") or {}).get("ledger") or {}
-        reference = ledger.get("bound_to") if isinstance(ledger, Mapping) else None
-        if not isinstance(reference, str) or depth > 2:
+        """The spec's ``ledger.bound_to`` resolved in this use case (FR-008; 005 binding.py)."""
+        if depth > 2:
             return None
-        root, *path = reference.split(".")
-        if not TERMINAL.match(root):
-            return None
-        value = self._terminal(conn, usecase_id, root, ctx, depth + 1)
-        for member in path:
-            if isinstance(value, list):
-                value = value[0] if value and isinstance(value[0], Mapping) else None
-            if not isinstance(value, Mapping) or member not in value:
-                return None
-            value = value[member]
-        return value
+
+        def record_of(terminal: str) -> Mapping[str, Any] | None:
+            value = self._terminal(conn, usecase_id, terminal, ctx, depth + 1)
+            return value if isinstance(value, Mapping) else None
+
+        return resolve_bound_to(self._spec(run), record_of)
 
 
 def _trigger(run: RunRow) -> dict[str, Any]:

@@ -199,3 +199,35 @@ def test_orchestrator_synthetic_dir_and_accounts(
     s = OrchestratorSettings()  # type: ignore[call-arg]
     assert s.synthetic_dir is None
     assert s.accounts_file == accounts
+
+
+# ---------------------------------------------------------------- 005 ledger settings
+
+
+def test_file_store_defaults(valid_env: dict[str, str]) -> None:
+    s = Settings()  # type: ignore[call-arg]
+    assert s.file_store_dir == Path("data/files")
+    assert s.attachment_max == 25_000_000
+    assert "application/pdf" in s.attachment_types
+    assert "application/vnd.ms-excel.sheet.macroEnabled.12" not in s.attachment_types
+    assert len(s.attachment_types) == 7
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"), [("25MB", 25_000_000), ("1MB", 1_000_000), ("500", 500), ("2kB", 2_000)]
+)
+def test_attachment_max_forms(
+    valid_env: dict[str, str], monkeypatch: pytest.MonkeyPatch, value: str, expected: int
+) -> None:
+    monkeypatch.setenv("ADLC_ATTACHMENT_MAX", value)
+    assert Settings().attachment_max == expected  # type: ignore[call-arg]
+
+
+def test_attachment_max_invalid(valid_env: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ADLC_ATTACHMENT_MAX", "lots")
+    assert "ADLC_ATTACHMENT_MAX" in _error()
+
+
+def test_attachment_types_list(valid_env: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ADLC_ATTACHMENT_TYPES", "application/pdf, text/plain")
+    assert Settings().attachment_types == frozenset({"application/pdf", "text/plain"})  # type: ignore[call-arg]
