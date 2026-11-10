@@ -8,7 +8,7 @@ prefers real evidence and marks synthetic evidence, so decisions that read it ar
 import re
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from sqlalchemy import Connection, Engine
 
@@ -21,6 +21,9 @@ from adlc.policy import store as policy_store
 from adlc.policy.directory import Directory, UnavailableDirectory
 from adlc.policy.values import NOT_AVAILABLE, _NotAvailable
 from adlc.spec_toolkit.registry import SpecRegistry
+
+if TYPE_CHECKING:
+    from adlc.policy.parameters import ProfileSource
 
 
 @dataclass(frozen=True)
@@ -85,12 +88,14 @@ class SqlEvidenceProvider:
         *,
         directory: Directory | None = None,
         parameters: ParameterSource | None = None,
+        profile: "ProfileSource | None" = None,
     ) -> None:
         self.engine = engine
         self.registry = registry
         self.clock = clock
         self.directory = directory or UnavailableDirectory()
         self.parameters = parameters
+        self.profile = profile
 
     def get(self, source: str, context: EvalContext) -> Answer:
         variables = context.variables or {}
@@ -98,6 +103,12 @@ class SqlEvidenceProvider:
             return Evidence(variables[source], "caller")
         if source == "param":
             return NOT_AVAILABLE if self.parameters is None else self.parameters(context)
+        if source == "profile":
+            if self.profile is None or context.usecase_id is None:
+                return NOT_AVAILABLE
+            return Evidence(
+                dict(self.profile.values(context.usecase_id, context.run_id)), "profile"
+            )
         if source == "directory":
             names = self.directory.names()
             return NOT_AVAILABLE if names is None else Evidence(sorted(names), "directory")

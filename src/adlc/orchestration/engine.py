@@ -18,6 +18,7 @@ from uuid import UUID
 from sqlalchemy import Connection, Engine
 
 from adlc.ledger import artifacts as versions
+from adlc.ledger import profile as profiles
 from adlc.ledger.artifacts import Change, NewAttachment, Producer
 from adlc.ledger.binding import resolve_bound_to
 from adlc.ledger.content import build_v2
@@ -195,6 +196,7 @@ class PostgresTerminalRun:
             rework_count=rework,
             now=now,
             due_at=None if expected is None else now + self.scaled(expected),
+            profile_version=profiles.current_version(conn, usecase_id)[0],
         )
         store.insert_transition(
             conn,
@@ -507,6 +509,7 @@ class PostgresTerminalRun:
 
         bodies = self._notified_bodies(conn, closed, entry, now) if status == "pass" else []
         record, emitted = self._write_ledger(conn, closed, entry, emitted, now)
+        profiles.on_close(conn, run.usecase_id, run.run_id, status, emitted)
         event_type = routing.outcome_event_type(run.terminal_id, status, root_cause, reentry)
         store.insert_event(
             conn,

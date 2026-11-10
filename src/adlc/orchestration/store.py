@@ -237,14 +237,16 @@ def insert_run(
     rework_count: int,
     now: datetime,
     due_at: datetime | None,
+    profile_version: int = 0,
 ) -> None:
     conn.execute(
         text(
             "INSERT INTO run.terminal_run (run_id, usecase_id, terminal_id, run_number, "
             "spec_version, state, mode, trigger_event_id, trigger_event_type, trigger_context, "
-            "rework_count, opened_at, due_at) VALUES (:run_id, :usecase_id, :terminal_id, "
-            ":run_number, :spec_version, 'opened', :mode, :trigger_event_id, "
-            ":trigger_event_type, CAST(:trigger_context AS jsonb), :rework_count, :now, :due_at)"
+            "rework_count, opened_at, due_at, profile_version) VALUES (:run_id, :usecase_id, "
+            ":terminal_id, :run_number, :spec_version, 'opened', :mode, :trigger_event_id, "
+            ":trigger_event_type, CAST(:trigger_context AS jsonb), :rework_count, :now, :due_at, "
+            ":profile_version)"
         ),
         {
             "run_id": run_id,
@@ -259,6 +261,7 @@ def insert_run(
             "rework_count": rework_count,
             "now": now,
             "due_at": due_at,
+            "profile_version": profile_version,
         },
     )
 
