@@ -341,7 +341,7 @@ are applied.
 - [X] T068 [P] Extend `tests/unit/test_no_hardcoded_values.py` so its terminal-id, event and role scan covers `src/adlc/spec_toolkit/**` (constitution I), and confirm it passes. Add `*/adlc/spec_toolkit/*` to `CORE_MODULES` in `Makefile` so the 80% core coverage gate includes routing and registry code (constitution IX).
 - [X] T069 [P] Write `src/adlc/spec_toolkit/README.md` (commands, rule levels, how to add a rule with its fixture, read interface) and update the root `README.md` command table (`spec-validate`, `spec-register`)
 - [X] T070 Run quickstart.md steps 1–6 on the live stack and record a "Validation run" section in `specs/002-terminal-spec-toolkit/quickstart.md`, including the `make spec-validate` timing (SC-001) and the registration timing (SC-005)
-- [ ] T071 Run `make check` on a clean clone of the branch; fix anything that fails
+- [X] T071 Run `make check` on a clean clone of the branch; fix anything that fails
 
 ---
 
