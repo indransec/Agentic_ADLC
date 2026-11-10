@@ -293,6 +293,15 @@ subscriber fail 5 times: the event is dead-lettered; fix it and re-queue: it is 
 - **FR-009**: Only a person holding one of the terminal's sign-off roles (including the
   applicable tier or mode rule) may decide pass, rework, exception or terminate. Terminate is
   limited further to the outcome's `set_by` roles when given.
+- **FR-009b**: The applicable sign-off rule MUST be the plain rule, or `by_tier[<use case risk
+  tier>]`, or `by_mode[<run mode>]`. The run mode is `retire` when the run was opened by a
+  `<terminal>.terminate` event, otherwise `evolve` (a generic rule, not terminal-specific).
+  A conditional `plus` approver whose condition holds is required **in addition to**
+  `min_approvers`. `min_approvers` applies to pass only; rework and terminate need one
+  authorised decision, and exception follows FR-012a.
+- **FR-009c**: Board approvals (`sign_off.board`) and external approvals (`sign_off.external`,
+  for example a CAB) are recorded as notifications in this feature and do not block closing.
+  In-run stage approvals (`sign_off.stage_approval`, T7) belong to the deployment feature (012).
 - **FR-009a**: A person allowed to terminate MAY terminate a run in `blocked`, `escalated` or
   `awaiting_sign_off`, with a reason.
 - **FR-010**: Rework MUST require a comment and a root cause from the terminal's
@@ -319,7 +328,8 @@ subscriber fail 5 times: the event is dead-lettered; fix it and re-queue: it is 
   ledger references, never artifacts.
 - **FR-015**: An event MUST open a run of every terminal whose pinned spec subscribes to it. A
   terminal whose pinned spec does not subscribe MUST NOT open, whatever the outcome route
-  says.
+  says, with one exception: a route to a `terminal_resolver` destination (for example
+  `owning_terminal` on T6 rework) opens the terminal named in the human decision.
 - **FR-016**: Special destinations MUST be handled generically by kind (feature 002
   `route_destinations.yaml`):
   - `human` keeps the run escalated for human completion;
@@ -335,24 +345,39 @@ subscriber fail 5 times: the event is dead-lettered; fix it and re-queue: it is 
 
 **Counters and timers**
 
+- **FR-018a**: Emitted values that are not artifacts (for example T0 `risk_tier`) MUST be
+  supplied in the pass decision by the deciding owner, so a person confirms them. They are
+  recorded on the outcome event and the ledger record; the use case's risk tier is set from
+  T0's emitted `risk_tier`.
+- **FR-018b**: A `continue` destination MUST start a review timer from the terminal's
+  `review_schedule` for the use case's risk tier (weekly 7d, fortnightly 14d, monthly 30d,
+  time-scaled). When it fires, the next review run of that terminal opens.
+- **FR-018c**: A terminate decision MUST close the use case lifecycle: every other active run
+  of that use case closes with `terminate` (reason "lifecycle terminated"), and their timers
+  are cancelled.
 - **FR-019**: The rework count per use case and terminal MUST increase by one for each rework
   routed to that terminal. Automated retries and clarifications MUST NOT change it.
 - **FR-020**: Opening a run with a rework count above the terminal's `max_rework_cycles` MUST
   put it in `escalated`.
 - **FR-021**: Timers MUST be taken from the pinned spec's timeline for the use case's risk tier
   (unknown tier before T0 closes: the `medium` values; T0 uses its own tier-independent
-  values). Passing `escalate_after` escalates the run in any open state, including `blocked`,
+  values). `escalate_after` is measured from the run's open. Passing it escalates the run in
+  any open state, including `blocked`; an escalated run does not escalate again,
   and passing `clarification_sla` on an open clarification escalates it. A configurable time scale MUST shorten all timers for the
   demo.
 - **FR-022**: Escalation MUST record its trigger: rework limit, timer, clarification limit,
-  clarification SLA, retry limit or budget.
+  clarification SLA, retry limit or budget. "Budget exceeded" is reported by the agent in its
+  result; budget limits themselves are defined with the agent runtime (006).
 
 **Clarifications**
 
 - **FR-023**: An agent or the reviewer MUST be able to raise a clarification round of one or
   more questions, with the addressed role and where it looked. The run waits in
   `awaiting_clarification`.
-- **FR-024**: Only a person holding the addressed role may answer. The answer resumes the same
+- **FR-023a**: When no role is named, the addressee MUST be the terminal's R role, else its
+  whole-terminal A role, else its first A role in spec order.
+- **FR-024**: Only a person holding the addressed role may answer, and only the first answer
+  counts; later answers to the same round are refused. The answer resumes the same
   run in the state it came from (`building` or `reviewing`) and is added to its context.
 - **FR-025**: Each round MUST be recorded with id `<run_id>/clar-<k>`, questions, addressee,
   answers, and asked and answered times. Rounds beyond `max_clarification_rounds` escalate the
@@ -378,6 +403,11 @@ subscriber fail 5 times: the event is dead-lettered; fix it and re-queue: it is 
   is recorded with person and time, and resets the attempt count.
 - **FR-030**: Run state MUST be durable. After a restart, every run continues from its last
   recorded state; overdue timers fire once.
+- **FR-030a**: An automatic step interrupted by a restart MUST be retried. Each retry counts
+  toward `max_auto_retries`, and beyond it the run escalates (trigger `retry_limit`).
+  Interrupted steps never count as rework.
+- **FR-030b**: A result that arrives after the run has moved on (for example an agent result
+  after a human terminated the run) MUST be discarded and recorded as stale.
 - **FR-031**: Routing a closed run's outcome to the next run's open MUST take at most 2 seconds
   under normal load (NFR-04).
 
@@ -461,5 +491,7 @@ subscriber fail 5 times: the event is dead-lettered; fix it and re-queue: it is 
   they are recorded as notifications.
 - Email and in-app notification delivery are feature 007; this feature records whom to notify.
 - The demo uses a time scale setting so that day-long timers run in seconds or minutes.
+- Because the waiver approver must differ from the proposer (FR-012a), the demo uses separate
+  accounts for the proposing owner and the risk owner, even when one presenter plays both.
 - One orchestrator process runs in the MVP. Restart safety is required; running several at
   once is post-MVP (SA §16).
