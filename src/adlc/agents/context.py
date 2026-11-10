@@ -192,3 +192,30 @@ def pack_tokens(messages: Sequence[Mapping[str, str]]) -> int:
     from adlc.agents.gateway import request_tokens  # noqa: PLC0415 - avoid an import cycle
 
     return request_tokens(messages)
+
+
+def resolve_ceiling(
+    conn: Connection, usecase_id: str, ceiling: str, data_classes: Mapping[str, Any]
+) -> str:
+    """The run's data ceiling: a data class, or a resolver read from the use case's evidence.
+
+    A resolver names a terminal artifact column (``source``); the ceiling is the highest-ranked
+    class found there in the use case's latest record. A missing record, an empty column or any
+    value that is not a known class leaves the resolver unresolved, which fails closed (R-16).
+    """
+    ranks = {str(d["id"]): int(d["rank"]) for d in data_classes.get("data_classes") or []}
+    if ceiling in ranks:
+        return ceiling
+    resolver = next(
+        (r for r in data_classes.get("resolvers") or [] if str(r.get("id")) == ceiling), None
+    )
+    source = None if resolver is None else resolver.get("source")
+    if not source:
+        return ceiling
+    terminal, artifact, column = str(source).split(".")
+    evidence = read_evidence(conn, usecase_id, [terminal])
+    rows = ((evidence.get(terminal) or {}).get("artifacts") or {}).get(artifact) or {}
+    values = [r.get(column) for r in rows.get("rows") or [] if isinstance(r, Mapping)]
+    if not values or any(v not in ranks for v in values):
+        return ceiling
+    return max((str(v) for v in values), key=lambda v: ranks[v])

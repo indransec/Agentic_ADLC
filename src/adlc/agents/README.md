@@ -195,7 +195,14 @@ level reached. Alerts never stop runs.
 
 No runtime code changes.
 
-## Known gap
+## Data ceilings
 
-T7's data ceiling is the resolver `per_T2_prod_design`. Until resolvers are implemented, it counts
-as above every approval, so a model review of T7 fails closed (`reviewer_failed`).
+A terminal's `authorities.data_access.max_class` is either a data class or a resolver.
+
+- **Resolvers.** A resolver in `data_classes.yaml` names a `source` artifact column, for example
+  `per_T2_prod_design` takes `T2.data_strategy.classification`. The ceiling is then the
+  highest-ranked class in that column of the use case's latest record.
+- **Fail closed.** If the record is missing, the column is empty, or any value is not a known
+  class, the resolver stays unresolved. It then counts as above every approval, so no model
+  qualifies.
+- **Validation.** Rule V-31 checks that the source is a declared artifact column.

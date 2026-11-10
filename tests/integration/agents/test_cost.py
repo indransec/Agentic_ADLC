@@ -47,28 +47,23 @@ def priced(orch_template: PlatformDatabase) -> Any:
 
 
 def test_every_call_of_a_full_walk_is_recorded(priced: Any) -> None:
-    """SC-001: one complete call record per gateway request over the walk.
-
-    T7's data ceiling is the resolver ``per_T2_prod_design``, which no model is approved for
-    until it is resolved (R-16: fails closed), so its model review escalates with
-    reviewer_failed and records only skipped entries."""
+    """SC-001: one complete call record per gateway request over T0 to T8 (T7's ceiling
+    resolves from T2's data strategy, so its model review runs)."""
     h, gateway = priced((1000, 200), [])
-    usecase, t7 = walk_to(h, "T7")
-    t7_run = h.run(t7)
-    assert (t7_run.state, t7_run.escalation_trigger) == ("escalated", "reviewer_failed")
+    usecase, t8 = walk_to(h, "T8")
+    h.pass_run(t8, {"risk_tier": "medium"})
     rows = h.sql(
         "SELECT provider, model, tokens_in, tokens_out, cost_usd, cost_known, outcome "
         "FROM run.model_call WHERE usecase_id = :u",
         u=usecase,
     )
-    requests = [r for r in rows if r[6] != "skipped"]
-    assert len(requests) == len(gateway.fake.calls) == 7  # T0 to T6, one review each
-    assert all(r[0] and r[1] and r[2] == 1000 and r[3] == 200 and r[5] for r in requests)
-    skipped = h.sql("SELECT DISTINCT reason FROM run.model_call WHERE run_id = :r", r=t7)
-    assert [s[0] for s in skipped] == ["data_class"]
+    assert len(rows) == len(gateway.fake.calls) == 9  # T0 to T8, one review each
+    assert all(
+        r[0] and r[1] and r[2] == 1000 and r[3] == 200 and r[5] and r[6] == "ok" for r in rows
+    )
     # Opus prices: 1000 x $4 + 200 x $20 per million tokens = $0.008 per call.
     total = usecase_cost(h.app, usecase)
-    assert total["calls"] == 7 and total["cost_usd"] == Decimal("0.008000") * 7
+    assert total["calls"] == 9 and total["cost_usd"] == Decimal("0.008000") * 9
     assert total["unknown_cost_calls"] == 0 and total["fallback_answers"] == 0
 
 

@@ -21,6 +21,7 @@ from adlc.agents.context import (
     data_block,
     prerequisite_terminals,
     read_evidence,
+    resolve_ceiling,
 )
 from adlc.agents.gateway import UNAVAILABLE, CallIds, ModelGateway, ModelRequest, request_tokens
 from adlc.agents.limits import Budget, Limits, limits_for
@@ -235,6 +236,11 @@ def data_ceiling(spec: Mapping[str, Any]) -> str:
     return str(access.get("max_class") or "")
 
 
+def _data_classes(deps: RuntimeDeps) -> Mapping[str, Any]:
+    entry = deps.registry.catalogue("data_classes")
+    return {} if entry is None else entry.content
+
+
 def playbook_texts(texts: SpecTexts, spec: Mapping[str, Any]) -> list[SpecText]:
     procedures = (spec_view.body(spec).get("playbooks") or {}).get("procedures") or []
     return [texts.playbook(str(p["id"]), str(p["version"])) for p in procedures]
@@ -260,6 +266,7 @@ class RuntimeAgentRunner:
             spec_version = "" if run is None else run.spec_version
             profile = version_values(conn, usecase_id, profile_version)
             evidence = read_evidence(conn, usecase_id, prerequisite_terminals(spec))
+            ceiling = resolve_ceiling(conn, usecase_id, data_ceiling(spec), _data_classes(deps))
         entry = deps.registry.entry(context.terminal_id, spec_version or None)
         prompt = (
             deps.texts.prompt(*agent.prompt)
@@ -306,7 +313,7 @@ class RuntimeAgentRunner:
                 outcome = run_loop(
                     deps,
                     tier=agent.model_tier,
-                    data_class=data_ceiling(spec),
+                    data_class=ceiling,
                     messages=builder_messages(
                         pack, prompt, spec, [a.id for a in spec_view.artifacts(spec) if required(a)]
                     ),

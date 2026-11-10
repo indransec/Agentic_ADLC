@@ -151,3 +151,42 @@ def v30_tool_permissions(ctx: Context) -> Iterator[Finding]:
                     f"/agents/{i}/tools/{j}/permission",
                     f"permission {permission} uses an unknown verb or MCP scope",
                 )
+
+
+@REGISTRY.rule(
+    "V-31", "L4", "error", "Data-class resolvers name an existing terminal artifact column"
+)
+def v31_resolver_sources(ctx: Context) -> Iterator[Finding]:
+    if not _usable(ctx, "data_classes"):
+        return
+    columns: dict[tuple[str, str], set[str]] = {}
+    for loaded in ctx.terminals():
+        t = spec(loaded)
+        terminal = str((t.get("metadata") or {}).get("id"))
+        for artifact in (t.get("evidence") or {}).get("artifacts") or []:
+            if isinstance(artifact, dict):
+                columns[(terminal, str(artifact.get("id")))] = {
+                    str(c) for c in artifact.get("columns") or []
+                }
+    resolvers = ctx.catalogue("data_classes").get("resolvers") or []
+    for i, resolver in enumerate(resolvers):
+        source = resolver.get("source") if isinstance(resolver, dict) else None
+        if source is None:
+            continue  # a resolver without a source stays unresolved (fails closed at run time)
+        terminal, artifact, column = str(source).split(".")
+        if not any(t == terminal for t, _ in columns):
+            yield ctx.finding(
+                "V-31",
+                _rel(ctx, "data_classes"),
+                f"/resolvers/{i}/source",
+                f"resolver source {source}: terminal {terminal} is not in this spec folder",
+                severity="info",
+            )
+            continue
+        if column not in columns.get((terminal, artifact), set()):
+            yield ctx.finding(
+                "V-31",
+                _rel(ctx, "data_classes"),
+                f"/resolvers/{i}/source",
+                f"resolver source {source} is not a declared artifact column",
+            )

@@ -320,7 +320,8 @@ without content.
   - whose provider has no key configured;
   - whose approved data class is below the run's data ceiling (the terminal's
     `authorities.data_access.max_class`), compared by rank in the data-class catalogue. A
-    ceiling that cannot be resolved (a resolver such as `per_T2_prod_design` with no value yet)
+    ceiling that is a resolver is read from the artifact column the resolver names (for example
+    `per_T2_prod_design` from `T2.data_strategy.classification`). One that cannot be resolved
     counts as the highest rank, so it fails closed;
   - whose context window is smaller than the request.
 

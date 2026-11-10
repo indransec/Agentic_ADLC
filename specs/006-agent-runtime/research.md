@@ -381,3 +381,17 @@ subagents. The build plan row is updated with ADR-02.
   `length`. The body is `contents` plus `generationConfig.max_output_tokens`. The key is not in
   the URL.
 - **Process environment:** LiteLLM did not add provider keys to the process environment.
+
+## R-18 Data-class resolvers (user, 2026-11-11)
+
+**Decision**:
+- **Source.** A resolver in `data_classes.yaml` may name a `source` artifact column (catalogue
+  1.1.0). `per_T2_prod_design` takes `T2.data_strategy.classification`.
+- **Resolution.** At run time the ceiling is the highest-ranked class in that column of the use
+  case's latest record of the terminal.
+- **Fail closed.** If the record is missing, the column is empty, or any value is not a known
+  class, the resolver stays unresolved and fails closed, as in R-16.
+- **Validation.** Rule V-31 checks that the source is a declared artifact column.
+
+**Rationale**: without it, a model review of T7 (ceiling `per_T2_prod_design`) could never run.
+The code stays generic, because the terminal, artifact and column come from the catalogue.

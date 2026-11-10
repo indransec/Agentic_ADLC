@@ -17,6 +17,7 @@ from adlc.agents.context import (
     data_block,
     prerequisite_terminals,
     read_evidence,
+    resolve_ceiling,
 )
 from adlc.agents.gateway import CallIds
 from adlc.agents.limits import limits_for
@@ -86,6 +87,10 @@ class RuntimeReviewer:
                 raise ValueError(f"spec {context.terminal_id}@{run.spec_version} not registered")
             spec = entry.spec
             evidence = read_evidence(conn, run.usecase_id, prerequisite_terminals(spec))
+            classes = deps.registry.catalogue("data_classes")
+            ceiling = resolve_ceiling(
+                conn, run.usecase_id, _ceiling(spec), {} if classes is None else classes.content
+            )
         reviewer_id = str((spec_view.body(spec).get("actors") or {}).get("reviewer"))
         agent = deps.agents.agent(reviewer_id)
         checklist_ref = (spec_view.body(spec).get("controls") or {}).get("checklist") or {}
@@ -151,7 +156,7 @@ class RuntimeReviewer:
                 outcome = run_loop(
                     deps,
                     tier=agent.model_tier,
-                    data_class=_ceiling(spec),
+                    data_class=ceiling,
                     messages=(
                         {"role": "system", "content": f"{prompt.body.strip()}\n\n{RUNTIME_RULES}"},
                         {"role": "user", "content": user},

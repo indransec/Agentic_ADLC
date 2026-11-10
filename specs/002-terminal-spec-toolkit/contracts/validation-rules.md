@@ -42,6 +42,7 @@ code list the same ids. Ids V-01 to V-10 keep their TDS Annex B.5 meaning.
 | V-28 | L4 | error | Every terminal's agent and reviewer are in the agents catalogue, and the agent's tier matches the spec (feature 006) | `agent t1-requirements-agent not registered` |
 | V-29 | L4 | error | Every agent prompt reference resolves to a prompt file written for that agent (feature 006) | `prompt common-terminal-reviewer@1.0.0 not found` |
 | V-30 | L4 | error | Agent tool permissions use a known permission verb, or an MCP scope from the MCP registry (feature 006) | `permission frobnicate:kb uses an unknown verb or MCP scope` |
+| V-31 | L4 | error | A data-class resolver's `source` names a declared terminal artifact column (feature 006) | `resolver source T2.data_plan.class is not a declared artifact column` |
 
 Registration-time refusals (database or register code, not validation findings):
 

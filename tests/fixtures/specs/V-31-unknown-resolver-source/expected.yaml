@@ -1,0 +1,1 @@
+- {rule_id: V-31, file: shared/data_classes.yaml, path_contains: /resolvers/0/source}
