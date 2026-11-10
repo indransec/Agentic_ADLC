@@ -9,7 +9,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Engine
 
@@ -28,6 +28,9 @@ from adlc.agents.output import Parsed, correction, parse_builder, validate_artif
 from adlc.agents.prompts import SpecText, SpecTexts
 from adlc.agents.store import insert_attempt
 from adlc.agents.telemetry import set_attributes
+
+if TYPE_CHECKING:
+    from adlc.agents.tools import ToolGate
 from adlc.config.settings import AgentLimit, AgentLimitOverride
 from adlc.ledger.profile import version_values
 from adlc.orchestration import spec_view
@@ -67,7 +70,7 @@ class RuntimeDeps:
     overrides: Mapping[str, AgentLimitOverride] = field(default_factory=dict)
     corrections: int = 2
     clock: Clock = field(default_factory=SystemClock)
-    tool_handler: Callable[[str, AgentDefinition], ToolHandler] | None = None  # US4
+    tools: "ToolGate | None" = None  # US4: tool calls are authorized first
 
 
 @dataclass
@@ -296,7 +299,9 @@ class RuntimeAgentRunner:
                     deps.limits, deps.overrides, agent.model_tier, context.terminal_id
                 )
                 handler = (
-                    None if deps.tool_handler is None else deps.tool_handler(context.run_id, agent)
+                    None
+                    if deps.tools is None or not agent.tools
+                    else deps.tools.handler(context.run_id, usecase_id, context.terminal_id, agent)
                 )
                 outcome = run_loop(
                     deps,

@@ -189,6 +189,7 @@ def harness(
     limits: Mapping[str, AgentLimit] = DEFAULT_AGENT_LIMITS,
     config: EngineConfig | None = None,
     reviewer_mode: str = "stub",
+    tools: Mapping[str, Any] | None = None,
 ) -> Iterator[Harness]:
     with fresh_database(db) as fresh:
         app = create_engine(fresh.app_url)
@@ -217,6 +218,7 @@ def harness(
             gateway=gateway,
             agents=agents,
             check_keys=False,
+            tools=tools,
         )
         orch = build_orchestrator(
             app,

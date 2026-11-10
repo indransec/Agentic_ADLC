@@ -250,7 +250,7 @@ P2).
 
 ### Tests first
 
-- [ ] T032 [P] [US4] Write failing integration tests in `tests/integration/agents/test_tool_gate.py`, using feature 004's policy engine and a `FakeTool`:
+- [X] T032 [P] [US4] Write failing integration tests in `tests/integration/agents/test_tool_gate.py`, using feature 004's policy engine and a `FakeTool`:
   - a T1 agent bound to `read:knowledge_base` is authorized, the tool runs, and its output reaches the next model request inside `<data source="tool:…">`;
   - a tool bound to `write:ledger.T0` is refused, the reason reaches the agent, the tool does not run, and a `run.policy_decision` row exists;
   - a call made with another run's id is refused (run scope);
@@ -258,7 +258,7 @@ P2).
 
 ### Implementation
 
-- [ ] T033 [US4] Implement `src/adlc/agents/tools.py`: `ToolGate`, `ToolOutput`, `ToolRefused`, `FakeTool`. Action and resource come from the binding's `permission`. Add the tool round to the loop in `runner.py`. This makes T032 pass.
+- [X] T033 [US4] Implement `src/adlc/agents/tools.py`: `ToolGate`, `ToolOutput`, `ToolRefused`, `FakeTool`. Action and resource come from the binding's `permission`. Add the tool round to the loop in `runner.py`. This makes T032 pass.
 
 ---
 

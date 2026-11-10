@@ -11,6 +11,7 @@ from adlc.agents.prompts import SpecTexts, SqlSpecTexts
 from adlc.agents.runner import RuntimeDeps
 from adlc.agents.startup import check_model_keys
 from adlc.agents.store import SqlCallRecorder
+from adlc.agents.tools import Tool, ToolGate
 from adlc.config.settings import DEFAULT_AGENT_LIMITS, AgentLimit, AgentLimitOverride
 from adlc.orchestration.interfaces import Clock, PolicyEngine
 from adlc.spec_toolkit.registry import SpecRegistry
@@ -45,6 +46,7 @@ def build_runtime(
     agents: AgentCatalogue | None = None,
     texts: SpecTexts | None = None,
     check_keys: bool = True,
+    tools: Mapping[str, Tool] | None = None,
 ) -> RuntimeDeps:
     models, registered_agents = load_catalogues(registry, profile)
     agents = agents or registered_agents
@@ -63,4 +65,5 @@ def build_runtime(
         overrides=dict(overrides or {}),
         corrections=corrections,
         clock=clock,
+        tools=ToolGate(policy, tools or {}),
     )
