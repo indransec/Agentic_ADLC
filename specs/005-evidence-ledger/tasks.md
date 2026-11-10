@@ -267,7 +267,7 @@ tasks come first in each phase and must fail before their implementation.
 - [X] T034 [P] Write `src/adlc/ledger/README.md` (store, versions, profile, record version 2, verification, views, how 007 calls the service, the S3 swap point, and the rule that 007 serves stored files as downloads only, never inline, FR-012) and add a "Backups" note to `deploy/README.md` (create it if absent): the `adlc-files` volume is backed up with the database
 - [X] T035 Run the 003 and 004 scenario suites with the ledger (SC-008), 10 times in a row, and record the result
 - [X] T036 Run `make check` and fix any failure, including the 80% core coverage gate that now includes `ledger/`
-- [ ] T037 Run the live-stack check (quickstart §5): rebuild with `make up`, run `scripts.demo_drive`, then `docker compose … exec orchestrator adlc-ledger verify --usecase <id>`. The result must be verified, and the verification run recorded.
+- [X] T037 Run the live-stack check (quickstart §5): rebuild with `make up`, run `scripts.demo_drive`, then `docker compose … exec orchestrator adlc-ledger verify --usecase <id>`. The result must be verified, and the verification run recorded.
 
 ---
 

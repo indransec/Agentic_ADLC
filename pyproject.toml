@@ -30,7 +30,7 @@ adlc-api = "adlc.api.__main__:main"
 adlc-account = "adlc.cli.account:app"
 adlc-spec = "adlc.spec_toolkit.cli:app"
 adlc-orchestrator = "adlc.orchestration.__main__:main"
-adlc-ledger = "adlc.ledger.cli:main"
+adlc-ledger = "adlc.ledger.cli:app"
 
 [build-system]
 requires = ["hatchling"]

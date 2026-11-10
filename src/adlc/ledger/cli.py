@@ -11,6 +11,7 @@ from typing import Annotated
 
 import typer
 
+SERVICE_NAME = "adlc-ledger"
 app = typer.Typer(add_completion=False, help="Evidence ledger tools.")
 
 
@@ -32,9 +33,11 @@ def verify_command(
     from adlc.db.engine import ConfigurationError, app_engine
     from adlc.ledger.storage import FileStore
     from adlc.ledger.verify import Verifier
+    from adlc.observability.tracing import setup_process_tracing
     from adlc.spec_toolkit.registry import SqlSpecRegistry
 
     settings = load_settings_or_exit(RuntimeSettings)
+    tracing = setup_process_tracing(SERVICE_NAME, settings)
     try:
         engine = app_engine(settings)
     except ConfigurationError as exc:
@@ -50,6 +53,7 @@ def verify_command(
         report = verifier.verify(usecase or "all", f"cli:{getpass.getuser()}")
     finally:
         engine.dispose()
+        tracing.shutdown()  # flush the adlc.ledger.verify span before exiting
     if as_json:
         typer.echo(json.dumps(report.as_dict(), indent=2, default=str))
     else:
