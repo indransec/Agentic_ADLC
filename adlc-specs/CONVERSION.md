@@ -12,6 +12,7 @@ TDS element and what happened to it, so the TDS can be updated and every judgeme
 - Every timeline gained `clarification_sla` (= `reminder_after`), `max_clarification_rounds: 2` and `max_auto_retries: 3` (SA §6.2, TDS Annex A.3 note).
 - Checklist item text moved to `checklists/t<n>.yaml`; specs list item ids only. Playbooks referenced by the TDS exist as versioned stubs in `playbooks/`.
 - An `exception` outcome without a route takes the pass route (TDS §3: "Next terminal").
+- Numeric artifact columns carry SA Annex A unit suffixes (`_count`, `_pct`, `_usd`, `_rate`); renames are listed per artifact below. This is a conversion convention, not a validation rule, because the dictionary does not type columns.
 - Mechanical outcome changes in every terminal (rows marked "converted" with no specific note): `set_by` is always a list of roles, `escalate.when` is CEL reading `timeline.*`, and free-text `when` wording is kept as `description`.
 - Numeric safety and assurance limits moved to `shared/guardrails.yaml` (spec FR-014); process-depth settings stay in `controls.tiering`.
 

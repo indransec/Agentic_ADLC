@@ -377,3 +377,10 @@ Then:     T025 predicates (grows during US3) → T026 views → T027 S-02 / V-18
    the CoE** (largest judgement area).
 3. US4 → US5: registry and lookups; feature 003 can start against `SpecRegistry`.
 4. US6 → Polish: gates, Compose, docs; then `/speckit-converge`.
+
+## Phase 10: Convergence
+
+- [X] T073 Change the level of V-01, V-05 and V-18 in `specs/002-terminal-spec-toolkit/contracts/validation-rules.md` from "L3/L4" to "L4" to match the registered rules per FR-009 (partial)
+- [X] T074 Add the `timeline` root (the spec's own timeline fields) to the name-resolution table in `specs/002-terminal-spec-toolkit/research.md` R-02 per FR-003 (partial)
+- [X] T075 Narrow the V-18 description in `contracts/validation-rules.md` to the checks implemented (spec-local id prefixes, agent id, checklist ref, ledger key, monitor events, guardrail and metric names) and record "numeric artifact columns carry Annex A unit suffixes" as a conversion convention in `adlc-specs/CONVERSION.md` per FR-008 (partial)
+- [ ] T076 Open `adlc-specs/terminals/T0.yaml` in VS Code with the Red Hat YAML extension, add an unknown field, confirm it is flagged, and record the result in `specs/002-terminal-spec-toolkit/quickstart.md` per SC-008 (partial; manual)

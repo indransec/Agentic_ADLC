@@ -31,6 +31,7 @@ Each identifier root in an expression must resolve to one of these:
 | `param` | guardrail parameter (`param.<name>`; replaces TDS `tier.<param>` for guardrailed values) |
 | `tier` | the spec's own `controls.tiering` key (process-depth settings) |
 | `profile` | use-case profile fields (artifacts selected, thresholds) for metric-iterating controls |
+| `timeline` | the spec's own `timeline` block (`timeline.max_rework_cycles`, `timeline.escalate_after`), so escalation rules read the configured limit instead of a literal |
 | `run` | run variables: `run.rework_count`, `run.age`, `run.now`, `run.risk_tier`, `run.usecase_id`, `run.run_version`, `run.mode` (TDS B.3; namespaced so they cannot collide) |
 | evidence source | a prefix from `evidence_sources.yaml` (`intake`, `env`, `change`, `template`, `dataset`, `trigger`, `release`, `telemetry`) |
 | function | a predicate from `predicates.yaml`, or a CEL built-in from an allow-list (`size`, `has`, `int`, `double`, `string`, `duration`, `timestamp`, `all`, `exists`, `exists_one`, `map`, `filter`) |
