@@ -1,0 +1,107 @@
+# yaml-language-server: $schema=../schema/terminal.schema.json
+# T0 – Intake & Qualification. Converted from TDS §4; changes recorded in CONVERSION.md.
+terminal:
+  metadata:
+    id: T0
+    name: Intake & Qualification
+    version: "1.0.0"
+    schema_version: "1.1.0"
+    purpose: Should we do this at all?
+    owner_role: adlc_coe
+    status: active
+  trigger:
+    on: [usecase.submitted, T9.reentry.T0, T1.rework.qualification]
+    mode: event
+  prerequisites:
+    - id: PRE-T0-01
+      evidence_ref: intake.free_text
+      condition: size(intake.free_text) >= 200
+      description: length >= 200 chars
+      on_missing: block
+    - id: PRE-T0-02
+      evidence_ref: intake.business_owner
+      condition: in_directory(intake.business_owner)
+      description: exists in directory
+      on_missing: block
+  actors:
+    agent: {id: t0-intake-agent, model_tier: reasoning}
+    subagents:
+      - {id: problem-framer, responsibility: "business problem, industry challenge, vertical/horizontal"}
+      - {id: suitability-assessor, responsibility: agentic vs RPA vs rules vs classic ML}
+      - {id: value-modeller, responsibility: value hypothesis and articulation}
+      - {id: risk-classifier, responsibility: risk tier and data classification}
+      - {id: raci-mapper, responsibility: map ADLC activities to org stakeholders}
+    reviewer: common-terminal-reviewer
+    human_roles:
+      - {role: business_owner, raci: A}
+      - {role: product_owner, raci: R}
+      - {role: solution_architect, raci: C}
+      - {role: rai_officer, raci: C}
+      - {role: adlc_coe, raci: I}
+  authorities:
+    allow: ["read:knowledge_base", "read:usecase_portfolio", "write:T0.artifacts"]
+    deny: ["write:any_other_terminal", "contact:external_parties"]
+    data_access: {max_class: internal}
+    tool_scopes: ["mcp:sharepoint:read", "mcp:confluence:read", "mcp:portfolio:read"]
+    sign_off: {roles: [business_owner], min_approvers: 1}
+    status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
+  playbooks:
+    procedures:
+      - {id: PB-T0-01, ref: playbooks/t0-intake.md, version: "1.0.0"}
+      - {id: PB-T0-02, ref: playbooks/agentic-suitability-rubric.md, version: "1.0.0"}
+      - {id: PB-T0-03, ref: playbooks/risk-classification.md, version: "1.0.0"}
+    grounding:
+      - {mcp: confluence, scope: /business-capabilities}
+      - {mcp: sharepoint, scope: "/strategy, /policies"}
+      - {mcp: portfolio, scope: existing agents (duplicate check)}
+  controls:
+    automated:
+      - id: CTL-T0-01
+        rule: all_required_artifacts_present()
+        description: all required artifacts present
+        severity: blocking
+      - id: CTL-T0-02
+        rule: all_rows_in(T0.risk_classification, "tier", ["low", "medium", "high"])
+        description: risk_tier in [low, medium, high]
+        severity: blocking
+      - id: CTL-T0-03
+        rule: column_mean(T0.agentic_suitability, "score_1_5") >= 3.0
+        description: suitability_score >= 3 of 5
+        severity: advisory
+      - id: CTL-T0-04
+        rule: portfolio.max_similarity < 0.85
+        description: no duplicate agent in portfolio (similarity < 0.85)
+        severity: advisory
+    checklist:
+      ref: checklists/t0.yaml
+      version: "1.0.0"
+      items: [CHK-T0-01, CHK-T0-02, CHK-T0-03, CHK-T0-04, CHK-T0-05, CHK-T0-06]
+  evidence:
+    artifacts:
+      - {id: intake_card, format: table, columns: [attribute, value, source, confidence], applicability: {mode: mandatory}}
+      - {id: business_problem, format: table, columns: [problem, industry_challenge, use_case_type, affected_users], applicability: {mode: mandatory}}
+      - {id: agentic_suitability, format: table, columns: [criterion, score_1_5, rationale], applicability: {mode: mandatory}}
+      - {id: value_hypothesis, format: table, columns: [value_driver, metric, baseline_estimate, target_estimate], applicability: {mode: mandatory}}
+      - {id: risk_classification, format: table, columns: [dimension, rating, rationale, tier], applicability: {mode: mandatory}}
+      - {id: data_access, format: table, columns: [data_source, classification, owner, access_status], applicability: {mode: mandatory}}
+      - {id: initial_rai_security, format: table, columns: [consideration, concern, initial_mitigation], applicability: {mode: mandatory}}
+      - {id: feasibility, format: table, columns: [dimension, assessment, blocker], applicability: {mode: mandatory}}
+      - {id: raci, format: table, columns: [activity, responsible, accountable, consulted, informed], applicability: {mode: mandatory}}
+    ledger: {key: "${usecase_id}/T0/${run_version}", immutable: true, retention: per_tier}
+  outcome_model:
+    pass: {route: T1, emits: [risk_tier, usecase_id]}
+    rework: {route: T0, requires: [owner_comment]}
+    exception: {route: T1, requires: [waiver_owner, expiry, compensating_control]}
+    escalate:
+      when: run.rework_count > timeline.max_rework_cycles || run.age > timeline.escalate_after
+      route: human_completion
+      description: rework_count > 3 or age > escalate_after
+    terminate: {set_by: [business_owner], requires: [reason], notify: [adlc_coe]}
+  timeline:
+    expected_duration: {low: 2d, medium: 3d, high: 5d}
+    reminder_after: 2d
+    escalate_after: 7d
+    max_rework_cycles: 3
+    clarification_sla: 2d
+    max_clarification_rounds: 2
+    max_auto_retries: 3

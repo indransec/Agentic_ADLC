@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../schema/checklist.schema.json
+# Reviewer checklist for T3 (TDS checklist item text). Scored by the common reviewer agent.
+checklist: t3
+version: "1.0.0"
+items:
+  - {id: CHK-T3-01, text: "Build reproducible from manifest"}
+  - {id: CHK-T3-02, text: "Design deviations documented and approved"}
+  - {id: CHK-T3-03, text: "Token budget enforced in code"}
+  - {id: CHK-T3-04, text: "Kill switch implemented"}
+  - {id: CHK-T3-05, text: "HITL hooks implemented per T2"}
+  - {id: CHK-T3-06, text: "Change log complete"}

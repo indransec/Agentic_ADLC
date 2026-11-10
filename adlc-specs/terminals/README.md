@@ -1,5 +1,3 @@
 # adlc-specs/terminals
 
-Placeholder created by feature 001-platform-foundation.
-
-Terminal specs T0–T9 (runtime YAML). Converted and validated in feature **002-terminal-spec-toolkit**.
+Terminal specs T0–T9 (runtime YAML), converted from TDS §4–§13 in feature 002. Validate with `make spec-validate`; see `../CONVERSION.md` for every change from the TDS.

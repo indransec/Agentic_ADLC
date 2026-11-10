@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../schema/checklist.schema.json
+# Reviewer checklist for T9 (TDS checklist item text). Scored by the common reviewer agent.
+checklist: t9
+version: "1.0.0"
+items:
+  - {id: CHK-T9-01, text: "Classification rationale stated"}
+  - {id: CHK-T9-02, text: "Revalidation scope covers affected requirements"}
+  - {id: CHK-T9-03, text: "Lessons learned recorded"}
+  - {id: CHK-T9-04, text: "Users and dependants notified"}

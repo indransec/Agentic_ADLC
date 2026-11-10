@@ -1,0 +1,155 @@
+# yaml-language-server: $schema=../schema/terminal.schema.json
+# T4 – Evaluation. Converted from TDS §8; changes recorded in CONVERSION.md.
+terminal:
+  metadata:
+    id: T4
+    name: Evaluation
+    version: "1.0.0"
+    schema_version: "1.1.0"
+    purpose: Does the agent behave as designed?
+    owner_role: adlc_coe
+    status: active
+  trigger:
+    on: [T3.pass, T3.exception]
+    mode: event
+  prerequisites:
+    - id: PRE-T4-01
+      evidence_ref: T3.candidate_package.sha256
+      condition: evidence_exists(T3.candidate_package.sha256)
+      description: exists
+      on_missing: block
+    - id: PRE-T4-02
+      evidence_ref: T1.eval_thresholds
+      condition: evidence_exists(T1.eval_thresholds)
+      description: exists
+      on_missing: block
+    - id: PRE-T4-03
+      evidence_ref: T1.rai_thresholds
+      condition: evidence_exists(T1.rai_thresholds)
+      description: exists
+      on_missing: block
+    - id: PRE-T4-04
+      evidence_ref: env.test
+      condition: hash_matches(env.test, T3.candidate_package)
+      description: deployed_hash == T3.candidate_package.sha256
+      on_missing: block
+    - id: PRE-T4-05
+      evidence_ref: dataset.golden
+      condition: approved_by(dataset.golden, "data_owner")
+      description: approved by data_owner
+      on_missing: block
+  actors:
+    agent: {id: t4-evaluation-agent, model_tier: reasoning}
+    subagents:
+      - {id: dataset-curator, responsibility: "golden set: synthetic from T1 scenarios + approved real-world samples"}
+      - {id: test-runner, responsibility: "functional, regression, multi-turn and trajectory tests"}
+      - {id: judge, responsibility: LLM-as-judge and deterministic scorers}
+      - {id: failure-mode-tester, responsibility: "T1 failure boundaries, tool failures, out-of-scope"}
+      - {id: cost-latency-profiler, responsibility: "tokens, cost per task, p50/p95 latency"}
+    reviewer: common-terminal-reviewer
+    human_roles:
+      - {role: qa_eval_lead, raci: A}
+      - {role: product_owner, raci: R}
+      - {role: data_owner, raci: C}
+      - {role: engineering_lead, raci: I}
+  authorities:
+    allow: ["read:ledger.T0-T3", "invoke:test_env_agent", "write:eval_store", "write:T4.artifacts"]
+    deny: ["write:repo", "write:candidate_package", "write:T1.thresholds", "deploy:any"]
+    data_access: {max_class: confidential_masked}
+    tool_scopes: ["mcp:harness:run", "mcp:eval_store:write", "mcp:dataset_registry:read"]
+    sign_off: {roles: [qa_eval_lead, product_owner], min_approvers: 2}
+    status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
+  playbooks:
+    procedures:
+      - {id: PB-T4-01, ref: playbooks/t4-evaluation.md, version: "1.0.0"}
+      - {id: PB-T4-02, ref: playbooks/golden-dataset.md, version: "1.0.0"}
+      - {id: PB-T4-03, ref: playbooks/judge-calibration.md, version: "1.0.0"}
+    grounding:
+      - {mcp: dataset_registry, scope: approved datasets}
+      - {mcp: eval_store, scope: prior eval runs for this use case}
+  controls:
+    automated:
+      - id: CTL-T4-01
+        rule: all_metrics_meet_thresholds(T4.quality_vs_threshold, T1.eval_thresholds)
+        description: each metric in T1.eval_thresholds meets operator and threshold
+        severity: blocking
+      - id: CTL-T4-02
+        rule: all_metrics_meet_thresholds(T4.rai_vs_threshold, T1.rai_thresholds)
+        description: each metric in T1.rai_thresholds meets operator and threshold
+        severity: blocking
+      - id: CTL-T4-03
+        rule: every_req_traced(T1.functional_requirements, T4.test_case_results, "case_id")
+        description: every req_id has >= 1 executed case
+        severity: blocking
+      - id: CTL-T4-04
+        rule: no_open_rows(T4.defect_log, "severity", ["critical"])
+        description: open_defects.critical == 0
+        severity: blocking
+      - id: CTL-T4-05
+        rule: column_min(T4.judge_calibration, "agreement_rate") >= param.judge_agreement_min
+        description: judge_human_agreement >= 0.85
+        severity: blocking
+      - id: CTL-T4-06
+        rule: cost_within_budget(T4.cost_latency, T2.token_budget)
+        description: cost_per_task <= T2.token_budget.max_cost
+        severity: blocking
+      - id: CTL-T4-07
+        rule: latency_within_nfr(T4.cost_latency, T1.non_functional_requirements)
+        description: p95_latency <= T1 latency NFR
+        severity: blocking
+      - id: CTL-T4-08
+        rule: all_rows_true(T4.failure_mode_results, "safe_fail")
+        description: failure-mode safe_fail_rate == 100%
+        severity: blocking
+      - id: CTL-T4-09
+        rule: size(T4.test_case_results) >= param.eval_cases_min
+        description: "executed cases meet the tier minimum (TDS tiering min_cases, now a guardrail)"
+        severity: blocking
+      - id: CTL-T4-10
+        rule: column_min(T4.judge_calibration, "sample_size_count") >= param.human_label_cases_min
+        description: "human-labelled calibration slice meets the tier minimum (TDS tiering human_label_slice, now a guardrail)"
+        severity: blocking
+    checklist:
+      ref: checklists/t4.yaml
+      version: "1.0.0"
+      items: [CHK-T4-01, CHK-T4-02, CHK-T4-03, CHK-T4-04, CHK-T4-05]
+    tiering:
+      high: {adversarial: full}
+      medium: {adversarial: standard}
+      low: {adversarial: smoke}
+  evidence:
+    artifacts:
+      - {id: golden_dataset_register, format: table, columns: [dataset_id, version, size_count, synthetic_pct, real_pct, approver], applicability: {mode: mandatory}}
+      - {id: test_case_results, format: table, columns: [case_id, req_id, expected, actual, score, result], applicability: {mode: mandatory}}
+      - {id: quality_vs_threshold, format: table, columns: [metric, threshold, actual, result], applicability: {mode: mandatory}}
+      - {id: rai_vs_threshold, format: table, columns: [metric, slice, threshold, actual, result], applicability: {mode: mandatory}}
+      - {id: cost_latency, format: table, columns: [measure, budget, actual, result], applicability: {mode: mandatory}}
+      - {id: failure_mode_results, format: table, columns: [scenario_id, scenario, observed, safe_fail], applicability: {mode: mandatory}}
+      - {id: defect_log, format: table, columns: [defect_id, severity, root_cause_terminal, status], applicability: {mode: mandatory}}
+      - {id: judge_calibration, format: table, columns: [judge, sample_size_count, agreement_rate], applicability: {mode: mandatory}}
+      - {id: regression_pack, format: reference, columns: [pack_id, version, case_count], applicability: {mode: mandatory}}
+    ledger: {key: "${usecase_id}/T4/${run_version}", immutable: true, bound_to: T3.candidate_package.sha256, retention: per_tier}
+  outcome_model:
+    pass: {route: T5, emits: [regression_pack, eval_baseline]}
+    rework:
+      route_by_root_cause: {implementation: T3, design: T2, requirement: T1}
+      requires: [defect_log]
+    exception:
+      when: no_critical_threshold_missed(T4.quality_vs_threshold, T4.rai_vs_threshold)
+      route: T5
+      requires: [waiver_owner, expiry, compensating_control]
+      recheck_at: [T6, T8]
+      description: only advisory or non-critical threshold missed
+    escalate:
+      when: run.rework_count > timeline.max_rework_cycles || judge_disputed(T4.judge_calibration)
+      route: human_completion
+      description: rework_count > 3 or judge dispute
+    terminate: {set_by: [business_owner], requires: [reason]}
+  timeline:
+    expected_duration: {low: 4d, medium: 7d, high: 12d}
+    reminder_after: 3d
+    escalate_after: 15d
+    max_rework_cycles: 3
+    clarification_sla: 3d
+    max_clarification_rounds: 2
+    max_auto_retries: 3

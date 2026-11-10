@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../schema/checklist.schema.json
+# Reviewer checklist for T2 (TDS checklist item text). Scored by the common reviewer agent.
+checklist: t2
+version: "1.0.0"
+items:
+  - {id: CHK-T2-01, text: "Pattern justified vs simpler alternative"}
+  - {id: CHK-T2-02, text: "Model fallback defined"}
+  - {id: CHK-T2-03, text: "Tool contracts have auth and error semantics"}
+  - {id: CHK-T2-04, text: "Memory retention matches data strategy"}
+  - {id: CHK-T2-05, text: "Environments poc/dev/test/prod defined"}
+  - {id: CHK-T2-06, text: "Kill switch designed"}

@@ -1,5 +1,3 @@
 # adlc-specs/playbooks
 
-Placeholder created by feature 001-platform-foundation.
-
-Versioned playbooks referenced by terminal specs. Added from feature **002** onward.
+Versioned playbooks referenced by `playbooks.procedures` in the terminal specs. Each file has YAML front matter (`id`, `version`, `title`, `owner_role`, `status`). Feature 002 created stubs; content is written with the terminal agents (features 008, 011, 012).

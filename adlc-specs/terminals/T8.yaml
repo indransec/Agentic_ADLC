@@ -1,0 +1,172 @@
+# yaml-language-server: $schema=../schema/terminal.schema.json
+# T8 – Operate & Observe. Converted from TDS §12; changes recorded in CONVERSION.md.
+terminal:
+  metadata:
+    id: T8
+    name: Operate & Observe
+    version: "1.0.0"
+    schema_version: "1.1.0"
+    purpose: Is the system operating as expected and can we trace its impact?
+    owner_role: adlc_coe
+    status: active
+  trigger:
+    on: [T7.pass]
+    mode: continuous
+    review_schedule: {high: weekly, medium: fortnightly, low: monthly}
+  prerequisites:
+    - id: PRE-T8-01
+      evidence_ref: T7.registry_entry
+      condition: is_live(T7.registry_entry)
+      description: status == live
+      on_missing: block
+    - id: PRE-T8-02
+      evidence_ref: T6.monitoring_readiness
+      condition: evidence_exists(T6.monitoring_readiness)
+      description: exists
+      on_missing: block
+    - id: PRE-T8-03
+      evidence_ref: T4.regression_pack
+      condition: is_frozen(T4.regression_pack)
+      description: frozen
+      on_missing: block
+  actors:
+    agent: {id: t8-operations-agent, model_tier: standard}
+    subagents:
+      - {id: trace-analyst, responsibility: "trajectory anomalies, loops, abandoned tasks"}
+      - {id: tool-behaviour-monitor, responsibility: "tool success, latency, unexpected tools, autonomy breaches"}
+      - {id: cost-monitor, responsibility: "tokens and cost per task vs budget, quotas"}
+      - {id: reliability-monitor, responsibility: "availability, error rate, p95 latency vs SLA"}
+      - {id: drift-evaluator, responsibility: "online evals on sampled traffic, scheduled regression replay"}
+      - {id: safety-monitor, responsibility: "injection attempts, policy violations, PII leakage, RAI metrics"}
+      - {id: kpi-analyst, responsibility: "business KPIs vs T1 targets, value vs T0 hypothesis"}
+      - {id: feedback-analyst, responsibility: "ratings, complaints, override and escalation rates"}
+    reviewer: common-terminal-reviewer
+    human_roles:
+      - {role: service_owner, raci: A}
+      - {role: sre, raci: R}
+      - {role: product_owner, raci: R, scope: kpis}
+      - {role: rai_officer, raci: C, scope: safety_signals}
+  authorities:
+    allow: ["read:telemetry", "read:traces_masked", "run:online_eval", "create:incident", "raise:lifecycle_event", "write:T8.artifacts"]
+    deny: ["write:repo", "write:config", "deploy:any"]
+    emergency:
+      allow: ["reduce:autonomy_level", "activate:kill_switch"]
+      when: telemetry.safety_breach_severity == "critical"
+      notify: [service_owner, security_officer]
+    data_access: {max_class: confidential_masked}
+    tool_scopes: ["mcp:observability:read", "mcp:eval_store:write", "mcp:servicenow:incident_create", "mcp:feedback:read", "mcp:kill_switch:invoke"]
+    sign_off: {roles: [service_owner], min_approvers: 1}
+    status_rights: {reviewer: [recommend], human: [pass, rework, exception], orchestrator: [escalate], agent: [raise_event]}
+  playbooks:
+    procedures:
+      - {id: PB-T8-01, ref: playbooks/t8-operations.md, version: "1.0.0"}
+      - {id: PB-T8-02, ref: playbooks/incident-response-agents.md, version: "1.0.0"}
+      - {id: PB-T8-03, ref: playbooks/drift-detection.md, version: "1.0.0"}
+    grounding:
+      - {mcp: observability, scope: "traces, metrics, logs"}
+      - {mcp: servicenow, scope: incidents and problems for this agent}
+  monitors:
+    - id: MON-01
+      signal: safety.policy_violation_rate
+      threshold: exceeds_threshold(telemetry.policy_violation_rate, T1.rai_thresholds, "policy_violation_rate")
+      raises: T8.event.safety_breach
+      description: "> T1.rai_thresholds"
+    - id: MON-02
+      signal: safety.pii_leak
+      threshold: telemetry.pii_leak_count > 0
+      raises: T8.event.safety_breach
+      description: "> 0"
+    - id: MON-03
+      signal: reliability.availability
+      threshold: below_nfr(telemetry.availability_pct, T1.non_functional_requirements, "availability")
+      raises: T8.event.incident
+      description: "< T1 SLA"
+    - id: MON-04
+      signal: eval.online_score
+      threshold: below_baseline(telemetry.online_eval_score, T4.eval_baseline)
+      raises: T8.event.drift
+      description: "< T4.eval_baseline - tolerance"
+    - id: MON-05
+      signal: cost.per_task
+      threshold: above_budget_for(telemetry.cost_per_task_usd, T2.token_budget, "7d")
+      raises: T8.event.cost_overrun
+      description: "> T2.token_budget.max_cost for 7d"
+    - id: MON-06
+      signal: kpi.value
+      threshold: kpi_below_target_for(T1.kpis, telemetry.kpi_values, 3)
+      raises: T8.event.kpi_shortfall
+      description: "< T1.kpis.target for N reviews (N = 3, proposed default)"
+    - id: MON-07
+      signal: autonomy.boundary_breach
+      threshold: telemetry.autonomy_breach_count > 0
+      raises: T8.event.safety_breach
+      description: "> 0"
+    - id: MON-08
+      signal: upstream.deprecation
+      threshold: telemetry.upstream_deprecation_notice
+      raises: T8.event.upstream_change
+      description: model or tool deprecation notice
+    - id: MON-09
+      signal: waiver.expiry
+      threshold: waiver_expiring_within("14d")
+      raises: T8.event.waiver_expiring
+      description: expiry within 14d
+  controls:
+    automated:
+      - id: CTL-T8-01
+        rule: all_monitors_reporting()
+        description: all monitors reporting (no silent signals)
+        severity: blocking
+      - id: CTL-T8-02
+        rule: regression_within_baseline(T8.operating_health_report, T4.eval_baseline)
+        description: regression replay pass_rate >= T4 baseline - tolerance
+        severity: blocking
+      - id: CTL-T8-03
+        rule: no_open_rows(T8.incident_problem_log, "severity", ["sev1", "sev2"])
+        description: no open sev1/sev2 older than SLA
+        severity: blocking
+      - id: CTL-T8-04
+        rule: no_expired_waivers()
+        description: no expired waivers
+        severity: blocking
+    checklist:
+      ref: checklists/t8.yaml
+      version: "1.0.0"
+      items: [CHK-T8-01, CHK-T8-02, CHK-T8-03, CHK-T8-04]
+  evidence:
+    artifacts:
+      - {id: operating_health_report, format: table, columns: [metric, threshold, actual, trend, status], applicability: {mode: mandatory}}
+      - {id: incident_problem_log, format: table, columns: [incident_id, severity, opened, closed, root_cause, linked_event], applicability: {mode: mandatory}}
+      - {id: drift_report, format: table, columns: [metric, slice, baseline, current, delta], applicability: {mode: mandatory}}
+      - {id: cost_report, format: table, columns: [period, task_count, token_count, cost_usd, budget_usd], applicability: {mode: mandatory}}
+      - {id: kpi_scorecard, format: table, columns: [kpi_id, baseline, target, actual, value_realised], applicability: {mode: mandatory}}
+      - {id: feedback_themes, format: table, columns: [theme, volume_count, sentiment, action], applicability: {mode: mandatory}}
+      - {id: raised_events, format: table, columns: [event_id, event_type, raised_at, routed_to, status], applicability: {mode: mandatory}}
+    ledger: {key: "${usecase_id}/T8/${review_period}", immutable: true, retention: per_tier}
+  outcome_model:
+    pass: {route: continue}
+    rework: {route: T8, description: review artifacts incomplete}
+    exception: {route: continue, requires: [waiver_owner, expiry], description: known issue tolerated}
+    escalate:
+      when: telemetry.safety_breach_severity == "critical" || repeated_sev1(T8.incident_problem_log)
+      route: human_completion
+      notify: [service_owner, security_officer, rai_officer]
+      description: critical safety breach or repeated sev1
+    terminate: {set_by: [business_owner], requires: [reason]}
+    event_routes:
+      T8.event.safety_breach: {route: T5, immediate: [reduce_autonomy_or_kill_switch]}
+      T8.event.incident: {route: itsm, then: T7.rollback, then_when: trigger.severity == "sev1"}
+      T8.event.drift: {route: T9}
+      T8.event.cost_overrun: {route: T9}
+      T8.event.kpi_shortfall: {route: T9, notify: [business_owner]}
+      T8.event.upstream_change: {route: T9}
+      T8.event.waiver_expiring: {route: owning_terminal_owner}
+  timeline:
+    expected_duration: continuous
+    review_due: review_schedule
+    reminder_after: 2d
+    escalate_after: 7d
+    max_rework_cycles: 3
+    clarification_sla: 2d
+    max_clarification_rounds: 2
+    max_auto_retries: 3

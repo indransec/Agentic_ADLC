@@ -1,0 +1,140 @@
+# yaml-language-server: $schema=../schema/terminal.schema.json
+# T3 – Build & Integration. Converted from TDS §7; changes recorded in CONVERSION.md.
+terminal:
+  metadata:
+    id: T3
+    name: Build & Integration
+    version: "1.0.0"
+    schema_version: "1.1.0"
+    purpose: Can we construct the agent reproducibly?
+    owner_role: adlc_coe
+    status: active
+  trigger:
+    on: [T2.pass, T2.exception, T9.reentry.T3, T4.rework.implementation, T5.rework.control_missing, T7.rollback, T7.rework.defect]
+    mode: event
+  prerequisites:
+    - id: PRE-T3-01
+      evidence_ref: T2.status
+      condition: T2.status in ["pass", "exception"]
+      description: in [pass, exception]
+      on_missing: block
+    - id: PRE-T3-02
+      evidence_ref: T2.tool_api_contracts
+      condition: evidence_exists(T2.tool_api_contracts)
+      description: exists
+      on_missing: block
+    - id: PRE-T3-03
+      evidence_ref: env.dev
+      condition: is_provisioned(env.dev)
+      description: provisioned
+      on_missing: block
+    - id: PRE-T3-04
+      evidence_ref: template.version
+      condition: is_pinned(template.version)
+      description: pinned
+      on_missing: block
+  actors:
+    agent: {id: t3-builder-agent, model_tier: coding}
+    subagents:
+      - {id: scaffolder, responsibility: repo and infra from golden template (IaC)}
+      - {id: agent-implementer, responsibility: agent graph and orchestration code}
+      - {id: prompt-engineer, responsibility: versioned prompts and instructions in prompt registry}
+      - {id: tool-integrator, responsibility: "tool wrappers, MCP bindings, A2A interfaces"}
+      - {id: memory-rag-builder, responsibility: context store and retrieval pipeline}
+      - {id: harness-integrator, responsibility: "harness, eval hooks, tracing, metric and RAI emission"}
+      - {id: pipeline-builder, responsibility: "CI/CD with tests, scans, packaging"}
+    reviewer: common-terminal-reviewer
+    human_roles:
+      - {role: engineering_lead, raci: A}
+      - {role: sre, raci: R}
+      - {role: solution_architect, raci: C}
+      - {role: qa_eval_lead, raci: I}
+  authorities:
+    allow: ["read:ledger.T0-T2", "write:repo.feature_branch", "open:pull_request", "run:ci_pipeline", "provision:dev_env"]
+    deny: ["merge:main", "write:secrets", "deploy:test", "deploy:prod", "write:T1.thresholds"]
+    data_access: {max_class: synthetic_or_masked}
+    tool_scopes: ["mcp:git:branch_write", "mcp:ci:run", "mcp:prompt_registry:write", "mcp:artifact_store:write"]
+    sign_off:
+      roles: [engineering_lead]
+      min_approvers: 1
+      plus:
+        - {role: solution_architect, when: any_design_deviation(T3.design_conformance)}
+    status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
+  playbooks:
+    procedures:
+      - {id: PB-T3-01, ref: playbooks/t3-build.md, version: "1.0.0"}
+      - {id: PB-T3-02, ref: playbooks/golden-template.md, version: "1.0.0"}
+      - {id: PB-T3-03, ref: playbooks/prompt-versioning.md, version: "1.0.0"}
+    grounding:
+      - {mcp: git, scope: "component catalogue, prior agents"}
+      - {mcp: confluence, scope: /engineering-standards}
+      - {mcp: mcp_registry, scope: approved servers}
+  controls:
+    automated:
+      - id: CTL-T3-01
+        rule: ci.status == "green"
+        description: ci.status == green
+        severity: blocking
+      - id: CTL-T3-02
+        rule: column_min(T3.test_results, "coverage_pct") >= param.unit_coverage_min
+        description: unit_coverage >= 80%
+        severity: blocking
+      - id: CTL-T3-03
+        rule: scan_clean(T3.security_build_checks, "sast", ["critical", "high"])
+        description: sast.critical == 0 and sast.high == 0
+        severity: blocking
+      - id: CTL-T3-04
+        rule: scan_clean(T3.security_build_checks, "secret_scan", ["critical", "high", "medium"])
+        description: secret_scan.findings == 0
+        severity: blocking
+      - id: CTL-T3-05
+        rule: every_req_traced(T1.functional_requirements, T3.traceability_matrix, "test_id")
+        description: every req_id traced to >= 1 test_id
+        severity: blocking
+      - id: CTL-T3-06
+        rule: all_rows_true(T3.observability_check, "emitting")
+        description: telemetry.traces and rai_metrics emitting in dev
+        severity: blocking
+      - id: CTL-T3-07
+        rule: all_rows_have(T3.build_manifest, ["version", "hash"])
+        description: all prompts and tools have registry version
+        severity: blocking
+      - id: CTL-T3-08
+        rule: sbom.generated && sbom.licences_approved
+        description: sbom generated and licences approved
+        severity: advisory
+    checklist:
+      ref: checklists/t3.yaml
+      version: "1.0.0"
+      items: [CHK-T3-01, CHK-T3-02, CHK-T3-03, CHK-T3-04, CHK-T3-05, CHK-T3-06]
+  evidence:
+    artifacts:
+      - {id: build_manifest, format: table, columns: [item, name, version, hash], applicability: {mode: mandatory}}
+      - {id: traceability_matrix, format: table, columns: [req_id, component, prompt_id, tool_id, test_id], applicability: {mode: mandatory}}
+      - {id: design_conformance, format: table, columns: [decision_id, implemented, deviation, approver], applicability: {mode: mandatory}}
+      - {id: test_results, format: table, columns: [suite, total_count, passed_count, failed_count, coverage_pct], applicability: {mode: mandatory}}
+      - {id: security_build_checks, format: table, columns: [scan, tool, critical_count, high_count, medium_count, status], applicability: {mode: mandatory}}
+      - {id: observability_check, format: table, columns: [signal, emitting, sample_trace_id], applicability: {mode: mandatory}}
+      - {id: config_register, format: table, columns: [config_key, environment, value_ref, autonomy_related], applicability: {mode: mandatory}}
+      - {id: change_log, format: table, columns: [change_id, description, req_id, pr_link], applicability: {mode: mandatory}}
+      - {id: candidate_package, format: reference, columns: [package_uri, sha256], applicability: {mode: mandatory}}
+    ledger: {key: "${usecase_id}/T3/${run_version}", immutable: true, retention: per_tier}
+  outcome_model:
+    pass: {route: T4, emits: [candidate_package.sha256, build_manifest]}
+    rework:
+      route_by_root_cause: {implementation: T3, design: T2}
+      requires: [owner_comment]
+    exception: {route: T4, requires: [waiver_owner, expiry, compensating_control], recheck_at: [T6]}
+    escalate:
+      when: run.rework_count > timeline.max_rework_cycles || run.age > timeline.escalate_after
+      route: human_completion
+      description: rework_count > 3 or age > escalate_after
+    terminate: {set_by: [business_owner], requires: [reason]}
+  timeline:
+    expected_duration: {low: 5d, medium: 10d, high: 15d}
+    reminder_after: 5d
+    escalate_after: 20d
+    max_rework_cycles: 3
+    clarification_sla: 5d
+    max_clarification_rounds: 2
+    max_auto_retries: 3

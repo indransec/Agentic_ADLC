@@ -1,0 +1,154 @@
+# yaml-language-server: $schema=../schema/terminal.schema.json
+# T5 – Trust, Risk & Assurance. Converted from TDS §9; changes recorded in CONVERSION.md.
+terminal:
+  metadata:
+    id: T5
+    name: Trust, Risk & Assurance
+    version: "1.0.0"
+    schema_version: "1.1.0"
+    purpose: Is the agentic system safe and compliant for release?
+    owner_role: adlc_coe
+    status: active
+  trigger:
+    on: [T4.pass, T4.exception, T8.event.safety_breach]
+    mode: event
+  prerequisites:
+    - id: PRE-T5-01
+      evidence_ref: T4.status
+      condition: T4.status in ["pass", "exception"]
+      description: in [pass, exception]
+      on_missing: block
+    - id: PRE-T5-02
+      evidence_ref: T4.rai_vs_threshold
+      condition: evidence_exists(T4.rai_vs_threshold)
+      description: exists
+      on_missing: block
+    - id: PRE-T5-03
+      evidence_ref: T2.security_architecture
+      condition: evidence_exists(T2.security_architecture)
+      description: exists
+      on_missing: block
+    - id: PRE-T5-04
+      evidence_ref: T2.data_strategy
+      condition: evidence_exists(T2.data_strategy)
+      description: exists
+      on_missing: block
+    - id: PRE-T5-05
+      evidence_ref: env.test
+      condition: hash_matches(env.test, T3.candidate_package)
+      description: deployed_hash == T3.candidate_package.sha256
+      on_missing: block
+  actors:
+    agent: {id: t5-assurance-agent, model_tier: reasoning}
+    subagents:
+      - {id: security-tester, responsibility: "prompt injection (direct/indirect), jailbreak, tool abuse, exfiltration; OWASP LLM Top 10"}
+      - {id: access-verifier, responsibility: "agent identity least privilege, tool scopes, secrets, user authz passthrough"}
+      - {id: privacy-assessor, responsibility: "PII/PHI in prompts, logs, memory, outputs; retention and residency"}
+      - {id: regulatory-mapper, responsibility: map controls to applicable regulations and internal policy}
+      - {id: rai-assurer, responsibility: "RAI evidence, transparency, human oversight, contestability"}
+      - {id: resilience-tester, responsibility: "safe-fail, fallback to human, kill switch, degradation"}
+    reviewer: common-terminal-reviewer
+    human_roles:
+      - {role: security_officer, raci: A}
+      - {role: privacy_officer, raci: R}
+      - {role: rai_officer, raci: R}
+      - {role: compliance_officer, raci: R}
+      - {role: risk_owner, raci: A, scope: residual_risk_acceptance}
+  authorities:
+    allow: ["read:ledger.T0-T4", "invoke:test_env_agent", "run:security_tests", "write:T5.artifacts"]
+    deny: ["write:repo", "write:candidate_package", "accept:residual_risk", "deploy:any"]
+    data_access: {max_class: confidential_masked}
+    tool_scopes: ["mcp:redteam_harness:run", "mcp:iam:read", "mcp:dlp_scanner:run", "mcp:control_library:read", "mcp:grc:write"]
+    sign_off:
+      by_tier:
+        low: {roles: [security_officer], min_approvers: 1}
+        medium: {roles: [security_officer, privacy_officer], min_approvers: 2}
+        high: {roles: [security_officer, privacy_officer, rai_officer, compliance_officer], min_approvers: 4, board: rai_board}
+    status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
+  playbooks:
+    procedures:
+      - {id: PB-T5-01, ref: playbooks/t5-assurance.md, version: "1.0.0"}
+      - {id: PB-T5-02, ref: playbooks/llm-red-team.md, version: "1.0.0"}
+      - {id: PB-T5-03, ref: playbooks/privacy-impact-assessment.md, version: "1.0.0"}
+      - {id: PB-T5-04, ref: playbooks/regulatory-mapping.md, version: "1.0.0"}
+    grounding:
+      - {mcp: control_library, scope: security and RAI controls}
+      - {mcp: sharepoint, scope: "/policies/security, /policies/privacy, /policies/rai"}
+      - {mcp: grc, scope: prior assurance reports}
+  controls:
+    automated:
+      - id: CTL-T5-01
+        rule: redteam.injection_success_rate <= param.injection_success_max
+        description: injection_success_rate <= tier.max_injection_success
+        severity: blocking
+      - id: CTL-T5-02
+        rule: redteam.jailbreak_success_rate <= param.jailbreak_success_max
+        description: jailbreak_success_rate <= tier.max_jailbreak_success
+        severity: blocking
+      - id: CTL-T5-03
+        rule: dlp.pii_leak_count == 0
+        description: pii_leak_findings == 0
+        severity: blocking
+      - id: CTL-T5-04
+        rule: permissions_subset(T5.access_control_matrix, T2.security_architecture)
+        description: agent identity permissions subset of T2 design
+        severity: blocking
+      - id: CTL-T5-05
+        rule: scenario_passed(T5.resilience_verification, "kill_switch")
+        description: kill_switch_test == pass
+        severity: blocking
+      - id: CTL-T5-06
+        rule: no_unmitigated_critical(T5.threat_model_results)
+        description: findings.critical.unmitigated == 0
+        severity: blocking
+      - id: CTL-T5-07
+        rule: all_rows_have(T5.residual_risk_register, ["risk_owner", "decision"])
+        description: every residual risk has risk_owner and decision
+        severity: blocking
+    checklist:
+      ref: checklists/t5.yaml
+      version: "1.0.0"
+      items: [CHK-T5-01, CHK-T5-02, CHK-T5-03, CHK-T5-04, CHK-T5-05]
+    tiering:
+      high: {red_team: full_manual_plus_automated, pia: full}
+      medium: {red_team: automated_plus_sample_manual, pia: standard}
+      low: {red_team: automated_smoke, pia: screening}
+  evidence:
+    artifacts:
+      - {id: threat_model_results, format: table, columns: [threat_id, threat, test, result, residual_risk], applicability: {mode: mandatory}}
+      - {id: security_control_evidence, format: table, columns: [control_id, implemented, evidence_link], applicability: {mode: mandatory}}
+      - {id: access_control_matrix, format: table, columns: [identity, resource, permission, justification], applicability: {mode: mandatory}}
+      - {id: privacy_assessment, format: table, columns: [data_element, data_class, masking, retention, lawful_basis], applicability: {mode: mandatory}}
+      - {id: regulatory_map, format: table, columns: [regulation, clause, control_id, status], applicability: {mode: mandatory}}
+      - {id: rai_assurance, format: table, columns: [rai_metric, t4_actual, threshold, accepted], applicability: {mode: mandatory}}
+      - {id: resilience_verification, format: table, columns: [scenario, expected_fallback, observed, result], applicability: {mode: mandatory}}
+      - {id: residual_risk_register, format: table, columns: [risk_id, risk, rating, risk_owner, decision, review_date], applicability: {mode: mandatory}}
+      - {id: assurance_attestation, format: signed_record, columns: [role, decision, date], applicability: {mode: mandatory}}
+    ledger: {key: "${usecase_id}/T5/${run_version}", immutable: true, bound_to: T3.candidate_package.sha256, retention: per_tier}
+  outcome_model:
+    pass: {route: T6, emits: [assurance_attestation, residual_risk_register]}
+    rework:
+      route_by_root_cause: {control_missing: T3, architecture: T2}
+      requires: [findings]
+    exception:
+      set_by: [risk_owner]
+      route: T6
+      requires: [risk_acceptance, expiry, compensating_control]
+      recheck_at: [T6, T8]
+    escalate:
+      when: run.rework_count > timeline.max_rework_cycles || assurance_disagreement(T5.assurance_attestation)
+      route: rai_board
+      description: rework_count > 3 or assurance functions disagree
+    terminate:
+      set_by: [business_owner, security_officer]
+      when: unacceptable_residual_risk(T5.residual_risk_register)
+      requires: [reason]
+      description: unacceptable residual risk
+  timeline:
+    expected_duration: {low: 3d, medium: 8d, high: 15d}
+    reminder_after: 3d
+    escalate_after: 20d
+    max_rework_cycles: 3
+    clarification_sla: 3d
+    max_clarification_rounds: 2
+    max_auto_retries: 3

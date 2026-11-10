@@ -172,8 +172,8 @@ and CI). L4 rules need the catalogues, and registration needs validated specs.
 
 ### Tests for US3 (write first) ⚠️
 
-- [ ] T041 [P] [US3] Write `tests/unit/spec_toolkit/test_repository_specs.py`: validating `adlc-specs/` (no baseline) gives zero `error` findings; ten terminal files `T0`–`T9` exist; every control `rule` and prerequisite `condition` parses as CEL (SC-004); every spec has `status: active` and `schema_version: "1.1.0"`
-- [ ] T042 [P] [US3] Write `tests/unit/spec_toolkit/test_conversion_record.py`. For each terminal it parses `adlc-specs/CONVERSION.md` and asserts that every `PRE-`, `CTL-`, `CHK-` and `MON-` id, every artifact id, every trigger event and every outcome status from the TDS section appears in the record. Read the TDS ids from `docs/terminal-design-spec.md` with a regex over that terminal's YAML block (SC-003).
+- [X] T041 [P] [US3] Write `tests/unit/spec_toolkit/test_repository_specs.py`: validating `adlc-specs/` (no baseline) gives zero `error` findings; ten terminal files `T0`–`T9` exist; every control `rule` and prerequisite `condition` parses as CEL (SC-004); every spec has `status: active` and `schema_version: "1.1.0"`
+- [X] T042 [P] [US3] Write `tests/unit/spec_toolkit/test_conversion_record.py`. For each terminal it parses `adlc-specs/CONVERSION.md` and asserts that every `PRE-`, `CTL-`, `CHK-` and `MON-` id, every artifact id, every trigger event and every outcome status from the TDS section appears in the record. Read the TDS ids from `docs/terminal-design-spec.md` with a regex over that terminal's YAML block (SC-003).
 
 ### Implementation for US3
 
@@ -191,48 +191,48 @@ Every artifact gets `applicability`. Every timeline gets `clarification_sla` (= 
 `reminder_after`), `max_clarification_rounds: 2` and `max_auto_retries: 3`. Annex A renames
 are applied.
 
-- [ ] T043 [US3] Convert T0 (TDS §4) to `adlc-specs/terminals/T0.yaml`, with `checklists/t0.yaml` and stubs `playbooks/t0-intake.md`, `agentic-suitability-rubric.md` and `risk-classification.md`. Example conversions: `"length >= 200 chars"` → `size(intake.free_text) >= 200`; `"exists in directory"` → `in_directory(intake.business_owner)`; `exception` with no route → `route: T1` (TDS §3 default "next terminal").
-- [ ] T044 [US3] Convert T1 (TDS §5) to `adlc-specs/terminals/T1.yaml`. Its tiering moves to the guardrails `test_scenarios_min_count` and `rai_metric_classes_required`. CTL-T1-05 references `param`/`profile` autonomy limits. Rework routes: `requirement` → T1, `qualification` → T0.
-- [ ] T045 [US3] Convert T2 (TDS §6) to `adlc-specs/terminals/T2.yaml`. Keep threat-model depth and architecture board review in `controls.tiering`.
-- [ ] T046 [US3] Convert T3 (TDS §7) to `adlc-specs/terminals/T3.yaml`:
+- [X] T043 [US3] Convert T0 (TDS §4) to `adlc-specs/terminals/T0.yaml`, with `checklists/t0.yaml` and stubs `playbooks/t0-intake.md`, `agentic-suitability-rubric.md` and `risk-classification.md`. Example conversions: `"length >= 200 chars"` → `size(intake.free_text) >= 200`; `"exists in directory"` → `in_directory(intake.business_owner)`; `exception` with no route → `route: T1` (TDS §3 default "next terminal").
+- [X] T044 [US3] Convert T1 (TDS §5) to `adlc-specs/terminals/T1.yaml`. Its tiering moves to the guardrails `test_scenarios_min_count` and `rai_metric_classes_required`. CTL-T1-05 references `param`/`profile` autonomy limits. Rework routes: `requirement` → T1, `qualification` → T0.
+- [X] T045 [US3] Convert T2 (TDS §6) to `adlc-specs/terminals/T2.yaml`. Keep threat-model depth and architecture board review in `controls.tiering`.
+- [X] T046 [US3] Convert T3 (TDS §7) to `adlc-specs/terminals/T3.yaml`:
   - CTL-T3-02 → `unit_coverage_pct >= param.unit_coverage_min_pct`
   - `sign_off.plus` → `[{role: solution_architect, when: "any_design_deviation(T3.design_conformance)"}]`
   - `candidate_package` keeps the `sha256` column that T4–T7 bind to
-- [ ] T047 [US3] Convert T4 (TDS §8) to `adlc-specs/terminals/T4.yaml`:
+- [X] T047 [US3] Convert T4 (TDS §8) to `adlc-specs/terminals/T4.yaml`:
   - CTL-T4-05 → `judge_agreement_rate >= param.judge_agreement_min`
   - Its tiering case counts move to guardrails; `adversarial` stays in tiering
   - `escalate.when` covers "judge dispute" through a predicate
   - Root-cause routes: implementation → T3, design → T2, requirement → T1
-- [ ] T048 [US3] Convert T5 (TDS §9) to `adlc-specs/terminals/T5.yaml`:
+- [X] T048 [US3] Convert T5 (TDS §9) to `adlc-specs/terminals/T5.yaml`:
   - `tier.max_injection_success` → `param.injection_success_max`, and the same for jailbreak
   - Keep tiered sign-off with `board: rai_board`
   - Exception `set_by: [risk_owner]`, `route: T6`, `recheck_at: [T6, T8]`
   - Escalate route `rai_board`
-- [ ] T049 [US3] Convert T6 (TDS §10) to `adlc-specs/terminals/T6.yaml`:
+- [X] T049 [US3] Convert T6 (TDS §10) to `adlc-specs/terminals/T6.yaml`:
   - `"T0..T5.status all in [...]"` → a predicate call over a terminal list
   - Rework `missing_evidence` → special destination `owning_terminal`
   - The exception example moves to `description`
   - Escalate → `release_board` with notify `[business_owner]`
-- [ ] T050 [US3] Convert T7 (TDS §11) to `adlc-specs/terminals/T7.yaml`:
+- [X] T050 [US3] Convert T7 (TDS §11) to `adlc-specs/terminals/T7.yaml`:
   - Keep `trigger.window`, `controls.auto_rollback_on` and `exception: {not_allowed: true}`
   - `expected_duration` becomes `{low: 1d, medium: 2d, high: 5d}`, with hypercare durations in tiering, as recorded in the conversion record
   - `escalate_after: window_end`
   - `max_rework_cycles: 2`
   - Orchestrator status right `rework_on_auto_rollback`
-- [ ] T051 [US3] Convert T8 (TDS §12) to `adlc-specs/terminals/T8.yaml`:
+- [X] T051 [US3] Convert T8 (TDS §12) to `adlc-specs/terminals/T8.yaml`:
   - `mode: continuous` with `review_schedule`
   - `monitors[].raises` and `event_routes` keys become `T8.event.<name>`
   - Free-text monitor thresholds become expressions or predicates
   - `timeline.reminder_after: 2d` and `escalate_after: 7d`, measured from `review_due` (research R-16)
   - Status right `agent: [raise_event]`
-- [ ] T052 [US3] Convert T9 (TDS §13) to `adlc-specs/terminals/T9.yaml`:
+- [X] T052 [US3] Convert T9 (TDS §13) to `adlc-specs/terminals/T9.yaml`:
   - `change_classes` with `reentry` and `path`
   - `retirement_procedure`
   - Artifacts `retirement_record` and `closure_report` become conditional (`run.mode == "retire"`)
   - `pass.route: "${T9.change_impact_assessment.reentry_terminal}"` with `alternatives: [lifecycle_closed]`
   - Sign-off per mode `evolve`/`retire`
   - `expected_duration` per research R-16, recorded in the conversion record
-- [ ] T053 [US3] Write `adlc-specs/schema/DICTIONARY-CHANGES.md` (every row of research R-16, final form) and finish `adlc-specs/CONVERSION.md` with an intro, per-terminal tables (TDS element, TDS location, result `kept|converted|renamed|moved|removed`, new location, reason) and a "proposed defaults" list (FR-017). Run T041 and T042 and make them pass.
+- [X] T053 [US3] Write `adlc-specs/schema/DICTIONARY-CHANGES.md` (every row of research R-16, final form) and finish `adlc-specs/CONVERSION.md` with an intro, per-terminal tables (TDS element, TDS location, result `kept|converted|renamed|moved|removed`, new location, reason) and a "proposed defaults" list (FR-017). Run T041 and T042 and make them pass.
 
 **Checkpoint**: the real `adlc-specs/` is clean, the conversion is recorded, and the playbooks and checklists exist (V-10).
 

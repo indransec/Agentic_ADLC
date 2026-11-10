@@ -1,0 +1,134 @@
+# yaml-language-server: $schema=../schema/terminal.schema.json
+# T7 – Deployment & Transition. Converted from TDS §11; changes recorded in CONVERSION.md.
+terminal:
+  metadata:
+    id: T7
+    name: Deployment & Transition
+    version: "1.0.0"
+    schema_version: "1.1.0"
+    purpose: Can the approved agentic system be safely deployed and handed over?
+    owner_role: adlc_coe
+    status: active
+  trigger:
+    on: [T6.pass, T6.exception]
+    mode: event
+    window: "${T6.release_authorisation.change_id}.window"
+  prerequisites:
+    - id: PRE-T7-01
+      evidence_ref: T6.release_authorisation
+      condition: is_signed(T6.release_authorisation)
+      description: signed
+      on_missing: block
+    - id: PRE-T7-02
+      evidence_ref: change.window
+      condition: within_window(change.window)
+      description: now within window
+      on_missing: block
+    - id: PRE-T7-03
+      evidence_ref: T6.deployment_package.sha256
+      condition: hash_matches(T6.deployment_package, T3.candidate_package)
+      description: == T3.candidate_package.sha256
+      on_missing: block
+  actors:
+    agent: {id: t7-deployment-agent, model_tier: standard}
+    subagents:
+      - {id: env-verifier, responsibility: "environment, config, secrets references, model and tool endpoints"}
+      - {id: rollout-controller, responsibility: execute shadow/canary/full per T6 rollout plan}
+      - {id: smoke-validator, responsibility: run smoke subset of T4 regression pack in prod}
+      - {id: hypercare-monitor, responsibility: elevated monitoring and incident triage during hypercare}
+      - {id: registrar, responsibility: agent registry and CMDB entries}
+    reviewer: common-terminal-reviewer
+    human_roles:
+      - {role: release_manager, raci: A}
+      - {role: sre, raci: R}
+      - {role: service_owner, raci: A, scope: handover_acceptance}
+      - {role: business_owner, raci: I}
+  authorities:
+    allow: ["run:cd_pipeline.with_hash_only", "set:traffic_split", "trigger:rollback", "write:agent_registry", "write:cmdb", "write:T7.artifacts"]
+    deny: ["write:repo", "write:config", "write:secrets", "deploy:unauthorised_hash", "deploy:outside_window", "promote:100pct_without_approval"]
+    data_access: {max_class: per_T2_prod_design}
+    tool_scopes: ["mcp:cd:deploy", "mcp:traffic_manager:write", "mcp:monitoring:read", "mcp:agent_registry:write", "mcp:cmdb:write", "mcp:servicenow:incident_create"]
+    sign_off:
+      roles: [release_manager, service_owner]
+      min_approvers: 2
+      stage_approval: {full_rollout: service_owner}
+    status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate, rework_on_auto_rollback]}
+  playbooks:
+    procedures:
+      - {id: PB-T7-01, ref: playbooks/t7-deployment.md, version: "1.0.0"}
+      - {id: PB-T7-02, ref: playbooks/rollback.md, version: "1.0.0"}
+      - {id: PB-T7-03, ref: playbooks/hypercare-handover.md, version: "1.0.0"}
+    grounding:
+      - {mcp: confluence, scope: "${T6.runbook}"}
+  controls:
+    automated:
+      - id: CTL-T7-01
+        rule: hash_matches(env.prod, T6.deployment_package)
+        description: deployed_hash == T6.deployment_package.sha256
+        severity: blocking
+      - id: CTL-T7-02
+        rule: all_rows_match(T7.env_config_verification, "result", "pass")
+        description: env_verification.all_green
+        severity: blocking
+      - id: CTL-T7-03
+        rule: within_baseline_tolerance(T7.stage_metrics, T4.eval_baseline, "shadow")
+        description: shadow quality within T4 baseline tolerance
+        severity: blocking
+        applies: [high]
+      - id: CTL-T7-04
+        rule: no_breach_in_stage(T7.stage_metrics, "canary")
+        description: no alert breach during canary soak
+        severity: blocking
+        applies: [high, medium]
+      - id: CTL-T7-05
+        rule: all_rows_match(T7.smoke_results, "result", "pass")
+        description: smoke_pass_rate == 100%
+        severity: blocking
+      - id: CTL-T7-06
+        rule: all_rows_have(T7.registry_entry, ["owner", "autonomy_level", "version"])
+        description: agent registered with owner, autonomy_level, version
+        severity: blocking
+      - id: CTL-T7-07
+        rule: no_open_rows(T7.hypercare_log, "severity", ["sev1", "sev2"])
+        description: "hypercare: no open sev1/sev2 at exit"
+        severity: blocking
+    auto_rollback_on: [CTL-T7-01, CTL-T7-03, CTL-T7-04, CTL-T7-05]
+    checklist:
+      ref: checklists/t7.yaml
+      version: "1.0.0"
+      items: [CHK-T7-01, CHK-T7-02, CHK-T7-03, CHK-T7-04]
+    tiering:
+      high: {canary_pct: 5, soak: 72h, hypercare: 14d}
+      medium: {canary_pct: 10, soak: 24h, hypercare: 7d}
+      low: {canary_pct: null, soak: 4h, hypercare: 3d}
+  evidence:
+    artifacts:
+      - {id: deployment_log, format: table, columns: [stage, start, end, traffic_pct, result], applicability: {mode: mandatory}}
+      - {id: env_config_verification, format: table, columns: [check, expected, actual, result], applicability: {mode: mandatory}}
+      - {id: stage_metrics, format: table, columns: [stage, metric, threshold, actual, result], applicability: {mode: mandatory}}
+      - {id: smoke_results, format: table, columns: [case_id, result], applicability: {mode: mandatory}}
+      - {id: hypercare_log, format: table, columns: [incident_id, severity, opened, closed, resolution], applicability: {mode: mandatory}}
+      - {id: registry_entry, format: reference, columns: [agent_id, version, owner, autonomy_level], applicability: {mode: mandatory}}
+      - {id: handover_acceptance, format: signed_record, columns: [role, decision, date], applicability: {mode: mandatory}}
+    ledger: {key: "${usecase_id}/T7/${run_version}", immutable: true, bound_to: T3.candidate_package.sha256, retention: per_tier}
+  outcome_model:
+    pass: {route: T8, emits: [registry_entry, prod_version]}
+    rework:
+      on: auto_rollback
+      route_by_root_cause: {defect: T3, readiness_gap: T6, environment: T7}
+      requires: [rollback_report]
+    exception: {not_allowed: true}
+    escalate:
+      when: rollback_failed(T7.deployment_log) || open_incident(T7.hypercare_log, ["sev1", "sev2"])
+      route: incident_bridge
+      notify: [service_owner]
+      description: rollback fails or sev1/sev2 incident
+    terminate: {set_by: [business_owner], requires: [reason]}
+  timeline:
+    expected_duration: {low: 1d, medium: 2d, high: 5d}
+    reminder_after: 1d
+    escalate_after: window_end
+    max_rework_cycles: 2
+    clarification_sla: 1d
+    max_clarification_rounds: 2
+    max_auto_retries: 3
