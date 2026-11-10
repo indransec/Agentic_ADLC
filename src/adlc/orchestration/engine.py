@@ -712,7 +712,7 @@ class PostgresTerminalRun:
             return Signal(
                 SignalKind.AGENT_RESULT,
                 ActorType.AGENT,
-                f"agent:{run.terminal_id}",
+                f"agent:{run.run_id}",
                 _agent_payload(result),
             )
         if run.state == RunState.CHECKING:
@@ -752,7 +752,7 @@ class PostgresTerminalRun:
         return Signal(
             SignalKind.REVIEW_RESULT,
             ActorType.REVIEWER,
-            f"reviewer:{run.terminal_id}",
+            f"reviewer:{run.run_id}",
             _review_payload(review),
         )
 

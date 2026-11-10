@@ -115,6 +115,7 @@ specs/004-policy-engine/
 src/adlc/policy/
 ├── __init__.py  README.md
 ├── engine.py          # CelPolicyEngine: evaluate, authorize, decision logging, spans
+├── factory.py         # build_policy_engine: wiring for a process (kept out of __init__ to avoid an import cycle)
 ├── compiler.py        # expression → compiled program cache; references via spec_toolkit.expressions
 ├── activation.py      # builds the CEL activation from evidence for the referenced namespaces
 ├── values.py          # JSON ↔ CEL values; numbers-in-text; durations; "not available" marker
@@ -132,12 +133,13 @@ src/adlc/policy/
     ├── evaluation.py  # thresholds, cost/latency, judge, scenarios, threats, assurance
     ├── operations.py  # rollout, incidents, monitors, telemetry, baselines, windows, hashes
     └── change.py      # reentry_consistent, class_at_least_if, classification_disputed, has_change_class
+scripts/make_synthetic.py   # generates data/synthetic/ (committed output)
 data/synthetic/
 ├── evidence.yaml      # synthetic env, ci, sbom, redteam, dlp, telemetry, change, template, dataset, release, portfolio, retirement
 └── artifacts/T0.yaml … T9.yaml   # control-passing artifacts for the stub agent
 db/migrations/versions/0004_policy.py
 tests/
-├── unit/policy/           # predicates (one test module per group), parameters, authorization, values, compiler
+├── unit/policy/           # predicates (one test module per group), parameters, authorization and its T0–T9 matrix, values, compiler
 ├── integration/policy/    # evidence provider, decision log, all-rules sweep, engine in orchestrator
 └── scenario/              # existing 003 scenarios now run with the real engine
 ```

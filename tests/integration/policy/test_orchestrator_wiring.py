@@ -28,3 +28,23 @@ def test_bad_artifact_retries_then_escalates(orch_template: PlatformDatabase) ->
         assert h.agent.calls["T1"] == 4
         reasons = [c["reason"] for c in run.control_results if not c["passed"]]
         assert reasons == ["T1.kpis row 1: baseline is not numeric ('n/a')"]
+
+
+def test_agent_actor_id_is_run_scoped(h: Harness) -> None:
+    """FR-016 (T055): the recorded agent id is the one authorize accepts for that run only."""
+    from adlc.orchestration.interfaces import EvalContext
+
+    usecase = h.submit()
+    run_id = h.active(usecase, "T0").run_id
+    actors = {
+        r[0]
+        for r in h.sql(
+            "SELECT actor_id FROM run.run_transition WHERE run_id = :r AND actor_type IN ('agent', 'reviewer')",
+            r=run_id,
+        )
+    }
+    assert actors == {f"agent:{run_id}", f"reviewer:{run_id}"}
+    ctx = EvalContext("T0", "authorize", run_id, usecase)
+    assert h.policy.authorize(f"agent:{run_id}", "write", "T0.artifacts", ctx)
+    other = EvalContext("T0", "authorize", f"{usecase}/T0/run-2", usecase)
+    assert not h.policy.authorize(f"agent:{run_id}", "write", "T0.artifacts", other)

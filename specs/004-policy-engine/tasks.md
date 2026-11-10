@@ -333,3 +333,10 @@ P2).
 3. **Platform**: Phase 7 switches the orchestrator to the real engine.
 4. **Remaining stories**: Phases 8–9, authorize and conditions.
 5. Run `make check` and commit at each checkpoint.
+
+---
+
+## Phase 11: Convergence
+
+- [X] T055 Change the orchestrator's agent and reviewer actor ids from `<kind>:<terminal>` to `<kind>:<run_id>` in `src/adlc/orchestration/engine.py`, and assert in a test that an agent can be authorized for its own run under its recorded id, per FR-016 (missing)
+- [X] T056 Record in `specs/004-policy-engine/plan.md` that wiring lives in `src/adlc/policy/factory.py` (not `__init__.py`, to avoid an import cycle with the predicate modules), that `scripts/make_synthetic.py` generates `data/synthetic/`, and that the authorization matrix runs as a unit test, per plan: project structure (unrequested)
