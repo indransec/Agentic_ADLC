@@ -68,7 +68,10 @@ Entering `escalated` also writes the outbox event `T<n>.escalate` (with the trig
 Every applied transition also: writes `run.run_transition` and `run.run_activity`, increments
 `version`, and cancels timers that no longer apply. `CloseRun` additionally writes the
 ledger record and the outbox event in the same transaction, cancels all timers and frees the
-active-run slot.
+active-run slot. When the route is `continue`, the close then starts a `review_due` timer
+(FR-018b). That timer is not a signal to this run: when it fires, the timer loop asks the
+router to open the next review run of the terminal. Any other timer that fires for a closed
+run is ignored.
 
 ## Properties (hypothesis, constitution III and IX)
 

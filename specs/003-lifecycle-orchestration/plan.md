@@ -131,6 +131,7 @@ src/adlc/orchestration/
 ├── outbox.py         # poller, retries, dead letters, re-queue, LISTEN/NOTIFY
 ├── timers.py         # timer loop (escalate_after, clarification_sla)
 ├── ledger.py         # baseline ledger record content + chained hash (005 extends)
+├── tracing.py        # spans adlc.<component>.<operation> with run attributes
 ├── service.py        # OrchestratorService: human and admin operations
 ├── worker.py         # run loop: poll outbox, advance runs, fire timers; heartbeat
 └── __main__.py       # `adlc-orchestrator` (run | health)

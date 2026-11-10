@@ -125,8 +125,11 @@
 - **Risk tier**: the use case tier once T0 has passed (emitted `risk_tier`, supplied in the pass
   decision, FR-018a), else `medium`.
 - **Continuous terminals** (FR-018b): a `continue` close starts a `review_due` timer from
-  `review_schedule` (weekly 7d, fortnightly 14d, monthly 30d). When it fires, the timer loop
-  opens the next review run of the terminal, triggered by the previous run's pass event.
+  `review_schedule` (weekly 7d, fortnightly 14d, monthly 30d). The timer is created by the
+  close itself, after `CancelAllTimers`, so it survives the close. It is not a signal to the
+  closed run: when it fires, the timer loop asks the router to open the next review run of that
+  terminal (trigger: the previous run's pass event). Every other timer on a closed run is
+  ignored.
 - **`escalate_after`** is measured from run open; an `escalated` run ignores the timer.
 
 ## R-08 Outbox, delivery, ordering, dead letters
@@ -173,10 +176,11 @@
 
 - **Decision**: `adlc-orchestrator run` loops: drain the outbox, then advance leased automatic
   runs, then fire due timers, then wait (notify or 1 s). Each loop writes
-  `events.orchestrator_heartbeat`. `adlc-orchestrator health` exits 0 if the heartbeat is under
-  30 s old; Compose uses it as the healthcheck (001 FR-003).
+  `events.orchestrator_heartbeat`. `adlc-orchestrator health` exits 0 if the heartbeat is younger
+  than `ADLC_HEARTBEAT_MAX_AGE` (default `30s`); Compose uses it as the healthcheck (001 FR-003).
 - Settings: `OrchestratorSettings(DatabaseSettings)` adds the app password, OTLP endpoint,
-  `ADLC_TIME_SCALE`, `ADLC_POLL_INTERVAL` (default `1s`) and `ADLC_LEASE` (default `5min`).
+  `ADLC_TIME_SCALE`, `ADLC_POLL_INTERVAL` (default `1s`), `ADLC_LEASE` (default `5min`),
+  `ADLC_HEARTBEAT_MAX_AGE` (default `30s`) and `ADLC_DEADLETTER_ROLE` (default `adlc_coe`).
 - **Tests** use `Worker.drain()`, which repeats outbox, advance and timers until nothing is
   left, so scenarios are deterministic.
 
@@ -186,9 +190,8 @@
   and roles) or the system. Rules:
   - **Decide**: the person holds a role in the applicable sign-off rule (FR-009b). A `plus`
     approver whose condition holds (policy interface) is required in addition to
-    `min_approvers`. Board and external approvals are recorded only (FR-009c). The rule is the plain
-    rule, `by_tier[risk tier]`, or `by_mode[run.mode]`; `plus` roles count when their condition
-    holds (policy interface).
+    `min_approvers`. The rule is the plain rule, `by_tier[risk tier]`, or `by_mode[run.mode]`.
+    Board and external approvals are recorded only (FR-009c).
   - **Terminate**: additionally restricted to the outcome's `set_by` when given.
   - **Waiver**: the approver role (R-04).
   - **Clarification answers**: the addressed role.

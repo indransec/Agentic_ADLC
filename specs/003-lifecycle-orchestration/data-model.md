@@ -64,7 +64,7 @@ and INSERT.
 | Table | Columns |
 | --- | --- |
 | `run.run_transition` | `run_transition_id`, `run_id`, `from_state`, `to_state`, `signal_kind`, `actor_type` (`human` \| `agent` \| `reviewer` \| `orchestrator` \| `system`), `actor_id`, `reason`, `at` |
-| `run.run_activity` | `run_activity_id`, `run_id`, `step` (`prerequisites` \| `build` \| `controls` \| `review` \| `clarification` \| `sign_off` \| `waiver` \| `escalation` \| `close` \| `route` \| `timer`), `actor_type`, `actor_id`, `started_at`, `ended_at`, `outcome`, `detail` jsonb |
+| `run.run_activity` | `run_activity_id`, `run_id`, `step` (`prerequisites` \| `build` \| `controls` \| `review` \| `clarification` \| `sign_off` \| `waiver` \| `escalation` \| `close` \| `route` \| `timer`), `actor_type`, `actor_id`, `started_at`, `ended_at`, `outcome` (a stale result is recorded with the step of the original call and outcome `stale`, FR-030b), `detail` jsonb |
 | `run.sign_off` | `sign_off_id`, `run_id`, `role`, `person`, `decision`, `comment`, `root_cause`, `reason_differs`, `target_terminal`, `signed_at` |
 | `run.clarification_round` | `clarification_id` (`<run_id>/clar-<k>`), `run_id`, `asked_by` (`agent` \| `reviewer`), `addressed_role`, `questions` jsonb, `looked_in` jsonb, `asked_at`; answered by one INSERT into `run.clarification_answer` (`clarification_id`, `answered_by`, `answers` jsonb, `answered_at`) |
 
