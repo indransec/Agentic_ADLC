@@ -130,3 +130,43 @@ def _pass(orch, run_id: str, terminal: str) -> None:  # type: ignore[no-untyped-
 def test_now_is_aware() -> None:
     assert SystemClock().now().tzinfo is UTC
     assert datetime.now(UTC) - SystemClock().now() < timedelta(seconds=1)
+
+
+def test_poll_fallback_without_notification(h: Harness) -> None:
+    """T082: an event written without NOTIFY is still delivered within the poll interval."""
+    engine = create_engine(h.db.app_url)
+    orch = build_orchestrator(
+        engine,
+        SqlSpecRegistry(engine),
+        StubPolicy(),
+        StubAgent(),
+        StubReviewer(),
+        SystemClock(),
+        deadletter_role=DEADLETTER_ROLE,
+        config=EngineConfig(),
+        worker_id="poller",
+    )
+    usecase = orch.service.submit_usecase(person("business_owner"), "poll", "x" * 250)
+    stop = threading.Event()
+    loop = threading.Thread(
+        target=orch.run_forever, args=(timedelta(milliseconds=200), stop), daemon=True
+    )
+    loop.start()
+    try:
+        _wait_for(orch, usecase, "T0")
+        with h.owner.begin() as conn:  # no pg_notify: only polling can find this event
+            conn.execute(
+                text(
+                    "INSERT INTO events.outbox_event (event_id, event_type, usecase_id, "
+                    "correlation_id, payload, next_attempt_at) VALUES (gen_random_uuid(), "
+                    "'T0.exception', :u, :c, '{}', now())"
+                ),
+                {"u": usecase, "c": f"{usecase}/lifecycle"},
+            )
+        started = time.monotonic()
+        _wait_for(orch, usecase, "T1")
+        assert time.monotonic() - started < 2.0
+    finally:
+        stop.set()
+        loop.join(timeout=10)
+        engine.dispose()

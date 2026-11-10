@@ -41,8 +41,10 @@ enforced by a trigger).
 | `artifacts` | jsonb | Latest artifacts (inline until 005's artifact store) |
 | `control_results` | jsonb | Latest controls run |
 | `recommendation` | jsonb null | Reviewer status, checklist scores, findings |
+| `received_events` | jsonb | Events delivered to this run while it was open (`event_received`) |
 | `pending_waiver_id` | text null | |
 | `escalation_trigger` | text null | `rework_limit` \| `timer` \| `clarification_limit` \| `clarification_sla` \| `retry_limit` \| `budget` |
+| `escalation_destination` | text null | The escalate route's destination (for example `release_board`), recorded for the human who completes the run |
 | `final_status` | text null | `pass` \| `rework` \| `exception` \| `escalate` \| `terminate` |
 | `version` | int | Optimistic concurrency, +1 per applied signal |
 | `lease_until` | timestamptz null | Advancer lease |
@@ -80,6 +82,7 @@ and INSERT.
 | `requires` | jsonb | Extra fields the spec requires (for example `risk_acceptance`) |
 | `status` | text | `proposed` → `approved` \| `rejected`; `approved` → `expired` (by date, read-time) |
 | `proposed_by`, `decided_by` | text | `decided_by` ≠ `proposed_by` |
+| `decision_comment` | text null | The approver's comment |
 | `proposed_at`, `decided_at` | timestamptz | |
 
 Grants for the app role: SELECT, INSERT, UPDATE (`status`, `decided_*` only, while `proposed`;

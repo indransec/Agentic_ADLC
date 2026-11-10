@@ -71,3 +71,12 @@ def test_terminate_with_retirement_subscribers(h: Harness) -> None:
     )
     h.drain()
     assert h.service.get_usecase(usecase).status == "terminated"
+
+
+def test_terminate_records_notify_roles(h: Harness) -> None:
+    """US2/AC6 (T081): the outcome's notify roles are recorded on the terminate event."""
+    usecase = h.submit()
+    t0 = h.active(usecase, "T0").run_id
+    h.service.decide(person("business_owner"), t0, "terminate", comment="out of scope")
+    payload = h.sql("SELECT payload FROM events.outbox_event WHERE event_type = 'T0.terminate'")
+    assert payload[0][0]["notify"] == ["adlc_coe"]

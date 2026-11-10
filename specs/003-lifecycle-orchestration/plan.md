@@ -80,7 +80,7 @@ has no `uuid7`), so no extra package is needed. LangGraph is **not** added in th
 | I Spec-driven | States, signals and routing are generic. Destinations, timers, sign-off roles and subscriptions come from the pinned specs through `SpecRegistry`; the scan is extended to `orchestration/` | Pass |
 | II Superset, not values | No use-case values in code; risk tier comes from T0's emitted value | Pass |
 | III Agents build, humans decide | The transition table only accepts outcome signals from human actors, and `escalate` only from the orchestrator; property tests prove no other path exists | Pass |
-| IV Separation of duties | Policy `authorize` is called for agent tool calls (stub here, enforced in 004/006); human decisions are checked against sign-off roles | Pass |
+| IV Separation of duties | Human decisions are checked against sign-off roles, and the waiver approver must differ from the proposer. Policy `authorize` is enforced on agent tool calls when they exist (feature 006); the 003 stub agent makes no tool calls | Pass |
 | V Evidence-first | Close writes run, sign-offs, activity, ledger record (chained hash) and outbox event in one transaction; the next run reads trigger evidence from the ledger and the run record | Pass |
 | VI Deterministic first | Prerequisites, controls and conditions go to the policy interface | Pass |
 | VII Interfaces | `TerminalRun`, `Router`, `PolicyEngine`, `AgentRunner`, `Reviewer` and `Clock` protocols; stubs implement the same protocols | Pass |
@@ -122,6 +122,7 @@ src/adlc/orchestration/
 ├── ids.py            # UC-nnnn, run ids, clarification ids, WVR-nnnn, uuid7
 ├── durations.py      # TDS B.1 durations → timedelta (h, d, w, m=30d) with ADLC_TIME_SCALE
 ├── states.py         # RunState, Signal, transition table (pure)
+├── spec_view.py      # read-only accessors over one pinned spec (pure)
 ├── interfaces.py     # protocols
 ├── stubs.py          # StubPolicy, StubAgent, StubReviewer (scriptable)
 ├── store.py          # SQL access for run/events/ledger tables (one transaction per call)

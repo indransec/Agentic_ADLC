@@ -53,7 +53,7 @@ uv run pytest tests/integration/orchestration -q
 ```bash
 make up                                   # migrate → register → api → orchestrator
 make status                               # orchestrator healthy (heartbeat < 30 s)
-uv run python -m scripts.demo_drive happy-path   # drives submit + decisions through the service
+uv run python -m scripts.demo_drive              # submits a use case and passes T0→T8 through the service
 ```
 
 **Expect**: the T0→T9 path completes. Inspect the routing latency:
@@ -64,3 +64,13 @@ docker compose -f deploy/compose.yaml --env-file .env exec postgres psql -U adlc
 ```
 
 The p95 gap between a run's `closed_at` and the next run's `opened_at` is ≤ 2 s (SC-003).
+`demo_drive` prints that gap for every run.
+
+The orchestrator's spans reach Jaeger. Jaeger 2 serves its query API under `/api/v3`:
+
+```bash
+curl -s "http://localhost:16686/api/v3/operations?service=adlc-orchestrator"
+```
+
+**Expect**: `adlc.router.route`, `adlc.policy.prerequisites`, `adlc.agent.build`,
+`adlc.policy.controls`, `adlc.reviewer.review` and `adlc.policy.sign_off_rule`.

@@ -235,14 +235,21 @@ class PostgresTerminalRun:
         tier = self.tier(conn, run.usecase_id)
         timeline = self.timeline(run.terminal_id, tier, run.spec_version)
         rule = spec_view.sign_off_rule(entry.spec, tier, run.mode)
-        required_plus = frozenset(
-            p.role
-            for p in rule.plus
-            if self.policy.evaluate(
-                p.condition,
-                EvalContext(run.terminal_id, f"plus:{p.role}", run.run_id, run.usecase_id),
-            ).passed
-        )
+        with span(
+            "policy",
+            "sign_off_rule",
+            run_id=run.run_id,
+            usecase_id=run.usecase_id,
+            terminal_id=run.terminal_id,
+        ):
+            required_plus = frozenset(
+                p.role
+                for p in rule.plus
+                if self.policy.evaluate(
+                    p.condition,
+                    EvalContext(run.terminal_id, f"plus:{p.role}", run.run_id, run.usecase_id),
+                ).passed
+            )
         approvals = tuple(
             (str(s["person"]), str(s["role"]))
             for s in store.sign_offs(conn, run.run_id)
@@ -474,6 +481,7 @@ class PostgresTerminalRun:
             elif self.destination_kind(route.destination) == "terminal_resolver":
                 open_terminal = str(p.get("target_terminal"))
 
+        bodies = self._notified_bodies(conn, closed, entry, now) if status == "pass" else []
         record = self._write_ledger(conn, closed, entry, emitted, now)
         event_type = routing.outcome_event_type(run.terminal_id, status, root_cause, reentry)
         store.insert_event(
@@ -496,6 +504,7 @@ class PostgresTerminalRun:
                     "waiver_id": run.pending_waiver_id,
                     "emits": emitted,
                     "notify": list(route.notify) if route else [],
+                    "notify_bodies": bodies,
                 }
             ),
             now=now,
@@ -508,6 +517,41 @@ class PostgresTerminalRun:
         if ends_lifecycle:
             self._end_lifecycle(conn, closed, signal, event_type, status, now)
         return closed
+
+    def _notified_bodies(
+        self, conn: Connection, run: RunRow, entry: RegistryEntry, now: datetime
+    ) -> list[str]:
+        """FR-009c: board and external approvals are recorded as notifications, not gates."""
+        rule = spec_view.sign_off_rule(entry.spec, self.tier(conn, run.usecase_id), run.mode)
+        bodies = [rule.board] if rule.board else []
+        if rule.external:
+            check = f"external:{rule.external}"
+            with span(
+                "policy",
+                "external_approval",
+                run_id=run.run_id,
+                usecase_id=run.usecase_id,
+                terminal_id=run.terminal_id,
+            ):
+                applies = self.policy.evaluate(
+                    rule.external_when or "true",
+                    EvalContext(run.terminal_id, check, run.run_id, run.usecase_id),
+                ).passed
+            if applies:
+                bodies.append(rule.external)
+        if bodies:
+            store.insert_activity(
+                conn,
+                run.run_id,
+                "sign_off",
+                "orchestrator",
+                ORCHESTRATOR_ID,
+                now,
+                now,
+                "notified",
+                {"bodies": bodies},
+            )
+        return bodies
 
     def _write_ledger(
         self,

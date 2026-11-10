@@ -254,3 +254,16 @@ Within a story: test tasks first (they must fail), then implementation, then the
 2. **Demo moments**: Phases 4–6 add D-2, D-3, D-5, D-4 and D-9; Phase 7 adds D-7.
 3. **Hardening**: Phase 8 (delivery and restart), Phase 9 (process and Compose), Phase 10.
 4. Commit after each phase checkpoint with `make check` passing.
+
+---
+
+## Phase 11: Convergence
+
+- [X] T077 Record board (`sign_off.board`) and external (`sign_off.external`) bodies as notifications when a run closes, in `run.run_activity` (step `sign_off`, outcome `notified`) and the outcome event's `notify`, with a test for T5 high tier and T6 per FR-009c (partial)
+- [X] T078 Wrap the plus-approver condition evaluations in `src/adlc/orchestration/engine.py` and the `then_when` evaluation in `src/adlc/orchestration/router.py` in `tracing.span` per FR-035 (partial)
+- [X] T079 Run the scenario suite 10 times in a row (quickstart §2) and record the result per SC-002 (partial)
+- [X] T080 Correct the Constitution IV row in `specs/003-lifecycle-orchestration/plan.md`: policy `authorize` is enforced on agent tool calls in feature 006; the 003 stub agent makes no tool calls, per plan: Constitution Check IV (contradicts)
+- [X] T081 Assert that a terminate outcome event records the outcome's `notify` roles (T0 → `adlc_coe`) in `tests/integration/orchestration/test_terminate_cascade.py` per US2/AC6 (partial)
+- [X] T082 Test that `Worker.run_forever` delivers an event within `ADLC_POLL_INTERVAL` when no notification arrives, in `tests/integration/orchestration/test_worker_process.py` per T068 (partial)
+- [X] T083 Add `spec_view.py` to the plan's source tree, and document `received_events`, `escalation_destination` and `decision_comment` in `specs/003-lifecycle-orchestration/data-model.md` per plan: project structure (unrequested)
+- [X] T084 Fix quickstart §4: `demo_drive` takes no argument; add the Jaeger check via `/api/v3/operations?service=adlc-orchestrator` per plan: quickstart (partial)

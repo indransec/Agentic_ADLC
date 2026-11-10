@@ -125,16 +125,23 @@ class PostgresRouter:
         follow_on = None
         if route.then_destination:
             condition = route.condition or "true"
-            check = self.runs.policy.evaluate(
-                condition,
-                EvalContext(
-                    source,
-                    f"then_when:{event.event_type}",
-                    source_run,
-                    event.usecase_id,
-                    {"trigger": event.payload},
-                ),
-            )
+            with span(
+                "policy",
+                "then_when",
+                run_id=source_run,
+                usecase_id=event.usecase_id,
+                terminal_id=source,
+            ):
+                check = self.runs.policy.evaluate(
+                    condition,
+                    EvalContext(
+                        source,
+                        f"then_when:{event.event_type}",
+                        source_run,
+                        event.usecase_id,
+                        {"trigger": event.payload},
+                    ),
+                )
             if check.passed:
                 follow_on = route.then_destination
                 store.insert_event(

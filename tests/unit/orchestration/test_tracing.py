@@ -17,7 +17,7 @@ def exporter(monkeypatch: pytest.MonkeyPatch) -> Iterator[InMemorySpanExporter]:
     memory = InMemorySpanExporter()
     provider = TracerProvider()
     provider.add_span_processor(SimpleSpanProcessor(memory))
-    monkeypatch.setattr(tracing.trace, "get_tracer", lambda name: provider.get_tracer(name))
+    monkeypatch.setattr(trace, "get_tracer", lambda name: provider.get_tracer(name))
     yield memory
     provider.shutdown()
 

@@ -151,6 +151,7 @@ class SignOffRule:
     plus: tuple[PlusApprover, ...] = ()
     board: str | None = None
     external: str | None = None
+    external_when: str | None = None
 
 
 def sign_off_rule(spec: Spec, risk_tier: str, mode: str) -> SignOffRule:
@@ -169,6 +170,9 @@ def sign_off_rule(spec: Spec, risk_tier: str, mode: str) -> SignOffRule:
         ),
         board=None if raw.get("board") is None else str(raw["board"]),
         external=None if not isinstance(external, Mapping) else str(external.get("body")),
+        external_when=None
+        if not isinstance(external, Mapping) or external.get("when") is None
+        else str(external["when"]),
     )
 
 
