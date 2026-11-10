@@ -37,3 +37,10 @@ def test_secrets_are_placeholders() -> None:
     entries = _entries()
     for name in _secret_names():
         assert entries[name] == "REPLACE_ME", name
+
+
+def test_provider_keys_are_empty() -> None:
+    """006: a placeholder would count as a configured key; an empty value means no key."""
+    entries = _entries()
+    for name in ("ADLC_ANTHROPIC_API_KEY", "ADLC_OPENAI_API_KEY", "ADLC_GEMINI_API_KEY"):
+        assert entries[name] == "", name

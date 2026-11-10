@@ -25,6 +25,7 @@ SPEC_TABLES = {
     "spec_change_class",
     "spec_timeline",
     "usecase_spec_pin",
+    "prompt_registry",  # feature 006
 }
 GUARDED_SPEC_TABLES = SPEC_TABLES - {"usecase_spec_pin"}
 

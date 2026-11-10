@@ -39,8 +39,8 @@ P2).
 
 ## Phase 1: Setup
 
-- [ ] T001 Add `litellm==1.106.5` (exact pin) to the dependencies and `respx` to the dev dependencies in `pyproject.toml`, refresh `uv.lock`, and record both (MIT, BSD-3) in the plan's licence table. Register the pytest marker `litellm_contract` in `pyproject.toml`.
-- [ ] T002 Add settings to `RuntimeSettings` in `src/adlc/config/settings.py`, writing tests first in `tests/unit/test_settings.py`:
+- [X] T001 Add `litellm==1.106.5` (exact pin) to the dependencies and `respx` to the dev dependencies in `pyproject.toml`, refresh `uv.lock`, and record both (MIT, BSD-3) in the plan's licence table. Register the pytest marker `litellm_contract` in `pyproject.toml`.
+- [X] T002 Add settings to `RuntimeSettings` in `src/adlc/config/settings.py`, writing tests first in `tests/unit/test_settings.py`:
   - provider keys, all `SecretStr | None`: `anthropic_api_key`, `openai_api_key`, `gemini_api_key` (`ADLC_ANTHROPIC_API_KEY`, `ADLC_OPENAI_API_KEY`, `ADLC_GEMINI_API_KEY`);
   - `model_profile` (default `default`);
   - `reviewer_mode` (`stub` | `model`, default `stub`);
@@ -53,7 +53,7 @@ P2).
   A validator refuses any tier or override whose `timeout_s` plus 30 s is not below `lease`
   (FR-015). Update `.env.example` (dev: `ADLC_MODEL_PROFILE=dev`, `ADLC_REVIEWER_MODE=stub`,
   key lines commented out). Keys are never logged.
-- [ ] T003 [P] Write failing migration tests in `tests/integration/agents/test_migration_0006.py`, following data-model.md:
+- [X] T003 [P] Write failing migration tests in `tests/integration/agents/test_migration_0006.py`, following data-model.md:
   - `spec.prompt_registry`: `prompt_id` `^[a-z][a-z0-9]*(-[a-z0-9]+)*$`, `content_hash` `^sha256:[0-9a-f]{64}$`, UNIQUE (`prompt_id`, `version`);
   - `run.agent_attempt`: `kind` in (`build`, `review`); `attempt ≥ 1`; `implementation` in (`stub`, `model`); `outcome` in (`artifacts`, `clarification`, `recommendation`, `budget_exceeded`, `failed`, `model_unavailable`); `limit_reached` null or in (`steps`, `tokens`, `timeout`); `reason` at most 2,000 characters;
   - `run.model_call`: `outcome` in (`ok`, `outage`, `refusal`, `truncated`, `request_error`, `skipped`); `cost_usd numeric(14,6)` null; `cost_known` boolean; `tried jsonb NOT NULL DEFAULT '[]'` (the entries tried before this one, each `{model, outcome, reason}`);
@@ -63,9 +63,9 @@ P2).
   - views `run.v_run_cost`, `run.v_terminal_cost` and `run.v_usecase_cost`;
   - the new tables are append-only for the app and owner roles; the app role has SELECT and INSERT; the views have SELECT;
   - downgrade, then upgrade again.
-- [ ] T004 Write `db/migrations/versions/0006_agent_runtime.py` (reusing `run.reject_mutation()`) so T003 passes. Update the expected grants in `tests/integration/test_ledger_immutability.py` and the column sets of earlier migration tests where 0006 adds columns.
-- [ ] T005 [P] Create the skeleton: `src/adlc/agents/__init__.py`, a stub `src/adlc/agents/README.md`, `tests/unit/agents/__init__.py` and `tests/integration/agents/__init__.py`. Add `*/adlc/agents/*` to `CORE_MODULES` in the `Makefile`.
-- [ ] T006 [P] Record ADR-02 (research R-15):
+- [X] T004 Write `db/migrations/versions/0006_agent_runtime.py` (reusing `run.reject_mutation()`) so T003 passes. Update the expected grants in `tests/integration/test_ledger_immutability.py` and the column sets of earlier migration tests where 0006 adds columns.
+- [X] T005 [P] Create the skeleton: `src/adlc/agents/__init__.py`, a stub `src/adlc/agents/README.md`, `tests/unit/agents/__init__.py` and `tests/integration/agents/__init__.py`. Add `*/adlc/agents/*` to `CORE_MODULES` in the `Makefile`.
+- [X] T006 [P] Record ADR-02 (research R-15):
   - in `docs/build-plan.md`, the Models and Model gateway rows; move "LangGraph for agent graphs (006)" to the feature that introduces subagents (R-14);
   - in `docs/solution-architecture.md` §17: ADR-02 decided, with the CoE to confirm the fallback ids and the data-class approvals.
 

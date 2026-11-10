@@ -231,3 +231,78 @@ def test_attachment_max_invalid(valid_env: dict[str, str], monkeypatch: pytest.M
 def test_attachment_types_list(valid_env: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ADLC_ATTACHMENT_TYPES", "application/pdf, text/plain")
     assert Settings().attachment_types == frozenset({"application/pdf", "text/plain"})  # type: ignore[call-arg]
+
+
+# ------------------------------------------------------------------ 006 agent runtime settings
+
+
+def test_agent_runtime_defaults(orchestrator_env: None) -> None:
+    from decimal import Decimal
+
+    from adlc.config.settings import OrchestratorSettings
+
+    s = OrchestratorSettings()  # type: ignore[call-arg]
+    assert (s.model_profile, s.reviewer_mode, s.agent_corrections) == ("default", "stub", 2)
+    assert s.anthropic_api_key is None and s.openai_api_key is None and s.gemini_api_key is None
+    assert s.agent_limits["reasoning"].model_dump() == {
+        "steps": 8,
+        "tokens": 400_000,
+        "timeout_s": 240.0,
+    }
+    assert s.agent_limits["standard"].timeout_s == 120.0
+    assert s.model_outage_limit.total_seconds() == 1800
+    assert s.cost_alert_levels == (Decimal("5"), Decimal("20"), Decimal("50"))
+    assert s.agent_limit_overrides == {}
+
+
+def test_agent_runtime_from_environment(
+    orchestrator_env: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from adlc.config.settings import OrchestratorSettings
+
+    monkeypatch.setenv("ADLC_MODEL_PROFILE", "dev")
+    monkeypatch.setenv("ADLC_REVIEWER_MODE", "model")
+    monkeypatch.setenv("ADLC_OPENAI_API_KEY", "sk-test-openai-key")
+    monkeypatch.setenv(
+        "ADLC_AGENT_LIMITS", '{"standard": {"steps": 3, "tokens": 1000, "timeout_s": 60}}'
+    )
+    monkeypatch.setenv("ADLC_AGENT_LIMIT_OVERRIDES", '{"T3": {"timeout_s": 200}}')
+    monkeypatch.setenv("ADLC_COST_ALERT_LEVELS", "1.5, 10")
+    s = OrchestratorSettings()  # type: ignore[call-arg]
+    assert s.agent_limits["standard"].steps == 3
+    assert s.agent_limits["reasoning"].steps == 8  # untouched tiers keep their defaults
+    assert (
+        s.agent_limit_overrides["T3"].timeout_s == 200
+        and s.agent_limit_overrides["T3"].steps is None
+    )
+    assert [str(x) for x in s.cost_alert_levels] == ["1.5", "10"]
+    assert s.openai_api_key is not None and "sk-test" not in repr(s)
+
+
+def test_agent_timeout_must_fit_the_lease(
+    orchestrator_env: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """FR-015: an agent timeout plus 30 s must be shorter than the worker lease."""
+    monkeypatch.setenv("ADLC_LEASE", "4min")
+    message = _orchestrator_error()  # reasoning default 240 s + 30 s >= 240 s
+    assert "ADLC_AGENT_LIMITS" in message and "lease" in message
+    monkeypatch.setenv("ADLC_LEASE", "10min")
+    monkeypatch.setenv("ADLC_AGENT_LIMIT_OVERRIDES", '{"T3": {"timeout_s": 590}}')
+    assert "ADLC_AGENT_LIMIT_OVERRIDES" in _orchestrator_error()
+
+
+@pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("ADLC_REVIEWER_MODE", "llm"),
+        ("ADLC_MODEL_PROFILE", "Dev Profile"),
+        ("ADLC_AGENT_CORRECTIONS", "-1"),
+        ("ADLC_COST_ALERT_LEVELS", "5,lots"),
+        ("ADLC_AGENT_LIMITS", '{"reasoning": {"steps": 0, "tokens": 1, "timeout_s": 1}}'),
+    ],
+)
+def test_agent_runtime_invalid_values(
+    orchestrator_env: None, monkeypatch: pytest.MonkeyPatch, name: str, value: str
+) -> None:
+    monkeypatch.setenv(name, value)
+    assert name in _orchestrator_error()
