@@ -33,5 +33,5 @@
 
 - The gateway product (LiteLLM) and the primary model names appear only as the user's recorded
   decision (ADR-02) in the input and FR-002; requirements are stated as behaviour.
-- Open points for `/speckit-clarify`: provider approval per data class, lifecycle budget source,
-  outage limit before escalation.
+- Clarified 2026-11-10: provider approval per data class, lifecycle budget source, outage limit
+  before escalation.

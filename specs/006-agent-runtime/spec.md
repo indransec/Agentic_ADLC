@@ -13,6 +13,20 @@ then Gemini): model gateway with a model catalogue and budgets, context builder,
 output validation, the real common reviewer agent, clarifications, tool-access checks and
 tracing. Terminal agents stay stubs until feature 008."
 
+## Clarifications
+
+### Session 2026-11-10
+
+- Q: Which data may be sent to the external model providers? → A: Anthropic, OpenAI and Gemini
+  are all approved up to `confidential_masked`, the highest ceiling any terminal uses today. MVP
+  data is synthetic; the CoE re-confirms approvals in the catalogue before real data is used.
+- Q: Where does a lifecycle agent run's token budget come from? → A: Configuration per model
+  tier (token budget, step limit, timeout), with optional overrides per terminal. The profile's
+  `token_budget` is the pilot agent's and is not used.
+- Q: How long does a run wait during a full outage of its tier before escalating? → A: 30
+  minutes by default, configurable per environment; retries use back-off and do not count as
+  attempts.
+
 ## User Scenarios & Testing *(mandatory)*
 
 Agents build, humans decide (constitution III). This feature gives every lifecycle agent the
@@ -67,7 +81,7 @@ record says so; when the primary refuses, no fallback is tried.
 4. **Given** a provider has no key configured, **Then** it is skipped without an error.
 5. **Given** every provider in the tier's list is unavailable, **Then** the step is not counted
    as an attempt. It is retried later, and the run escalates with reason `model_unavailable`
-   once the configured outage limit has passed.
+   once the outage limit (30 minutes by default) has passed.
 
 ---
 
@@ -274,7 +288,8 @@ without content.
   model tier to an ordered list of models. Each entry has:
   - provider and model id;
   - price per input token and per output token;
-  - the highest data class the model is approved for.
+  - the highest data class the model is approved for (initially `confidential_masked` for
+    every entry of all three providers).
 
   Initial primaries:
   - `reasoning`: Anthropic Claude Opus 5.5;
@@ -296,7 +311,8 @@ without content.
   If no model of the tier can run, the step behaves as a full outage (FR-006).
 - **FR-006**: When no model of the tier is available, the step MUST NOT count as an attempt. The
   run stays in its state and is retried after a back-off. It escalates with reason
-  `model_unavailable` once the configured outage limit has passed.
+  `model_unavailable` once the outage limit has passed (default 30 minutes, configurable per
+  environment).
 - **FR-007**: Each model call MUST be recorded (append-only) with:
   - run, use case, terminal, agent id and version, tier;
   - provider and model;
@@ -343,7 +359,8 @@ without content.
   MUST count as a failed build attempt (the same counter and limit as failed blocking controls,
   feature 003).
 - **FR-014**: Each agent run MUST have a step limit, a token budget and a timeout from
-  configuration, per model tier, with optional overrides per terminal. Reaching any of them MUST
+  configuration, per model tier, with optional overrides per terminal. The use-case profile's
+  `token_budget` is not used for lifecycle agents. Reaching any of them MUST
   end the attempt with `BudgetExceeded` naming the limit, so the run escalates (feature 003).
 - **FR-015**: The agent timeout MUST be shorter than the orchestrator's step lease. Settings that
   break this MUST be refused at start-up.
@@ -454,9 +471,8 @@ without content.
     wrapping they use, tested with a fake tool.
   - The exact OpenAI and Gemini model ids per tier, and all prices, are configuration values in
     the model catalogue, set during planning and confirmed by the CoE.
-  - All three providers are assumed approved up to `confidential_masked`, the highest ceiling
-    any terminal spec uses today. MVP data is synthetic. The CoE confirms provider approvals per
-    data class before real data is used.
+  - All three providers are approved up to `confidential_masked` (clarified). MVP data is
+    synthetic. The CoE confirms provider approvals per data class before real data is used.
 - **Budgets:**
   - The use-case profile's `token_budget` (emitted at T2) is the **pilot agent's** budget, not
     the lifecycle agents'. Lifecycle agent budgets come from configuration (FR-014), and the
