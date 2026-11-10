@@ -1,0 +1,1 @@
+- {rule_id: V-30, file: shared/agents.yaml, path_contains: /tools/0/permission}

@@ -66,10 +66,14 @@ def s02_catalogues(ctx: Context) -> Iterator[Finding]:
         yield from _check(ctx, "S-02", loaded, schema)
 
 
-@REGISTRY.rule("S-03", "L2", "error", "Checklist and playbook front matter match their schemas")
+@REGISTRY.rule(
+    "S-03", "L2", "error", "Checklist, playbook and prompt front matter match their schemas"
+)
 def s03_checklists_playbooks(ctx: Context) -> Iterator[Finding]:
     root = ctx.bundle.root / "schema"
     for loaded in ctx.bundle.checklists.values():
         yield from _check(ctx, "S-03", loaded, root / "checklist.schema.json")
     for loaded in ctx.bundle.playbooks.values():
         yield from _check(ctx, "S-03", loaded, root / "playbook-front-matter.schema.json")
+    for loaded in ctx.bundle.prompts.values():
+        yield from _check(ctx, "S-03", loaded, root / "prompt-front-matter.schema.json")

@@ -11,7 +11,7 @@ code list the same ids. Ids V-01 to V-10 keep their TDS Annex B.5 meaning.
 | P-03 | L1 | info | Later checks (L3–L5) skipped for a file that has L1 or L2 errors, so the skip is visible rather than silent | `terminals/T2.yaml: L3–L5 checks skipped (earlier errors)` |
 | S-01 | L2 | error | Terminal spec matches `terminal.schema.json` (unknown fields refused) | `/terminal/controls/automated/0/rul: unknown field` |
 | S-02 | L2 | error | Catalogue matches its schema | `shared/metrics.yaml /metrics/3/unit: required` |
-| S-03 | L2 | error | Checklist and playbook front matter match their schemas | `playbooks/t0-intake.md: version missing` |
+| S-03 | L2 | error | Checklist, playbook and prompt front matter match their schemas (prompts added by feature 006) | `playbooks/t0-intake.md: version missing` |
 | V-01 | L4 | error | Ids unique within a spec, within each catalogue, and terminal id unique across the folder | `CTL-T3-02 defined twice` |
 | V-02 | L4 | error | Every `T<n>.<artifact>[.<field>]` reference names an artifact column or emitted value of terminal `T<n>`, and `T<n>` can reach the referencing terminal in the route graph | `T2 references T5.attestation but T5 cannot reach T2` |
 | V-03 | L4 | error | Every `trigger.on` event is produced by some terminal or is external in `events.yaml` | `T5 triggers on T8.event.safety_breech: no producer` |
@@ -38,6 +38,10 @@ code list the same ids. Ids V-01 to V-10 keep their TDS Annex B.5 meaning.
 | V-24 | L5 | error | Content changed versus baseline requires a version bump of at least the level in research R-10; a missing baseline ref gives a `warning` | `T0 changed (route) needs major bump; 1.0.0 → 1.0.1` |
 | V-25 | L5 | error | Version never decreases versus baseline | `T3 1.2.0 → 1.1.0` |
 | V-26 | L4 | warning | Guardrail or tiering value marked `proposed_default` (reported so owners can confirm; does not fail) | `param.judge_agreement_min is a proposed default` |
+| V-27 | L4 | error | Model catalogue has a `default` profile; every profile lists models for every model tier; every entry's `max_data_class` is a data class (feature 006) | `tier coding has no models` |
+| V-28 | L4 | error | Every terminal's agent and reviewer are in the agents catalogue, and the agent's tier matches the spec (feature 006) | `agent t1-requirements-agent not registered` |
+| V-29 | L4 | error | Every agent prompt reference resolves to a prompt file written for that agent (feature 006) | `prompt common-terminal-reviewer@1.0.0 not found` |
+| V-30 | L4 | error | Agent tool permissions use a known permission verb, or an MCP scope from the MCP registry (feature 006) | `permission frobnicate:kb uses an unknown verb or MCP scope` |
 
 Registration-time refusals (database or register code, not validation findings):
 

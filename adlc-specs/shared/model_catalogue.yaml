@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=../schema/catalogues/model_catalogue.schema.json
+# Model catalogue (feature 006, ADR-02): per profile, each model tier maps to an ordered list of
+# models. The gateway tries them in order and falls back only on availability errors, never on
+# refusals. Prices are USD per million tokens; limits are in tokens. ADLC_MODEL_PROFILE selects
+# the profile. Entries marked "CoE to confirm" are proposals: an unconfirmed model is removed.
+catalogue: model_catalogue
+version: "1.0.0"
+profiles:
+  # Production order: Anthropic, then OpenAI, then Gemini.
+  default:
+    reasoning:
+      - {provider: anthropic, model: anthropic/claude-opus-5-5, input_per_mtok: 4.0, output_per_mtok: 20.0, max_output_tokens: 128000, context_tokens: 1000000, max_data_class: confidential_masked}
+      - {provider: openai, model: openai/gpt-6.1-sol, input_per_mtok: 2.0, output_per_mtok: 10.0, max_output_tokens: 128000, context_tokens: 922000, max_data_class: confidential_masked}  # CoE to confirm
+      - {provider: gemini, model: gemini/gemini-4-argon, input_per_mtok: 2.0, output_per_mtok: 10.0, max_output_tokens: 128000, context_tokens: 1048576, max_data_class: confidential_masked}  # CoE to confirm
+    coding:
+      - {provider: anthropic, model: anthropic/claude-opus-5-5, input_per_mtok: 4.0, output_per_mtok: 20.0, max_output_tokens: 128000, context_tokens: 1000000, max_data_class: confidential_masked}
+      - {provider: openai, model: openai/gpt-6.1-sol, input_per_mtok: 2.0, output_per_mtok: 10.0, max_output_tokens: 128000, context_tokens: 922000, max_data_class: confidential_masked}  # CoE to confirm
+      - {provider: gemini, model: gemini/gemini-4-argon, input_per_mtok: 2.0, output_per_mtok: 10.0, max_output_tokens: 128000, context_tokens: 1048576, max_data_class: confidential_masked}  # CoE to confirm
+    standard:
+      - {provider: anthropic, model: anthropic/claude-sonnet-5-5, input_per_mtok: 2.0, output_per_mtok: 10.0, max_output_tokens: 128000, context_tokens: 1000000, max_data_class: confidential_masked}
+      - {provider: openai, model: openai/gpt-6-sol, input_per_mtok: 2.0, output_per_mtok: 10.0, max_output_tokens: 128000, context_tokens: 922000, max_data_class: confidential_masked}  # CoE to confirm
+      - {provider: gemini, model: gemini/gemini-3.8-flash, input_per_mtok: 0.75, output_per_mtok: 3.75, max_output_tokens: 65536, context_tokens: 1048576, max_data_class: confidential_masked}  # CoE to confirm
+  # Development tests: GPT-4o mini first for every tier (agents and reviewer).
+  dev:
+    reasoning:
+      - {provider: openai, model: openai/gpt-4o-mini, input_per_mtok: 0.15, output_per_mtok: 0.6, max_output_tokens: 16384, context_tokens: 128000, max_data_class: confidential_masked}  # dated snapshot retires 2027-01-14
+      - {provider: gemini, model: gemini/gemini-2.5-flash, input_per_mtok: 0.3, output_per_mtok: 2.5, max_output_tokens: 65536, context_tokens: 1048576, max_data_class: confidential_masked}
+      - {provider: anthropic, model: anthropic/claude-opus-5-5, input_per_mtok: 4.0, output_per_mtok: 20.0, max_output_tokens: 128000, context_tokens: 1000000, max_data_class: confidential_masked}
+      - {provider: openai, model: openai/gpt-6.1-sol, input_per_mtok: 2.0, output_per_mtok: 10.0, max_output_tokens: 128000, context_tokens: 922000, max_data_class: confidential_masked}  # CoE to confirm
+      - {provider: gemini, model: gemini/gemini-4-argon, input_per_mtok: 2.0, output_per_mtok: 10.0, max_output_tokens: 128000, context_tokens: 1048576, max_data_class: confidential_masked}  # CoE to confirm
+    coding:
+      - {provider: openai, model: openai/gpt-4o-mini, input_per_mtok: 0.15, output_per_mtok: 0.6, max_output_tokens: 16384, context_tokens: 128000, max_data_class: confidential_masked}  # dated snapshot retires 2027-01-14
+      - {provider: gemini, model: gemini/gemini-2.5-flash, input_per_mtok: 0.3, output_per_mtok: 2.5, max_output_tokens: 65536, context_tokens: 1048576, max_data_class: confidential_masked}
+      - {provider: anthropic, model: anthropic/claude-opus-5-5, input_per_mtok: 4.0, output_per_mtok: 20.0, max_output_tokens: 128000, context_tokens: 1000000, max_data_class: confidential_masked}
+      - {provider: openai, model: openai/gpt-6.1-sol, input_per_mtok: 2.0, output_per_mtok: 10.0, max_output_tokens: 128000, context_tokens: 922000, max_data_class: confidential_masked}  # CoE to confirm
+      - {provider: gemini, model: gemini/gemini-4-argon, input_per_mtok: 2.0, output_per_mtok: 10.0, max_output_tokens: 128000, context_tokens: 1048576, max_data_class: confidential_masked}  # CoE to confirm
+    standard:
+      - {provider: openai, model: openai/gpt-4o-mini, input_per_mtok: 0.15, output_per_mtok: 0.6, max_output_tokens: 16384, context_tokens: 128000, max_data_class: confidential_masked}  # dated snapshot retires 2027-01-14
+      - {provider: gemini, model: gemini/gemini-2.5-flash, input_per_mtok: 0.3, output_per_mtok: 2.5, max_output_tokens: 65536, context_tokens: 1048576, max_data_class: confidential_masked}
+      - {provider: anthropic, model: anthropic/claude-sonnet-5-5, input_per_mtok: 2.0, output_per_mtok: 10.0, max_output_tokens: 128000, context_tokens: 1000000, max_data_class: confidential_masked}
+      - {provider: openai, model: openai/gpt-6-sol, input_per_mtok: 2.0, output_per_mtok: 10.0, max_output_tokens: 128000, context_tokens: 922000, max_data_class: confidential_masked}  # CoE to confirm
+      - {provider: gemini, model: gemini/gemini-3.8-flash, input_per_mtok: 0.75, output_per_mtok: 3.75, max_output_tokens: 65536, context_tokens: 1048576, max_data_class: confidential_masked}  # CoE to confirm

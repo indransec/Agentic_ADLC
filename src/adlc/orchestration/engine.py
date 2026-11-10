@@ -9,7 +9,7 @@
 """
 
 import json
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from typing import Any
@@ -30,11 +30,13 @@ from adlc.orchestration import durations, ids, routing, spec_view, store
 from adlc.orchestration.interfaces import (
     AgentRunner,
     Artifacts,
+    AttemptFailed,
     BudgetExceeded,
     BuildContext,
     Clarification,
     Clock,
     EvalContext,
+    ModelUnavailable,
     PolicyEngine,
     Recommendation,
     ReviewContext,
@@ -744,7 +746,8 @@ class PostgresTerminalRun:
             run = loaded
             entry = self.entry(run.terminal_id, run.spec_version)
             started = self.clock.now()
-            signal = self._step(conn, run, entry)
+            step = self._step(conn, run, entry)  # reads what the step needs
+        signal = step()  # 006: the agent or reviewer runs with no database connection held
         try:
             with self.engine.begin() as conn:
                 self.apply_in(
@@ -785,9 +788,54 @@ class PostgresTerminalRun:
     def scaled_lease(self) -> timedelta:
         return self.config.lease
 
-    def _step(self, conn: Connection, run: RunRow, entry: RegistryEntry) -> Signal:
+    def _step(self, conn: Connection, run: RunRow, entry: RegistryEntry) -> Callable[[], Signal]:
+        """Read the step's inputs on ``conn``; return the call that produces the signal.
+
+        The returned call runs after the connection is released (006 research R-07), so a model
+        call never holds a connection open in a transaction.
+        """
         spec = entry.spec
-        ids_ = {"run_id": run.run_id, "usecase_id": run.usecase_id, "terminal_id": run.terminal_id}
+        if run.state == RunState.BUILDING:
+            context = self._build_context(conn, run, spec)
+            return lambda: self._build(run, context)
+        if run.state == RunState.REVIEWING and not run.controls_pending:
+            review_context = ReviewContext(
+                run.run_id,
+                run.terminal_id,
+                spec_view.checklist_items(spec),
+                run.artifacts,
+                tuple(run.control_results),
+                tuple(json_safe(store.clarifications(conn, run.run_id))),
+            )
+            return lambda: self._review(run, review_context)
+        return lambda: self._checks(run, spec)
+
+    def _ids(self, run: RunRow) -> dict[str, str]:
+        return {"run_id": run.run_id, "usecase_id": run.usecase_id, "terminal_id": run.terminal_id}
+
+    def _build(self, run: RunRow, context: BuildContext) -> Signal:
+        with span("agent", "build", **self._ids(run)):
+            result = self.agent.build(context)
+        return Signal(
+            SignalKind.AGENT_RESULT,
+            ActorType.AGENT,
+            f"agent:{run.run_id}",
+            _agent_payload(result),
+        )
+
+    def _review(self, run: RunRow, context: ReviewContext) -> Signal:
+        with span("reviewer", "review", **self._ids(run)):
+            review = self.reviewer.review(context)
+        return Signal(
+            SignalKind.REVIEW_RESULT,
+            ActorType.REVIEWER,
+            f"reviewer:{run.run_id}",
+            _review_payload(review),
+        )
+
+    def _checks(self, run: RunRow, spec: Mapping[str, Any]) -> Signal:
+        """Prerequisites, controls, and the re-check after an edit (policy engine only)."""
+        ids_ = self._ids(run)
         if run.state == RunState.OPENED:
             with span("policy", "prerequisites", **ids_):
                 results = [
@@ -802,15 +850,6 @@ class PostgresTerminalRun:
                 ORCHESTRATOR_ID,
                 {"met": not blocked, "blocked_ids": blocked, "warned_ids": warned},
             )
-        if run.state == RunState.BUILDING:
-            with span("agent", "build", **ids_):
-                result = self.agent.build(self._build_context(conn, run, spec))
-            return Signal(
-                SignalKind.AGENT_RESULT,
-                ActorType.AGENT,
-                f"agent:{run.run_id}",
-                _agent_payload(result),
-            )
         if run.controls_pending:  # 005: re-check an edit's content before anyone decides
             with span("policy", "controls", **ids_):
                 rechecked = self._control_results(run, spec)
@@ -820,32 +859,14 @@ class PostgresTerminalRun:
                 ORCHESTRATOR_ID,
                 {"results": rechecked},
             )
-        if run.state == RunState.CHECKING:
-            with span("policy", "controls", **ids_):
-                control_results = self._control_results(run, spec)
-            failed = [c["id"] for c in control_results if not c["passed"] and c["blocking"]]
-            return Signal(
-                SignalKind.CONTROLS_RESULT,
-                ActorType.ORCHESTRATOR,
-                ORCHESTRATOR_ID,
-                {"passed": not failed, "failed_blocking_ids": failed, "results": control_results},
-            )
-        with span("reviewer", "review", **ids_):
-            review = self.reviewer.review(
-                ReviewContext(
-                    run.run_id,
-                    run.terminal_id,
-                    spec_view.checklist_items(spec),
-                    run.artifacts,
-                    tuple(run.control_results),
-                    tuple(json_safe(store.clarifications(conn, run.run_id))),
-                )
-            )
+        with span("policy", "controls", **ids_):
+            control_results = self._control_results(run, spec)
+        failed = [c["id"] for c in control_results if not c["passed"] and c["blocking"]]
         return Signal(
-            SignalKind.REVIEW_RESULT,
-            ActorType.REVIEWER,
-            f"reviewer:{run.run_id}",
-            _review_payload(review),
+            SignalKind.CONTROLS_RESULT,
+            ActorType.ORCHESTRATOR,
+            ORCHESTRATOR_ID,
+            {"passed": not failed, "failed_blocking_ids": failed, "results": control_results},
         )
 
     def _eval(self, run: RunRow, check_id: str, attempt: int | None = None) -> EvalContext:
@@ -884,6 +905,10 @@ def _agent_payload(result: object) -> dict[str, Any]:
         return {"result": "clarification", "clarification": _clarification_payload(result)}
     if isinstance(result, BudgetExceeded):
         return {"result": "budget_exceeded", "detail": result.detail}
+    if isinstance(result, AttemptFailed):
+        return {"result": "failed", "detail": result.reason[:2000]}
+    if isinstance(result, ModelUnavailable):
+        return {"result": "model_unavailable", "detail": result.detail[:2000]}
     raise TypeError(f"unexpected agent result {type(result).__name__}")
 
 
@@ -895,8 +920,15 @@ def _review_payload(result: object) -> dict[str, Any]:
                 "status": result.status,
                 "checklist_scores": dict(result.checklist_scores),
                 "findings": list(result.findings),
+                "reason": result.reason,
+                "root_cause": result.root_cause,
+                "reviewer": result.reviewer,
             },
         }
+    if isinstance(result, AttemptFailed):
+        return {"result": "failed", "detail": result.reason[:2000]}
+    if isinstance(result, ModelUnavailable):
+        return {"result": "model_unavailable", "detail": result.detail[:2000]}
     if isinstance(result, Clarification):
         return {"result": "clarification", "clarification": _clarification_payload(result)}
     raise TypeError(f"unexpected review result {type(result).__name__}")
@@ -912,6 +944,8 @@ def _clarification_payload(c: Clarification) -> dict[str, Any]:
 
 def _reason(signal: Signal) -> str | None:
     p = signal.payload
+    if p.get("result") and p.get("detail"):  # 006: e.g. "failed: missing column kpi_id"
+        return f"{p['result']}: {p['detail']}"[:2000]
     for key in ("comment", "trigger", "kind", "event_type", "result", "decision"):
         if p.get(key):
             return str(p[key])

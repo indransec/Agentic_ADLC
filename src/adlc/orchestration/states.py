@@ -311,6 +311,12 @@ def _agent(p: Mapping[str, Any], ctx: TransitionContext) -> Outcome | None:
         return _clarification("agent", RunState.BUILDING, ctx)
     if result == "budget_exceeded":
         return Outcome(RunState.ESCALATED, (Escalate("budget"),))
+    if result == "failed":  # 006: output still unfit after corrections, or a refusal
+        if ctx.auto_retries >= ctx.max_auto_retries:
+            return Outcome(RunState.ESCALATED, (Escalate("retry_limit"),))
+        return Outcome(RunState.BUILDING, (IncrementAutoRetry(),))
+    if result == "model_unavailable":  # 006: sent only after the outage limit
+        return Outcome(RunState.ESCALATED, (Escalate("model_unavailable"),))
     return None
 
 
@@ -328,6 +334,10 @@ def _review(p: Mapping[str, Any], ctx: TransitionContext) -> Outcome | None:
         return Outcome(RunState.AWAITING_SIGN_OFF, (StoreRecommendation(),))
     if result == "clarification":
         return _clarification("reviewer", RunState.REVIEWING, ctx)
+    if result == "failed":  # 006: the reviewer's output never fit
+        return Outcome(RunState.ESCALATED, (Escalate("reviewer_failed"),))
+    if result == "model_unavailable":
+        return Outcome(RunState.ESCALATED, (Escalate("model_unavailable"),))
     return None
 
 

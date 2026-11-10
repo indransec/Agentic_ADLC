@@ -75,13 +75,13 @@ P2).
 
 ### Tests first
 
-- [ ] T007 [P] Write failing spec-toolkit tests in `tests/unit/spec_toolkit/test_agent_catalogues.py`:
+- [X] T007 [P] Write failing spec-toolkit tests in `tests/unit/spec_toolkit/test_agent_catalogues.py`:
   - **Model catalogue:** must have a `default` profile; every profile covers every tier of `model_tiers`; every tier has at least one entry.
   - **Entries:** `provider`, `model`, `input_per_mtok`, `output_per_mtok` (number or null), `max_output_tokens`, `context_tokens` and `max_data_class` (a known data class); optional `params`.
   - **Agents catalogue:** ids unique; `implementation` is `stub` or `model`; `prompt` required for `model`; `tools[].permission` matches `^[a-z_]+:[A-Za-z0-9_.*:/-]+$`, and is split at the first colon into action and resource, so MCP scopes such as `mcp:confluence:read` (action `mcp`, resource `confluence:read`) are accepted, as feature 004 authorizes them.
   - **Cross-spec rules:** every terminal's `actors.agent.id` and `actors.reviewer` are in `agents`; the agent's `model_tier` equals the spec's; every prompt reference resolves.
   - **Prompts:** front matter `id`, `version`, `agent`, `status`; a changed body with an unchanged version is refused, as for playbooks.
-- [ ] T008 [P] Write failing state-machine tests in `tests/unit/orchestration/test_states.py` and `tests/unit/orchestration/test_state_properties.py` (contracts/state-machine-additions.md):
+- [X] T008 [P] Write failing state-machine tests in `tests/unit/orchestration/test_states.py` and `tests/unit/orchestration/test_state_properties.py` (contracts/state-machine-additions.md):
   - `agent_result` `failed` returns to `building` with `IncrementAutoRetry`, and escalates with `retry_limit` at the limit;
   - `agent_result` `model_unavailable` escalates with `model_unavailable`;
   - `review_result` `failed` escalates with `reviewer_failed`, and `model_unavailable` with `model_unavailable`;
@@ -90,13 +90,13 @@ P2).
 
 ### Implementation
 
-- [ ] T009 Extend the spec toolkit so T007 passes:
+- [X] T009 Extend the spec toolkit so T007 passes:
   - `src/adlc/spec_toolkit/loader.py`: `model_catalogue` and `agents` join `REQUIRED_CATALOGUES`; load `prompts/*.md` as a new `prompt` file kind with front matter;
   - schemas: `adlc-specs/schema/catalogues/model_catalogue.schema.json`, `adlc-specs/schema/catalogues/agents.schema.json` and `adlc-specs/schema/prompt-front-matter.schema.json`;
   - rules in `src/adlc/spec_toolkit/rules/cross_spec.py`;
   - registration of prompts into `spec.prompt_registry` in `src/adlc/spec_toolkit/register.py`;
   - registry read access (`prompt(id, version)`) in `src/adlc/spec_toolkit/registry.py`.
-- [ ] T010 Write the catalogue content (research R-04, R-05, R-05a):
+- [X] T010 Write the catalogue content (research R-04, R-05, R-05a):
   - `adlc-specs/shared/model_catalogue.yaml`:
     - `default`: reasoning and coding: `anthropic/claude-opus-5-5` (4 / 20, 128000 out, 1000000 context), `openai/gpt-6.1-sol` (2 / 10), `gemini/gemini-4-argon` (2 / 10); standard: `anthropic/claude-sonnet-5-5` (2 / 10), `openai/gpt-6-sol` (2 / 10), `gemini/gemini-3.8-flash` (0.75 / 3.75);
     - `dev`: every tier `openai/gpt-4o-mini` (0.15 / 0.60, 16384 out, 128000 context), then `gemini/gemini-2.5-flash` (0.30 / 2.50, 65536 out, 1048576 context), then that tier's `default` entries;
@@ -111,12 +111,12 @@ P2).
     - that `terminate` is never recommended;
     - that a clarification needs `looked_in`.
   - Run `adlc-spec validate` with no findings, then confirm the test template database registers the new catalogues and the prompt.
-- [ ] T011 Feature 003 interface and state-machine additions so T008 passes:
+- [X] T011 Feature 003 interface and state-machine additions so T008 passes:
   - `src/adlc/orchestration/interfaces.py`: `AttemptFailed(reason)` and `ModelUnavailable(detail)` added to `AgentResult` and `ReviewResult`; `Recommendation` gains `reason: str = ""`, `root_cause: str | None = None`, `reviewer: str = "stub"`;
   - `src/adlc/orchestration/states.py`: the new `result` values;
   - `src/adlc/orchestration/engine.py`: payloads (`_agent_payload`, `_review_payload`) and the `reason` on transitions;
   - the rows in `specs/003-lifecycle-orchestration/contracts/state-machine.md`.
-- [ ] T012 In `src/adlc/orchestration/engine.py`, read the step's inputs, then release the database connection before calling `agent.build` or `reviewer.review` (research R-07). The 003 integration and scenario suites stay green.
+- [X] T012 In `src/adlc/orchestration/engine.py`, read the step's inputs, then release the database connection before calling `agent.build` or `reviewer.review` (research R-07). The 003 integration and scenario suites stay green.
 
 **Checkpoint**: catalogues and prompts validate and register; the state machine knows the new results.
 

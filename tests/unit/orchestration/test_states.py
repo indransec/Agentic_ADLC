@@ -400,7 +400,10 @@ def test_pass_role_must_belong_to_the_rule() -> None:
 SAMPLE_PAYLOADS: dict[SignalKind, list[dict[str, Any]]] = {
     K.PREREQUISITES_RESULT: [{"met": True}, {"met": False}],
     K.EVENT_RECEIVED: [{"event_type": "e"}],
-    K.AGENT_RESULT: [{"result": r} for r in ("artifacts", "clarification", "budget_exceeded")],
+    K.AGENT_RESULT: [
+        {"result": r}
+        for r in ("artifacts", "clarification", "budget_exceeded", "failed", "model_unavailable")
+    ],
     K.CONTROLS_RESULT: [{"passed": True}, {"passed": False}],
     K.REVIEW_RESULT: [{"result": "recommendation"}, {"result": "clarification"}],
     K.CLARIFICATION_ANSWERED: [{}],
@@ -504,3 +507,32 @@ def test_no_pass_or_exception_while_controls_are_pending() -> None:
             transition(S.AWAITING_SIGN_OFF, sig(K.DECIDE, payload), pending)
     rework = sig(K.DECIDE, {"decision": "rework", "role": "owner"})
     assert transition(S.AWAITING_SIGN_OFF, rework, pending).next_state == S.CLOSED
+
+
+def test_failed_build_attempt_is_an_auto_retry() -> None:
+    """006: output still unfit after corrections counts like a failed blocking control."""
+    failed = sig(K.AGENT_RESULT, {"result": "failed", "reason": "missing column kpi_id"})
+    assert go(S.BUILDING, failed, TransitionContext(max_auto_retries=2, auto_retries=1)) == (
+        S.BUILDING,
+        (IncrementAutoRetry(),),
+    )
+    assert go(S.BUILDING, failed, TransitionContext(max_auto_retries=2, auto_retries=2)) == (
+        S.ESCALATED,
+        (Escalate("retry_limit"),),
+    )
+
+
+def test_model_unavailable_and_reviewer_failure_escalate() -> None:
+    """006: after the outage limit, and when the reviewer's output never fits."""
+    assert go(S.BUILDING, sig(K.AGENT_RESULT, {"result": "model_unavailable"})) == (
+        S.ESCALATED,
+        (Escalate("model_unavailable"),),
+    )
+    assert go(S.REVIEWING, sig(K.REVIEW_RESULT, {"result": "model_unavailable"})) == (
+        S.ESCALATED,
+        (Escalate("model_unavailable"),),
+    )
+    assert go(S.REVIEWING, sig(K.REVIEW_RESULT, {"result": "failed", "reason": "r"})) == (
+        S.ESCALATED,
+        (Escalate("reviewer_failed"),),
+    )

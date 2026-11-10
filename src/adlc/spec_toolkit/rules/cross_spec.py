@@ -53,6 +53,7 @@ _CATALOGUE_KEYS: dict[str, list[tuple[str, str]]] = {
     "predicates": [("predicates", "name")],
     "metrics": [("metrics", "name")],
     "guardrails": [("guardrails", "name")],
+    "agents": [("agents", "id")],
 }
 
 

@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../schema/catalogues/agents.schema.json
+# Lifecycle agent registry (SA 7.3, feature 006). Terminal agents are stubs until feature 008
+# switches them to implementation: model with a prompt. The reviewer is a model agent.
+catalogue: agents
+version: "1.0.0"
+agents:
+  - {id: t0-intake-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
+  - {id: t1-requirements-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
+  - {id: t2-architect-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
+  - {id: t3-builder-agent, version: "1.0.0", implementation: stub, model_tier: coding, tools: []}
+  - {id: t4-evaluation-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
+  - {id: t5-assurance-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
+  - {id: t6-readiness-agent, version: "1.0.0", implementation: stub, model_tier: standard, tools: []}
+  - {id: t7-deployment-agent, version: "1.0.0", implementation: stub, model_tier: standard, tools: []}
+  - {id: t8-operations-agent, version: "1.0.0", implementation: stub, model_tier: standard, tools: []}
+  - {id: t9-evolution-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
+  - id: common-terminal-reviewer
+    version: "1.0.0"
+    description: "Scores each checklist item and recommends an outcome (SA 7.2 point 5)"
+    implementation: model
+    model_tier: reasoning
+    prompt: {id: common-terminal-reviewer, version: "1.0.0"}
+    tools: []

@@ -60,10 +60,26 @@ class Clarification:
 
 @dataclass(frozen=True)
 class BudgetExceeded:
+    detail: str = ""  # 006: names the limit reached: tokens, steps or timeout
+
+
+@dataclass(frozen=True)
+class AttemptFailed:
+    """006: output still unfit after the corrections, a refusal, or a request that cannot work.
+    Counted as a failed build attempt, or escalates a review (``reviewer_failed``)."""
+
+    reason: str = ""
+
+
+@dataclass(frozen=True)
+class ModelUnavailable:
+    """006: no model of the tier could run (keys, outages). The engine defers the run, and
+    escalates it once the outage limit has passed."""
+
     detail: str = ""
 
 
-AgentResult = Artifacts | Clarification | BudgetExceeded
+AgentResult = Artifacts | Clarification | BudgetExceeded | AttemptFailed | ModelUnavailable
 
 
 @dataclass(frozen=True)
@@ -71,9 +87,12 @@ class Recommendation:
     status: str
     checklist_scores: Mapping[str, int] = field(default_factory=dict)
     findings: tuple[str, ...] = ()
+    reason: str = ""  # 006: the reviewer's reason for the recommended status
+    root_cause: str | None = None  # 006: required with rework, from the root-cause catalogue
+    reviewer: str = "stub"  # 006: stub or model
 
 
-ReviewResult = Recommendation | Clarification
+ReviewResult = Recommendation | Clarification | AttemptFailed | ModelUnavailable
 
 
 @dataclass(frozen=True)

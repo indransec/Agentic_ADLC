@@ -130,6 +130,7 @@ _RULE_MODULES = (
     "adlc.spec_toolkit.rules.single_spec",
     "adlc.spec_toolkit.rules.cross_spec",
     "adlc.spec_toolkit.rules.versioning",
+    "adlc.spec_toolkit.rules.agents",
 )
 
 

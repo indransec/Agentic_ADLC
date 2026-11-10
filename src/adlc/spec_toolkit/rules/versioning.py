@@ -158,7 +158,7 @@ def check_bump(
             f"version {_fmt(new_v)} is lower than {baseline_label} {_fmt(old_v)}",
         )
         return
-    if loaded.kind == "playbook":
+    if loaded.kind in ("playbook", "prompt"):
         needed = BumpLevel.PATCH if baseline_text != loaded.text else BumpLevel.NONE
     else:
         needed = compare(baseline_data, loaded.data)
@@ -215,7 +215,7 @@ def _ref_exists(cwd: Path, ref: str) -> bool:
 
 def _load_text(kind: str, text: str) -> Any:
     try:
-        if kind == "playbook":
+        if kind in ("playbook", "prompt"):
             match = FRONT_MATTER.match(text)
             return YAML(typ="safe").load(match.group(1)) if match else None
         return YAML(typ="safe").load(text)
