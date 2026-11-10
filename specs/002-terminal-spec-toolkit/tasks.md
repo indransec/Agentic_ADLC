@@ -246,16 +246,16 @@ are applied.
 
 ### Tests for US4 (write first) ⚠️
 
-- [ ] T054 [P] [US4] Write `tests/integration/spec_toolkit/test_spec_schema_immutability.py` (core rule, constitution IX), using the `migrated_db` fixture from 001:
+- [X] T054 [P] [US4] Write `tests/integration/spec_toolkit/test_spec_schema_immutability.py` (core rule, constitution IX), using the `migrated_db` fixture from 001:
   - For every table in data-model.md, UPDATE, DELETE and TRUNCATE as `adlc_owner` and `adlc_app` are refused with SQLSTATE `42501`.
   - The exception is `spec_registry`/`spec_catalogue` status: `active→deprecated`, `active→retired` and `deprecated→retired` succeed as owner, but `deprecated→active`, `retired→*`, and changing `content_hash` together with status are refused.
   - A second `active` row for the same `terminal_id` is refused (partial unique index).
   - Retiring a version referenced by `usecase_spec_pin` is refused.
   - `adlc_app` has SELECT only on schema `spec`.
-- [ ] T055 [P] [US4] Write `tests/unit/spec_toolkit/test_projections.py` (pure, from the `_valid` bundle plus one T8-like and one T9-like fixture):
+- [X] T055 [P] [US4] Write `tests/unit/spec_toolkit/test_projections.py` (pure, from the `_valid` bundle plus one T8-like and one T9-like fixture):
   - Exact projection rows for triggers, outcome routes (root-cause rows, `requires`, `recheck_at`, `set_by`, `notify`, `alternatives`, `destination_kind`), event routes (`immediate`, `then_destination`), change classes and timelines.
   - One timeline row per tier, with untiered values repeated; `continuous` has a null `expected_duration`.
-- [ ] T056 [P] [US4] Write `tests/integration/spec_toolkit/test_register.py`:
+- [X] T056 [P] [US4] Write `tests/integration/spec_toolkit/test_register.py`:
   - First run registers 10 terminals, every catalogue and every playbook.
   - Second run reports `0 registered`.
   - A changed T0 content under the same version is refused (R-01) with nothing written.
@@ -269,7 +269,7 @@ are applied.
 
 ### Implementation for US4
 
-- [ ] T057 [US4] Write migration `db/migrations/versions/0002_spec_registry.py` per data-model.md.
+- [X] T057 [US4] Write migration `db/migrations/versions/0002_spec_registry.py` per data-model.md.
   - Tables `spec.spec_registry`, `spec.spec_catalogue`, `spec.playbook_registry`, `spec.spec_trigger`, `spec.spec_outcome_route`, `spec.spec_event_route`, `spec.spec_change_class`, `spec.spec_timeline` and `spec.usecase_spec_pin`, with the constraints quoted in the data model:
     - `content_hash` `CHECK (content_hash ~ '^sha256:[0-9a-f]{64}$')`
     - `status IN ('active','deprecated','retired')`
@@ -284,14 +284,14 @@ are applied.
   - `GRANT USAGE` and `SELECT` on all `spec` tables to the app role.
   - The downgrade drops everything in reverse.
   - Extend `scripts/migration_check.py` to assert the new tables and triggers.
-- [ ] T058 [US4] Implement `projections.py` (pure: spec JSON → typed rows) so T055 passes
-- [ ] T059 [US4] Implement `register.py` per research R-12:
+- [X] T058 [US4] Implement `projections.py` (pure: spec JSON → typed rows) so T055 passes
+- [X] T059 [US4] Implement `register.py` per research R-12:
   - Validate first.
   - In one owner transaction, take `pg_advisory_xact_lock(hashtext('adlc.spec.register'))`.
   - Process catalogues, then terminals, then playbooks: compare hashes; for a new version use `versioning.compare` against the registered JSON; deprecate the old active row, insert the new row and its projections.
   - Return a `RegistrationReport`; `--dry-run` rolls back.
   - Log one summary line.
-- [ ] T060 [US4] Implement `adlc-spec register [--dry-run]` in `cli.py` using `load_settings_or_exit(DatabaseSettings)` and `owner_engine` from 001. Output and exit codes per contracts/adlc-spec-cli.md. Make T054 and T056 pass.
+- [X] T060 [US4] Implement `adlc-spec register [--dry-run]` in `cli.py` using `load_settings_or_exit(DatabaseSettings)` and `owner_engine` from 001. Output and exit codes per contracts/adlc-spec-cli.md. Make T054 and T056 pass.
 
 **Checkpoint**: the registry is populated, idempotent and immutable.
 

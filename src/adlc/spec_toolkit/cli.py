@@ -60,3 +60,34 @@ def validate_command(
     else:
         typer.echo(report.to_text(min_severity))
     raise typer.Exit(1 if report.has_errors else 0)
+
+
+@app.command("register")
+def register_command(
+    path: Annotated[Path, typer.Argument(help="Spec folder")] = Path("adlc-specs"),
+    dry_run: Annotated[bool, typer.Option("--dry-run", help="Plan, then roll back")] = False,
+) -> None:
+    """Validate, then register specs into the ADLC_DB_* data store (schema-owner identity)."""
+    from adlc.config.errors import load_settings_or_exit
+    from adlc.config.settings import DatabaseSettings
+    from adlc.db.engine import ConfigurationError, owner_engine
+    from adlc.spec_toolkit.register import RegistrationRefused, register
+
+    if not path.is_dir():
+        typer.echo(f"adlc-spec: {path} is not a directory", err=True)
+        raise typer.Exit(2)
+    settings = load_settings_or_exit(DatabaseSettings)
+    try:
+        engine = owner_engine(settings)
+    except ConfigurationError as exc:
+        typer.echo(f"adlc: configuration error\n  {exc}", err=True)
+        raise typer.Exit(2) from None
+    try:
+        report = register(path, engine, dry_run=dry_run)
+    except RegistrationRefused as exc:
+        typer.echo(f"spec registration refused, nothing written: {exc}", err=True)
+        raise typer.Exit(1) from None
+    finally:
+        engine.dispose()
+    for line in report.lines():
+        typer.echo(line)

@@ -67,10 +67,10 @@ registry row and never changed.
 | Table | Columns (besides `spec_registry_id`) | Source in spec |
 | --- | --- | --- |
 | `spec_trigger` | `event_type` | `trigger.on[]` |
-| `spec_outcome_route` | `outcome_status`, `root_cause` (null unless rework by cause), `destination_kind` (`terminal` \| `event` \| `special` \| `template`), `destination`, `alternatives` text[], `requires` text[], `recheck_at` text[], `set_by` text[], `notify` text[], `condition` text | `outcome_model.*` |
+| `spec_outcome_route` | `outcome_status`, `root_cause` (null unless rework by cause), `destination_kind` (`terminal` \| `event` \| `special` \| `template` \| `disabled` \| `terminating`), `destination`, `alternatives` text[], `requires` text[], `recheck_at` text[], `set_by` text[], `notify` text[], `condition` text | `outcome_model.*` |
 | `spec_event_route` | `event_type`, `destination_kind`, `destination`, `immediate` text[], `then_destination`, `notify` text[], `condition` | `outcome_model.event_routes` |
-| `spec_change_class` | `change_class`, `reentry_terminal`, `path` text[], `retrospective` text[], `within` interval | `change_classes` |
-| `spec_timeline` | `risk_tier` (`low`\|`medium`\|`high`), `expected_duration` interval null, `continuous` bool, `reminder_after` interval, `escalate_after` interval null, `escalate_at_window_end` bool, `max_rework_cycles` int, `clarification_sla` interval, `max_clarification_rounds` int, `max_auto_retries` int | `timeline` (one row per tier, with untiered values repeated) |
+| `spec_change_class` | `change_class`, `reentry_terminal`, `path` text[], `retrospective` text[], `within` text (B.1 duration), `alternative` text | `change_classes` |
+| `spec_timeline` | `risk_tier` (`low`\|`medium`\|`high`), `expected_duration` text null, `continuous` bool, `reminder_after` text, `escalate_after` text null, `escalate_at_window_end` bool, `max_rework_cycles` int, `clarification_sla` text, `max_clarification_rounds` int, `max_auto_retries` int null, `retirement_duration` text null | `timeline` (one row per tier, with untiered values repeated). Durations are stored as TDS B.1 text (`2d`, `12m`), because months have no fixed interval |
 
 Unique keys: `spec_trigger (spec_registry_id, event_type)`;
 `spec_outcome_route (spec_registry_id, outcome_status, coalesce(root_cause, ''))`;
