@@ -37,7 +37,7 @@ def _records(h: Harness, usecase: str) -> list[tuple[str, str, str | None, dict]
         "WHERE usecase_id = :u ORDER BY ledger_record_id",
         u=usecase,
     )
-    return [tuple(r) for r in rows]  # type: ignore[misc]
+    return [tuple(r) for r in rows]
 
 
 def test_record_contents_and_artifact_hashes(h: Harness) -> None:
