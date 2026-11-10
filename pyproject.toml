@@ -11,6 +11,7 @@ dependencies = [
     "itsdangerous>=2.2.0",
     "jsonschema>=4.26.0",
     "networkx>=3.7",
+    "openpyxl>=3.1.5",
     "opentelemetry-api>=1.45.2",
     "opentelemetry-exporter-otlp-proto-http>=1.45.2",
     "opentelemetry-instrumentation-fastapi>=0.66b2",
@@ -29,6 +30,7 @@ adlc-api = "adlc.api.__main__:main"
 adlc-account = "adlc.cli.account:app"
 adlc-spec = "adlc.spec_toolkit.cli:app"
 adlc-orchestrator = "adlc.orchestration.__main__:main"
+adlc-ledger = "adlc.ledger.cli:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -89,4 +91,5 @@ dev = [
     "testcontainers[postgres]>=4.15.0",
     "types-jsonschema>=4.26.0.20261006",
     "types-networkx>=3.6.1.20261108",
+    "types-openpyxl>=3.1.5.20261017",
 ]

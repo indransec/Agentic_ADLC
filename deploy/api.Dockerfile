@@ -22,7 +22,9 @@ COPY adlc-specs ./adlc-specs
 COPY data ./data
 RUN uv sync --locked --no-dev
 
-RUN useradd --system --uid 10001 --no-create-home adlc
+RUN useradd --system --uid 10001 --no-create-home adlc \
+    && mkdir -p /var/lib/adlc/files && chown adlc /var/lib/adlc/files
+# The evidence file store (feature 005); a named volume mounted here inherits this owner.
 USER adlc
 
 EXPOSE 8000

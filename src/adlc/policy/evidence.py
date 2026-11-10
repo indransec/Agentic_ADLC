@@ -12,6 +12,7 @@ from typing import Any, Protocol
 
 from sqlalchemy import Connection, Engine
 
+from adlc.ledger.binding import resolve_bound_to
 from adlc.orchestration import durations, spec_view
 from adlc.orchestration import store as run_store
 from adlc.orchestration.interfaces import Clock, EvalContext
@@ -197,22 +198,15 @@ class SqlEvidenceProvider:
     def _bound_to(
         self, conn: Connection, usecase_id: str, run: RunRow, ctx: EvalContext, depth: int
     ) -> Any:
-        """The spec's ``ledger.bound_to`` reference resolved in this use case (FR-008)."""
-        ledger = (spec_view.body(self._spec(run)).get("evidence") or {}).get("ledger") or {}
-        reference = ledger.get("bound_to") if isinstance(ledger, Mapping) else None
-        if not isinstance(reference, str) or depth > 2:
+        """The spec's ``ledger.bound_to`` resolved in this use case (FR-008; 005 binding.py)."""
+        if depth > 2:
             return None
-        root, *path = reference.split(".")
-        if not TERMINAL.match(root):
-            return None
-        value = self._terminal(conn, usecase_id, root, ctx, depth + 1)
-        for member in path:
-            if isinstance(value, list):
-                value = value[0] if value and isinstance(value[0], Mapping) else None
-            if not isinstance(value, Mapping) or member not in value:
-                return None
-            value = value[member]
-        return value
+
+        def record_of(terminal: str) -> Mapping[str, Any] | None:
+            value = self._terminal(conn, usecase_id, terminal, ctx, depth + 1)
+            return value if isinstance(value, Mapping) else None
+
+        return resolve_bound_to(self._spec(run), record_of)
 
 
 def _trigger(run: RunRow) -> dict[str, Any]:
