@@ -1,7 +1,9 @@
 # tests/scenario
 
 Demo-moment scenarios, driven through `OrchestratorService` against the real registered
-`adlc-specs/`, with stub agents, reviewer and policy engine (feature 003). Each test gets its
+`adlc-specs/`. Since feature 004 they run with the real policy engine. The stub agent starts
+from the synthetic artifacts in `data/synthetic/`, and synthetic evidence is labelled in every
+decision. Each test gets its
 own database, copied from a migrated and registered template (`tests/support/orchestration.py`).
 
 | Test | Demo moment |

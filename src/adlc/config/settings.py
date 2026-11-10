@@ -108,6 +108,23 @@ class OrchestratorSettings(RuntimeSettings):
         default=timedelta(seconds=30), json_schema_extra=_meta(DURATION_FORM)
     )
     deadletter_role: str = Field(json_schema_extra=_meta("a role id from the role catalogue"))
+    synthetic_dir: Path | None = Field(
+        default=Path("data/synthetic"),
+        json_schema_extra=_meta("path to the synthetic data folder, or off"),
+    )
+    accounts_file: Path | None = Field(
+        default=None, json_schema_extra=_meta("path to a readable file (optional)")
+    )
+
+    @field_validator("synthetic_dir", mode="before")
+    @classmethod
+    def _off_disables(cls, value: object) -> object:
+        return None if isinstance(value, str) and value.strip().lower() == "off" else value
+
+    @field_validator("accounts_file")
+    @classmethod
+    def _readable_optional(cls, value: Path | None) -> Path | None:
+        return None if value is None else _readable(value)
 
     @field_validator("deadletter_role")
     @classmethod

@@ -18,6 +18,8 @@ from dotenv import load_dotenv
 from adlc.config.errors import load_settings_or_exit
 from adlc.config.settings import OrchestratorSettings
 from adlc.db.engine import app_engine
+from adlc.identity.accounts import load_accounts
+from adlc.identity.catalogue import load_role_ids
 from adlc.orchestration import routing
 from adlc.orchestration.interfaces import SystemClock
 from adlc.orchestration.service import Actor, OrchestratorService
@@ -27,6 +29,12 @@ from adlc.orchestration.worker import build_orchestrator
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 
 LIFECYCLE = ["T0", "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"]
+SUBMITTER_ROLE = "business_owner"  # demo script data, not platform code
+INTAKE = (
+    "Claims handlers spend about twelve minutes triaging each motor claim before it reaches "
+    "an assessor. We want an assistant that reads the claim, looks up the policy and history, "
+    "and proposes a triage category for the handler to confirm."
+)
 WAIT = timedelta(seconds=30)
 
 
@@ -42,7 +50,7 @@ def main() -> int:
     orch = build_orchestrator(
         engine,
         SqlSpecRegistry(engine),
-        StubPolicy(),
+        StubPolicy(),  # only the service is used here; the orchestrator container decides
         StubAgent(),
         StubReviewer(),
         SystemClock(),
@@ -50,7 +58,7 @@ def main() -> int:
         worker_id="demo-drive",
     )
     service = orch.service
-    usecase = service.submit_usecase(person("business_owner"), "Demo: claims triage", "x" * 250)
+    usecase = service.submit_usecase(_submitter(settings), "Demo: claims triage", INTAKE)
     print(f"submitted {usecase}")
     for terminal in LIFECYCLE:
         run_id = _await_sign_off(orch, usecase, terminal)
@@ -77,6 +85,20 @@ def main() -> int:
         print(f"{current.run_id:<22} {current.state:<18} {current.final_status or '':<10} {gap}")
     engine.dispose()
     return 0
+
+
+def _submitter(settings: OrchestratorSettings) -> Actor:
+    """A real account holding the business-owner role of T0's sign-off, when the account file is
+    set: the orchestrator checks the submitter against the directory (PRE-T0-02)."""
+    if settings.accounts_file is None:
+        return person(SUBMITTER_ROLE)
+    accounts = load_accounts(
+        settings.accounts_file, load_role_ids(settings.role_catalogue), settings.env
+    )
+    for account in accounts.values():
+        if SUBMITTER_ROLE in account.roles:
+            return Actor(account.account_name, account.roles)
+    raise SystemExit(f"no account in {settings.accounts_file} holds {SUBMITTER_ROLE}")
 
 
 def _run(service: OrchestratorService, run_id: str) -> RunRow:

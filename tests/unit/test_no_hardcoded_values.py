@@ -27,6 +27,15 @@ def test_no_terminal_ids_or_events(path: Path) -> None:
     assert hits == []
 
 
+CATALOGUE_FIELD = "# catalogue-field"
+
+
+def _catalogue_field(line: str, path: Path) -> bool:
+    """An evidence-source field name that equals a role id (evidence_sources.yaml), marked on the
+    line and only in the evidence provider. It names data, not a role check."""
+    return line.rstrip().endswith(CATALOGUE_FIELD) and path.name == "evidence.py"
+
+
 @pytest.mark.parametrize("path", SOURCES, ids=lambda p: str(p.relative_to(ROOT)))
 def test_no_role_ids(path: Path) -> None:
     roles = load_role_ids(ROOT / "adlc-specs" / "shared" / "roles.yaml")
@@ -34,12 +43,17 @@ def test_no_role_ids(path: Path) -> None:
     hits = [
         f"{path.name}:{number}: {line.strip()}"
         for number, line in _code_lines(path)
-        if pattern.search(line)
+        if pattern.search(line) and not _catalogue_field(line, path)
     ]
     assert hits == []
 
 
-ORCHESTRATION = sorted((ROOT / "src" / "adlc" / "orchestration").rglob("*.py"))
+ORCHESTRATION = sorted(
+    [
+        *(ROOT / "src" / "adlc" / "orchestration").rglob("*.py"),
+        *(ROOT / "src" / "adlc" / "policy").rglob("*.py"),
+    ]
+)
 
 
 def _destination_ids() -> set[str]:
@@ -56,7 +70,7 @@ def _destination_ids() -> set[str]:
 
 @pytest.mark.parametrize("path", ORCHESTRATION, ids=lambda p: str(p.relative_to(ROOT)))
 def test_orchestration_names_no_route_destination(path: Path) -> None:
-    """003 T072: special destinations are handled by kind, never by name (constitution I)."""
+    """003 T072, 004 T050: destinations are handled by kind, never by name (constitution I)."""
     pattern = re.compile(r"\b(" + "|".join(sorted(_destination_ids())) + r")\b")
     hits = [
         f"{path.name}:{number}: {line.strip()}"

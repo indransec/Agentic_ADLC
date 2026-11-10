@@ -53,7 +53,7 @@ def insert_usecase(
 def load_usecase(conn: Connection, usecase_id: str, *, lock: bool = False) -> UseCaseRow | None:
     sql = (
         "SELECT usecase_id, name, intake_text, submitted_by, risk_tier, status "
-        "FROM run.usecase WHERE usecase_id = :u FOR UPDATE"
+        "FROM run.usecase WHERE usecase_id = :u FOR NO KEY UPDATE"
         if lock
         else "SELECT usecase_id, name, intake_text, submitted_by, risk_tier, status "
         "FROM run.usecase WHERE usecase_id = :u"
@@ -161,7 +161,9 @@ def load_run(conn: Connection, run_id: str, *, lock: bool = False) -> RunRow | N
         "lease_until, opened_at, due_at, closed_at FROM run.terminal_run WHERE run_id = :r"
     )
     if lock:
-        sql += " FOR UPDATE"
+        # NO KEY UPDATE: serializes writers of the run, but lets rows that reference it (for
+        # example 004's frozen parameter set) be inserted from another connection meanwhile.
+        sql += " FOR NO KEY UPDATE"
     row = conn.execute(text(sql), {"r": run_id}).mappings().first()
     return None if row is None else _run(row)
 
@@ -298,7 +300,7 @@ def lease_next_automatic(
             "SELECT run_id, lease_until FROM run.terminal_run "
             "WHERE state IN ('opened', 'building', 'checking', 'reviewing') "
             "AND (lease_until IS NULL OR lease_until < :now) "
-            "ORDER BY opened_at, run_id LIMIT 1 FOR UPDATE SKIP LOCKED"
+            "ORDER BY opened_at, run_id LIMIT 1 FOR NO KEY UPDATE SKIP LOCKED"
         ),
         {"now": now},
     ).first()

@@ -3,7 +3,7 @@
 import pytest
 
 from adlc.orchestration.service import Actor, InvalidDecision, NotAuthorised
-from adlc.orchestration.stubs import StubPolicy
+from adlc.orchestration.stubs import StubAgent, StubPolicy
 from tests.support.orchestration import Harness, harness, person
 from tests.support.pg import PlatformDatabase
 
@@ -33,11 +33,20 @@ def test_two_approvers_needed(h: Harness) -> None:
     assert h.run(run_id).final_status == "pass"
 
 
-def test_plus_approver_needed_in_addition(h: Harness) -> None:
-    _, run_id = _to(h, "T3")  # engineering_lead min 1, plus solution_architect on deviation
+def test_plus_approver_needed_in_addition(orch_template: PlatformDatabase) -> None:
+    # engineering_lead min 1, plus solution_architect when the build deviates from the design
+    deviation = {"design_conformance": {"deviation": "caching layer added"}}
+    with harness(orch_template, agent=StubAgent({"T3": {1: deviation}})) as h:
+        _, run_id = _to(h, "T3")
+        h.service.decide(person("engineering_lead"), run_id, "pass")
+        assert h.run(run_id).state == "awaiting_sign_off"
+        h.service.decide(person("solution_architect"), run_id, "pass")
+        assert h.run(run_id).final_status == "pass"
+
+
+def test_plus_not_needed_without_deviation(h: Harness) -> None:
+    _, run_id = _to(h, "T3")  # the synthetic T3 build has no design deviation
     h.service.decide(person("engineering_lead"), run_id, "pass")
-    assert h.run(run_id).state == "awaiting_sign_off"
-    h.service.decide(person("solution_architect"), run_id, "pass")
     assert h.run(run_id).final_status == "pass"
 
 

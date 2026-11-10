@@ -56,6 +56,10 @@ known-first-party = ["adlc", "tests", "scripts"]
 "src/adlc/spec_toolkit/register.py" = ["E501"]
 "scripts/**" = ["S603", "S607"]
 "db/migrations/**" = ["S608", "E501"]
+# Predicate failure messages name table, row and column; keep each on one line.
+"src/adlc/policy/predicates/*" = ["E501"]
+# Synthetic data rows read better one per line.
+"scripts/make_synthetic.py" = ["E501"]
 
 [tool.mypy]
 strict = true

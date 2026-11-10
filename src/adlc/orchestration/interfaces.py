@@ -33,6 +33,7 @@ class EvalResult:
     passed: bool
     value: Any = None
     reason: str = ""
+    synthetic: bool = False  # 004: true when any input came from the synthetic provider
 
 
 class PolicyEngine(Protocol):

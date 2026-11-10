@@ -1,7 +1,8 @@
 """``adlc-orchestrator``: run the orchestrator loop, or check its heartbeat (research R-11).
 
-``run`` wires the registered specs and, until features 004 and 006 land, the scriptable stubs
-for the policy engine, agents and reviewer. ``health`` exits 0 when a worker beat within
+``run`` wires the registered specs, the policy engine (feature 004, with labelled synthetic
+evidence) and, until feature 006 lands, the stub agent (starting from synthetic artifacts) and
+stub reviewer. ``health`` exits 0 when a worker beat within
 ``ADLC_HEARTBEAT_MAX_AGE`` (the Compose healthcheck).
 """
 
@@ -21,8 +22,11 @@ from adlc.observability.tracing import setup_process_tracing
 from adlc.orchestration import store
 from adlc.orchestration.engine import EngineConfig
 from adlc.orchestration.interfaces import SystemClock
-from adlc.orchestration.stubs import StubAgent, StubPolicy, StubReviewer
+from adlc.orchestration.stubs import StubAgent, StubReviewer
 from adlc.orchestration.worker import build_orchestrator
+from adlc.policy.directory import AccountFileDirectory
+from adlc.policy.factory import build_policy_engine
+from adlc.policy.synthetic import load_synthetic_artifacts
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 
 SERVICE_NAME = "adlc-orchestrator"
@@ -41,13 +45,23 @@ def run() -> None:
         print(f"adlc: {exc}", file=sys.stderr)
         raise typer.Exit(1) from exc
     setup_process_tracing(SERVICE_NAME, settings)
+    registry = SqlSpecRegistry(engine)
+    clock = SystemClock()
+    directory = (
+        AccountFileDirectory(settings.accounts_file, settings.role_catalogue, settings.env)
+        if settings.accounts_file
+        else None
+    )
+    policy = build_policy_engine(
+        engine, registry, clock, synthetic_dir=settings.synthetic_dir, directory=directory
+    )
     orchestrator = build_orchestrator(
         engine,
-        SqlSpecRegistry(engine),
-        StubPolicy(),
-        StubAgent(),
+        registry,
+        policy,
+        StubAgent(base=load_synthetic_artifacts(settings.synthetic_dir)),
         StubReviewer(),
-        SystemClock(),
+        clock,
         deadletter_role=settings.deadletter_role,
         config=EngineConfig(time_scale=settings.time_scale, lease=settings.lease),
     )
