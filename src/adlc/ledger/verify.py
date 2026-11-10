@@ -45,6 +45,9 @@ class Report:
     scope: str
     records_checked: int = 0
     breaks: list[Break] = field(default_factory=list)
+    # Records outside any use-case chain (no use case, e.g. 001's quickstart row): listed, not
+    # verifiable, never silently skipped.
+    unscoped: list[str] = field(default_factory=list)
 
     @property
     def verified(self) -> bool:
@@ -56,6 +59,7 @@ class Report:
             "records_checked": self.records_checked,
             "verified": self.verified,
             "breaks": [asdict(b) for b in self.breaks],
+            "unscoped": list(self.unscoped),
         }
 
 
@@ -180,6 +184,16 @@ class Verifier:
                 ),
                 {"scope": scope},
             ).all()
+            if scope == "all":
+                report.unscoped = [
+                    str(k)
+                    for k in conn.execute(
+                        text(
+                            "SELECT ledger_key FROM ledger.ledger_record "
+                            "WHERE usecase_id IS NULL ORDER BY ledger_record_id"
+                        )
+                    ).scalars()
+                ]
             blobs: dict[str, Any] = {}
 
             def blob(digest: str) -> Any | None:

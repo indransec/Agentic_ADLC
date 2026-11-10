@@ -221,3 +221,17 @@ def test_verification_is_fast(h: Harness, ledger: LedgerService) -> None:
 
 def _catalogue_roles() -> frozenset[str]:
     return load_role_ids(ROLES)
+
+
+def test_records_without_a_use_case_are_listed(h: Harness, ledger: LedgerService) -> None:
+    """001's quickstart row has no use case or content: listed under ``unscoped``, not skipped."""
+    walk_to(h, "T1")
+    with h.app.begin() as conn:
+        conn.execute(
+            text("INSERT INTO ledger.ledger_record (ledger_key, content_hash) VALUES ('qs/1', :h)"),
+            {"h": "sha256:" + "0" * 64},
+        )
+    report = ledger.verify(AUDITOR, "all")
+    assert report.verified and report.unscoped == ["qs/1"]
+    assert report.records_checked == 1
+    assert ledger.verify(AUDITOR, h.sql("SELECT usecase_id FROM run.usecase")[0][0]).unscoped == []

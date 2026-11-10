@@ -61,6 +61,11 @@ def verify_command(
             f"{report.scope}: {report.records_checked} records checked, "
             f"{'verified' if report.verified else f'{len(report.breaks)} breaks'}"
         )
+        if report.unscoped:
+            typer.echo(
+                f"  {len(report.unscoped)} records belong to no use case and cannot be verified: "
+                + ", ".join(report.unscoped)
+            )
         for b in report.breaks:
             typer.echo(
                 f"  {b.ledger_key}  {b.check}  {b.element}: expected {b.expected}, got {b.actual}"

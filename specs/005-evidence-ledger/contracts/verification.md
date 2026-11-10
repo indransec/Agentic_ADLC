@@ -2,7 +2,8 @@
 
 ```text
 Verifier.verify(scope: "UC-nnnn" | "all", actor: str) -> Report
-Report: {scope, records_checked, verified: bool, breaks: [{ledger_key, check, element, expected, actual}]}
+Report: {scope, records_checked, verified: bool, breaks: [{ledger_key, check, element, expected, actual}],
+         unscoped: [ledger_key]}
 ```
 
 ## Checks per record (in chain order per use case)
@@ -16,6 +17,10 @@ Report: {scope, records_checked, verified: bool, breaks: [{ledger_key, check, el
 | `binding` | Version-2 records whose spec binds | `bound_to` differs from the bound terminal's package hash, read from the stored artifact content that the bound terminal's latest earlier record references |
 
 Breaks never include artifact content: only keys, hashes and names.
+
+Records with no use case (such as the row feature 001's quickstart inserts by hand) belong to no
+chain and have no content to check. With scope `all`, their keys are listed under `unscoped`, so
+nothing is skipped silently; they do not count as breaks.
 
 ## Operations
 

@@ -24,7 +24,13 @@ def test_verified_exits_zero_with_the_report_shape(h: Harness, tmp_path: Path) -
         result = runner.invoke(app, ["verify", "--usecase", usecase, "--json"])
     assert result.exit_code == 0, result.output
     report = json.loads(result.output)
-    assert report == {"scope": usecase, "records_checked": 3, "verified": True, "breaks": []}
+    assert report == {
+        "scope": usecase,
+        "records_checked": 3,
+        "verified": True,
+        "breaks": [],
+        "unscoped": [],
+    }
     actor = h.sql("SELECT actor FROM ledger.verification_run")[0][0]
     assert str(actor).startswith("cli:")
 
