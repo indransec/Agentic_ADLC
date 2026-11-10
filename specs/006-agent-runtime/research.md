@@ -363,3 +363,21 @@ subagents. The build plan row is updated with ADR-02.
   errors."
 - SA §17: ADR-02 is recorded as decided, with the CoE to confirm the fallback model ids and the
   data-class approvals.
+
+## R-17 LiteLLM 1.106.5 behaviour observed (mocked HTTP probe, 2026-11-10)
+
+- **Anthropic stop reasons:** `refusal` arrives as `finish_reason="content_filter"`, with the
+  text still present. `max_tokens` arrives as `length`.
+- **Anthropic request body:** keys `model`, `messages`, `system`, `max_tokens` only (no sampling
+  settings). The key goes in the `x-api-key` header.
+- **Anthropic reply without `usage`:** raises `APIConnectionError` (a `KeyError` inside
+  LiteLLM). The gateway must not treat this as an outage: it is a malformed reply, so classify
+  it as `request_error`, or catch it before the generic connection rule.
+- **Errors:** 429 gives `RateLimitError`, 400 gives `BadRequestError`, a read timeout gives
+  `Timeout`.
+- **OpenAI:** body keys `model`, `messages`, `max_tokens`. `content_filter` and `length` pass
+  through. Key in the `Authorization` header.
+- **Gemini:** `SAFETY` becomes `content_filter` with content `None`; `MAX_TOKENS` becomes
+  `length`. The body is `contents` plus `generationConfig.max_output_tokens`. The key is not in
+  the URL.
+- **Process environment:** LiteLLM did not add provider keys to the process environment.
