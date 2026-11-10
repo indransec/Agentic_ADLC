@@ -197,7 +197,7 @@ def _run_tables() -> None:
             run_id text NOT NULL REFERENCES run.terminal_run (run_id),
             waiver_owner text NULL,
             compensating_control text NULL,
-            expiry date NOT NULL,
+            expiry date NULL,
             recheck_at text[] NOT NULL DEFAULT '{}',
             requires jsonb NOT NULL DEFAULT '{}',
             status text NOT NULL CHECK (status IN ('proposed', 'approved', 'rejected', 'expired')),
@@ -393,7 +393,7 @@ def _guards() -> None:
                OR NEW.waiver_id <> OLD.waiver_id OR NEW.run_id <> OLD.run_id
                OR NEW.waiver_owner IS DISTINCT FROM OLD.waiver_owner
                OR NEW.compensating_control IS DISTINCT FROM OLD.compensating_control
-               OR NEW.expiry <> OLD.expiry OR NEW.recheck_at <> OLD.recheck_at
+               OR NEW.expiry IS DISTINCT FROM OLD.expiry OR NEW.recheck_at <> OLD.recheck_at
                OR NEW.requires <> OLD.requires OR NEW.proposed_by <> OLD.proposed_by
                OR NEW.proposed_at <> OLD.proposed_at THEN
                 RAISE EXCEPTION 'waiver %: only a proposed waiver may be decided, once',

@@ -75,7 +75,7 @@ and INSERT.
 | `waiver_id` | text PK | `^WVR-[0-9]{4}$` |
 | `run_id` | text FK | |
 | `waiver_owner`, `compensating_control` | text | |
-| `expiry` | date | Must be after today |
+| `expiry` | date null | Must be after today when the spec's exception requires it (T9's emergency exception requires a retrospective plan instead) |
 | `recheck_at` | text[] | From the spec's exception outcome |
 | `requires` | jsonb | Extra fields the spec requires (for example `risk_acceptance`) |
 | `status` | text | `proposed` → `approved` \| `rejected`; `approved` → `expired` (by date, read-time) |
