@@ -237,8 +237,8 @@ architect; one without deviation does not.
 
 - **A rule names a terminal with no closed run for the use case** (for example a T1
   prerequisite before T0 closed): the evidence is missing, and the check is not passed.
-- **An artifact table is empty**: "every row" checks pass vacuously only if the spec allows an
-  empty table. The applicable-artifacts check fails for a required artifact that has no rows.
+- **An artifact table is empty**: "every row" checks fail with the reason "table is empty". A
+  required artifact must have rows, which the applicable-artifacts check also enforces.
 - **A value that should be numeric is text** (for example "80%"): the numeric check fails with
   the row named. Numbers given as text without units ("80") count as numbers.
 - **A predicate is called with arguments of the wrong kind**, or a function is not in the
@@ -269,10 +269,12 @@ architect; one without deviation does not.
   the catalogue MUST be refused.
 - **FR-003**: Every evaluation MUST return passed or not passed, the value computed, and a
   reason. For a failure, the reason names what failed (for example table, column and row, or
-  the missing evidence).
+  the missing evidence). When several parts fail, the first failing predicate's reason is
+  reported.
 - **FR-004**: The engine MUST fail closed. An error, missing evidence, a wrong type, an unknown
   name, or an evaluation that exceeds its time or size limit MUST give "not passed" with the
-  reason. It MUST never raise an error that lets a gate through.
+  reason. It MUST never raise an error that lets a gate through. The limits are 1 second per
+  evaluation, 10,000 rows per table and 100,000 characters per text value.
 - **FR-005**: Expressions MUST be evaluated without side effects. They can only read the
   evidence given to them.
 - **FR-006**: Prerequisites and automated controls MUST be evaluated for every check the
@@ -288,12 +290,17 @@ architect; one without deviation does not.
   - record fields from the evidence source catalogue (status, signatures, close time, run
     version, waivers);
   - artifacts as `T<n>.<artifact>` (a table of rows) and `T<n>.<artifact>.<column>` (the first
-    row's value).
+    row's value);
+  - emitted values as `T<n>.<name>` (the values of its pass decision, for example
+    `T4.eval_baseline`);
+  - `T<n>.bound_to`, the spec's `ledger.bound_to` reference resolved for the use case (for
+    example the T3 package hash).
 
   The run being checked reads its own artifacts the same way, under its own terminal id.
 - **FR-009**: `intake` (the submitted use case), `trigger` (the event that opened the run) and
   `run.*` (rework count, age, mode, use case, run version, risk tier) MUST be provided from
-  feature 003's records.
+  feature 003's records. The directory (for `in_directory`) is the account file, mounted
+  read-only into the orchestrator; without it, the synthetic provider supplies it, labelled.
 - **FR-010**: Sources built by later features MUST answer "not available" until those features
   register a real provider. A synthetic provider MUST be able to supply any source for tests
   and the demo. The sources are `env`, `ci`, `sbom`, `redteam`, `dlp`, `telemetry`, `change`,
@@ -308,13 +315,15 @@ architect; one without deviation does not.
   1. the use-case value, when the use case's profile supplies one within the guardrail for the
      use case's tier;
   2. otherwise, the guardrail's tier value.
-- **FR-013**: For a tighten-only guardrail, a use-case value MUST be used only if it is
-  stricter than or equal to the tier value: lower for a `max` guardrail, higher for a `min`
-  one. A looser value MUST be rejected, and the rejection recorded with the guardrail, the
-  proposed value and the reason.
-- **FR-014**: The resolved parameter set MUST be computed once per run, recorded with each
-  value's source, and reused for every check in that run. A use case without a tier MUST use
-  the `medium` values.
+- **FR-013**: A use-case value is "within the guardrail" when it is numeric and stricter than
+  or equal to the tier value: lower for a `max` guardrail, higher for a `min` one. This applies
+  to every guardrail. A tighten-only guardrail can only be loosened by an exception, never by a
+  profile value. A value that is not within the guardrail MUST be rejected, and the rejection
+  recorded with the guardrail, the proposed value and the reason.
+- **FR-014**: The resolved parameter set MUST be computed when the run opens, recorded with
+  each value's source, and reused for every check in that run. Each run resolves its own set
+  (a rework run does not reuse the previous run's). A use case without a tier MUST use the
+  `medium` values.
 
 **Authorization**
 
@@ -322,9 +331,12 @@ architect; one without deviation does not.
   run's terminal spec allows it and does not deny it. Deny wins, and the default is deny.
   - Actions and resources follow the permission patterns of the spec (`<verb>:<resource>`,
     with `*` wildcards).
-  - Tool use follows the terminal's tool scopes.
+  - Tool use follows the terminal's tool scopes, and the deny list still applies to it.
+  - People are authorized by sign-off roles in feature 003, not by `authorize`.
 - **FR-016**: Authorization MUST be run-scoped: an actor bound to a run may act only for that
-  run's use case and terminal. Any other request is refused.
+  run's use case and terminal. Any other request is refused. Agent, reviewer and tool actors
+  are named `<kind>:<run id>`. Feature 003's agent and reviewer actor ids change from
+  `<kind>:<terminal>` to this form.
 - **FR-017**: A refusal MUST name the matching deny entry, or say that no allow entry matched,
   or that the request is out of scope.
 
@@ -346,17 +358,23 @@ architect; one without deviation does not.
 
 - **FR-019**: Every evaluation and authorization MUST write one decision record. A record holds:
   - the rule or action and the check id;
-  - the inputs read (values, or references for large tables);
+  - the inputs read: scalar values in full, tables as a reference with row count and content
+    hash;
   - the result, the value and the reason;
   - the run, the use case and the time.
-- **FR-020**: Decision records MUST be append-only for every identity.
+- **FR-020**: Decision records MUST be append-only for every identity, and MUST be kept even if
+  the caller's work is rolled back. There is one record per check per attempt, kept with the
+  run.
 - **FR-021**: The decisions of a run MUST be readable in the order they were made.
 - **FR-022**: Every evaluation and authorization MUST be traced with the run id (constitution X).
+  A conditional artifact's `when`, evaluated inside the applicable-artifacts check, is recorded
+  as its own decision.
 
 **Platform wiring**
 
 - **FR-023**: The orchestrator process MUST use the real policy engine through the feature 003
-  policy interface, which stays unchanged.
+  policy interface. The interface's only change is a backward-compatible `synthetic` field
+  (default false) on evaluation results.
 - **FR-024**: The stub agent MUST produce synthetic artifacts per terminal that meet the
   registered specs' controls. These MUST be kept as data files, not code. Tests MUST be able to
   override them with failing artifacts.
@@ -410,7 +428,8 @@ architect; one without deviation does not.
 - **SC-007**: The feature 003 scenario tests (happy path, D-2, D-3, D-4, D-5, D-7, D-9) pass
   with the real engine.
 - **SC-008**: Evaluating one automated control takes under 50 milliseconds at the 95th
-  percentile, measured over all controls of the T0–T9 specs.
+  percentile, measured over all 98 T0–T9 rules, with compiled rules cached, against the test
+  database.
 
 ## Assumptions
 
