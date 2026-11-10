@@ -5,6 +5,7 @@ import sys
 import uvicorn
 
 from adlc.api.app import create_app
+from adlc.api.startup import RoleCatalogueMismatch, check_role_catalogue
 from adlc.config.errors import load_settings_or_exit
 from adlc.config.settings import Settings
 from adlc.db.engine import DatabaseUnavailable, wait_for_database
@@ -24,6 +25,11 @@ def main() -> None:
     except DatabaseUnavailable as exc:
         print(f"adlc: {exc}", file=sys.stderr)
         sys.exit(1)
+    try:
+        check_role_catalogue(settings.role_catalogue, app.state.engine)
+    except RoleCatalogueMismatch as exc:
+        print(f"adlc: configuration error\n  {exc}", file=sys.stderr)
+        sys.exit(2)
     uvicorn.run(app, host="0.0.0.0", port=8000, log_config=None)  # noqa: S104  # container port
 
 

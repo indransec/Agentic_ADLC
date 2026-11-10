@@ -305,14 +305,14 @@ are applied.
 
 ### Tests for US5 (write first) ⚠️
 
-- [ ] T061 [P] [US5] Write `tests/integration/spec_toolkit/test_demo_routing.py` (SC-007, test-first). After registering the real `adlc-specs/` into the test database, every row of the demo routing table returns the expected answer from `SqlSpecRegistry` and from `InMemorySpecRegistry.from_bundle(...)`, and the two are equal. Unknown event, root cause and terminal return `()` or `None`.
-- [ ] T062 [P] [US5] Write `tests/integration/spec_toolkit/test_registry_versions.py`: with T0 at `1.0.0` (deprecated) and `1.0.1` (active), reads without `version` use `1.0.1`, and reads with `version="1.0.0"` use the old projections
+- [X] T061 [P] [US5] Write `tests/integration/spec_toolkit/test_demo_routing.py` (SC-007, test-first). After registering the real `adlc-specs/` into the test database, every row of the demo routing table returns the expected answer from `SqlSpecRegistry` and from `InMemorySpecRegistry.from_bundle(...)`, and the two are equal. Unknown event, root cause and terminal return `()` or `None`.
+- [X] T062 [P] [US5] Write `tests/integration/spec_toolkit/test_registry_versions.py`: with T0 at `1.0.0` (deprecated) and `1.0.1` (active), reads without `version` use `1.0.1`, and reads with `version="1.0.0"` use the old projections
 
 ### Implementation for US5
 
-- [ ] T063 [US5] Implement in `src/adlc/spec_toolkit/registry.py`: the `SpecRegistry` Protocol and the frozen result dataclasses (`TerminalRef`, `RouteTarget`, `EventRouteTarget`, `ChangeClassRoute`, `TimelinePolicy`, `RegistryEntry`, `CatalogueEntry`) per contracts/spec-registry-interface.md; `SqlSpecRegistry(engine)` (SQLAlchemy Core, app identity); and `InMemorySpecRegistry.from_bundle(bundle)`, which reuses `projections.py`. Make T061 and T062 pass.
+- [X] T063 [US5] Implement in `src/adlc/spec_toolkit/registry.py`: the `SpecRegistry` Protocol and the frozen result dataclasses (`TerminalRef`, `RouteTarget`, `EventRouteTarget`, `ChangeClassRoute`, `TimelinePolicy`, `RegistryEntry`, `CatalogueEntry`) per contracts/spec-registry-interface.md; `SqlSpecRegistry(engine)` (SQLAlchemy Core, app identity); and `InMemorySpecRegistry.from_bundle(bundle)`, which reuses `projections.py`. Make T061 and T062 pass.
 
-- [ ] T072 [US5] Write failing tests, then implement the role catalogue cross-check (FR-025 exception).
+- [X] T072 [US5] Write failing tests, then implement the role catalogue cross-check (FR-025 exception).
   - Tests go in `tests/integration/spec_toolkit/test_role_catalogue_consistency.py`.
   - At API start, `create_app` compares the content hash of the role file it loaded with the active `roles` catalogue in the registry, through `SpecRegistry.catalogue("roles")`.
   - On a mismatch, startup stops with `adlc: configuration error` naming both versions.
