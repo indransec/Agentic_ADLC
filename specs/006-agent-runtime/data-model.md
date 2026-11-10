@@ -92,8 +92,9 @@ One row per request to a provider, including the ones that failed.
 
 ## Catalogues (in `adlc-specs/shared/`)
 
-**`model_catalogue.yaml`**: `catalogue: model_catalogue`, then `tiers: {<tier>: [entry, ...]}`.
-Each entry has:
+**`model_catalogue.yaml`**: `catalogue: model_catalogue`, then
+`profiles: {<profile>: {<tier>: [entry, ...]}}`. A `default` profile is required, and every
+profile covers every tier. Each entry has:
 
 - `provider`: `anthropic`, `openai` or `gemini`;
 - `model`: the LiteLLM id;

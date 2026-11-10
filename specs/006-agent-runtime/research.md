@@ -135,6 +135,25 @@ records.
 **Rationale**: values live in the catalogue, not in code, so they change through a spec pull
 request.
 
+## R-05a Catalogue profiles: Gemini 2.5 Flash first in dev
+
+**Decision** (user, 2026-11-10):
+- **Profiles:** the model catalogue holds `profiles: {default: {tiers}, dev: {tiers}}`.
+  `ADLC_MODEL_PROFILE` selects one (default `default`); `.env.example` sets `dev`.
+- **The `dev` profile:** every tier starts with `gemini/gemini-2.5-flash` ($0.30 / $2.50 per
+  million tokens, 1M context, 65K output; LiteLLM 1.106.5 price map). The `default` entries of
+  that tier follow.
+- **Dev keys:** only `ADLC_GEMINI_API_KEY` is set, so the Anthropic and OpenAI entries are
+  skipped (`skipped` rows with reason `no_key`). Gemini 2.5 Flash answers as the first runnable
+  entry (`fallback = false`).
+- **Validation rules:** every profile must cover every tier, and `default` must exist.
+
+**Rationale**:
+- Cheap real-model testing in development without changing the reviewed production order.
+- The profiles stay in the reviewed catalogue, not in settings (constitution II).
+
+**Alternative**: a setting that reorders providers. It hides the actual order outside the specs.
+
 ## R-06 Context pack
 
 **Decision**:

@@ -27,6 +27,9 @@ runtime behind feature 003's `AgentRunner` and `Reviewer` interfaces:
 - **Feature 003 additions**: `failed` and `model_unavailable` results, deferral of runs during
   an outage, and two escalation triggers.
 
+- **Catalogue profiles**: `ADLC_MODEL_PROFILE=dev` puts Gemini 2.5 Flash first for development
+  testing, which needs only a Gemini key. `default` keeps Anthropic first.
+
 Terminal agents stay stubs, now running through the runtime. `ADLC_REVIEWER_MODE=stub` keeps the
 stub reviewer for tests and keyless runs.
 

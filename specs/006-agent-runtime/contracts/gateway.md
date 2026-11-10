@@ -27,7 +27,9 @@ ModelResponse:
 
 ## Rules
 
-1. **Order:** the gateway walks the tier's entries in catalogue order. It skips an entry:
+1. **Order:** the gateway walks the tier's entries in the order of the catalogue profile
+   selected by `ADLC_MODEL_PROFILE` (default `default`; `dev` puts Gemini 2.5 Flash first). It
+   skips an entry:
    - with no key: a `skipped` call row with reason `no_key`;
    - whose `max_data_class` ranks below the request's `data_class`: a `skipped` row with reason
      `data_class`.

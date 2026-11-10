@@ -23,6 +23,10 @@ tracing. Terminal agents stay stubs until feature 008."
 - Q: Where does a lifecycle agent run's token budget come from? → A: Configuration per model
   tier (token budget, step limit, timeout), with optional overrides per terminal. The profile's
   `token_budget` is the pilot agent's and is not used.
+- Q: Which models run in development testing? → A: A `dev` profile of the model catalogue puts
+  Gemini 2.5 Flash first for every tier, with the other models after it. In dev only the Gemini
+  key is set, so the Anthropic and OpenAI entries are skipped. The `default` profile (Anthropic,
+  then OpenAI, then Gemini) stays the production order. The environment selects the profile.
 - Q: How long does a run wait during a full outage of its tier before escalating? → A: 30
   minutes by default, configurable per environment; retries use back-off and do not count as
   attempts.
@@ -297,6 +301,11 @@ without content.
   - `standard`: Anthropic Claude Sonnet 5.5.
 
   OpenAI and then Gemini follow as fallbacks per tier.
+
+  The catalogue holds named **profiles**, each a full tier-to-models map. `default` is the order
+  above. `dev` puts Gemini 2.5 Flash first for every tier, followed by the default entries. A
+  setting selects the profile per environment (default `default`). An unknown profile is refused
+  at start-up.
 - **FR-003**: The tier for a call MUST come from the terminal spec's `actors.agent.model_tier`
   (the reviewer uses `reasoning`). There is no runtime choice of model by content.
 - **FR-004**: The gateway MUST move to the next model in the list only on a provider error, a
