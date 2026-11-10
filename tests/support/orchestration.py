@@ -15,6 +15,12 @@ from typing import Any
 
 from sqlalchemy import Engine, create_engine, text
 
+from adlc.agents.catalogue import AgentCatalogue
+from adlc.agents.gateway import ModelGateway
+from adlc.agents.reviewer import RuntimeReviewer
+from adlc.agents.runner import RuntimeAgentRunner, RuntimeDeps
+from adlc.agents.wiring import build_runtime
+from adlc.config.settings import DEFAULT_AGENT_LIMITS, AgentLimit
 from adlc.orchestration import routing
 from adlc.orchestration.engine import EngineConfig
 from adlc.orchestration.interfaces import PolicyEngine
@@ -107,6 +113,7 @@ class Harness:
     reviewer: StubReviewer
     policy: Any  # StubPolicy when a test scripts answers, otherwise the real CelPolicyEngine
     orch: Orchestrator
+    runtime: RuntimeDeps | None = None  # 006
     approvers: dict[str, list[Actor]] = field(default_factory=dict)
 
     @property
@@ -177,6 +184,12 @@ def harness(
     fault: FaultHook | None = None,
     time_scale: float = 1.0,
     synthetic_dir: Path = SYNTHETIC,
+    gateway: ModelGateway | None = None,
+    agents: AgentCatalogue | None = None,
+    limits: Mapping[str, AgentLimit] = DEFAULT_AGENT_LIMITS,
+    config: EngineConfig | None = None,
+    reviewer_mode: str = "stub",
+    tools: Mapping[str, Any] | None = None,
 ) -> Iterator[Harness]:
     with fresh_database(db) as fresh:
         app = create_engine(fresh.app_url)
@@ -190,20 +203,37 @@ def harness(
         engine_policy: PolicyEngine = policy or build_policy_engine(
             app, registry, clock, synthetic_dir=synthetic_dir
         )
+        # 006: stub terminal agents run through the runtime (FR-024); tests script models with
+        # a FakeGateway and switch agents to implementation: model with ``agents``.
+        runtime = build_runtime(
+            app,
+            registry,
+            engine_policy,
+            clock,
+            profile="default",
+            keys={},
+            reviewer_mode="stub",
+            spec_dir=SPECS,
+            limits=limits,
+            gateway=gateway,
+            agents=agents,
+            check_keys=False,
+            tools=tools,
+        )
         orch = build_orchestrator(
             app,
             registry,
             engine_policy,
-            agent,
-            reviewer,
+            RuntimeAgentRunner(runtime, agent),
+            RuntimeReviewer(runtime, reviewer, reviewer_mode),
             clock,
             deadletter_role=DEADLETTER_ROLE,
-            config=EngineConfig(time_scale=time_scale),
+            config=config or EngineConfig(time_scale=time_scale),
             fault=fault,
             worker_id="test-worker",
         )
         try:
-            yield Harness(fresh, app, owner, clock, agent, reviewer, engine_policy, orch)
+            yield Harness(fresh, app, owner, clock, agent, reviewer, engine_policy, orch, runtime)
         finally:
             app.dispose()
             owner.dispose()

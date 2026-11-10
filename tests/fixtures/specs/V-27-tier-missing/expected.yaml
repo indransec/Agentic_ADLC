@@ -1,0 +1,1 @@
+- {rule_id: V-27, file: shared/model_catalogue.yaml, path_contains: /profiles/dev}

@@ -1,0 +1,1 @@
+- {file: terminals/T1.yaml, op: set, path: /terminal/actors/agent/model_tier, value: standard}

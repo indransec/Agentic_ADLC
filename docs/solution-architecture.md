@@ -494,7 +494,7 @@ Choices below are **proposed** for the MVP and need confirmation (ADR status). E
 | Spec format | YAML + JSON Schema + CEL | CUE / Pkl, BPMN | Readable by owners, Git-reviewable, validatable | Registry stores JSON; source format can change |
 | Workflow / orchestration | PostgreSQL state machine (one row per run, one transaction per signal); LangGraph for agent graphs only. Changed by feature 003 (CoE to confirm) | LangGraph with Postgres checkpointer, Temporal, Camunda | One copy of run state; the close writes the run, ledger record and outcome event atomically; restart safety from the database | Terminal-run state machine interface (`TerminalRun`) |
 | Lifecycle agents | Python agents on the same framework; model via gateway | Claude Agent SDK, other agent SDKs | One runtime pattern for all terminals | Agent registry entry + context pack contract |
-| Model access | One model gateway with model catalogue (tiers) | Direct provider SDKs | Central model swap, cost tracking | Model tier names |
+| Model access | One model gateway on LiteLLM with a model catalogue per tier and profile; Anthropic primary, then OpenAI, then Gemini; fallback on availability errors only (ADR-02, decided by feature 006; CoE to confirm fallback ids and data-class approvals) | Direct provider SDKs | Central model swap, cost tracking | Model tier names |
 | Policy engine | CEL evaluator + predicate catalogue in a small service | OPA / Rego, Cedar | Fast to build; expressive enough | `evaluate()` and `authorize()` |
 | Database | PostgreSQL (ledger, runs, specs, outbox) | Separate stores per concern | One store keeps MVP simple and transactional | Schema-per-concern |
 | Object store | S3-compatible (MinIO locally) | Cloud blob storage | Content-addressed artifacts | Storage adapter |
@@ -505,7 +505,7 @@ Choices below are **proposed** for the MVP and need confirmation (ADR status). E
 | Packaging and runtime | Docker Compose on one host | Kubernetes | Fast to stand up | Container images unchanged |
 | CI | Git host CI (e.g. GitHub Actions) | GitLab CI, Jenkins | Spec validation and release jobs | `adlc-spec` CLI |
 
-**Decisions to record as ADRs:** ADR-01 workflow engine; ADR-02 agent framework and model provider; ADR-03 policy language; ADR-04 single Postgres vs split stores; ADR-05 web stack; ADR-06 tracing tool; ADR-07 hosting target.
+**Decisions to record as ADRs:** ADR-01 workflow engine; ADR-02 agent framework and model provider (model provider decided 2026-11-10: LiteLLM gateway, Anthropic primary; agent framework: own bounded loop until subagents); ADR-03 policy language; ADR-04 single Postgres vs split stores; ADR-05 web stack; ADR-06 tracing tool; ADR-07 hosting target.
 
 ## 18. Extensibility and roadmap
 

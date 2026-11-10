@@ -128,6 +128,17 @@ services:
       ADLC_ACCOUNTS_FILE: /run/adlc/accounts.yaml
       # Evidence ledger file store (feature 005): back this volume up with the database.
       ADLC_FILE_STORE_DIR: /var/lib/adlc/files
+      # Agent runtime (feature 006). Empty keys mean that provider is skipped.
+      ADLC_MODEL_PROFILE: ${ADLC_MODEL_PROFILE:-default}
+      ADLC_REVIEWER_MODE: ${ADLC_REVIEWER_MODE:-stub}
+      ADLC_ANTHROPIC_API_KEY: ${ADLC_ANTHROPIC_API_KEY:-}
+      ADLC_OPENAI_API_KEY: ${ADLC_OPENAI_API_KEY:-}
+      ADLC_GEMINI_API_KEY: ${ADLC_GEMINI_API_KEY:-}
+      ADLC_AGENT_CORRECTIONS: ${ADLC_AGENT_CORRECTIONS:-2}
+      ADLC_MODEL_OUTAGE_LIMIT: ${ADLC_MODEL_OUTAGE_LIMIT:-30min}
+      ADLC_COST_ALERT_LEVELS: ${ADLC_COST_ALERT_LEVELS:-5,20,50}
+      ADLC_AGENT_LIMITS: ${ADLC_AGENT_LIMITS:-}
+      ADLC_AGENT_LIMIT_OVERRIDES: ${ADLC_AGENT_LIMIT_OVERRIDES:-}
     volumes:
       - ${ADLC_ACCOUNTS_FILE:?ADLC_ACCOUNTS_FILE is required}:/run/adlc/accounts.yaml:ro
       - adlc-files:/var/lib/adlc/files

@@ -8,10 +8,11 @@ error formatter in :mod:`adlc.config.errors` prints field names and expected for
 import os
 import re
 from datetime import timedelta
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Annotated, Any, Literal
 
-from pydantic import Field, SecretStr, ValidationInfo, field_validator
+from pydantic import BaseModel, Field, SecretStr, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from adlc.config.durations import DURATION_FORM, Duration
@@ -134,6 +135,32 @@ class Settings(RuntimeSettings):
         return _readable(value)
 
 
+LEASE_MARGIN_S = 30.0  # an agent timeout plus this margin must fit inside the lease (006 FR-015)
+
+
+class AgentLimit(BaseModel):
+    """Limits of one agent attempt (006 FR-014)."""
+
+    steps: int = Field(gt=0)
+    tokens: int = Field(gt=0)
+    timeout_s: float = Field(gt=0)
+
+
+class AgentLimitOverride(BaseModel):
+    """Per-terminal overrides; unset fields keep the tier's limit."""
+
+    steps: int | None = Field(default=None, gt=0)
+    tokens: int | None = Field(default=None, gt=0)
+    timeout_s: float | None = Field(default=None, gt=0)
+
+
+DEFAULT_AGENT_LIMITS: dict[str, AgentLimit] = {
+    "reasoning": AgentLimit(steps=8, tokens=400_000, timeout_s=240),
+    "coding": AgentLimit(steps=8, tokens=400_000, timeout_s=240),
+    "standard": AgentLimit(steps=6, tokens=200_000, timeout_s=120),
+}
+
+
 class OrchestratorSettings(RuntimeSettings):
     """Settings for the ``adlc-orchestrator`` process (003 research R-11)."""
 
@@ -156,6 +183,92 @@ class OrchestratorSettings(RuntimeSettings):
         default=None, json_schema_extra=_meta("path to a readable file (optional)")
     )
 
+    # 006 agent runtime
+    spec_dir: Path = Field(
+        default=Path("adlc-specs"),
+        json_schema_extra=_meta("path to the spec folder (prompts, playbooks, checklists)"),
+    )
+    anthropic_api_key: SecretStr | None = Field(
+        default=None, json_schema_extra=_meta("provider API key", secret=True)
+    )
+    openai_api_key: SecretStr | None = Field(
+        default=None, json_schema_extra=_meta("provider API key", secret=True)
+    )
+    gemini_api_key: SecretStr | None = Field(
+        default=None, json_schema_extra=_meta("provider API key", secret=True)
+    )
+    model_profile: str = Field(
+        default="default",
+        pattern=r"^[a-z][a-z0-9_]*$",
+        json_schema_extra=_meta("a profile name of the model catalogue, e.g. default or dev"),
+    )
+    reviewer_mode: Literal["stub", "model"] = Field(
+        default="stub", json_schema_extra=_meta("stub or model")
+    )
+    agent_limits: dict[str, AgentLimit] = Field(
+        default_factory=lambda: dict(DEFAULT_AGENT_LIMITS),
+        json_schema_extra=_meta(
+            'JSON per tier: {"<tier>": {"steps", "tokens", "timeout_s"}}; each timeout plus 30 s '
+            "shorter than the lease"
+        ),
+    )
+    agent_limit_overrides: dict[str, AgentLimitOverride] = Field(
+        default_factory=dict,
+        json_schema_extra=_meta(
+            'JSON per terminal id: {"<terminal>": {"timeout_s": 200}}; each timeout plus 30 s '
+            "shorter than the lease"
+        ),
+    )
+    agent_corrections: int = Field(
+        default=2, ge=0, le=10, json_schema_extra=_meta("whole number from 0 to 10")
+    )
+    model_outage_limit: Duration = Field(
+        default=timedelta(minutes=30), json_schema_extra=_meta(DURATION_FORM)
+    )
+    cost_alert_levels: Annotated[tuple[Decimal, ...], NoDecode] = Field(
+        default=(Decimal("5"), Decimal("20"), Decimal("50")),
+        json_schema_extra=_meta("comma-separated USD amounts, e.g. 5,20,50"),
+    )
+
+    def provider_keys(self) -> dict[str, str | None]:
+        """Provider (as the model catalogue names it) to API key; None means no key (006)."""
+        keys = {
+            "anthropic": self.anthropic_api_key,
+            "openai": self.openai_api_key,
+            "gemini": self.gemini_api_key,
+        }
+        return {p: None if k is None else k.get_secret_value() for p, k in keys.items()}
+
+    @field_validator("agent_limits", mode="after")
+    @classmethod
+    def _merge_tier_defaults(
+        cls, value: dict[str, AgentLimit], info: ValidationInfo
+    ) -> dict[str, AgentLimit]:
+        merged = {**DEFAULT_AGENT_LIMITS, **value}
+        _fits_lease(info, [limit.timeout_s for limit in merged.values()])
+        return merged
+
+    @field_validator("agent_limit_overrides", mode="after")
+    @classmethod
+    def _overrides_fit_lease(
+        cls, value: dict[str, AgentLimitOverride], info: ValidationInfo
+    ) -> dict[str, AgentLimitOverride]:
+        _fits_lease(info, [o.timeout_s for o in value.values() if o.timeout_s is not None])
+        return value
+
+    @field_validator("cost_alert_levels", mode="before")
+    @classmethod
+    def _levels(cls, value: object) -> object:
+        if isinstance(value, str):
+            try:
+                levels = tuple(Decimal(p.strip()) for p in value.split(",") if p.strip())
+            except InvalidOperation:
+                raise ValueError("expected comma-separated USD amounts") from None
+            if any(level <= 0 for level in levels):
+                raise ValueError("amounts must be greater than zero")
+            return tuple(sorted(levels))
+        return value
+
     @field_validator("synthetic_dir", mode="before")
     @classmethod
     def _off_disables(cls, value: object) -> object:
@@ -173,6 +286,15 @@ class OrchestratorSettings(RuntimeSettings):
         if isinstance(catalogue, Path) and value not in load_role_ids(catalogue):
             raise ValueError("not a role in the role catalogue")
         return value
+
+
+def _fits_lease(info: ValidationInfo, timeouts: list[float]) -> None:
+    """006 FR-015: a running agent step must never outlive the worker's lease on it."""
+    lease = info.data.get("lease")
+    if isinstance(lease, timedelta) and any(
+        t + LEASE_MARGIN_S >= lease.total_seconds() for t in timeouts
+    ):
+        raise ValueError("an agent timeout plus 30 s must be shorter than the lease")
 
 
 def _readable(value: Path) -> Path:

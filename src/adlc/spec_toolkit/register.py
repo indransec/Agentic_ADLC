@@ -35,7 +35,7 @@ class _DryRun(Exception):
 
 @dataclass(frozen=True)
 class ItemResult:
-    kind: str  # terminal | catalogue | playbook
+    kind: str  # terminal | catalogue | playbook | prompt
     name: str
     version: str
     action: str  # registered | unchanged
@@ -323,6 +323,33 @@ def _register_playbook(conn: Connection, loaded: LoadedFile) -> ItemResult:
     return ItemResult("playbook", pid, version, "registered")
 
 
+def _register_prompt(conn: Connection, loaded: LoadedFile) -> ItemResult:
+    """Prompts are registered like playbooks (feature 006): a changed body needs a new version."""
+    data = loaded.data
+    pid, version = str(data["id"]), str(data["version"])
+    digest = file_hash(loaded.text)
+    same = _rows(
+        conn,
+        "SELECT content_hash FROM spec.prompt_registry WHERE prompt_id=:p AND version=:v",
+        p=pid,
+        v=version,
+    )
+    if same:
+        if same[0]["content_hash"] != digest:
+            raise RegistrationRefused(
+                f"{pid}: prompt changed but version {version} is already registered"
+            )
+        return ItemResult("prompt", pid, version, "unchanged")
+    conn.execute(
+        text(
+            "INSERT INTO spec.prompt_registry (prompt_id, version, path, content_hash) "
+            "VALUES (:p, :v, :path, :h)"
+        ),
+        {"p": pid, "v": version, "path": loaded.rel, "h": digest},
+    )
+    return ItemResult("prompt", pid, version, "registered")
+
+
 def _validated(root: Path) -> SpecBundle:
     bundle = load_bundle(root)
     errors = [f for f in validate(Context(bundle)) if f.severity == "error"]
@@ -348,6 +375,8 @@ def register(root: Path, engine: Engine, *, dry_run: bool = False) -> Registrati
                 report.items.append(_register_terminal(conn, loaded, cats, known))
             for loaded in sorted(bundle.playbooks.values(), key=lambda p: p.rel):
                 report.items.append(_register_playbook(conn, loaded))
+            for loaded in sorted(bundle.prompts.values(), key=lambda p: p.rel):
+                report.items.append(_register_prompt(conn, loaded))
             if dry_run:
                 raise _DryRun
     except _DryRun:

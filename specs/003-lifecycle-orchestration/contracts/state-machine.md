@@ -19,9 +19,9 @@ sign-offs so far.
 | --- | --- | --- |
 | `prerequisites_result` | orchestrator | `met`, `blocked_ids`, `warned_ids` |
 | `event_received` | orchestrator | event type, id, payload |
-| `agent_result` | agent | `artifacts` \| `clarification` \| `budget_exceeded` |
+| `agent_result` | agent | `artifacts` \| `clarification` \| `budget_exceeded` \| `failed` \| `model_unavailable` (the last two added by feature 006) |
 | `controls_result` | orchestrator | `passed`, `failed_blocking_ids`, results |
-| `review_result` | reviewer | `recommendation` \| `clarification` |
+| `review_result` | reviewer | `recommendation` \| `clarification` \| `failed` \| `model_unavailable` (feature 006) |
 | `clarification_answered` | human | clarification id, answers |
 | `decide` | human | `pass` \| `rework` \| `exception` \| `terminate`, fields, approver |
 | `waiver_decision` | human | `approve` \| `reject` |
@@ -49,12 +49,17 @@ The `escalate_after` timer starts when the run is opened (`engine.open_in`), so 
 | building | `agent_result` clarification, rounds < max | awaiting_clarification | RecordClarification; `return_state=building`; StartTimer(clarification_sla) |
 | building | `agent_result` clarification, rounds ≥ max | escalated | trigger `clarification_limit` |
 | building | `agent_result` budget_exceeded | escalated | trigger `budget` |
+| building | `agent_result` failed, retries < max | building | IncrementAutoRetry (feature 006: output still unfit after corrections, or a refusal) |
+| building | `agent_result` failed, retries ≥ max | escalated | trigger `retry_limit` |
+| building | `agent_result` model_unavailable | escalated | trigger `model_unavailable` (sent only after the outage limit; before it the engine defers the run without a transition) |
 | checking | `controls_result` passed | reviewing | store results |
 | checking | `controls_result` failed, retries < max_auto_retries | building | `auto_retries += 1` |
 | checking | `controls_result` failed, retries ≥ max | escalated | trigger `retry_limit` |
 | reviewing | `review_result` recommendation | awaiting_sign_off | store recommendation |
 | reviewing | `review_result` clarification, rounds < max | awaiting_clarification | `return_state=reviewing`; StartTimer(clarification_sla) |
 | reviewing | `review_result` clarification, rounds ≥ max | escalated | trigger `clarification_limit` |
+| reviewing | `review_result` failed | escalated | trigger `reviewer_failed` (feature 006) |
+| reviewing | `review_result` model_unavailable | escalated | trigger `model_unavailable` (feature 006) |
 | awaiting_clarification | `clarification_answered` | `return_state` | CancelTimer(clarification_sla) |
 | awaiting_clarification | `timer` clarification_sla | escalated | trigger `clarification_sla` |
 | awaiting_sign_off | `decide` pass, approvals < min | awaiting_sign_off | RecordSignOff |
@@ -100,3 +105,5 @@ run is ignored.
    escalate a run (feature 005).
 6. Between `artifact_edited` (at sign-off) and `controls_rechecked`, no `decide` closes a run as
    pass or proposes a waiver (feature 005).
+7. `failed` and `model_unavailable` results never close a run or reach `awaiting_sign_off`, and
+   `model_unavailable` never counts as an auto-retry (feature 006).

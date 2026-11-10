@@ -10,6 +10,7 @@ dependencies = [
     "fastapi>=0.162.2",
     "itsdangerous>=2.2.0",
     "jsonschema>=4.26.0",
+    "litellm==1.106.5",
     "networkx>=3.7",
     "openpyxl>=3.1.5",
     "opentelemetry-api>=1.45.2",
@@ -76,7 +77,10 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-markers = ["integration: needs Docker (testcontainers PostgreSQL)"]
+markers = [
+    "integration: needs Docker (testcontainers PostgreSQL)",
+    "litellm_contract: LiteLLM request/response mapping over mocked HTTP (respx)",
+]
 addopts = "-ra --cov=adlc --cov-report=term:skip-covered"
 filterwarnings = ["ignore:Using `httpx` with `starlette.testclient` is deprecated:DeprecationWarning"]
 
@@ -87,6 +91,7 @@ dev = [
     "mypy>=2.4.1",
     "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
+    "respx>=0.23.1",
     "ruff>=0.17.4",
     "testcontainers[postgres]>=4.15.0",
     "types-jsonschema>=4.26.0.20261006",

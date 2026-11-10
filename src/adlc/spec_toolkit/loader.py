@@ -16,7 +16,7 @@ from ruamel.yaml.error import MarkedYAMLError, YAMLError
 
 from adlc.spec_toolkit.findings import Finding
 
-FileKind = Literal["terminal", "catalogue", "checklist", "playbook"]
+FileKind = Literal["terminal", "catalogue", "checklist", "playbook", "prompt"]
 
 # The catalogue set is part of the spec standard (FR-004), not lifecycle data.
 REQUIRED_CATALOGUES: tuple[str, ...] = (
@@ -34,6 +34,8 @@ REQUIRED_CATALOGUES: tuple[str, ...] = (
     "predicates",
     "metrics",
     "guardrails",
+    "model_catalogue",  # feature 006
+    "agents",  # feature 006
 )
 TERMINAL_FILE = re.compile(r"^T[0-9]+\.yaml$")
 CHECKLIST_FILE = re.compile(r"^t[0-9]+\.yaml$")
@@ -61,6 +63,7 @@ class SpecBundle:
     catalogues: dict[str, LoadedFile] = field(default_factory=dict)
     checklists: dict[str, LoadedFile] = field(default_factory=dict)
     playbooks: dict[str, LoadedFile] = field(default_factory=dict)
+    prompts: dict[str, LoadedFile] = field(default_factory=dict)  # feature 006
     findings: list[Finding] = field(default_factory=list)
 
     def files(self) -> list[LoadedFile]:
@@ -69,6 +72,7 @@ class SpecBundle:
             *self.terminals.values(),
             *self.checklists.values(),
             *self.playbooks.values(),
+            *self.prompts.values(),
         ]
 
     def file(self, rel: str) -> LoadedFile | None:
@@ -232,4 +236,19 @@ def load_bundle(root: Path) -> SpecBundle:
             _parse(yaml, loaded, match.group(1), bundle.findings)
             loaded.body = match.group(2)
         bundle.playbooks[loaded.rel] = loaded
+
+    for path in sorted((root / "prompts").glob("*.md")):
+        if path.name == "README.md":
+            continue
+        loaded = LoadedFile(rel(path), "prompt", path.read_text())
+        match = FRONT_MATTER.match(loaded.text)
+        if match is None:
+            loaded.parse_failed = True
+            bundle.findings.append(
+                Finding("P-01", "L1", "error", loaded.rel, "", 1, 1, "missing YAML front matter")
+            )
+        else:
+            _parse(yaml, loaded, match.group(1), bundle.findings)
+            loaded.body = match.group(2)
+        bundle.prompts[loaded.rel] = loaded
     return bundle

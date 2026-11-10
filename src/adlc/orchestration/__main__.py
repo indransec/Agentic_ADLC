@@ -14,6 +14,11 @@ from types import FrameType
 
 import typer
 
+from adlc.agents.catalogue import UnknownProfile
+from adlc.agents.reviewer import RuntimeReviewer
+from adlc.agents.runner import RuntimeAgentRunner
+from adlc.agents.startup import MissingModelKey
+from adlc.agents.wiring import build_runtime
 from adlc.config.errors import load_settings_or_exit
 from adlc.config.settings import OrchestratorSettings
 from adlc.db.engine import DatabaseUnavailable, app_engine, wait_for_database
@@ -55,15 +60,39 @@ def run() -> None:
     policy = build_policy_engine(
         engine, registry, clock, synthetic_dir=settings.synthetic_dir, directory=directory
     )
+    try:
+        runtime = build_runtime(
+            engine,
+            registry,
+            policy,
+            clock,
+            profile=settings.model_profile,
+            keys=settings.provider_keys(),
+            reviewer_mode=settings.reviewer_mode,
+            spec_dir=settings.spec_dir,
+            limits=settings.agent_limits,
+            overrides=settings.agent_limit_overrides,
+            corrections=settings.agent_corrections,
+            cost_alert_levels=settings.cost_alert_levels,
+        )
+    except (MissingModelKey, UnknownProfile) as exc:
+        print(f"adlc: configuration error\n  {exc}", file=sys.stderr)
+        raise typer.Exit(2) from exc
     orchestrator = build_orchestrator(
         engine,
         registry,
         policy,
-        StubAgent(base=load_synthetic_artifacts(settings.synthetic_dir)),
-        StubReviewer(),
+        RuntimeAgentRunner(
+            runtime, StubAgent(base=load_synthetic_artifacts(settings.synthetic_dir))
+        ),
+        RuntimeReviewer(runtime, StubReviewer(), settings.reviewer_mode),
         clock,
         deadletter_role=settings.deadletter_role,
-        config=EngineConfig(time_scale=settings.time_scale, lease=settings.lease),
+        config=EngineConfig(
+            time_scale=settings.time_scale,
+            lease=settings.lease,
+            model_outage_limit=settings.model_outage_limit,
+        ),
     )
     stop = threading.Event()
 

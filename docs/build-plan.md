@@ -98,13 +98,13 @@ Every platform component is open source and, except the database, the proxy and 
 | --- | --- | --- | --- |
 | Language and tooling | Python 3.12, uv, ruff, mypy, pytest | Python PSF; MIT / Apache | — |
 | API | FastAPI + Pydantic v2 | MIT | Platform API contracts |
-| Workflow / orchestration | PostgreSQL state machine behind `TerminalRun` (changed by feature 003, ADR-01; CoE to confirm). LangGraph stays for agent graphs (006) | — (own code) | `TerminalRun` interface; Temporal (MIT) later |
+| Workflow / orchestration | PostgreSQL state machine behind `TerminalRun` (changed by feature 003, ADR-01; CoE to confirm). LangGraph considered for agent graphs once subagents arrive (feature 006 runs a bounded loop without it) | — (own code) | `TerminalRun` interface; Temporal (MIT) later |
 | Database | PostgreSQL 16; SQLAlchemy 2 + Alembic; psycopg 3 | PostgreSQL; MIT; LGPL-3.0 | Schema-per-concern |
 | Event delivery | Postgres outbox + poller (LISTEN/NOTIFY) | — (own code) | Router interface; Kafka later |
 | Policy engine | cel-python + predicate catalogue | Apache-2.0 | `evaluate` / `authorize`; OPA or Cedar later |
 | Spec toolkit | ruamel.yaml, jsonschema, networkx, Typer (CLI) | MIT / MIT / BSD / MIT | `adlc-spec` CLI |
-| Model gateway | LiteLLM (Python SDK, no proxy needed for MVP) | MIT (core) | Model catalogue by tier |
-| Models | Decision ADR-02: commercial API via LiteLLM, or open-weight models served by vLLM / Ollama | Apache-2.0 / MIT (servers) | Model tier names |
+| Model gateway | LiteLLM (Python SDK, pinned; no proxy, router or callbacks) behind the ADLC `ModelGateway`, which owns the fallback order and records every call (feature 006) | MIT (core) | Model catalogue by tier and profile |
+| Models | ADR-02 (decided 2026-11-10): commercial models through LiteLLM. Catalogue per tier, `default` profile: Anthropic first (Claude Opus 5.5 for reasoning and coding, Claude Sonnet 5.5 for standard), then OpenAI, then Gemini; fallback only on availability errors, never on refusals. `dev` profile: OpenAI GPT-4o mini first. CoE to confirm the OpenAI and Gemini ids and the data-class approvals | — | Model tier names; catalogue profiles |
 | Agent tools | Official MCP Python SDK (FastMCP) for all MCP servers | MIT | MCP registry |
 | Artifact storage | Local content-addressed file store behind a storage interface | — (own code) | S3-compatible later (e.g. SeaweedFS, Apache-2.0); avoid MinIO unless AGPL-3.0 is acceptable |
 | UI (inbox + dashboard) | Streamlit (+ Plotly for charts; `st.data_editor` for artifact tables) | Apache-2.0; MIT | Approval and query APIs; React later if needed |

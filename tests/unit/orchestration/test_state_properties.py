@@ -35,9 +35,16 @@ PAYLOADS: dict[SignalKind, list[dict[str, Any]]] = {
         {"result": "artifacts"},
         {"result": "clarification"},
         {"result": "budget_exceeded"},
+        {"result": "failed"},
+        {"result": "model_unavailable"},
     ],
     SignalKind.CONTROLS_RESULT: [{"passed": True}, {"passed": False}],
-    SignalKind.REVIEW_RESULT: [{"result": "recommendation"}, {"result": "clarification"}],
+    SignalKind.REVIEW_RESULT: [
+        {"result": "recommendation"},
+        {"result": "clarification"},
+        {"result": "failed"},
+        {"result": "model_unavailable"},
+    ],
     SignalKind.CLARIFICATION_ANSWERED: [{}],
     SignalKind.DECIDE: [
         {"decision": d, "role": r}
@@ -193,3 +200,31 @@ def test_no_pass_close_while_controls_are_pending(
         for effect in effects:
             if isinstance(effect, SetControlsPending):
                 pending = effect.pending
+
+
+FAILURE_RESULTS = ("failed", "model_unavailable")
+
+
+@settings(max_examples=300, deadline=None)
+@given(contexts, st.lists(signals, max_size=40))
+def test_failures_never_close_or_reach_sign_off(
+    ctx: TransitionContext, sequence: list[Signal]
+) -> None:
+    """006: failed and model_unavailable results never close a run or reach sign-off."""
+    for state, signal, effects in _run(ctx, sequence):
+        if signal.kind in (SignalKind.AGENT_RESULT, SignalKind.REVIEW_RESULT) and (
+            signal.payload.get("result") in FAILURE_RESULTS
+        ):
+            assert state not in (RunState.CLOSED, RunState.AWAITING_SIGN_OFF)
+            assert not any(isinstance(e, CloseRun) for e in effects)
+
+
+@settings(max_examples=300, deadline=None)
+@given(contexts, st.lists(signals, max_size=40))
+def test_model_unavailable_never_counts_as_retry(
+    ctx: TransitionContext, sequence: list[Signal]
+) -> None:
+    """006: an outage is not the agent's fault, so it never uses a retry."""
+    for _, signal, effects in _run(ctx, sequence):
+        if signal.payload.get("result") == "model_unavailable":
+            assert not any(isinstance(e, IncrementAutoRetry) for e in effects)

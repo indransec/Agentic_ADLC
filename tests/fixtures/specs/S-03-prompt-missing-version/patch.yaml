@@ -1,0 +1,1 @@
+- {file: prompts/common-terminal-reviewer.md, op: write_text, value: "---\nid: common-terminal-reviewer\nagent: common-terminal-reviewer\nstatus: active\n---\nBody\n"}

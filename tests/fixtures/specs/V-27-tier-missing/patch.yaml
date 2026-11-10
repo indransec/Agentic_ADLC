@@ -1,0 +1,1 @@
+- {file: shared/model_catalogue.yaml, op: delete, path: /profiles/dev/coding}

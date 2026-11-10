@@ -55,6 +55,11 @@
           "description": {
             "type": "string",
             "minLength": 1
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^T[0-9]+\\.[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$",
+            "description": "Terminal artifact column whose highest-ranked data class resolves the ceiling (feature 006)"
           }
         },
         "required": [
