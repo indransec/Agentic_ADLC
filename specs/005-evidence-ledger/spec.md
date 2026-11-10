@@ -253,13 +253,19 @@ one clarification, and agent and human time split per terminal.
   - `bound_to`;
   - the previous record's hash;
   - a record content version.
+
+  Field names and shape follow contracts/record.md exactly. Artifacts are listed in the spec's
+  order, an absent value is `null` (never a missing key), and "previous" means the record
+  committed immediately before in the use case's chain. Closes of one use case are serialised,
+  so there is always exactly one previous record.
 - **FR-002**: A record's content hash MUST be the SHA-256 of its normalised content (as in
   feature 002). Records of one use case MUST form one chain in close order (as in feature 003).
 - **FR-003**: `bound_to` MUST be the terminal spec's `evidence.ledger.bound_to` reference,
   resolved in the use case (the T3 candidate package hash for T4–T7), or empty when the spec
   has none.
 - **FR-004**: Ledger records, stored content, artifact versions, profile versions and
-  verification results MUST be append-only for every identity.
+  verification results MUST be append-only for every platform identity. A database superuser
+  can still bypass this; verification (FR-016) is the control that detects it.
 
 **Artifact store and versions**
 
@@ -271,6 +277,11 @@ one clarification, and agent and human time split per terminal.
   location is configurable. Each attachment is written before the version that refers to it is
   committed. The interface MUST allow an S3-compatible store to replace the file store without
   changes to callers.
+  - An unreferenced (orphan) file is left alone; verification only checks referenced content.
+  - If the file store is unavailable, the upload or attachment is refused with the reason.
+    Closing a run never writes files, so it is not affected.
+  - The file store volume MUST be backed up together with the database; the deployment notes
+    say so.
 - **FR-008**: Every artifact version MUST record:
   - run, artifact id and version number (1, 2, …);
   - content hash;
@@ -284,25 +295,39 @@ one clarification, and agent and human time split per terminal.
   store instead of keeping artifacts only inline.
 - **FR-010**: A person holding a sign-off role or the accountable role of the run's terminal
   MUST be able to submit an edited version of an artifact while the run awaits sign-off or is
-  escalated. An edit with unchanged content MUST NOT create a version.
+  escalated. An edit with unchanged content MUST NOT create a version; content is unchanged
+  when its normal-form hash is the same (reordered keys do not count as a change, reordered
+  rows do). An edit while awaiting sign-off:
+  - clears the pass approvals already given, so approvers decide on the new content;
+  - withdraws a pending waiver;
+  - re-runs the automated controls on the edited content before the run returns to sign-off,
+    so a failing blocking control is shown to the approvers with its reason (the edit is not
+    retried automatically).
 - **FR-011**: A spreadsheet upload for a table artifact MUST be converted into rows (the sheet
   named after the artifact, or the only sheet; the header row gives column names). The
   original file MUST be kept as an attachment of the new version. A spreadsheet that cannot be
-  read, or has no sheet that fits, MUST be refused with the reason.
-- **FR-012**: An attachment larger than the configured limit (default 25 MB) MUST be refused.
-  Only media types on a configured allow list (Word, Excel, PDF, PNG, SVG, plain text and
-  Markdown by default) MUST be accepted.
+  read, or has no sheet that fits, MUST be refused with the reason. The header MUST be row 1;
+  merged cells and hidden sheets are not supported, and a formula without a saved value reads
+  as an empty cell.
+- **FR-012**: An attachment larger than the configured limit (default 25 MB, meaning
+  25,000,000 bytes) MUST be refused. Only media types on a configured allow list (Word, Excel,
+  PDF, PNG, SVG, plain text and Markdown by default) MUST be accepted. Macro-enabled formats
+  (`.xlsm`, `.docm`) are not on the list. The type is checked against the file's content, not
+  only its declared type or name, and a mismatch is refused. Stored files MUST only ever be
+  served as downloads, never rendered inline (a rule feature 007 applies).
 
 **Use-case profile**
 
 - **FR-013**: When a run closes with `pass` or `exception`, its emitted values MUST produce a new
   profile version: the previous version's values with the new ones replacing values of the
-  same name, recording the source run. An emitted value that is an artifact MUST be stored as a
-  reference (artifact id, version, content hash).
+  same name (a re-emitted table replaces the old one whole, it is never merged by row),
+  recording the source run. An emitted value that is an artifact MUST be stored as a reference
+  (artifact id, version, content hash). Runs already open keep the version they started with.
 - **FR-014**: Each run MUST record the profile version current when it opened. Its policy checks
   (`profile.*`, and use-case values in parameter resolution) MUST read that version.
 - **FR-015**: The profile MUST be the `ProfileSource` for feature 004 parameter resolution. A
-  profile value whose name matches a guardrail is the use case's proposed value for it.
+  profile value whose name equals a guardrail's name is the use case's proposed value for it:
+  a plain value is used as is, and a mapping uses its `value` member.
 
 **Verification**
 
@@ -311,13 +336,15 @@ one clarification, and agent and human time split per terminal.
   2. that its previous hash matches the prior record of the use case;
   3. that every artifact and attachment hash resolves to stored content that still hashes the
      same;
-  4. that its `bound_to` equals T3's package hash where the spec binds it.
+  4. that its `bound_to` equals the bound terminal's package hash where the spec binds it,
+     read from the stored artifact content that the bound terminal's record references.
 - **FR-017**: Each break MUST be reported with the record, the element (artifact, attachment,
   chain, binding), and the expected and actual values.
 - **FR-018**: Every verification run MUST be recorded: who, when, scope, records checked, and
-  breaks found.
-- **FR-019**: Verification MUST be available as a command for operators (`adlc-ledger verify`)
-  and as a service operation for features 007 and 013. Any signed-in person may run it; its
+  breaks found. Verifying all use cases is one recorded run.
+- **FR-019**: Verification MUST be available as a command for operators (`adlc-ledger verify`,
+  exit code 0 when verified, 1 with breaks, 2 on a configuration error, with an optional
+  machine-readable output) and as a service operation for features 007 and 013. Any signed-in person may run it; its
   report contains hashes and results, never artifact content.
 
 **Read views**
@@ -327,6 +354,9 @@ one clarification, and agent and human time split per terminal.
   - the prerequisite, control and checklist results per attempt;
   - the artifact versions;
   - the ledger record.
+
+  Any signed-in person may read the views. They give references and hashes; artifact content
+  is read through feature 007 under its rules.
 - **FR-021**: Checklist results MUST be recorded per checklist item (score, finding) from the
   reviewer's recommendation when the review step completes.
 - **FR-022**: Per use case, a summary MUST give per terminal:
@@ -334,7 +364,8 @@ one clarification, and agent and human time split per terminal.
   - time in automatic steps;
   - time waiting for people (`awaiting_clarification`, `awaiting_sign_off`, `escalated`).
 
-  These are measured from the run transitions.
+  These are measured from the run transitions. For a run still open, its current state
+  counts up to now.
 
 **General**
 
@@ -381,7 +412,8 @@ one clarification, and agent and human time split per terminal.
   guardrail resolves to the profile value in 100% of later runs. A looser profile value is
   rejected in 100% of cases.
 - **SC-006**: Identical content stored twice uses one stored copy.
-- **SC-007**: Verifying a use case with 10 closed runs takes under 2 seconds.
+- **SC-007**: Verifying a use case with 10 closed runs, each with its artifacts and up to 3
+  attachments of at most 1 MB, takes under 2 seconds on the test database.
 - **SC-008**: The 003 and 004 scenario suites still pass.
 
 ## Assumptions
@@ -395,3 +427,8 @@ one clarification, and agent and human time split per terminal.
   superuser. Verification is what detects that case.
 - The checklist result source until feature 006 is the stub reviewer's recommendation.
 - Spreadsheet reading uses the first row as headers and reads cell values, not formulas.
+- Data classification of artifacts and attachments (SA §10) is deferred: MVP data is
+  synthetic. The version and attachment tables leave room for a data class later.
+- Erasure requests (for example for personal data) conflict with an append-only ledger. That is
+  out of scope for the MVP and needs a design decision (for example crypto-shredding of
+  attachments) before real personal data is stored.
