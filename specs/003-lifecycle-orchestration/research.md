@@ -50,8 +50,8 @@
   - `agent_result` and `review_result` only from `agent` and `reviewer`.
 
   A hypothesis test generates arbitrary signal sequences and asserts that no run ever closes
-  with pass, rework, exception or terminate without a human decision, and that no run reaches
-  `escalated` without an orchestrator signal.
+  with pass, rework, exception or terminate without a human decision, and that every entry
+  into `escalated` comes from an orchestrator rule (a timer or limit), never from a request.
 
 ## R-04 Waiver (two-step exception)
 
@@ -180,7 +180,8 @@
   than `ADLC_HEARTBEAT_MAX_AGE` (default `30s`); Compose uses it as the healthcheck (001 FR-003).
 - Settings: `OrchestratorSettings(DatabaseSettings)` adds the app password, OTLP endpoint,
   `ADLC_TIME_SCALE`, `ADLC_POLL_INTERVAL` (default `1s`), `ADLC_LEASE` (default `5min`),
-  `ADLC_HEARTBEAT_MAX_AGE` (default `30s`) and `ADLC_DEADLETTER_ROLE` (default `adlc_coe`).
+  `ADLC_HEARTBEAT_MAX_AGE` (default `30s`) and `ADLC_DEADLETTER_ROLE` (required, no default
+  because role names stay out of code; `.env.example` sets `adlc_coe`).
 - **Tests** use `Worker.drain()`, which repeats outbox, advance and timers until nothing is
   left, so scenarios are deterministic.
 
@@ -197,4 +198,4 @@
   - **Clarification answers**: the addressed role.
   - **Escalation completion**: the terminal's A role.
   - **Dead-letter re-queue**: role `adlc_coe`, read from configuration
-    (`ADLC_DEADLETTER_ROLE`, default `adlc_coe`) so no role name is hard-coded.
+    (`ADLC_DEADLETTER_ROLE`, required; `.env.example` sets `adlc_coe`) so no role name is hard-coded.

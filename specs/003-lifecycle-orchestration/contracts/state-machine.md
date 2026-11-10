@@ -77,6 +77,10 @@ run is ignored.
 
 1. No sequence of signals from actors other than `human` ends in `closed` with status pass,
    rework, exception or terminate.
-2. `escalated` is only ever entered by an `orchestrator` signal.
+2. `escalated` is only ever entered through an `Escalate` effect from one of the
+   orchestrator's own rules. Orchestrator signals can trigger `timer`, `clarification_sla`,
+   `retry_limit` and `rework_limit`. An agent can trigger only `clarification_limit` or
+   `budget` (what it reported crossed a limit), the reviewer only `clarification_limit`, and a
+   human never. No signal can request escalation.
 3. `closed` accepts no signal.
 4. `clarification_answered` and `escalation_completed` never change `rework_count`.

@@ -328,8 +328,10 @@ subscriber fail 5 times: the event is dead-lettered; fix it and re-queue: it is 
   ledger references, never artifacts.
 - **FR-015**: An event MUST open a run of every terminal whose pinned spec subscribes to it. A
   terminal whose pinned spec does not subscribe MUST NOT open, whatever the outcome route
-  says, with one exception: a route to a `terminal_resolver` destination (for example
-  `owning_terminal` on T6 rework) opens the terminal named in the human decision.
+  says, with two exceptions: a route to a `terminal_resolver` destination (for example
+  `owning_terminal` on T6 rework) opens the terminal named in the human decision, and a route
+  back to the closing terminal itself (for example T1 rework `requirement` → T1) reopens it.
+  Self-routes are exempt from subscriptions in 002 rule V-17.
 - **FR-016**: Special destinations MUST be handled generically by kind (feature 002
   `route_destinations.yaml`):
   - `human` keeps the run escalated for human completion;
@@ -354,7 +356,10 @@ subscriber fail 5 times: the event is dead-lettered; fix it and re-queue: it is 
   time-scaled). When it fires, the next review run of that terminal opens.
 - **FR-018c**: A terminate decision MUST close the use case lifecycle: every other active run
   of that use case closes with `terminate` (reason "lifecycle terminated"), and their timers
-  are cancelled.
+  are cancelled. The terminate event itself is still routed: terminals that subscribe to it
+  (T9 retirement on `T7.terminate` or `T8.terminate`) open in `retire` mode. Any later event of
+  the terminated use case is recorded and ignored. A `lifecycle_closed` destination closes the
+  use case and its other active runs the same way.
 - **FR-019**: The rework count per use case and terminal MUST increase by one for each rework
   routed to that terminal. Automated retries and clarifications MUST NOT change it.
 - **FR-020**: Opening a run with a rework count above the terminal's `max_rework_cycles` MUST

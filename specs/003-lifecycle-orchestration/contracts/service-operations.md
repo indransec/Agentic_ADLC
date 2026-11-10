@@ -13,7 +13,7 @@ typed error. Nothing is written on error.
 | `answer_clarification(actor, clarification_id, answers)` | holder of the addressed role | Applies `clarification_answered` | `NotAuthorised`, `AlreadyAnswered` |
 | `complete_escalation(actor, run_id, artifacts)` | the terminal's A role | Applies `escalation_completed` | `NotAuthorised`, `InvalidTransition` |
 | `raise_operational_event(actor, usecase_id, event_name, payload)` | system or agent identity with `raise_event` right (T8 status rights) | Writes outbox `T8.event.<name>` (terminal from the spec raising it) | `UnknownEvent` (not raised by any monitor of the pinned T8) |
-| `list_dead_letters(actor) -> list[DeadLetter]` | `ADLC_DEADLETTER_ROLE` (default `adlc_coe`) | — | `NotAuthorised` |
+| `list_dead_letters(actor) -> list[DeadLetter]` | `ADLC_DEADLETTER_ROLE` (required; `.env.example` sets `adlc_coe`) | — | `NotAuthorised` |
 | `requeue(actor, event_id)` | same | Resets delivery; writes `dead_letter_action` | `NotAuthorised`, `NotDeadLettered` |
 | `get_run(run_id)`, `list_runs(usecase_id)`, `get_usecase(usecase_id)` | read-only; any signed-in person | — | — |
 

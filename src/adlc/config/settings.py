@@ -10,10 +10,11 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any, Literal
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, ValidationInfo, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from adlc.config.durations import DURATION_FORM, Duration
+from adlc.identity.catalogue import load_role_ids
 
 ENV_PREFIX = "ADLC_"
 
@@ -52,19 +53,12 @@ class DatabaseSettings(BaseSettings):
     )
 
 
-class Settings(DatabaseSettings):
-    """Settings for the platform API and the account CLI."""
+class RuntimeSettings(DatabaseSettings):
+    """Settings shared by the long-running processes (API and orchestrator)."""
 
     db_app_password: SecretStr = Field(
         min_length=16, json_schema_extra=_meta("at least 16 characters", secret=True)
     )
-    session_secret: SecretStr = Field(
-        min_length=32, json_schema_extra=_meta("at least 32 characters", secret=True)
-    )
-    session_ttl: Duration = Field(
-        default=timedelta(hours=8), json_schema_extra=_meta(DURATION_FORM)
-    )
-    accounts_file: Path = Field(json_schema_extra=_meta("path to a readable file"))
     role_catalogue: Path = Field(
         default=Path("adlc-specs/shared/roles.yaml"),
         json_schema_extra=_meta("path to a readable file"),
@@ -77,13 +71,58 @@ class Settings(DatabaseSettings):
         default="INFO", json_schema_extra=_meta("DEBUG, INFO, WARNING or ERROR")
     )
 
-    @field_validator("accounts_file", "role_catalogue")
+    @field_validator("role_catalogue")
     @classmethod
-    def _readable_file(cls, value: Path) -> Path:
-        path = value.expanduser()
-        if not path.is_file() or not os.access(path, os.R_OK):
-            raise ValueError("not a readable file")
-        return path
+    def _readable_catalogue(cls, value: Path) -> Path:
+        return _readable(value)
+
+
+class Settings(RuntimeSettings):
+    """Settings for the platform API and the account CLI."""
+
+    session_secret: SecretStr = Field(
+        min_length=32, json_schema_extra=_meta("at least 32 characters", secret=True)
+    )
+    session_ttl: Duration = Field(
+        default=timedelta(hours=8), json_schema_extra=_meta(DURATION_FORM)
+    )
+    accounts_file: Path = Field(json_schema_extra=_meta("path to a readable file"))
+
+    @field_validator("accounts_file")
+    @classmethod
+    def _readable_accounts(cls, value: Path) -> Path:
+        return _readable(value)
+
+
+class OrchestratorSettings(RuntimeSettings):
+    """Settings for the ``adlc-orchestrator`` process (003 research R-11)."""
+
+    time_scale: float = Field(
+        default=1.0, gt=0, json_schema_extra=_meta("number greater than zero")
+    )
+    poll_interval: Duration = Field(
+        default=timedelta(seconds=1), json_schema_extra=_meta(DURATION_FORM)
+    )
+    lease: Duration = Field(default=timedelta(minutes=5), json_schema_extra=_meta(DURATION_FORM))
+    heartbeat_max_age: Duration = Field(
+        default=timedelta(seconds=30), json_schema_extra=_meta(DURATION_FORM)
+    )
+    deadletter_role: str = Field(json_schema_extra=_meta("a role id from the role catalogue"))
+
+    @field_validator("deadletter_role")
+    @classmethod
+    def _known_role(cls, value: str, info: ValidationInfo) -> str:
+        catalogue = info.data.get("role_catalogue")
+        if isinstance(catalogue, Path) and value not in load_role_ids(catalogue):
+            raise ValueError("not a role in the role catalogue")
+        return value
+
+
+def _readable(value: Path) -> Path:
+    path = value.expanduser()
+    if not path.is_file() or not os.access(path, os.R_OK):
+        raise ValueError("not a readable file")
+    return path
 
 
 def env_name(field_name: str) -> str:

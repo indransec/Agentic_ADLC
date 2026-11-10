@@ -1,5 +1,3 @@
-# orchestration
+# adlc.orchestration
 
-Placeholder created by feature 001-platform-foundation.
-
-Filled by feature **003-lifecycle-orchestration**: outbox, poller, router, terminal-run state machine, timers.
+Lifecycle orchestration (feature 003). Full description: written in task T073.
