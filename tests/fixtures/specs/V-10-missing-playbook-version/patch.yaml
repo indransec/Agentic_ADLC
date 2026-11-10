@@ -1,0 +1,1 @@
+- {file: terminals/T0.yaml, op: set, path: /terminal/playbooks/procedures/0/version, value: '9.9.9'}

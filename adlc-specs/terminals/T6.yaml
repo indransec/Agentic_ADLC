@@ -1,0 +1,135 @@
+# yaml-language-server: $schema=../schema/terminal.schema.json
+# T6 – Release Readiness. Converted from TDS §10; changes recorded in CONVERSION.md.
+terminal:
+  metadata:
+    id: T6
+    name: Release Readiness
+    version: "1.0.0"
+    schema_version: "1.1.0"
+    purpose: Is everything necessary for production ready?
+    owner_role: adlc_coe
+    status: active
+  trigger:
+    on: [T5.pass, T5.exception, T7.rework.readiness_gap]
+    mode: event
+  prerequisites:
+    - id: PRE-T6-01
+      evidence_ref: T5.status
+      condition: all_statuses_in(["T0", "T1", "T2", "T3", "T4", "T5"], ["pass", "exception"])
+      description: "T0..T5.status all in [pass, exception]"
+      on_missing: block
+    - id: PRE-T6-02
+      evidence_ref: T5.assurance_attestation
+      condition: is_signed(T5.assurance_attestation)
+      description: signed
+      on_missing: block
+    - id: PRE-T6-03
+      evidence_ref: change.window_requested
+      condition: change.window_requested
+      description: change.window requested
+      on_missing: warn
+  actors:
+    agent: {id: t6-readiness-agent, model_tier: standard}
+    subagents:
+      - {id: evidence-auditor, responsibility: "chain completeness, waiver expiry, hash consistency"}
+      - {id: runbook-author, responsibility: "runbook, kill-switch procedure, triage steps"}
+      - {id: rollout-planner, responsibility: shadow/canary/full plan and rollback strategy}
+      - {id: ops-readiness-checker, responsibility: "ownership, on-call, support KB, T8 dashboards and alerts"}
+      - {id: change-coordinator, responsibility: change record in ITSM}
+    reviewer: common-terminal-reviewer
+    human_roles:
+      - {role: release_manager, raci: A}
+      - {role: service_owner, raci: R}
+      - {role: sre, raci: R}
+      - {role: business_owner, raci: A, scope: go_no_go}
+  authorities:
+    allow: ["read:ledger.T0-T5", "write:runbook_repo", "create:change_request", "configure:monitoring_dev", "write:T6.artifacts"]
+    deny: ["deploy:prod", "approve:change_request", "write:candidate_package"]
+    data_access: {max_class: internal}
+    tool_scopes: ["mcp:servicenow:change_create", "mcp:cmdb:read", "mcp:monitoring:configure", "mcp:confluence:write"]
+    sign_off:
+      roles: [release_manager, service_owner, business_owner]
+      min_approvers: 3
+      external: {body: cab, when: tier.cab_required}
+    status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
+  playbooks:
+    procedures:
+      - {id: PB-T6-01, ref: playbooks/t6-release-readiness.md, version: "1.0.0"}
+      - {id: PB-T6-02, ref: playbooks/runbook-template.md, version: "1.0.0"}
+      - {id: PB-T6-03, ref: playbooks/progressive-rollout.md, version: "1.0.0"}
+    grounding:
+      - {mcp: servicenow, scope: "change policy, support groups"}
+      - {mcp: confluence, scope: /runbooks}
+  controls:
+    automated:
+      - id: CTL-T6-01
+        rule: all_statuses_in(["T0", "T1", "T2", "T3", "T4", "T5"], ["pass", "exception"])
+        description: all prior terminal statuses in [pass, exception]
+        severity: blocking
+      - id: CTL-T6-02
+        rule: no_waiver_expiring_before(release.release_date)
+        description: no waiver with expiry < release_date
+        severity: blocking
+      - id: CTL-T6-03
+        rule: T4.bound_to == T5.bound_to && T5.bound_to == release.package_sha256
+        description: T4.bound_to == T5.bound_to == release.package_sha256
+        severity: blocking
+      - id: CTL-T6-04
+        rule: all_rows_true(T6.rollback_strategy, "tested")
+        description: rollback_tested == true
+        severity: blocking
+      - id: CTL-T6-05
+        rule: all_rows_have(T6.operational_ownership, ["team", "contact", "escalation"])
+        description: on_call rota and service_owner assigned
+        severity: blocking
+      - id: CTL-T6-06
+        rule: alerts_cover(T6.monitoring_readiness, T1.kpis, T2.observability_design)
+        description: T8 alerts configured for every T1 KPI and T2 observability signal
+        severity: blocking
+      - id: CTL-T6-07
+        rule: change.request_status == "approved"
+        description: change_request.status == approved
+        severity: blocking
+    checklist:
+      ref: checklists/t6.yaml
+      version: "1.0.0"
+      items: [CHK-T6-01, CHK-T6-02, CHK-T6-03, CHK-T6-04]
+    tiering:
+      high: {rollout: [shadow, canary, full], cab_required: true}
+      medium: {rollout: [canary, full], cab_required: true}
+      low: {rollout: [full], cab_required: false}
+  evidence:
+    artifacts:
+      - {id: gate_evidence_summary, format: table, columns: [terminal, status, signed_by, date, open_waivers, waiver_expiry], applicability: {mode: mandatory}}
+      - {id: deployment_package, format: table, columns: [item, version, sha256, environment_config_ref], applicability: {mode: mandatory}}
+      - {id: runbook, format: document, columns: [section, owner], applicability: {mode: mandatory}}
+      - {id: rollback_strategy, format: table, columns: [trigger_condition, steps, data_memory_rollback, tested], applicability: {mode: mandatory}}
+      - {id: rollout_plan, format: table, columns: [stage, traffic_pct, soak_period, success_criteria], applicability: {mode: mandatory}}
+      - {id: operational_ownership, format: table, columns: [function, team, contact, escalation], applicability: {mode: mandatory}}
+      - {id: support_readiness, format: table, columns: [item, status, link], applicability: {mode: mandatory}}
+      - {id: monitoring_readiness, format: table, columns: [signal, dashboard, alert_threshold, routed_to], applicability: {mode: mandatory}}
+      - {id: release_authorisation, format: signed_record, columns: [role, decision, date, change_id], applicability: {mode: mandatory}}
+    ledger: {key: "${usecase_id}/T6/${run_version}", immutable: true, bound_to: T3.candidate_package.sha256, retention: per_tier}
+  outcome_model:
+    pass: {route: T7, emits: [release_authorisation, rollout_plan, deployment_package]}
+    rework:
+      route_by_root_cause: {missing_evidence: owning_terminal, ops_gap: T6}
+      requires: [gap_list]
+    exception:
+      route: T7
+      requires: [conditions, expiry]
+      description: "go with conditions, for example a limited rollout cap"
+    escalate:
+      when: go_no_go_disputed(T6.release_authorisation) || run.rework_count > timeline.max_rework_cycles
+      route: release_board
+      notify: [business_owner]
+      description: go/no-go dispute or rework_count > 3
+    terminate: {set_by: [business_owner], requires: [reason]}
+  timeline:
+    expected_duration: {low: 2d, medium: 3d, high: 5d}
+    reminder_after: 1d
+    escalate_after: 7d
+    max_rework_cycles: 3
+    clarification_sla: 1d
+    max_clarification_rounds: 2
+    max_auto_retries: 3

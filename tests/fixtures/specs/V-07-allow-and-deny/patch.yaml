@@ -1,0 +1,1 @@
+- {file: terminals/T0.yaml, op: append, path: /terminal/authorities/deny, value: 'write:T0.artifacts'}

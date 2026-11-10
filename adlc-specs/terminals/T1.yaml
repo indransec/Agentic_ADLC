@@ -1,0 +1,123 @@
+# yaml-language-server: $schema=../schema/terminal.schema.json
+# T1 – Requirements & Outcome. Converted from TDS §5; changes recorded in CONVERSION.md.
+terminal:
+  metadata:
+    id: T1
+    name: Requirements & Outcome
+    version: "1.0.0"
+    schema_version: "1.1.0"
+    purpose: What exactly must the agent achieve?
+    owner_role: adlc_coe
+    status: active
+  trigger:
+    on: [T0.pass, T0.exception, T9.reentry.T1, T4.rework.requirement, T2.rework.requirement]
+    mode: event
+  prerequisites:
+    - id: PRE-T1-01
+      evidence_ref: T0.status
+      condition: T0.status in ["pass", "exception"]
+      description: in [pass, exception]
+      on_missing: block
+    - id: PRE-T1-02
+      evidence_ref: T0.risk_classification.tier
+      condition: evidence_exists(T0.risk_classification.tier)
+      description: exists
+      on_missing: block
+    - id: PRE-T1-03
+      evidence_ref: T0.value_hypothesis
+      condition: evidence_exists(T0.value_hypothesis)
+      description: exists
+      on_missing: block
+  actors:
+    agent: {id: t1-requirements-agent, model_tier: reasoning}
+    subagents:
+      - {id: functional-analyst, responsibility: "functional and behavioural requirements, persona journeys"}
+      - {id: nfr-analyst, responsibility: "performance, availability, scalability, cost NFRs"}
+      - {id: autonomy-designer, responsibility: autonomy level and boundaries per action}
+      - {id: metrics-designer, responsibility: "KPI baseline/target, eval and RAI thresholds"}
+      - {id: acceptance-designer, responsibility: "acceptance criteria, failure boundaries, test scenarios"}
+    reviewer: common-terminal-reviewer
+    human_roles:
+      - {role: product_owner, raci: A}
+      - {role: business_owner, raci: R}
+      - {role: qa_eval_lead, raci: C}
+      - {role: rai_officer, raci: C}
+      - {role: solution_architect, raci: C}
+  authorities:
+    allow: ["read:ledger.T0", "read:knowledge_base", "write:T1.artifacts"]
+    deny: ["write:ledger.T0", "write:any_other_terminal"]
+    data_access: {max_class: internal}
+    tool_scopes: ["mcp:confluence:read", "mcp:sharepoint:read", "mcp:jira:read"]
+    sign_off: {roles: [product_owner, business_owner], min_approvers: 2}
+    status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
+  playbooks:
+    procedures:
+      - {id: PB-T1-01, ref: playbooks/t1-requirements.md, version: "1.0.0"}
+      - {id: PB-T1-02, ref: playbooks/autonomy-levels.md, version: "1.0.0"}
+      - {id: PB-T1-03, ref: playbooks/metric-catalogue.md, version: "1.0.0"}
+    grounding:
+      - {mcp: confluence, scope: "/process-docs, /sops"}
+      - {mcp: jira, scope: related epics}
+  controls:
+    automated:
+      - id: CTL-T1-01
+        rule: all_rows_have(T1.functional_requirements, ["req_id", "priority", "acceptance_criteria"])
+        description: every requirement has id, priority, acceptance_criteria
+        severity: blocking
+      - id: CTL-T1-02
+        rule: all_rows_numeric(T1.kpis, ["baseline", "target"])
+        description: every KPI has numeric baseline and target
+        severity: blocking
+      - id: CTL-T1-03
+        rule: >-
+          all_rows_numeric(T1.eval_thresholds, ["threshold"]) && all_rows_have(T1.eval_thresholds, ["operator"])
+          && all_rows_numeric(T1.rai_thresholds, ["threshold"]) && all_rows_have(T1.rai_thresholds, ["operator"])
+        description: every eval and RAI threshold is numeric with operator
+        severity: blocking
+      - id: CTL-T1-04
+        rule: all_rows_have(T1.autonomy_levels, ["autonomy_level"])
+        description: autonomy_level defined for every agent action
+        severity: blocking
+      - id: CTL-T1-05
+        rule: column_max(T1.autonomy_levels, "autonomy_level") <= param.autonomy_level_max
+        description: autonomy_level <= max allowed for risk_tier
+        severity: blocking
+      - id: CTL-T1-06
+        rule: size(T1.acceptance_and_failure) >= param.test_scenarios_min
+        description: "test scenarios meet the tier minimum (TDS tiering min_test_scenarios, now a guardrail)"
+        severity: blocking
+    checklist:
+      ref: checklists/t1.yaml
+      version: "1.0.0"
+      items: [CHK-T1-01, CHK-T1-02, CHK-T1-03, CHK-T1-04, CHK-T1-05]
+  evidence:
+    artifacts:
+      - {id: functional_requirements, format: table, columns: [req_id, description, priority, persona, acceptance_criteria], applicability: {mode: mandatory}}
+      - {id: non_functional_requirements, format: table, columns: [nfr_id, category, requirement, target, unit], applicability: {mode: mandatory}}
+      - {id: behavioural_requirements, format: table, columns: [beh_id, situation, expected_behaviour, prohibited_behaviour], applicability: {mode: mandatory}}
+      - {id: autonomy_levels, format: table, columns: [action, autonomy_level, hitl_required, boundary], applicability: {mode: mandatory}}
+      - {id: kpis, format: table, columns: [kpi_id, kpi, baseline, target, unit, measurement_source], applicability: {mode: mandatory}}
+      - {id: eval_thresholds, format: table, columns: [metric, operator, threshold, dataset_scope], applicability: {mode: mandatory}}
+      - {id: rai_thresholds, format: table, columns: [metric, operator, threshold, slice], applicability: {mode: mandatory}}
+      - {id: user_experience, format: table, columns: [journey, step, channel, expected_experience], applicability: {mode: mandatory}}
+      - {id: acceptance_and_failure, format: table, columns: [scenario_id, scenario, type, expected_outcome], applicability: {mode: mandatory}}
+    ledger: {key: "${usecase_id}/T1/${run_version}", immutable: true, retention: per_tier}
+  outcome_model:
+    pass: {route: T2, emits: [eval_thresholds, rai_thresholds, kpis, autonomy_levels]}
+    rework:
+      route_by_root_cause: {requirement: T1, qualification: T0}
+      requires: [owner_comment]
+    exception: {route: T2, requires: [waiver_owner, expiry, compensating_control]}
+    escalate:
+      when: run.rework_count > timeline.max_rework_cycles || run.age > timeline.escalate_after
+      route: human_completion
+      description: rework_count > 3 or age > escalate_after
+    terminate: {set_by: [business_owner], requires: [reason]}
+  timeline:
+    expected_duration: {low: 3d, medium: 5d, high: 8d}
+    reminder_after: 2d
+    escalate_after: 10d
+    max_rework_cycles: 3
+    clarification_sla: 2d
+    max_clarification_rounds: 2
+    max_auto_retries: 3

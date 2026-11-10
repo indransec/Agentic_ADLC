@@ -1,0 +1,1 @@
+- {file: playbooks/t0-intake.md, op: write_text, value: "---\nid: PB-T0-01\ntitle: x\nowner_role: adlc_coe\nstatus: stub\n---\nBody\n"}

@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../schema/checklist.schema.json
+# Reviewer checklist for T8 (TDS checklist item text). Scored by the common reviewer agent.
+checklist: t8
+version: "1.0.0"
+items:
+  - {id: CHK-T8-01, text: "KPI trend explained"}
+  - {id: CHK-T8-02, text: "Incidents have root cause"}
+  - {id: CHK-T8-03, text: "Feedback themes actioned or raised to T9"}
+  - {id: CHK-T8-04, text: "Drift analysis covers all eval slices"}

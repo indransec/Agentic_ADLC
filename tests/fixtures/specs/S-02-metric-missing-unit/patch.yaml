@@ -1,0 +1,1 @@
+- {file: shared/metrics.yaml, op: delete, path: /metrics/0/unit}

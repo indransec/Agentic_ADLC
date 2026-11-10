@@ -1,0 +1,1 @@
+- {file: terminals/T1.yaml, op: append, path: /terminal/trigger/on, value: T5.pass}

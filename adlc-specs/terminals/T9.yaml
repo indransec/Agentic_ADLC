@@ -1,0 +1,160 @@
+# yaml-language-server: $schema=../schema/terminal.schema.json
+# T9 – Evolve / Retire. Converted from TDS §13; changes recorded in CONVERSION.md.
+terminal:
+  metadata:
+    id: T9
+    name: Evolve / Retire
+    version: "1.0.0"
+    schema_version: "1.1.0"
+    purpose: How do we continuously improve or retire the product?
+    owner_role: adlc_coe
+    status: active
+  trigger:
+    on: [T8.event.drift, T8.event.cost_overrun, T8.event.kpi_shortfall, T8.event.upstream_change, change.requested, lifecycle.review_due, T8.terminate, T7.terminate]
+    mode: event
+    lifecycle_review: {every: 12m}
+  prerequisites:
+    - id: PRE-T9-01
+      evidence_ref: trigger.evidence
+      condition: evidence_exists(trigger.evidence)
+      description: exists
+      on_missing: block
+    - id: PRE-T9-02
+      evidence_ref: T3.build_manifest
+      condition: evidence_exists(T3.build_manifest)
+      description: "T3.build_manifest.current exists (latest ledger record)"
+      on_missing: block
+    - id: PRE-T9-03
+      evidence_ref: T4.regression_pack
+      condition: evidence_exists(T4.regression_pack)
+      description: "T4.regression_pack.current exists (latest ledger record)"
+      on_missing: warn
+  actors:
+    agent: {id: t9-evolution-agent, model_tier: reasoning}
+    subagents:
+      - {id: impact-assessor, responsibility: "classify change, affected components, risk delta"}
+      - {id: revalidation-planner, responsibility: re-entry terminal and revalidation scope}
+      - {id: version-manager, responsibility: "version lifecycle: live, deprecated, sunset"}
+      - {id: knowledge-curator, responsibility: lessons learned into playbooks and knowledge base}
+      - {id: retirement-executor, responsibility: decommission steps per retirement procedure}
+    reviewer: common-terminal-reviewer
+    human_roles:
+      - {role: product_owner, raci: A, scope: evolve}
+      - {role: business_owner, raci: A, scope: retire}
+      - {role: solution_architect, raci: C}
+      - {role: service_owner, raci: R}
+      - {role: data_owner, raci: R, scope: data_disposition}
+  authorities:
+    allow: ["read:ledger.all", "read:telemetry", "write:T9.artifacts", "raise:reentry_event", "write:knowledge_base.lessons"]
+    deny: ["write:repo", "deploy:any", "revoke:identity_without_approval"]
+    retirement:
+      allow: ["disable:traffic", "revoke:agent_identity", "revoke:tool_scopes", "archive:data", "update:agent_registry"]
+      requires: business_owner
+    data_access: {max_class: confidential_masked}
+    tool_scopes: ["mcp:agent_registry:write", "mcp:iam:revoke", "mcp:cmdb:write", "mcp:confluence:write", "mcp:servicenow:change_create"]
+    sign_off:
+      by_mode:
+        evolve: {roles: [product_owner], min_approvers: 1}
+        retire: {roles: [business_owner, service_owner, data_owner], min_approvers: 3}
+    status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
+  playbooks:
+    procedures:
+      - {id: PB-T9-01, ref: playbooks/t9-change-impact.md, version: "1.0.0"}
+      - {id: PB-T9-02, ref: playbooks/version-lifecycle.md, version: "1.0.0"}
+      - {id: PB-T9-03, ref: playbooks/retirement.md, version: "1.0.0"}
+    grounding:
+      - {mcp: confluence, scope: /adlc/lessons-learned}
+      - {mcp: agent_registry, scope: dependent agents and consumers}
+  change_classes:
+    minor:
+      examples: [prompt wording, retrieval tuning, threshold-neutral config]
+      reentry: T3
+      path: [T3, T4.regression_only, T6, T7]
+    moderate:
+      examples: [model version upgrade, new tool, memory change]
+      reentry: T2
+      path: [T2.delta, T3, T4, T5.delta, T6, T7]
+    major:
+      examples: [autonomy level raised, new scope, new data class]
+      reentry: T1
+      path: full
+    strategic:
+      examples: [business case no longer holds]
+      reentry: T0
+      alternative: lifecycle_closed
+    emergency:
+      examples: [sev1 fix, safety patch]
+      reentry: T3
+      path: [T3, T4.smoke, T7]
+      retrospective: [T4, T5]
+      within: 5d
+  retirement_procedure: [approve_and_communicate, disable_new_traffic, drain_or_handoff_in_flight, revoke_identity_scopes_secrets, dispose_memory_logs_data_per_retention, update_registry_and_cmdb, closure_report]
+  controls:
+    automated:
+      - id: CTL-T9-01
+        rule: reentry_consistent(T9.change_impact_assessment)
+        description: change_class assigned and reentry >= class minimum
+        severity: blocking
+      - id: CTL-T9-02
+        rule: class_at_least_if(T9.change_impact_assessment, ["autonomy", "data_class"], "major")
+        description: autonomy or data class change => class >= major
+        severity: blocking
+      - id: CTL-T9-03
+        rule: class_at_least_if(T9.change_impact_assessment, ["model", "tool"], "moderate")
+        description: model or tool change => class >= moderate
+        severity: blocking
+      - id: CTL-T9-04
+        rule: run.mode != "retire" || retirement.credentials_revoked
+        description: "retire: all credentials revoked"
+        severity: blocking
+      - id: CTL-T9-05
+        rule: run.mode != "retire" || retirement.data_disposed
+        description: "retire: data disposition evidenced per T2 retention"
+        severity: blocking
+      - id: CTL-T9-06
+        rule: run.mode != "retire" || retirement.unowned_dependants == 0
+        description: "retire: no dependent agent left unowned"
+        severity: blocking
+    checklist:
+      ref: checklists/t9.yaml
+      version: "1.0.0"
+      items: [CHK-T9-01, CHK-T9-02, CHK-T9-03, CHK-T9-04]
+  evidence:
+    artifacts:
+      - {id: change_impact_assessment, format: table, columns: [trigger, change_class, affected_components, risk_delta, reentry_terminal], applicability: {mode: mandatory}}
+      - {id: revalidation_plan, format: table, columns: [terminal, scope, owner, due], applicability: {mode: mandatory}}
+      - {id: version_lifecycle_record, format: table, columns: [version, status, live_from, deprecated_on, sunset_on], applicability: {mode: mandatory}}
+      - {id: lessons_learned, format: table, columns: [lesson, source_terminal, playbook_update], applicability: {mode: mandatory}}
+      - id: retirement_record
+        format: table
+        columns: [step, completed_on, evidence_link]
+        applicability: {mode: conditional, when: run.mode == "retire", reason: "TDS required: on_retire"}
+      - id: closure_report
+        format: signed_record
+        columns: [role, decision, date]
+        applicability: {mode: conditional, when: run.mode == "retire", reason: "TDS required: on_retire"}
+    ledger: {key: "${usecase_id}/T9/${run_version}", immutable: true, retention: per_tier}
+  outcome_model:
+    pass:
+      route: "${T9.change_impact_assessment.reentry_terminal}"
+      alternatives: [lifecycle_closed]
+    rework: {route: T9, requires: [owner_comment]}
+    exception:
+      when: has_change_class(T9.change_impact_assessment, "emergency")
+      route: "${T9.change_impact_assessment.reentry_terminal}"
+      requires: [retrospective_plan]
+      description: emergency change, validated retrospectively
+    escalate:
+      when: classification_disputed(T9.change_impact_assessment) || run.rework_count > timeline.max_rework_cycles
+      route: adlc_coe
+      description: classification disputed or rework_count > 3
+    terminate: {set_by: [business_owner], description: "retirement complete, lifecycle closed"}
+  timeline:
+    expected_duration: {low: 2d, medium: 2d, high: 2d}
+    retirement_duration: {low: 5d, medium: 10d, high: 20d}
+    reminder_after: 2d
+    escalate_after: 7d
+    max_rework_cycles: 3
+    clarification_sla: 2d
+    max_clarification_rounds: 2
+    max_auto_retries: 3

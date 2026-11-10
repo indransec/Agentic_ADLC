@@ -1,0 +1,1 @@
+- {file: terminals/T1.yaml, op: set, path: /terminal/trigger/on, value: [T0.exception]}

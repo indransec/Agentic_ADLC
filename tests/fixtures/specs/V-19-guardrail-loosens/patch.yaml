@@ -1,0 +1,1 @@
+- {file: shared/guardrails.yaml, op: set, path: /guardrails/0/values/high, value: 0.09}

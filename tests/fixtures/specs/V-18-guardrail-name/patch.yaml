@@ -1,0 +1,1 @@
+- {file: shared/guardrails.yaml, op: set, path: /guardrails/0/name, value: max_injection_success}

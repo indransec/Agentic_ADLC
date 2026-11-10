@@ -1,0 +1,1 @@
+- {rule_id: V-11, file: terminals/T0.yaml, path_contains: /terminal/controls/automated/0/rule}

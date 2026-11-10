@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../schema/checklist.schema.json
+# Reviewer checklist for T1 (TDS checklist item text). Scored by the common reviewer agent.
+checklist: t1
+version: "1.0.0"
+items:
+  - {id: CHK-T1-01, text: "Requirements traceable to T0 problem"}
+  - {id: CHK-T1-02, text: "Failure boundaries cover out-of-scope and unsafe requests"}
+  - {id: CHK-T1-03, text: "HITL points defined for irreversible actions"}
+  - {id: CHK-T1-04, text: "Thresholds realistic vs baseline"}
+  - {id: CHK-T1-05, text: "UX covers error and handoff states"}

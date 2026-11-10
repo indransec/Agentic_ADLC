@@ -59,6 +59,19 @@ services:
         condition: service_healthy
     restart: "no"
 
+  # Registers adlc-specs from the image into the registry after migrating (spec 002 FR-023a).
+  # Validation runs without the git baseline here; L5 against the registry still applies.
+  register:
+    image: adlc-api:0.1.0
+    command: ["adlc-spec", "register", "adlc-specs"]
+    environment:
+      <<: *db-settings
+      ADLC_DB_OWNER_PASSWORD: ${ADLC_DB_OWNER_PASSWORD:?ADLC_DB_OWNER_PASSWORD is required}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: "no"
+
   api:
     image: adlc-api:0.1.0
     environment:
@@ -76,7 +89,7 @@ services:
     ports:
       - "${ADLC_API_PORT:-8000}:8000"
     depends_on:
-      migrate:
+      register:
         condition: service_completed_successfully
       jaeger:
         condition: service_started

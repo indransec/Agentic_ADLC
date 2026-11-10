@@ -1,0 +1,1 @@
+- {file: terminals/T0.yaml, op: set, path: /terminal/authorities/sign_off/roles, value: [adlc_coe]}

@@ -36,10 +36,15 @@ The Jaeger UI is at `http://localhost:16686` (service `adlc-api`). If a port is 
 
 | Command | What it does |
 | --- | --- |
-| `make up` / `make down` / `make status` | Start (and wait until healthy), stop (data kept), show service health |
+| `make up` / `make down` / `make status` | Start (migrate → register specs → API, waits until healthy), stop (data kept), show service health |
 | `make reset` | Wipe all data after you type the `ADLC_ENV` name, then start again |
 | `make migrate` / `make migrate-down` | Apply migrations / roll back to empty (asks for the same confirmation) |
-| `make check` | lint → typecheck → test → migration-check → secret-scan (what CI runs) |
+| `make spec-validate` | Validate `adlc-specs/` at L1–L5 (L5 compares with `origin/main`) |
+| `make spec-register` | Register validated specs and catalogues into the `.env` data store |
+| `make check` | lint → typecheck → spec-validate → test → migration-check → secret-scan (what CI runs) |
+
+Terminal specs, catalogues, checklists and playbooks live in `adlc-specs/`; `adlc-specs/CONVERSION.md`
+records how they were converted from the TDS.
 
 Run `make check` before calling a task done.
 

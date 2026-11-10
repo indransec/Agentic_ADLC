@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../schema/catalogues/route_destinations.schema.json
+# Non-terminal route destinations. kind tells the orchestrator how to handle each one.
+catalogue: route_destinations
+version: "1.0.0"
+route_destinations:
+  - {id: human_completion, kind: human, description: "The accountable owner completes the artifacts; then normal sign-off"}
+  - {id: owning_terminal, kind: terminal_resolver, description: "The terminal that owns the missing evidence (resolved from the gap list)"}
+  - {id: owning_terminal_owner, kind: human, description: "The accountable owner of the terminal that granted the waiver"}
+  - {id: lifecycle_closed, kind: terminating, description: "The lifecycle ends for this use case"}
+  - {id: continue, kind: continue, description: "The continuous terminal keeps running into the next review period"}
+  - {id: itsm, kind: external, description: "Incident handled in ITSM"}
+  - {id: rai_board, kind: human, description: "The RAI board decides"}
+  - {id: release_board, kind: human, description: "The business owner and release board decide"}
+  - {id: incident_bridge, kind: human, description: "The SRE incident bridge with the service owner"}
+  - {id: adlc_coe, kind: human, description: "The ADLC CoE decides"}

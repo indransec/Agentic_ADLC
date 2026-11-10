@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=../schema/catalogues/predicates.schema.json
+# Predicate catalogue (SA §5.5, §9). Named checks that terminal specs call in CEL expressions.
+# Declared here and checked for name and arguments by the spec toolkit (V-12, V-13);
+# evaluated by the policy engine (feature 004). Kinds: evidence_ref, terminal_list, string,
+# string_list, number, duration, role, any.
+catalogue: predicates
+version: "1.0.0"
+predicates:
+  - {name: evidence_exists, params: [{name: ref, kind: evidence_ref}], returns: bool, description: "The referenced evidence exists in the ledger for this use case"}
+  - {name: is_signed, params: [{name: ref, kind: evidence_ref}], returns: bool, description: "The referenced signed record carries all required signatures"}
+  - {name: is_frozen, params: [{name: ref, kind: evidence_ref}], returns: bool, description: "The referenced artifact is frozen (immutable version)"}
+  - {name: is_provisioned, params: [{name: ref, kind: evidence_ref}], returns: bool, description: "The referenced environment is provisioned"}
+  - {name: is_pinned, params: [{name: ref, kind: evidence_ref}], returns: bool, description: "The referenced template or dependency version is pinned"}
+  - {name: is_live, params: [{name: ref, kind: evidence_ref}], returns: bool, description: "The referenced registry entry has status live"}
+  - {name: in_directory, params: [{name: person, kind: evidence_ref}], returns: bool, description: "The named person exists in the enterprise directory"}
+  - {name: approved_by, params: [{name: ref, kind: evidence_ref}, {name: role, kind: role}], returns: bool, description: "The referenced item is approved by a holder of the role"}
+  - {name: all_required_artifacts_present, params: [], returns: bool, description: "Every artifact applicable to this run exists and matches its column schema"}
+  - {name: all_rows_in, params: [{name: table, kind: evidence_ref}, {name: column, kind: string}, {name: allowed, kind: string_list}], returns: bool, description: "Every row's column value is one of the allowed values"}
+  - {name: all_rows_have, params: [{name: table, kind: evidence_ref}, {name: columns, kind: string_list}], returns: bool, description: "Every row has a non-empty value in each column"}
+  - {name: all_rows_numeric, params: [{name: table, kind: evidence_ref}, {name: columns, kind: string_list}], returns: bool, description: "Every row has a numeric value in each column"}
+  - {name: all_rows_true, params: [{name: table, kind: evidence_ref}, {name: column, kind: string}], returns: bool, description: "Every row has true in the column"}
+  - {name: all_rows_match, params: [{name: table, kind: evidence_ref}, {name: column, kind: string}, {name: value, kind: string}], returns: bool, description: "Every row has exactly this value in the column"}
+  - {name: column_mean, params: [{name: table, kind: evidence_ref}, {name: column, kind: string}], returns: number, description: "Mean of a numeric column"}
+  - {name: column_min, params: [{name: table, kind: evidence_ref}, {name: column, kind: string}], returns: number, description: "Minimum of a numeric column"}
+  - {name: column_max, params: [{name: table, kind: evidence_ref}, {name: column, kind: string}], returns: number, description: "Maximum of a numeric column"}
+  - {name: no_open_rows, params: [{name: table, kind: evidence_ref}, {name: column, kind: string}, {name: values, kind: string_list}], returns: bool, description: "No row with status open has one of the values in the column"}
+  - {name: every_req_mapped, params: [{name: requirements, kind: evidence_ref}, {name: decisions, kind: evidence_ref}], returns: bool, description: "Every requirement id is mapped to at least one design decision"}
+  - {name: every_req_traced, params: [{name: requirements, kind: evidence_ref}, {name: trace, kind: evidence_ref}, {name: column, kind: string}], returns: bool, description: "Every requirement id has at least one non-empty value in the column of the trace table"}
+  - {name: all_tools_registered_or_flagged, params: [{name: contracts, kind: evidence_ref}], returns: bool, description: "Every tool is in the MCP registry or flagged as new"}
+  - {name: token_budget_within_nfr, params: [{name: budget, kind: evidence_ref}, {name: nfrs, kind: evidence_ref}], returns: bool, description: "Token budget per task is defined and within the cost NFR"}
+  - {name: data_classes_within, params: [{name: strategy, kind: evidence_ref}, {name: approval, kind: evidence_ref}], returns: bool, description: "Every data class handled is within the approved classification"}
+  - {name: hitl_covered, params: [{name: autonomy, kind: evidence_ref}, {name: hitl, kind: evidence_ref}], returns: bool, description: "Every action with hitl_required has a HITL design row"}
+  - {name: scan_clean, params: [{name: checks, kind: evidence_ref}, {name: scan, kind: string}, {name: levels, kind: string_list}], returns: bool, description: "The named scan has zero findings at each listed level"}
+  - {name: all_metrics_meet_thresholds, params: [{name: results, kind: evidence_ref}, {name: thresholds, kind: evidence_ref}], returns: bool, description: "Every metric meets its operator and threshold"}
+  - {name: no_critical_threshold_missed, params: [{name: quality, kind: evidence_ref}, {name: rai, kind: evidence_ref}], returns: bool, description: "Only advisory or non-critical thresholds were missed"}
+  - {name: cost_within_budget, params: [{name: measured, kind: evidence_ref}, {name: budget, kind: evidence_ref}], returns: bool, description: "Measured cost per task is within the token budget"}
+  - {name: latency_within_nfr, params: [{name: measured, kind: evidence_ref}, {name: nfrs, kind: evidence_ref}], returns: bool, description: "Measured p95 latency is within the latency NFR"}
+  - {name: judge_disputed, params: [{name: calibration, kind: evidence_ref}], returns: bool, description: "A judge result is disputed by a human labeller"}
+  - {name: permissions_subset, params: [{name: matrix, kind: evidence_ref}, {name: design, kind: evidence_ref}], returns: bool, description: "Agent identity permissions are a subset of the designed ones"}
+  - {name: scenario_passed, params: [{name: table, kind: evidence_ref}, {name: scenario, kind: string}], returns: bool, description: "The named resilience scenario passed"}
+  - {name: no_unmitigated_critical, params: [{name: threats, kind: evidence_ref}], returns: bool, description: "No critical finding is left unmitigated"}
+  - {name: assurance_disagreement, params: [{name: attestation, kind: evidence_ref}], returns: bool, description: "Assurance functions disagree on the attestation"}
+  - {name: unacceptable_residual_risk, params: [{name: register, kind: evidence_ref}], returns: bool, description: "A residual risk was rated unacceptable by the risk owner"}
+  - {name: all_statuses_in, params: [{name: terminals, kind: terminal_list}, {name: statuses, kind: string_list}], returns: bool, description: "Every listed terminal's latest status is one of the statuses"}
+  - {name: no_waiver_expiring_before, params: [{name: date, kind: evidence_ref}], returns: bool, description: "No active waiver expires before the date"}
+  - {name: alerts_cover, params: [{name: monitoring, kind: evidence_ref}, {name: kpis, kind: evidence_ref}, {name: signals, kind: evidence_ref}], returns: bool, description: "An alert exists for every KPI and observability signal"}
+  - {name: go_no_go_disputed, params: [{name: authorisation, kind: evidence_ref}], returns: bool, description: "Go/no-go approvers disagree"}
+  - {name: within_window, params: [{name: window, kind: evidence_ref}], returns: bool, description: "Now is within the change window"}
+  - {name: hash_matches, params: [{name: a, kind: evidence_ref}, {name: b, kind: evidence_ref}], returns: bool, description: "Both references carry the same package hash"}
+  - {name: within_baseline_tolerance, params: [{name: metrics, kind: evidence_ref}, {name: baseline, kind: evidence_ref}, {name: stage, kind: string}], returns: bool, description: "Stage quality is within tolerance of the T4 baseline"}
+  - {name: no_breach_in_stage, params: [{name: metrics, kind: evidence_ref}, {name: stage, kind: string}], returns: bool, description: "No alert threshold was breached during the stage soak"}
+  - {name: rollback_failed, params: [{name: log, kind: evidence_ref}], returns: bool, description: "An automatic rollback did not complete"}
+  - {name: open_incident, params: [{name: log, kind: evidence_ref}, {name: severities, kind: string_list}], returns: bool, description: "An incident of one of the severities is open"}
+  - {name: exceeds_threshold, params: [{name: signal, kind: evidence_ref}, {name: thresholds, kind: evidence_ref}, {name: metric, kind: string}], returns: bool, description: "The signal is worse than the threshold for the metric"}
+  - {name: below_nfr, params: [{name: signal, kind: evidence_ref}, {name: nfrs, kind: evidence_ref}, {name: category, kind: string}], returns: bool, description: "The signal is below the NFR target of the category"}
+  - {name: below_baseline, params: [{name: signal, kind: evidence_ref}, {name: baseline, kind: evidence_ref}], returns: bool, description: "The signal is below the baseline minus tolerance"}
+  - {name: above_budget_for, params: [{name: signal, kind: evidence_ref}, {name: budget, kind: evidence_ref}, {name: period, kind: duration}], returns: bool, description: "The signal stays above budget for the whole period"}
+  - {name: kpi_below_target_for, params: [{name: kpis, kind: evidence_ref}, {name: values, kind: evidence_ref}, {name: reviews, kind: number}], returns: bool, description: "A KPI stays below target for the number of reviews"}
+  - {name: waiver_expiring_within, params: [{name: period, kind: duration}], returns: bool, description: "An active waiver expires within the period"}
+  - {name: all_monitors_reporting, params: [], returns: bool, description: "Every monitor reported in the review period (no silent signals)"}
+  - {name: regression_within_baseline, params: [{name: report, kind: evidence_ref}, {name: baseline, kind: evidence_ref}], returns: bool, description: "Regression replay pass rate is within tolerance of the T4 baseline"}
+  - {name: no_expired_waivers, params: [], returns: bool, description: "No active waiver for this use case has expired"}
+  - {name: repeated_sev1, params: [{name: log, kind: evidence_ref}], returns: bool, description: "More than one sev1 incident in the review period"}
+  - {name: reentry_consistent, params: [{name: assessment, kind: evidence_ref}], returns: bool, description: "A change class is assigned and the re-entry terminal is at least the class minimum"}
+  - {name: class_at_least_if, params: [{name: assessment, kind: evidence_ref}, {name: components, kind: string_list}, {name: minimum, kind: string}], returns: bool, description: "If any listed component changed, the change class is at least the minimum"}
+  - {name: classification_disputed, params: [{name: assessment, kind: evidence_ref}], returns: bool, description: "The change classification is disputed"}
+  - {name: has_change_class, params: [{name: assessment, kind: evidence_ref}, {name: change_class, kind: string}], returns: bool, description: "The assessment assigns this change class"}
+  - {name: any_design_deviation, params: [{name: conformance, kind: evidence_ref}], returns: bool, description: "At least one design decision was implemented with a deviation"}

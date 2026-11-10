@@ -17,7 +17,9 @@ Every target exits non-zero on failure and prints the name of the failing step.
 | `make test` | `pytest` unit + integration with coverage report (core modules ≥ 80%) | uv, Docker (testcontainers) |
 | `make migration-check` | Fresh PostgreSQL: upgrade head → downgrade base → upgrade head; assert schemas and ledger triggers | uv, Docker |
 | `make secret-scan` | gitleaks over the working tree with `.gitleaks.toml` | Docker |
-| `make check` | lint → typecheck → test → migration-check → secret-scan | all of the above |
+| `make spec-validate` | `adlc-spec validate adlc-specs` at L1–L5, L5 against `ADLC_SPEC_BASELINE_REF` (default `origin/main`); added by feature 002 | uv, git |
+| `make spec-register` | `adlc-spec register adlc-specs` into the `.env` data store; added by feature 002 | running postgres |
+| `make check` | lint → typecheck → spec-validate → test → migration-check → secret-scan | all of the above |
 
 ## CLI: `adlc-account`
 

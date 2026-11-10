@@ -1,0 +1,1 @@
+- {file: terminals/T0.yaml, op: delete, path: /terminal/outcome_model/exception/route}

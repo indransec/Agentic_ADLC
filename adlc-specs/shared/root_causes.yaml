@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../schema/catalogues/root_causes.schema.json
+# Rework root causes (TDS Annex B.2 root_cause). Used in rework.route_by_root_cause and events T<n>.rework.<root_cause>.
+catalogue: root_causes
+version: "1.0.0"
+root_causes:
+  - {id: qualification, description: "The use case was qualified wrongly at T0"}
+  - {id: requirement, description: "A requirement or threshold is missing or wrong"}
+  - {id: design, description: "The design contract is wrong or incomplete"}
+  - {id: architecture, description: "An architectural or security design gap"}
+  - {id: implementation, description: "The build does not meet the design"}
+  - {id: control_missing, description: "A required control is not implemented"}
+  - {id: missing_evidence, description: "Evidence a later terminal needs is missing"}
+  - {id: ops_gap, description: "Operational readiness is incomplete"}
+  - {id: defect, description: "A defect found after deployment"}
+  - {id: readiness_gap, description: "Release readiness was incomplete"}
+  - {id: environment, description: "The target environment is wrong or unhealthy"}

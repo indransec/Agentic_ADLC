@@ -1,0 +1,3 @@
+- {file: terminals/T0.yaml, op: set, path: /terminal/trigger/on, value: [usecase.submitted]}
+- {file: terminals/T1.yaml, op: set, path: /terminal/outcome_model/rework/route_by_root_cause, value: {requirement: T1}}
+- {file: terminals/T0.yaml, op: append, path: /terminal/prerequisites, value: {id: PRE-T0-02, evidence_ref: T1.scores, condition: evidence_exists(T1.scores), on_missing: block}}

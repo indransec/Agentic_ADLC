@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://adlc.local/schema/catalogues/guardrails.schema.json",
+  "title": "ADLC catalogue: guardrails",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "catalogue": {
+      "const": "guardrails"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "guardrails": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+          },
+          "unit": {
+            "enum": [
+              "ratio",
+              "pct",
+              "count",
+              "list",
+              "level"
+            ]
+          },
+          "direction": {
+            "enum": [
+              "max",
+              "min",
+              "superset"
+            ]
+          },
+          "tighten_only": {
+            "type": "boolean"
+          },
+          "values": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "low": {
+                "type": [
+                  "number",
+                  "array"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "medium": {
+                "type": [
+                  "number",
+                  "array"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              },
+              "high": {
+                "type": [
+                  "number",
+                  "array"
+                ],
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": []
+          },
+          "proposed_default": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          },
+          "monotonic": {
+            "type": "boolean",
+            "description": "Values must tighten as risk rises (default true); false for limits that grow with tier"
+          }
+        },
+        "required": [
+          "name",
+          "unit",
+          "direction",
+          "tighten_only",
+          "values",
+          "proposed_default",
+          "source",
+          "description"
+        ]
+      }
+    }
+  },
+  "required": [
+    "catalogue",
+    "version",
+    "guardrails"
+  ]
+}

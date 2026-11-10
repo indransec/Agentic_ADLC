@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../schema/checklist.schema.json
+# Reviewer checklist for T0 (TDS checklist item text). Scored by the common reviewer agent.
+checklist: t0
+version: "1.0.0"
+items:
+  - {id: CHK-T0-01, text: "Problem is measurable"}
+  - {id: CHK-T0-02, text: "Agentic approach justified over simpler options"}
+  - {id: CHK-T0-03, text: "Value hypothesis has a metric"}
+  - {id: CHK-T0-04, text: "Risk tier rationale stated"}
+  - {id: CHK-T0-05, text: "Data sources and owners named"}
+  - {id: CHK-T0-06, text: "RACI has one A per activity"}

@@ -1,0 +1,1 @@
+- {rule_id: V-01, file: shared/root_causes.yaml, path_contains: /root_causes/11}

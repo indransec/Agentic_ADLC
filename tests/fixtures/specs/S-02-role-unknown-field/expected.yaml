@@ -1,0 +1,1 @@
+- {rule_id: S-02, file: shared/roles.yaml, path_contains: /roles/0}

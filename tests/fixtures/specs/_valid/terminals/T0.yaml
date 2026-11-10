@@ -1,0 +1,73 @@
+# yaml-language-server: $schema=../schema/terminal.schema.json
+# Minimal valid fixture terminal (feature 002 tests). Not a real lifecycle terminal.
+terminal:
+  metadata:
+    id: T0
+    name: Fixture Intake
+    version: "1.0.0"
+    schema_version: "1.1.0"
+    purpose: Should we do this at all?
+    owner_role: adlc_coe
+    status: active
+  trigger:
+    on: [usecase.submitted, T1.rework.qualification]
+    mode: event
+  prerequisites:
+    - id: PRE-T0-01
+      evidence_ref: intake.free_text
+      condition: size(intake.free_text) >= 200
+      description: length >= 200 chars
+      on_missing: block
+  actors:
+    agent: {id: t0-intake-agent, model_tier: reasoning}
+    subagents:
+      - {id: problem-framer, responsibility: business problem}
+    reviewer: common-terminal-reviewer
+    human_roles:
+      - {role: business_owner, raci: A}
+      - {role: product_owner, raci: R}
+      - {role: adlc_coe, raci: I}
+  authorities:
+    allow: ["read:knowledge_base", "write:T0.artifacts"]
+    deny: ["write:any_other_terminal"]
+    data_access: {max_class: internal}
+    tool_scopes: ["mcp:confluence:read"]
+    sign_off: {roles: [business_owner], min_approvers: 1}
+    status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
+  playbooks:
+    procedures:
+      - {id: PB-T0-01, ref: playbooks/t0-intake.md, version: "1.0.0"}
+    grounding:
+      - {mcp: confluence, scope: /business-capabilities}
+  controls:
+    automated:
+      - id: CTL-T0-01
+        rule: all_required_artifacts_present()
+        description: all required artifacts present
+        severity: blocking
+      - id: CTL-T0-02
+        rule: all_rows_in(T0.risk_classification, "tier", ["low", "medium", "high"])
+        description: risk_tier in [low, medium, high]
+        severity: blocking
+    checklist: {ref: checklists/t0.yaml, version: "1.0.0", items: [CHK-T0-01]}
+  evidence:
+    artifacts:
+      - {id: intake_card, format: table, columns: [attribute, value], applicability: {mode: mandatory}}
+      - {id: risk_classification, format: table, columns: [dimension, rating, tier], applicability: {mode: mandatory}}
+    ledger: {key: "${usecase_id}/T0/${run_version}", immutable: true, retention: per_tier}
+  outcome_model:
+    pass: {route: T1, emits: [risk_tier]}
+    rework: {route: T0, requires: [owner_comment]}
+    exception: {route: T1, requires: [waiver_owner, expiry, compensating_control]}
+    escalate:
+      when: run.rework_count > timeline.max_rework_cycles || run.age > timeline.escalate_after
+      route: human_completion
+    terminate: {set_by: [business_owner], requires: [reason], notify: [adlc_coe]}
+  timeline:
+    expected_duration: {low: 2d, medium: 3d, high: 5d}
+    reminder_after: 2d
+    escalate_after: 7d
+    max_rework_cycles: 3
+    clarification_sla: 2d
+    max_clarification_rounds: 2
+    max_auto_retries: 3

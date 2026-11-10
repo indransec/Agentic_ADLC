@@ -1,0 +1,2 @@
+- {rule_id: V-06, file: terminals/T0.yaml, path_contains: /terminal/authorities/tool_scopes/0}
+- {rule_id: V-06, file: terminals/T0.yaml, path_contains: /terminal/playbooks/grounding/0}

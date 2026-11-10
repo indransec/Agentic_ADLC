@@ -1,0 +1,129 @@
+# yaml-language-server: $schema=../schema/terminal.schema.json
+# T2 – Architecture & Design. Converted from TDS §6; changes recorded in CONVERSION.md.
+terminal:
+  metadata:
+    id: T2
+    name: Architecture & Design
+    version: "1.0.0"
+    schema_version: "1.1.0"
+    purpose: How should the agent operate?
+    owner_role: adlc_coe
+    status: active
+  trigger:
+    on: [T1.pass, T1.exception, T9.reentry.T2, T3.rework.design, T4.rework.design, T5.rework.architecture]
+    mode: event
+  prerequisites:
+    - id: PRE-T2-01
+      evidence_ref: T1.status
+      condition: T1.status in ["pass", "exception"]
+      description: in [pass, exception]
+      on_missing: block
+    - id: PRE-T2-02
+      evidence_ref: T1.non_functional_requirements
+      condition: evidence_exists(T1.non_functional_requirements)
+      description: exists
+      on_missing: block
+    - id: PRE-T2-03
+      evidence_ref: T1.autonomy_levels
+      condition: evidence_exists(T1.autonomy_levels)
+      description: exists
+      on_missing: block
+  actors:
+    agent: {id: t2-architect-agent, model_tier: reasoning}
+    subagents:
+      - {id: system-architect, responsibility: "solution overview, system and deployment architecture"}
+      - {id: agent-pattern-designer, responsibility: "agentic pattern, GenAI principles, memory/context strategy"}
+      - {id: model-strategist, responsibility: "model selection, routing, fallback, token budget"}
+      - {id: contract-designer, responsibility: tool/API/MCP contracts and A2A interfaces}
+      - {id: data-architect, responsibility: "data strategy: retention, access, compliance"}
+      - {id: security-architect, responsibility: security architecture and threat model draft}
+      - {id: observability-designer, responsibility: "observability, RAI and metric emission design"}
+    reviewer: common-terminal-reviewer
+    human_roles:
+      - {role: solution_architect, raci: A}
+      - {role: engineering_lead, raci: R}
+      - {role: security_officer, raci: R}
+      - {role: data_owner, raci: C}
+      - {role: product_owner, raci: I}
+  authorities:
+    allow: ["read:ledger.T0-T1", "read:architecture_repo", "read:component_catalogue", "write:T2.artifacts"]
+    deny: ["write:ledger.T0-T1", "provision:infrastructure"]
+    data_access: {max_class: internal}
+    tool_scopes: ["mcp:confluence:read", "mcp:sharepoint:read", "mcp:arch_repo:read", "mcp:mcp_registry:read"]
+    sign_off: {roles: [solution_architect, security_officer], min_approvers: 2}
+    status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
+  playbooks:
+    procedures:
+      - {id: PB-T2-01, ref: playbooks/t2-architecture.md, version: "1.0.0"}
+      - {id: PB-T2-02, ref: playbooks/agentic-patterns.md, version: "1.0.0"}
+      - {id: PB-T2-03, ref: playbooks/reference-architectures.md, version: "1.0.0"}
+    grounding:
+      - {mcp: arch_repo, scope: "reference architectures, ADRs"}
+      - {mcp: mcp_registry, scope: approved MCP servers and tools}
+      - {mcp: confluence, scope: /platform-standards}
+  controls:
+    automated:
+      - id: CTL-T2-01
+        rule: every_req_mapped(T1.functional_requirements, T2.design_decisions)
+        description: every T1 requirement mapped to >= 1 design decision
+        severity: blocking
+      - id: CTL-T2-02
+        rule: all_tools_registered_or_flagged(T2.tool_api_contracts)
+        description: all tools in approved MCP registry or flagged as new
+        severity: blocking
+      - id: CTL-T2-03
+        rule: token_budget_within_nfr(T2.token_budget, T1.non_functional_requirements)
+        description: token_budget per task defined and <= T1 cost NFR
+        severity: blocking
+      - id: CTL-T2-04
+        rule: data_classes_within(T2.data_strategy, T0.data_access)
+        description: data classes handled <= T0 data classification approval
+        severity: blocking
+      - id: CTL-T2-05
+        rule: hitl_covered(T1.autonomy_levels, T2.hitl_design)
+        description: HITL design covers every action with hitl_required = true
+        severity: blocking
+    checklist:
+      ref: checklists/t2.yaml
+      version: "1.0.0"
+      items: [CHK-T2-01, CHK-T2-02, CHK-T2-03, CHK-T2-04, CHK-T2-05, CHK-T2-06]
+    tiering:
+      high: {threat_model: full, architecture_board_review: true}
+      medium: {threat_model: standard, architecture_board_review: false}
+      low: {threat_model: lightweight, architecture_board_review: false}
+  evidence:
+    artifacts:
+      - {id: solution_overview, format: table, columns: [aspect, description], applicability: {mode: mandatory}}
+      - {id: system_architecture, format: diagram+table, columns: [component, responsibility, technology, interfaces], applicability: {mode: mandatory}}
+      - {id: data_strategy, format: table, columns: [data_element, classification, retention, access_policy, residency], applicability: {mode: mandatory}}
+      - {id: agentic_pattern, format: table, columns: [decision_id, pattern, rationale, genai_principle], applicability: {mode: mandatory}}
+      - {id: model_strategy, format: table, columns: [use, model, version, fallback, routing_rule], applicability: {mode: mandatory}}
+      - {id: tool_api_contracts, format: table, columns: [tool_id, mcp_server, operation, auth, input_schema, output_schema, error_semantics], applicability: {mode: mandatory}}
+      - {id: memory_context_strategy, format: table, columns: [memory_type, store, scope, ttl], applicability: {mode: mandatory}}
+      - {id: hitl_design, format: table, columns: [action, trigger, approver_role, timeout_behaviour], applicability: {mode: mandatory}}
+      - {id: token_budget, format: table, columns: [task, max_tokens, max_cost_usd, on_exceed], applicability: {mode: mandatory}}
+      - {id: security_architecture, format: table, columns: [threat, control, layer], applicability: {mode: mandatory}}
+      - {id: observability_design, format: table, columns: [signal, source, metric, sink, alert], applicability: {mode: mandatory}}
+      - {id: rai_metric_emission, format: table, columns: [rai_metric, emission_point, frequency], applicability: {mode: mandatory}}
+      - {id: deployment_architecture, format: table, columns: [environment, purpose, infra, data_allowed], applicability: {mode: mandatory}}
+      - {id: design_decisions, format: table, columns: [decision_id, decision, req_ids, status], applicability: {mode: mandatory}}
+    ledger: {key: "${usecase_id}/T2/${run_version}", immutable: true, retention: per_tier}
+  outcome_model:
+    pass: {route: T3, emits: [design_decisions, tool_api_contracts, token_budget]}
+    rework:
+      route_by_root_cause: {design: T2, requirement: T1}
+      requires: [owner_comment]
+    exception: {route: T3, requires: [waiver_owner, expiry, compensating_control]}
+    escalate:
+      when: run.rework_count > timeline.max_rework_cycles || run.age > timeline.escalate_after
+      route: human_completion
+      description: rework_count > 3 or age > escalate_after
+    terminate: {set_by: [business_owner], requires: [reason]}
+  timeline:
+    expected_duration: {low: 4d, medium: 7d, high: 12d}
+    reminder_after: 3d
+    escalate_after: 15d
+    max_rework_cycles: 3
+    clarification_sla: 3d
+    max_clarification_rounds: 2
+    max_auto_retries: 3

@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../schema/checklist.schema.json
+# Reviewer checklist for T7 (TDS checklist item text). Scored by the common reviewer agent.
+checklist: t7
+version: "1.0.0"
+items:
+  - {id: CHK-T7-01, text: "Deployment log complete per stage"}
+  - {id: CHK-T7-02, text: "Rollback executed cleanly if triggered"}
+  - {id: CHK-T7-03, text: "Support team accepted handover"}
+  - {id: CHK-T7-04, text: "Hypercare incidents closed or transferred"}

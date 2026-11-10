@@ -1,5 +1,3 @@
 # adlc-specs/checklists
 
-Placeholder created by feature 001-platform-foundation.
-
-Reviewer checklists referenced by terminal specs. Added from feature **002** onward.
+Reviewer checklists, one per terminal (`t<n>.yaml`), referenced by `controls.checklist` in each terminal spec. Each item has an id and text; the common reviewer agent scores them. Converted from TDS §4–§13 in feature 002.

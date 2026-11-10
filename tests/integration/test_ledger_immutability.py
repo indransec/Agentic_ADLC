@@ -109,8 +109,9 @@ def test_app_has_no_privileges_beyond_ledger_record(app_engine: Engine) -> None:
                 "AND has_schema_privilege(current_user, n.oid, 'CREATE')"
             )
         ).all()
-    assert sorted(grants) == [
-        ("ledger.ledger_record", "INSERT"),
-        ("ledger.ledger_record", "SELECT"),
-    ]
+    writes = sorted(g for g in grants if g[1] != "SELECT")
+    reads = {table for table, privilege in grants if privilege == "SELECT"}
+    assert writes == [("ledger.ledger_record", "INSERT")]
+    # Feature 002 adds read-only access to the spec registry; nothing else is readable.
+    assert all(t == "ledger.ledger_record" or t.startswith("spec.") for t in reads), reads
     assert create_rights == []

@@ -1,0 +1,1 @@
+- {file: terminals/T0.yaml, op: set, path: /terminal/authorities/status_rights/agent, value: [pass]}

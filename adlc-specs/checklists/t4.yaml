@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../schema/checklist.schema.json
+# Reviewer checklist for T4 (TDS checklist item text). Scored by the common reviewer agent.
+checklist: t4
+version: "1.0.0"
+items:
+  - {id: CHK-T4-01, text: "Dataset provenance recorded"}
+  - {id: CHK-T4-02, text: "Synthetic vs real split justified"}
+  - {id: CHK-T4-03, text: "Defects assigned a root_cause_terminal"}
+  - {id: CHK-T4-04, text: "Regression pack frozen and versioned"}
+  - {id: CHK-T4-05, text: "Results bound to candidate hash"}

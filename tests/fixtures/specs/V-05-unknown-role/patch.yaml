@@ -1,0 +1,1 @@
+- {file: terminals/T0.yaml, op: append, path: /terminal/actors/human_roles, value: {role: chief_wizard, raci: C}}

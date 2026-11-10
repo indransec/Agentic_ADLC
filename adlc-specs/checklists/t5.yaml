@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../schema/checklist.schema.json
+# Reviewer checklist for T5 (TDS checklist item text). Scored by the common reviewer agent.
+checklist: t5
+version: "1.0.0"
+items:
+  - {id: CHK-T5-01, text: "Threat model updated from T2 draft"}
+  - {id: CHK-T5-02, text: "Regulatory map complete for tier"}
+  - {id: CHK-T5-03, text: "Disclosure to users meets policy"}
+  - {id: CHK-T5-04, text: "Human override path tested"}
+  - {id: CHK-T5-05, text: "Logs exclude secrets and raw PII"}

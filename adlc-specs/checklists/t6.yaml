@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../schema/checklist.schema.json
+# Reviewer checklist for T6 (TDS checklist item text). Scored by the common reviewer agent.
+checklist: t6
+version: "1.0.0"
+items:
+  - {id: CHK-T6-01, text: "Runbook covers known failure modes from T4"}
+  - {id: CHK-T6-02, text: "Rollout stages have success criteria"}
+  - {id: CHK-T6-03, text: "Support KB and user comms ready"}
+  - {id: CHK-T6-04, text: "Agent registered in agent registry as pending"}

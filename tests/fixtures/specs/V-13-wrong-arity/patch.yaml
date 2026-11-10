@@ -1,0 +1,1 @@
+- {file: terminals/T0.yaml, op: set, path: /terminal/controls/automated/1/rule, value: all_rows_in(T0.risk_classification)}

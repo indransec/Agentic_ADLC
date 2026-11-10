@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=../schema/catalogues/evidence_sources.schema.json
+# Non-terminal evidence sources an expression or evidence_ref may start with (rule V-12),
+# plus `terminal_record`: fields every terminal run record has, readable as T<n>.<field>.
+catalogue: evidence_sources
+version: "1.0.0"
+evidence_sources:
+  - {id: terminal_record, fields: [status, bound_to, signed_by, closed_at, run_version, waivers], description: "Fields of every terminal's ledger record, read as T<n>.<field>"}
+  - {id: intake, fields: [free_text, business_owner, title], description: "The use case as submitted"}
+  - {id: env, fields: [dev, test, prod], description: "Pilot environments; members such as env.test.deployed_hash"}
+  - {id: change, fields: [window, window_requested, request_status], description: "The ITSM change record for a release"}
+  - {id: template, fields: [version], description: "The pinned golden template"}
+  - {id: dataset, fields: [golden], description: "Registered datasets"}
+  - {id: trigger, fields: [evidence, severity, event_id], description: "The event that opened the run"}
+  - {id: release, fields: [package_sha256, release_date], description: "The release being authorised"}
+  - {id: profile, fields: [applicable_artifacts, metric_thresholds, kpis, autonomy_levels, autonomy_level_max, token_budget, parameters], description: "The use-case profile (SA §5.1), versioned in the ledger"}
+  - {id: ci, fields: [status, run_id], description: "Latest CI run of the candidate"}
+  - {id: sbom, fields: [generated, licences_approved], description: "Software bill of materials check"}
+  - {id: redteam, fields: [injection_success_rate, jailbreak_success_rate], description: "Red-team harness results for the candidate"}
+  - {id: dlp, fields: [pii_leak_count], description: "DLP scan results for the candidate"}
+  - {id: portfolio, fields: [max_similarity], description: "Duplicate check against the agent portfolio"}
+  - {id: telemetry, fields: [policy_violation_rate, pii_leak_count, availability_pct, online_eval_score, cost_per_task_usd, kpi_values, autonomy_breach_count, upstream_deprecation_notice, safety_breach_severity], description: "Live signals of the deployed agent (T8 monitors)"}
+  - {id: retirement, fields: [credentials_revoked, data_disposed, unowned_dependants], description: "Retirement checks (T9 retire mode)"}

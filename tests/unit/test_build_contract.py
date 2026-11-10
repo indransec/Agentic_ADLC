@@ -18,6 +18,8 @@ MAKE_TARGETS = {
     "migration-check",
     "secret-scan",
     "check",
+    "spec-validate",
+    "spec-register",
 }
 SETUP_ONLY_RUNS = {"make install"}
 
@@ -49,8 +51,7 @@ def test_check_runs_all_steps_in_order() -> None:
     match = re.search(r"^check:[^\n]*\n((?:\t[^\n]*\n)+)", text, flags=re.MULTILINE)
     assert match is not None
     body = match.group(1)
-    positions = [
-        body.find(step) for step in ("lint", "typecheck", "test", "migration-check", "secret-scan")
-    ]
+    steps = ("lint", "typecheck", "spec-validate", " test", "migration-check", "secret-scan")
+    positions = [body.find(step) for step in steps]
     assert all(p >= 0 for p in positions)
     assert positions == sorted(positions)

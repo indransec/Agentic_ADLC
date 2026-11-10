@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://adlc.local/schema/catalogues/route_destinations.schema.json",
+  "title": "ADLC catalogue: route_destinations",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "catalogue": {
+      "const": "route_destinations"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "route_destinations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+          },
+          "kind": {
+            "enum": [
+              "human",
+              "terminal_resolver",
+              "terminating",
+              "external",
+              "continue"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "description"
+        ]
+      }
+    }
+  },
+  "required": [
+    "catalogue",
+    "version",
+    "route_destinations"
+  ]
+}

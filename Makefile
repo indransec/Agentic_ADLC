@@ -14,7 +14,10 @@ UV := uv run
 GITLEAKS_IMAGE := ghcr.io/gitleaks/gitleaks:v8.30.1
 
 .PHONY: help install up down status reset migrate migrate-down lint typecheck test \
-        migration-check secret-scan check
+        migration-check secret-scan check spec-validate spec-register
+
+# L5 spec validation compares with this git ref (override in the environment).
+ADLC_SPEC_BASELINE_REF ?= origin/main
 
 help:
 	@grep -E '^[a-z-]+:' Makefile | cut -d: -f1 | sort | tr '\n' ' '; echo
@@ -63,13 +66,22 @@ typecheck:
 	$(UV) mypy
 
 # Whole-package coverage is reported; the core modules (constitution IX) are gated at 80%.
-CORE_MODULES := */adlc/config/*,*/adlc/identity/*,*/adlc/db/*
+CORE_MODULES := */adlc/config/*,*/adlc/identity/*,*/adlc/db/*,*/adlc/spec_toolkit/*
 
 test:
 	@echo "==> test"
 	$(UV) pytest
 	@echo "core-module coverage (gate 80%):"
 	$(UV) coverage report --include='$(CORE_MODULES)' --skip-covered --fail-under=80
+
+spec-validate:
+	@echo "==> spec-validate"
+	$(UV) adlc-spec validate adlc-specs --baseline-ref $(ADLC_SPEC_BASELINE_REF)
+
+# Registers adlc-specs into the ADLC_DB_* data store (schema-owner identity), host side.
+spec-register: .env
+	@echo "==> spec-register"
+	$(UV) adlc-spec register adlc-specs
 
 migration-check:
 	@echo "==> migration-check"
@@ -86,6 +98,7 @@ check:
 	@echo "==> check"
 	@$(MAKE) --no-print-directory lint
 	@$(MAKE) --no-print-directory typecheck
+	@$(MAKE) --no-print-directory spec-validate
 	@$(MAKE) --no-print-directory test
 	@$(MAKE) --no-print-directory migration-check
 	@$(MAKE) --no-print-directory secret-scan

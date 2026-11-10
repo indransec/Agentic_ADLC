@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../schema/catalogues/model_tiers.schema.json
+# Model tiers (TDS Annex B.2), mapped to approved models in the model catalogue (feature 006).
+catalogue: model_tiers
+version: "1.0.0"
+model_tiers:
+  - {id: reasoning, description: "Strongest reasoning models for analysis and judgement"}
+  - {id: coding, description: "Models tuned for code generation"}
+  - {id: standard, description: "Cost-efficient models for routine steps"}

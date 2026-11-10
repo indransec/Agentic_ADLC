@@ -1,7 +1,8 @@
+# yaml-language-server: $schema=../schema/catalogues/roles.schema.json
 # Role catalogue (Terminal Design Specification §3). Human roles referenced by
 # actors.human_roles, authorities.sign_off, set_by and notify in terminal specs.
-# Schema validation for this file arrives in feature 002; its shape stays the same.
-schema_version: "1.0.0"
+catalogue: roles
+version: "1.0.0"
 roles:
   - id: business_owner
     description: Use-case sponsor; owns value and terminate decision

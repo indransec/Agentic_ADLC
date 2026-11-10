@@ -1,0 +1,1 @@
+- {file: terminals/T0.yaml, op: append, path: /terminal/controls/automated, value: {id: CTL-T0-01, rule: 'true', severity: advisory}}

@@ -6,8 +6,11 @@ readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic>=1.20.1",
+    "cel-python>=0.5.0",
     "fastapi>=0.162.2",
     "itsdangerous>=2.2.0",
+    "jsonschema>=4.26.0",
+    "networkx>=3.7",
     "opentelemetry-api>=1.45.2",
     "opentelemetry-exporter-otlp-proto-http>=1.45.2",
     "opentelemetry-instrumentation-fastapi>=0.66b2",
@@ -24,6 +27,7 @@ dependencies = [
 [project.scripts]
 adlc-api = "adlc.api.__main__:main"
 adlc-account = "adlc.cli.account:app"
+adlc-spec = "adlc.spec_toolkit.cli:app"
 
 [build-system]
 requires = ["hatchling"]
@@ -45,9 +49,12 @@ ignore = ["N818"]  # exception names follow the contracts (e.g. NotAuthenticated
 known-first-party = ["adlc", "tests", "scripts"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S105", "S106", "S603", "S607"]
+"tests/**" = ["S101", "S105", "S106", "S603", "S607", "S608"]
+# SQL-heavy files: long SQL string literals read better unwrapped.
+"tests/integration/**" = ["S101", "S105", "S106", "S603", "S607", "S608", "E501"]
+"src/adlc/spec_toolkit/register.py" = ["E501"]
 "scripts/**" = ["S603", "S607"]
-"db/migrations/**" = ["S608"]
+"db/migrations/**" = ["S608", "E501"]
 
 [tool.mypy]
 strict = true
@@ -55,6 +62,10 @@ python_version = "3.12"
 files = ["src", "tests", "scripts", "db/migrations"]
 mypy_path = "src"
 explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = ["celpy", "celpy.*"]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -70,4 +81,6 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.17.4",
     "testcontainers[postgres]>=4.15.0",
+    "types-jsonschema>=4.26.0.20261006",
+    "types-networkx>=3.6.1.20261108",
 ]
