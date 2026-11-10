@@ -79,6 +79,17 @@ def check_file(data: bytes, media_type: str, max_bytes: int, allowed: Iterable[s
             raise AttachmentRefused("not an SVG")
 
 
+def put_structured(conn: Connection, value: Any) -> str:
+    """Store structured content on the caller's connection; returns its hash (idempotent)."""
+    digest = structured_hash(value)
+    store.insert_blob(conn, digest, value)
+    return digest
+
+
+def versions_exist(conn: Connection, run_id: str) -> bool:
+    return bool(store.latest_versions(conn, run_id))
+
+
 class FileStore:
     """Files at ``<root>/<aa>/<bb>/<hex>``; written through a temporary file and a rename."""
 
@@ -131,9 +142,7 @@ class LedgerContentStore:
         self.files = files
 
     def put_structured(self, conn: Connection, value: Any) -> str:
-        digest = structured_hash(value)
-        store.insert_blob(conn, digest, value)
-        return digest
+        return put_structured(conn, value)
 
     def get_structured(self, conn: Connection, digest: str) -> Any | None:
         return store.load_blob(conn, digest)

@@ -141,6 +141,7 @@ class RunRow:
     opened_at: datetime
     due_at: datetime | None
     closed_at: datetime | None
+    profile_version: int = 0  # 005: the profile version current when the run opened
 
 
 def _run(row: Mapping[str, Any] | Any) -> RunRow:
@@ -158,7 +159,8 @@ def load_run(conn: Connection, run_id: str, *, lock: bool = False) -> RunRow | N
         "mode, trigger_event_id, trigger_event_type, trigger_context, rework_count, auto_retries, "
         "clarification_rounds, artifacts, control_results, recommendation, received_events, "
         "pending_waiver_id, escalation_trigger, escalation_destination, final_status, version, "
-        "lease_until, opened_at, due_at, closed_at FROM run.terminal_run WHERE run_id = :r"
+        "lease_until, opened_at, due_at, closed_at, profile_version FROM run.terminal_run "
+        "WHERE run_id = :r"
     )
     if lock:
         # NO KEY UPDATE: serializes writers of the run, but lets rows that reference it (for
@@ -176,7 +178,8 @@ def runs_of_usecase(conn: Connection, usecase_id: str) -> list[RunRow]:
             "rework_count, auto_retries, clarification_rounds, artifacts, control_results, "
             "recommendation, received_events, pending_waiver_id, escalation_trigger, "
             "escalation_destination, final_status, version, lease_until, opened_at, due_at, "
-            "closed_at FROM run.terminal_run WHERE usecase_id = :u ORDER BY opened_at, run_id"
+            "closed_at, profile_version FROM run.terminal_run WHERE usecase_id = :u "
+            "ORDER BY opened_at, run_id"
         ),
         {"u": usecase_id},
     ).mappings()

@@ -17,6 +17,12 @@ from uuid import UUID
 
 from sqlalchemy import Connection, Engine
 
+from adlc.ledger import artifacts as versions
+from adlc.ledger.artifacts import Change, Producer
+from adlc.ledger.binding import resolve_bound_to
+from adlc.ledger.content import build_v2
+from adlc.ledger.storage import put_structured
+from adlc.ledger.storage import versions_exist as store_versions_exist
 from adlc.orchestration import durations, ids, routing, spec_view, store
 from adlc.orchestration.interfaces import (
     AgentRunner,
@@ -31,7 +37,7 @@ from adlc.orchestration.interfaces import (
     ReviewContext,
     Reviewer,
 )
-from adlc.orchestration.ledger import build_record_content, make_record
+from adlc.orchestration.ledger import make_record
 from adlc.orchestration.states import (
     ActorType,
     CancelAllTimers,
@@ -359,7 +365,7 @@ class PostgresTerminalRun:
             case IncrementAutoRetry():
                 return replace(run, auto_retries=run.auto_retries + 1)
             case StoreArtifacts():
-                return replace(run, artifacts=dict(p.get("artifacts") or {}))
+                return self._store_artifacts(conn, run, signal)
             case StoreControls():
                 return replace(run, control_results=list(p.get("results") or []))
             case StoreRecommendation():
@@ -446,7 +452,7 @@ class PostgresTerminalRun:
         store.cancel_timers(conn, run.run_id, now)
         p = signal.payload
         if signal.kind == SignalKind.LIFECYCLE_ENDED:
-            self._write_ledger(conn, closed, entry, {}, now)
+            self._write_ledger(conn, closed, entry, {}, now)  # (key, emitted) not needed here
             return closed
 
         fields = dict(p.get("fields") or {})
@@ -484,7 +490,7 @@ class PostgresTerminalRun:
                 open_terminal = str(p.get("target_terminal"))
 
         bodies = self._notified_bodies(conn, closed, entry, now) if status == "pass" else []
-        record = self._write_ledger(conn, closed, entry, emitted, now)
+        record, emitted = self._write_ledger(conn, closed, entry, emitted, now)
         event_type = routing.outcome_event_type(run.terminal_id, status, root_cause, reentry)
         store.insert_event(
             conn,
@@ -555,6 +561,19 @@ class PostgresTerminalRun:
             )
         return bodies
 
+    def _store_artifacts(self, conn: Connection, run: RunRow, signal: Signal) -> RunRow:
+        """Agent results and escalation completion become artifact versions (005 FR-008, FR-009);
+        the run's inline artifacts are the latest versions' content."""
+        artifacts = dict(signal.payload.get("artifacts") or {})
+        entry = self.entry(run.terminal_id, run.spec_version)
+        if signal.actor_type == ActorType.AGENT:
+            producer = Producer("agent", signal.actor_id, attempt=run.auto_retries + 1)
+        else:
+            producer = Producer("person", signal.actor_id)
+        changes = {aid: Change(json_safe(rows)) for aid, rows in artifacts.items()}
+        versions.record(conn, run.run_id, entry.spec, changes, producer, put_structured)
+        return replace(run, artifacts={**run.artifacts, **json_safe(artifacts)})
+
     def _write_ledger(
         self,
         conn: Connection,
@@ -562,11 +581,26 @@ class PostgresTerminalRun:
         entry: RegistryEntry,
         emitted: Mapping[str, Any],
         now: datetime,
-    ) -> str:
+    ) -> tuple[str, dict[str, Any]]:
+        """Version-2 record (005 contracts/record.md): artifacts by version and content hash,
+        profile version and package binding, chained to the use case's previous record."""
         store.load_usecase(conn, run.usecase_id, lock=True)  # one chain per use case (R-09)
         previous = store.latest_ledger_hash(conn, run.usecase_id)
+        if not store_versions_exist(conn, run.run_id) and run.artifacts:
+            # A run opened before feature 005: its inline artifacts become version 1.
+            changes = {aid: Change(rows) for aid, rows in run.artifacts.items()}
+            producer = Producer("agent", f"agent:{run.run_id}")
+            versions.record(conn, run.run_id, entry.spec, changes, producer, put_structured)
+        entries = versions.ledger_entries(conn, run.run_id, entry.spec)
+        emitted_refs = versions.enrich_emitted(json_safe(emitted), entries)
         waiver = store.load_waiver(conn, run.pending_waiver_id) if run.pending_waiver_id else None
-        content = build_record_content(
+
+        def record_of(terminal: str) -> Mapping[str, Any] | None:
+            if terminal == run.terminal_id:
+                return run.artifacts
+            return store.latest_closed_artifacts(conn, run.usecase_id, terminal) or None
+
+        content = build_v2(
             run_id=run.run_id,
             usecase_id=run.usecase_id,
             terminal_id=run.terminal_id,
@@ -580,18 +614,20 @@ class PostgresTerminalRun:
             final_status=str(run.final_status),
             decisions=json_safe(store.sign_offs(conn, run.run_id)),
             recommendation=run.recommendation,
-            artifacts=run.artifacts,
             control_results=run.control_results,
             clarifications=json_safe(store.clarifications(conn, run.run_id)),
             waiver=json_safe(waiver),
-            emitted=json_safe(emitted),
+            emitted=emitted_refs,
+            profile_version=run.profile_version,
+            artifacts=entries,
+            bound_to=json_safe(resolve_bound_to(entry.spec, record_of)),
         )
         key = spec_view.ledger_key(entry.spec, run.usecase_id, f"run-{run.run_number}")
         record = make_record(
             ledger_key=key, content=json_safe(content), previous_record_hash=previous
         )
         store.insert_ledger_record(conn, record, now)
-        return key
+        return key, emitted_refs
 
     def _schedule_review(
         self, conn: Connection, run: RunRow, entry: RegistryEntry, now: datetime
