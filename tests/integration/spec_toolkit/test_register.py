@@ -47,14 +47,15 @@ def test_first_registration_creates_everything(owner_engine: Engine, specs: Path
     started = time.monotonic()
     report = register(specs, owner_engine)
     assert time.monotonic() - started < 30  # SC-005
-    assert report.registered_count == 10 + 14 + 31
+    assert report.registered_count == 10 + 16 + 31 + 1  # 006: two catalogues and one prompt
     assert (
         _count(owner_engine, "SELECT count(*) FROM spec.spec_registry WHERE status='active'") == 10
     )
     assert (
-        _count(owner_engine, "SELECT count(*) FROM spec.spec_catalogue WHERE status='active'") == 14
+        _count(owner_engine, "SELECT count(*) FROM spec.spec_catalogue WHERE status='active'") == 16
     )
     assert _count(owner_engine, "SELECT count(*) FROM spec.playbook_registry") == 31
+    assert _count(owner_engine, "SELECT count(*) FROM spec.prompt_registry") == 1
     assert _count(owner_engine, "SELECT count(*) FROM spec.spec_timeline") == 30
     assert _count(owner_engine, "SELECT count(*) FROM spec.spec_event_route") == 7
 
@@ -63,7 +64,7 @@ def test_second_registration_writes_nothing(owner_engine: Engine, specs: Path) -
     register(specs, owner_engine)
     report = register(specs, owner_engine)
     assert report.registered_count == 0
-    assert report.unchanged_count == 55
+    assert report.unchanged_count == 58
 
 
 def test_changed_content_same_version_refused(owner_engine: Engine, specs: Path) -> None:
@@ -121,7 +122,7 @@ def test_validation_errors_refused_before_writing(owner_engine: Engine, specs: P
 
 def test_dry_run_leaves_nothing(owner_engine: Engine, specs: Path) -> None:
     report = register(specs, owner_engine, dry_run=True)
-    assert report.registered_count == 55
+    assert report.registered_count == 58
     assert _count(owner_engine, "SELECT count(*) FROM spec.spec_registry") == 0
 
 
@@ -159,7 +160,7 @@ def test_concurrent_registrations_serialise(
     for t in threads:
         t.join()
     assert errors == []
-    assert sorted(results) == [0, 55]
+    assert sorted(results) == [0, 58]
     assert (
         _count(owner_engine, "SELECT count(*) FROM spec.spec_registry WHERE status='active'") == 10
     )

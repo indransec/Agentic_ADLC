@@ -172,20 +172,20 @@ P2).
 
 ### Tests first
 
-- [ ] T020 [P] [US2] Write failing unit tests in `tests/unit/agents/test_context.py`:
+- [X] T020 [P] [US2] Write failing unit tests in `tests/unit/agents/test_context.py`:
   - the pack sections of research R-06;
   - the same inputs give the same hash; changing the spec version, profile version, a clarification answer, a playbook or a failed control changes it;
   - evidence carries the content of referenced artifact versions;
   - every untrusted text (grounding, tool output, artifacts, clarification answers, rework comments) is rendered inside `<data …>` with `</data` escaped;
   - the system prompt comes first, then stable sections, then volatile ones.
-- [ ] T021 [P] [US2] Write failing unit tests in `tests/unit/agents/test_output.py` (contracts/reviewer.md, builder part):
+- [X] T021 [P] [US2] Write failing unit tests in `tests/unit/agents/test_output.py` (contracts/reviewer.md, builder part):
   - JSON taken from a fenced or bare block;
   - every mandatory artifact present; a conditional artifact required when its `when` holds (evaluated through a policy stub);
   - rows with exactly the declared columns for every format; undeclared artifacts refused;
   - a clarification needs at least one `looked_in` and 1–5 questions;
   - correction messages list every problem, without echoing artifact content beyond ids and column names.
-- [ ] T022 [P] [US2] Write failing unit tests in `tests/unit/agents/test_limits.py`: tier limits with terminal overrides; every call counts as a step, corrections included; tokens accumulate input plus output; the per-call timeout is the time left; a pack larger than the token budget gives `BudgetExceeded("tokens")` before any call.
-- [ ] T023 [P] [US2] Write failing integration tests in `tests/integration/agents/test_runtime.py` (`FakeGateway`, an agent switched to `implementation: model` in a test catalogue):
+- [X] T022 [P] [US2] Write failing unit tests in `tests/unit/agents/test_limits.py`: tier limits with terminal overrides; every call counts as a step, corrections included; tokens accumulate input plus output; the per-call timeout is the time left; a pack larger than the token budget gives `BudgetExceeded("tokens")` before any call.
+- [X] T023 [P] [US2] Write failing integration tests in `tests/integration/agents/test_runtime.py` (`FakeGateway`, an agent switched to `implementation: model` in a test catalogue):
   - a T1 build returns valid artifacts and writes one `run.agent_attempt` row with the hashes and totals;
   - invalid output is corrected twice, then the run returns to `building` with `auto_retries + 1`, and escalates with `retry_limit` at the limit. No artifact version, control decision or review exists for the failed attempt (SC-004);
   - reaching the step, token or time limit escalates with `budget` after a single drain (SC-005), and the attempt row names the limit;
@@ -195,19 +195,19 @@ P2).
 
 ### Implementation
 
-- [ ] T024 [US2] Implement `src/adlc/agents/context.py` (T020) and `src/adlc/agents/prompts.py` (prompt by id and version from the registry, with its hash).
-- [ ] T025 [US2] Implement `src/adlc/agents/output.py` (T021) and `src/adlc/agents/limits.py` (T022).
-- [ ] T026 [US2] Implement `src/adlc/agents/runner.py`: `RuntimeAgentRunner` (contracts/runtime.md).
+- [X] T024 [US2] Implement `src/adlc/agents/context.py` (T020) and `src/adlc/agents/prompts.py` (prompt by id and version from the registry, with its hash).
+- [X] T025 [US2] Implement `src/adlc/agents/output.py` (T021) and `src/adlc/agents/limits.py` (T022).
+- [X] T026 [US2] Implement `src/adlc/agents/runner.py`: `RuntimeAgentRunner` (contracts/runtime.md).
   - The `stub` implementation wraps the existing `StubAgent` behaviour; its output is validated too (FR-024).
   - The `model` implementation runs the bounded loop with corrections.
   - Every attempt records `run.agent_attempt` and an `adlc.agent.build` span.
-- [ ] T027 [US2] In `src/adlc/orchestration/engine.py` and `src/adlc/orchestration/store.py`:
+- [X] T027 [US2] In `src/adlc/orchestration/engine.py` and `src/adlc/orchestration/store.py`:
   - handle `ModelUnavailable`: below `model_outage_limit`, a `deferred` activity, `model_unavailable_since` set if empty, and `lease_until = now + backoff` (30 s doubling, cap 5 min, based on the deferrals since the outage began); at or over the limit, the `model_unavailable` signal;
   - handle `AttemptFailed` as the `failed` signal;
   - any other result clears `model_unavailable_since`.
 
   This makes T023 pass.
-- [ ] T028 [US2] Wire the runtime in `src/adlc/orchestration/worker.py` (`build_orchestrator`) and `src/adlc/orchestration/__main__.py`: `RuntimeAgentRunner` with `LiteLLMGateway`; test harnesses keep injecting stubs or `FakeGateway`. The 003, 004 and 005 scenario suites run with stub agents through the runtime (SC-008).
+- [X] T028 [US2] Wire the runtime in `src/adlc/orchestration/worker.py` (`build_orchestrator`) and `src/adlc/orchestration/__main__.py`: `RuntimeAgentRunner` with `LiteLLMGateway`; test harnesses keep injecting stubs or `FakeGateway`. The 003, 004 and 005 scenario suites run with stub agents through the runtime (SC-008).
 
 **Checkpoint**: every build attempt is reproducible, bounded and recorded.
 

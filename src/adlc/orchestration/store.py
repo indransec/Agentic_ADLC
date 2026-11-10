@@ -144,6 +144,7 @@ class RunRow:
     profile_version: int = 0  # 005: the profile version current when the run opened
     approvals_after_sign_off_id: int | None = None  # 005: earlier approvals no longer count
     controls_pending: bool = False  # 005: an edit's controls are not re-run yet
+    model_unavailable_since: datetime | None = None  # 006: start of a full model outage
 
 
 def _run(row: Mapping[str, Any] | Any) -> RunRow:
@@ -162,7 +163,7 @@ def load_run(conn: Connection, run_id: str, *, lock: bool = False) -> RunRow | N
         "clarification_rounds, artifacts, control_results, recommendation, received_events, "
         "pending_waiver_id, escalation_trigger, escalation_destination, final_status, version, "
         "lease_until, opened_at, due_at, closed_at, profile_version, approvals_after_sign_off_id, "
-        "controls_pending "
+        "controls_pending, model_unavailable_since "
         "FROM run.terminal_run "
         "WHERE run_id = :r"
     )
@@ -182,8 +183,8 @@ def runs_of_usecase(conn: Connection, usecase_id: str) -> list[RunRow]:
             "rework_count, auto_retries, clarification_rounds, artifacts, control_results, "
             "recommendation, received_events, pending_waiver_id, escalation_trigger, "
             "escalation_destination, final_status, version, lease_until, opened_at, due_at, "
-            "closed_at, profile_version, approvals_after_sign_off_id, controls_pending "
-            "FROM run.terminal_run "
+            "closed_at, profile_version, approvals_after_sign_off_id, controls_pending, "
+            "model_unavailable_since FROM run.terminal_run "
             "WHERE usecase_id = :u "
             "ORDER BY opened_at, run_id"
         ),
@@ -282,7 +283,8 @@ def save_run(conn: Connection, run: RunRow, now: datetime) -> None:
             "pending_waiver_id = :pending_waiver_id, escalation_trigger = :escalation_trigger, "
             "escalation_destination = :escalation_destination, final_status = :final_status, "
             "version = version + 1, lease_until = NULL, closed_at = :closed_at, "
-            "approvals_after_sign_off_id = :approvals_after, controls_pending = :controls_pending "
+            "approvals_after_sign_off_id = :approvals_after, controls_pending = :controls_pending, "
+            "model_unavailable_since = :unavailable_since "
             "WHERE run_id = :run_id"
         ),
         {
@@ -301,6 +303,7 @@ def save_run(conn: Connection, run: RunRow, now: datetime) -> None:
             "final_status": run.final_status,
             "closed_at": run.closed_at if run.state == RunState.CLOSED else None,
             "approvals_after": run.approvals_after_sign_off_id,
+            "unavailable_since": run.model_unavailable_since,
             "controls_pending": run.controls_pending,
         },
     )
@@ -316,7 +319,7 @@ def lease_next_automatic(
     row = conn.execute(
         text(
             "SELECT run_id, CASE WHEN state IN ('opened', 'building', 'checking', 'reviewing') "
-            "THEN lease_until END FROM run.terminal_run "
+            "AND model_unavailable_since IS NULL THEN lease_until END FROM run.terminal_run "
             "WHERE (state IN ('opened', 'building', 'checking', 'reviewing') "
             "OR (state IN ('awaiting_sign_off', 'escalated') AND controls_pending)) "
             "AND (lease_until IS NULL OR lease_until < :now) "
@@ -331,6 +334,28 @@ def lease_next_automatic(
         {"l": lease_until, "r": row[0]},
     )
     return str(row[0]), row[1] is not None
+
+
+def defer_for_outage(conn: Connection, run_id: str, since: datetime, lease_until: datetime) -> None:
+    """006: hold a run through a model outage; its expired lease is a retry, not an interrupt."""
+    conn.execute(
+        text(
+            "UPDATE run.terminal_run SET model_unavailable_since = :s, lease_until = :l "
+            "WHERE run_id = :r"
+        ),
+        {"s": since, "l": lease_until, "r": run_id},
+    )
+
+
+def deferrals_since(conn: Connection, run_id: str, since: datetime) -> int:
+    value = conn.execute(
+        text(
+            "SELECT count(*) FROM run.run_activity WHERE run_id = :r AND outcome = 'deferred' "
+            "AND ended_at >= :s"
+        ),
+        {"r": run_id, "s": since},
+    ).scalar()
+    return int(value or 0)
 
 
 def set_lease(conn: Connection, run_id: str, lease_until: datetime) -> None:

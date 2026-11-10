@@ -184,6 +184,10 @@ class OrchestratorSettings(RuntimeSettings):
     )
 
     # 006 agent runtime
+    spec_dir: Path = Field(
+        default=Path("adlc-specs"),
+        json_schema_extra=_meta("path to the spec folder (prompts, playbooks, checklists)"),
+    )
     anthropic_api_key: SecretStr | None = Field(
         default=None, json_schema_extra=_meta("provider API key", secret=True)
     )

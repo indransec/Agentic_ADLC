@@ -123,6 +123,9 @@ class Trigger:
 class EngineConfig:
     time_scale: float = 1.0
     lease: timedelta = timedelta(minutes=5)
+    model_outage_limit: timedelta = timedelta(minutes=30)  # 006 FR-006
+    outage_backoff: timedelta = timedelta(seconds=30)  # doubling
+    outage_backoff_max: timedelta = timedelta(minutes=5)
 
 
 def json_safe(value: Any) -> Any:
@@ -310,6 +313,8 @@ class PostgresTerminalRun:
         new = replace(run, state=outcome.next_state)
         for effect in outcome.effects:
             new = self._effect(conn, run, new, signal, effect, now)
+        if signal.kind in (SignalKind.AGENT_RESULT, SignalKind.REVIEW_RESULT):
+            new = replace(new, model_unavailable_since=None)  # 006: any step result ends it
         store.save_run(conn, new, now)
         store.insert_transition(
             conn,
@@ -748,6 +753,10 @@ class PostgresTerminalRun:
             started = self.clock.now()
             step = self._step(conn, run, entry)  # reads what the step needs
         signal = step()  # 006: the agent or reviewer runs with no database connection held
+        if signal.payload.get("result") == "model_unavailable" and self._defer(
+            run, signal, started
+        ):
+            return True
         try:
             with self.engine.begin() as conn:
                 self.apply_in(
@@ -784,6 +793,35 @@ class PostgresTerminalRun:
                 ),
             )
         ]
+
+    def _defer(self, run: RunRow, signal: Signal, started: datetime) -> bool:
+        """006 FR-006: during a full outage, wait with back-off instead of signalling.
+
+        Returns False once the outage limit has passed, so the signal escalates the run.
+        """
+        now = self.clock.now()
+        since = run.model_unavailable_since or now
+        if now - since >= self.config.model_outage_limit:
+            return False
+        with self.engine.begin() as conn:
+            done = store.deferrals_since(conn, run.run_id, since)
+            backoff = min(self.config.outage_backoff * (2**done), self.config.outage_backoff_max)
+            store.defer_for_outage(conn, run.run_id, since, now + backoff)
+            store.insert_activity(
+                conn,
+                run.run_id,
+                _STEP_BY_STATE.get(run.state, "build"),
+                signal.actor_type.value,
+                signal.actor_id,
+                started,
+                now,
+                "deferred",
+                {
+                    "until": (now + backoff).isoformat(),
+                    "detail": str(signal.payload.get("detail"))[:200],
+                },
+            )
+        return True
 
     def scaled_lease(self) -> timedelta:
         return self.config.lease
