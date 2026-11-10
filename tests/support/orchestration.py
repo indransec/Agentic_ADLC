@@ -17,6 +17,7 @@ from sqlalchemy import Engine, create_engine, text
 
 from adlc.agents.catalogue import AgentCatalogue
 from adlc.agents.gateway import ModelGateway
+from adlc.agents.reviewer import RuntimeReviewer
 from adlc.agents.runner import RuntimeAgentRunner, RuntimeDeps
 from adlc.agents.wiring import build_runtime
 from adlc.config.settings import DEFAULT_AGENT_LIMITS, AgentLimit
@@ -187,6 +188,7 @@ def harness(
     agents: AgentCatalogue | None = None,
     limits: Mapping[str, AgentLimit] = DEFAULT_AGENT_LIMITS,
     config: EngineConfig | None = None,
+    reviewer_mode: str = "stub",
 ) -> Iterator[Harness]:
     with fresh_database(db) as fresh:
         app = create_engine(fresh.app_url)
@@ -221,7 +223,7 @@ def harness(
             registry,
             engine_policy,
             RuntimeAgentRunner(runtime, agent),
-            reviewer,
+            RuntimeReviewer(runtime, reviewer, reviewer_mode),
             clock,
             deadletter_role=DEADLETTER_ROLE,
             config=config or EngineConfig(time_scale=time_scale),

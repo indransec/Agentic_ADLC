@@ -221,12 +221,12 @@ P2).
 
 ### Tests first
 
-- [ ] T029 [P] [US3] Write failing unit tests in `tests/unit/agents/test_reviewer_output.py` (contracts/reviewer.md):
+- [X] T029 [P] [US3] Write failing unit tests (written in `tests/unit/agents/test_output.py`, next to the builder output tests) (contracts/reviewer.md):
   - scores cover exactly the terminal's checklist items, each 0–3;
   - status is `pass`, `rework` or `exception` (`terminate` refused); `rework` needs a catalogue root cause;
   - findings `item` is null or an item id; text 1–1,000 characters;
   - mapping to `Recommendation` with findings as `"item: text"`, plus `reason`, `root_cause` and `reviewer="model"`.
-- [ ] T030 [P] [US3] Write failing integration tests in `tests/integration/agents/test_reviewer.py`:
+- [X] T030 [P] [US3] Write failing integration tests in `tests/integration/agents/test_reviewer.py`:
   - a T1 review with a scripted model reaches `awaiting_sign_off`, and the recommendation's reason and root cause are stored on the run and in its ledger record;
   - `run.checklist_result` has five rows;
   - no recorded reviewer request contains any text the builder model received or produced (the builder scripted with marker strings);
@@ -236,7 +236,7 @@ P2).
 
 ### Implementation
 
-- [ ] T031 [US3] Implement `src/adlc/agents/reviewer.py`: `RuntimeReviewer` built only from `ReviewContext` plus the prerequisite evidence; the `reasoning` tier; the reviewer prompt; the shared loop; `adlc.agent.review` spans and attempt rows; the stub wrapper for `stub` mode. Wire it in `build_orchestrator` according to `reviewer_mode`. This makes T029 and T030 pass.
+- [X] T031 [US3] Implement `src/adlc/agents/reviewer.py`: `RuntimeReviewer` built only from `ReviewContext` plus the prerequisite evidence; the `reasoning` tier; the reviewer prompt; the shared loop; `adlc.agent.review` spans and attempt rows; the stub wrapper for `stub` mode. Wire it in `build_orchestrator` according to `reviewer_mode`. This makes T029 and T030 pass.
 
 **Checkpoint**: all P1 stories pass.
 

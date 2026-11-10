@@ -15,6 +15,7 @@ from types import FrameType
 import typer
 
 from adlc.agents.catalogue import UnknownProfile
+from adlc.agents.reviewer import RuntimeReviewer
 from adlc.agents.runner import RuntimeAgentRunner
 from adlc.agents.startup import MissingModelKey
 from adlc.agents.wiring import build_runtime
@@ -83,7 +84,7 @@ def run() -> None:
         RuntimeAgentRunner(
             runtime, StubAgent(base=load_synthetic_artifacts(settings.synthetic_dir))
         ),
-        StubReviewer(),
+        RuntimeReviewer(runtime, StubReviewer(), settings.reviewer_mode),
         clock,
         deadletter_role=settings.deadletter_role,
         config=EngineConfig(
