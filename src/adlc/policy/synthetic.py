@@ -32,7 +32,7 @@ class SyntheticEvidenceProvider(InMemoryEvidenceProvider):
 def load_synthetic_artifacts(
     folder: Path | None,
 ) -> dict[str, Mapping[str, list[dict[str, Any]]]]:
-    """Artifacts per terminal id (``T0`` … from ``artifacts/T0.yaml`` …); empty when disabled."""
+    """Artifacts per terminal id, from ``artifacts/<terminal>.yaml``; empty when disabled."""
     if folder is None:
         return {}
     out: dict[str, Mapping[str, list[dict[str, Any]]]] = {}

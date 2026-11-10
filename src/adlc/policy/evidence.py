@@ -118,9 +118,10 @@ class SqlEvidenceProvider:
             return NOT_AVAILABLE
         tier = usecase.risk_tier or DEFAULT_TIER
         if source == "intake":
+            # Field names come from the intake evidence source (evidence_sources.yaml).
             return {
                 "free_text": usecase.intake_text,
-                "business_owner": usecase.submitted_by,
+                "business_owner": usecase.submitted_by,  # catalogue-field
                 "title": usecase.name,
             }
         if source == "waivers":

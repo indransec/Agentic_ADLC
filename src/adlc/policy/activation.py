@@ -1,7 +1,7 @@
 """Build the CEL activation for one evaluation, and record what it read (FR-019, R-08).
 
 Each referenced path is followed in the evidence. A path into a table reads the first row
-(``T0.risk_classification.tier``); such a path is bound to its own variable, because CEL only
+(``<terminal>.<artifact>.<column>``); such a path is bound to its own variable, because CEL only
 selects fields of mappings. Missing evidence is bound as an error value, so CEL's own logic
 decides whether the rule needed it (contracts/policy-engine.md step 2).
 """

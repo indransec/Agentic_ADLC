@@ -121,6 +121,11 @@ services:
       ADLC_LEASE: ${ADLC_LEASE:-5min}
       ADLC_HEARTBEAT_MAX_AGE: ${ADLC_HEARTBEAT_MAX_AGE:-30s}
       ADLC_DEADLETTER_ROLE: ${ADLC_DEADLETTER_ROLE:?ADLC_DEADLETTER_ROLE is required}
+      ADLC_SYNTHETIC_DIR: ${ADLC_SYNTHETIC_DIR:-data/synthetic}
+      # The enterprise directory for in_directory checks (feature 004), read-only.
+      ADLC_ACCOUNTS_FILE: /run/adlc/accounts.yaml
+    volumes:
+      - ${ADLC_ACCOUNTS_FILE:?ADLC_ACCOUNTS_FILE is required}:/run/adlc/accounts.yaml:ro
     depends_on:
       register:
         condition: service_completed_successfully
