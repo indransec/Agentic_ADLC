@@ -10,54 +10,54 @@
 
 ## Fail-closed Behaviour and Reasons
 
-- [ ] CHK001 Are the evaluation time and size limits ("exceeds its time or size limit") quantified in the spec, or only in research R-03 (1 s, 10,000 rows, 100,000 characters)? [Clarity, Spec §FR-004]
-- [ ] CHK002 Is the content of a failure reason specified precisely enough to be tested for every failure class (missing evidence, false rule, non-boolean result, error, too slow, too large)? [Measurability, Spec §FR-003]
-- [ ] CHK003 Is it specified which reason is reported when an expression has several failing parts (for example `a && b` where both fail)? [Clarity, Spec §FR-003, contracts/policy-engine.md step 5]
-- [ ] CHK004 Is the fail-safe direction for `plus`, `external` and `then_when` conditions consistent between FR-018, US7/AC3 and contracts/policy-engine.md step 6, including the case where evidence is not available? [Consistency, Spec §FR-018]
+- [X] CHK001 Are the evaluation time and size limits ("exceeds its time or size limit") quantified in the spec, or only in research R-03 (1 s, 10,000 rows, 100,000 characters)? [Clarity, Spec §FR-004]
+- [X] CHK002 Is the content of a failure reason specified precisely enough to be tested for every failure class (missing evidence, false rule, non-boolean result, error, too slow, too large)? [Measurability, Spec §FR-003]
+- [X] CHK003 Is it specified which reason is reported when an expression has several failing parts (for example `a && b` where both fail)? [Clarity, Spec §FR-003, contracts/policy-engine.md step 5]
+- [X] CHK004 Is the fail-safe direction for `plus`, `external` and `then_when` conditions consistent between FR-018, US7/AC3 and contracts/policy-engine.md step 6, including the case where evidence is not available? [Consistency, Spec §FR-018]
 
 ## Evidence and Synthetic Labelling
 
-- [ ] CHK005 Does the spec state that a terminal's emitted values (for example `T4.eval_baseline`) are terminal evidence, or is that only in contracts/evidence.md? [Gap, Spec §FR-008]
-- [ ] CHK006 Is "latest closed run" defined for runs closed by rework, terminate or the lifecycle cascade, so prerequisites such as `T1.status in ["pass", "exception"]` read the intended run? [Clarity, Spec §FR-008, US1/AC4]
-- [ ] CHK007 Is `T<n>.bound_to` (resolved from the spec's `ledger.bound_to`) specified in the requirements, given that T6 compares it across terminals? [Gap, Spec §FR-008]
-- [ ] CHK008 Is the source of `in_directory` (the account file mounted into the orchestrator, or synthetic) specified, and is that source's availability consistent with "fail closed"? [Gap, research R-10]
-- [ ] CHK009 Is it defined where approvers and auditors see the `synthetic` label (decision record, control results, the inbox in 007), and is "dev and demo" enough when a future production environment exists? [Clarity, Spec §FR-025, Clarifications]
-- [ ] CHK010 Is it specified that synthetic evidence never overrides real evidence when both exist? [Completeness, contracts/evidence.md]
-- [ ] CHK011 Are the synthetic data's consistency requirements stated, so hash comparisons across sources are meaningful (for example `env.test` and the T3 package hash)? [Gap, Spec §FR-024, FR-025]
+- [X] CHK005 Does the spec state that a terminal's emitted values (for example `T4.eval_baseline`) are terminal evidence, or is that only in contracts/evidence.md? [Gap, Spec §FR-008]
+- [X] CHK006 Is "latest closed run" defined for runs closed by rework, terminate or the lifecycle cascade, so prerequisites such as `T1.status in ["pass", "exception"]` read the intended run? [Clarity, Spec §FR-008, US1/AC4]
+- [X] CHK007 Is `T<n>.bound_to` (resolved from the spec's `ledger.bound_to`) specified in the requirements, given that T6 compares it across terminals? [Gap, Spec §FR-008]
+- [X] CHK008 Is the source of `in_directory` (the account file mounted into the orchestrator, or synthetic) specified, and is that source's availability consistent with "fail closed"? [Gap, research R-10]
+- [X] CHK009 Is it defined where approvers and auditors see the `synthetic` label (decision record, control results, the inbox in 007), and is "dev and demo" enough when a future production environment exists? [Clarity, Spec §FR-025, Clarifications]
+- [X] CHK010 Is it specified that synthetic evidence never overrides real evidence when both exist? [Completeness, contracts/evidence.md]
+- [X] CHK011 Are the synthetic data's consistency requirements stated, so hash comparisons across sources are meaningful (for example `env.test` and the T3 package hash)? [Gap, Spec §FR-024, FR-025]
 
 ## Predicate Semantics
 
-- [ ] CHK012 Does every one of the 60 predicates have documented semantics, including the failing condition and the reason content? [Completeness, Spec §FR-002, contracts/predicates.md]
-- [ ] CHK013 Are predicates whose meaning depends on columns the specs don't declare (for example `judge_disputed` needing a `disputed` column) flagged as needing CoE confirmation, with the behaviour defined meanwhile? [Assumption, contracts/predicates.md]
-- [ ] CHK014 Are the value conventions ("numeric", "truthy", "open row", list-valued `req_ids`) defined once and applied consistently across predicates? [Consistency, contracts/evidence.md]
-- [ ] CHK015 Is the behaviour of "every row" checks on an empty table consistent between the edge case ("pass vacuously only if the spec allows an empty table") and the predicate contract? [Conflict, Spec §Edge Cases, contracts/predicates.md]
-- [ ] CHK016 Is it specified whether evaluating a conditional artifact's `when` inside `all_required_artifacts_present()` writes its own decision record? [Clarity, contracts/predicates.md]
+- [X] CHK012 Does every one of the 60 predicates have documented semantics, including the failing condition and the reason content? [Completeness, Spec §FR-002, contracts/predicates.md]
+- [X] CHK013 Are predicates whose meaning depends on columns the specs don't declare (for example `judge_disputed` needing a `disputed` column) flagged as needing CoE confirmation, with the behaviour defined meanwhile? [Assumption, contracts/predicates.md]
+- [X] CHK014 Are the value conventions ("numeric", "truthy", "open row", list-valued `req_ids`) defined once and applied consistently across predicates? [Consistency, contracts/evidence.md]
+- [X] CHK015 Is the behaviour of "every row" checks on an empty table consistent between the edge case ("pass vacuously only if the spec allows an empty table") and the predicate contract? [Conflict, Spec §Edge Cases, contracts/predicates.md]
+- [X] CHK016 Is it specified whether evaluating a conditional artifact's `when` inside `all_required_artifacts_present()` writes its own decision record? [Clarity, contracts/predicates.md]
 
 ## Parameter Resolution
 
-- [ ] CHK017 Is "within the guardrail" defined for guardrails that are not tighten-only? FR-012 requires it, while research R-06 accepts any numeric value. [Conflict, Spec §FR-012, research R-06]
-- [ ] CHK018 Is the moment parameters are frozen consistent: "at run open" (SA §5.4, FR-014) versus "on first evaluation in a run" (research R-06)? [Consistency, Spec §FR-014]
-- [ ] CHK019 Is it specified whether a re-run of the same terminal (rework, run 2) resolves a new parameter set or reuses the previous run's? [Clarity, Spec §FR-014]
-- [ ] CHK020 Is the treatment of a non-numeric profile value specified? [Edge Case, Spec §FR-013]
+- [X] CHK017 Is "within the guardrail" defined for guardrails that are not tighten-only? FR-012 requires it, while research R-06 accepts any numeric value. [Conflict, Spec §FR-012, research R-06]
+- [X] CHK018 Is the moment parameters are frozen consistent: "at run open" (SA §5.4, FR-014) versus "on first evaluation in a run" (research R-06)? [Consistency, Spec §FR-014]
+- [X] CHK019 Is it specified whether a re-run of the same terminal (rework, run 2) resolves a new parameter set or reuses the previous run's? [Clarity, Spec §FR-014]
+- [X] CHK020 Is the treatment of a non-numeric profile value specified? [Edge Case, Spec §FR-013]
 
 ## Authorization
 
-- [ ] CHK021 Is the actor identity format (`agent:<run_id>`) and its change from feature 003 (`agent:<terminal>`) stated in the spec, as it affects recorded actor ids? [Gap, Spec §FR-016, research R-07]
-- [ ] CHK022 Is the pattern grammar specified, including the spec convention `read:ledger.all` meaning all ledgers? [Clarity, Spec §FR-015, contracts/authorization.md]
-- [ ] CHK023 Is it specified how tool scope entries (`mcp:confluence:read`) relate to allow and deny: is a tool request checked against both, or only against tool scopes? [Clarity, Spec §FR-015]
-- [ ] CHK024 Are human actors (approvers acting through feature 007) in or out of scope for `authorize`? [Gap, Spec §FR-015]
+- [X] CHK021 Is the actor identity format (`agent:<run_id>`) and its change from feature 003 (`agent:<terminal>`) stated in the spec, as it affects recorded actor ids? [Gap, Spec §FR-016, research R-07]
+- [X] CHK022 Is the pattern grammar specified, including the spec convention `read:ledger.all` meaning all ledgers? [Clarity, Spec §FR-015, contracts/authorization.md]
+- [X] CHK023 Is it specified how tool scope entries (`mcp:confluence:read`) relate to allow and deny: is a tool request checked against both, or only against tool scopes? [Clarity, Spec §FR-015]
+- [X] CHK024 Are human actors (approvers acting through feature 007) in or out of scope for `authorize`? [Gap, Spec §FR-015]
 
 ## Decision Log
 
-- [ ] CHK025 Is the threshold for storing an input by reference rather than by value specified (all tables, or only large ones)? [Clarity, Spec §FR-019, research R-08]
-- [ ] CHK026 Is it specified that a decision is recorded even when the caller's transaction rolls back? [Completeness, research R-08]
-- [ ] CHK027 Are retention or volume expectations for decision records stated (one record per check per attempt)? [Gap, Spec §FR-019]
+- [X] CHK025 Is the threshold for storing an input by reference rather than by value specified (all tables, or only large ones)? [Clarity, Spec §FR-019, research R-08]
+- [X] CHK026 Is it specified that a decision is recorded even when the caller's transaction rolls back? [Completeness, research R-08]
+- [X] CHK027 Are retention or volume expectations for decision records stated (one record per check per attempt)? [Gap, Spec §FR-019]
 
 ## Orchestrator Wiring and Non-functional
 
-- [ ] CHK028 Is the change to feature 003's `EvalResult` (the added `synthetic` field) documented as backward-compatible, given FR-023 says the interface "stays unchanged"? [Consistency, Spec §FR-023, plan interface note]
-- [ ] CHK029 Is SC-008 (50 ms p95) specified with the conditions it is measured under (warm program cache, test database, all controls)? [Measurability, Spec §SC-008]
-- [ ] CHK030 Is the behaviour defined when the predicate library and the catalogue disagree at start-up (the process stops), and is that consistent with fail-closed elsewhere? [Consistency, contracts/policy-engine.md start-up checks]
+- [X] CHK028 Is the change to feature 003's `EvalResult` (the added `synthetic` field) documented as backward-compatible, given FR-023 says the interface "stays unchanged"? [Consistency, Spec §FR-023, plan interface note]
+- [X] CHK029 Is SC-008 (50 ms p95) specified with the conditions it is measured under (warm program cache, test database, all controls)? [Measurability, Spec §SC-008]
+- [X] CHK030 Is the behaviour defined when the predicate library and the catalogue disagree at start-up (the process stops), and is that consistent with fail-closed elsewhere? [Consistency, contracts/policy-engine.md start-up checks]
 
 ## Notes
 
