@@ -329,18 +329,18 @@ are applied.
 
 **Independent Test**: break a spec, and `make check` fails at `==> spec-validate`. `make up` runs `migrate → register → api`, and the API is healthy.
 
-- [ ] T064 [P] [US6] Add `# yaml-language-server: $schema=../schema/terminal.schema.json` as the first line of every `adlc-specs/terminals/*.yaml`, the matching catalogue schema line to every `adlc-specs/shared/*.yaml`, and the checklist schema line to `adlc-specs/checklists/*.yaml`. Add a test in `tests/unit/spec_toolkit/test_repository_specs.py` that every YAML file declares its schema (FR-026).
-- [ ] T065 [US6] Add `spec-validate` (`$(UV) adlc-spec validate adlc-specs --baseline-ref $${ADLC_SPEC_BASELINE_REF:-origin/main}`) and `spec-register` to `Makefile`. Insert `spec-validate` into `check` between `typecheck` and `test`. Update `tests/unit/test_build_contract.py` (target list and `check` order) and `specs/001-platform-foundation/contracts/make-targets.md`.
-- [ ] T066 [US6] In `deploy/compose.yaml`, add the one-shot `register` service (API image, `command: ["adlc-spec", "register", "adlc-specs"]`, owner settings like `migrate`, `depends_on: migrate: service_completed_successfully`). Make `api` depend on `register` completing. Bring the stack up and confirm `make status` shows `register` exited 0.
-- [ ] T067 [US6] Set `fetch-depth: 0` on `actions/checkout` in `.github/workflows/ci.yml`, so L5 can read `origin/main` (`tests/unit/test_build_contract.py` still sees only `make` runs)
+- [X] T064 [P] [US6] Add `# yaml-language-server: $schema=../schema/terminal.schema.json` as the first line of every `adlc-specs/terminals/*.yaml`, the matching catalogue schema line to every `adlc-specs/shared/*.yaml`, and the checklist schema line to `adlc-specs/checklists/*.yaml`. Add a test in `tests/unit/spec_toolkit/test_repository_specs.py` that every YAML file declares its schema (FR-026).
+- [X] T065 [US6] Add `spec-validate` (`$(UV) adlc-spec validate adlc-specs --baseline-ref $${ADLC_SPEC_BASELINE_REF:-origin/main}`) and `spec-register` to `Makefile`. Insert `spec-validate` into `check` between `typecheck` and `test`. Update `tests/unit/test_build_contract.py` (target list and `check` order) and `specs/001-platform-foundation/contracts/make-targets.md`.
+- [X] T066 [US6] In `deploy/compose.yaml`, add the one-shot `register` service (API image, `command: ["adlc-spec", "register", "adlc-specs"]`, owner settings like `migrate`, `depends_on: migrate: service_completed_successfully`). Make `api` depend on `register` completing. Bring the stack up and confirm `make status` shows `register` exited 0.
+- [X] T067 [US6] Set `fetch-depth: 0` on `actions/checkout` in `.github/workflows/ci.yml`, so L5 can read `origin/main` (`tests/unit/test_build_contract.py` still sees only `make` runs)
 
 ---
 
 ## Phase 9: Polish & Cross-Cutting
 
-- [ ] T068 [P] Extend `tests/unit/test_no_hardcoded_values.py` so its terminal-id, event and role scan covers `src/adlc/spec_toolkit/**` (constitution I), and confirm it passes. Add `*/adlc/spec_toolkit/*` to `CORE_MODULES` in `Makefile` so the 80% core coverage gate includes routing and registry code (constitution IX).
-- [ ] T069 [P] Write `src/adlc/spec_toolkit/README.md` (commands, rule levels, how to add a rule with its fixture, read interface) and update the root `README.md` command table (`spec-validate`, `spec-register`)
-- [ ] T070 Run quickstart.md steps 1–6 on the live stack and record a "Validation run" section in `specs/002-terminal-spec-toolkit/quickstart.md`, including the `make spec-validate` timing (SC-001) and the registration timing (SC-005)
+- [X] T068 [P] Extend `tests/unit/test_no_hardcoded_values.py` so its terminal-id, event and role scan covers `src/adlc/spec_toolkit/**` (constitution I), and confirm it passes. Add `*/adlc/spec_toolkit/*` to `CORE_MODULES` in `Makefile` so the 80% core coverage gate includes routing and registry code (constitution IX).
+- [X] T069 [P] Write `src/adlc/spec_toolkit/README.md` (commands, rule levels, how to add a rule with its fixture, read interface) and update the root `README.md` command table (`spec-validate`, `spec-register`)
+- [X] T070 Run quickstart.md steps 1–6 on the live stack and record a "Validation run" section in `specs/002-terminal-spec-toolkit/quickstart.md`, including the `make spec-validate` timing (SC-001) and the registration timing (SC-005)
 - [ ] T071 Run `make check` on a clean clone of the branch; fix anything that fails
 
 ---

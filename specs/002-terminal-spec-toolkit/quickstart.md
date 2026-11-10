@@ -71,3 +71,17 @@ uv run pytest tests/integration/spec_toolkit/test_demo_routing.py -q
 
 **Expect**: every row of the demo routing table in the registry contract passes against the
 registered specs (SC-007).
+
+## Validation run (2026-11-10, T070)
+
+These results are from a macOS laptop with Docker Desktop, using API port 8010 as for feature 001.
+
+| Step | Result |
+| --- | --- |
+| 1 Validate the folder | `make spec-validate`: 0 errors, 8 V-26 warnings (proposed-default guardrails), 65 files in 0.7 s (SC-001) |
+| 2 Rule fixtures | 45 fixture cases, each caught by its rule (`test_rule_fixtures.py`); rule table matches the code (`test_rules_documented.py`) (SC-002) |
+| 3 Break a spec | Covered by fixtures (V-06, S-01) and `test_versioning.py` (V-24). A planted error makes `make check` stop at `==> spec-validate`. Editor highlighting was **not** checked by hand in this run; every YAML file declares its schema (`test_every_yaml_declares_its_schema`) |
+| 4 Conversion record | `CONVERSION.md` accounts for every TDS element of T0–T9 (`test_conversion_record.py`, SC-003); no free-text rules (`test_every_expression_parses`, SC-004) |
+| 5 Register | `make up` ran migrate → register (55 registered) → api (healthy). Re-registration on restart and `make spec-register`: 0 registered, 55 unchanged, in under 1 s (SC-005). A direct `UPDATE spec.spec_registry SET version=...` as `adlc_owner` was refused (`spec.spec_registry is immutable`) (SC-006) |
+| 6 Route lookups | Live SQL: `T4.rework.implementation` opens T3. All demo routing rows (D-2 to D-9) pass against both registries (`test_demo_routing.py`, SC-007) |
+| `make check` | Passed in about 76 s: 376 tests, 93% whole-package coverage, 94% gated core modules, migration round trip incl. spec tables, no leaks |

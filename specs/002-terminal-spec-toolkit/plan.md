@@ -71,7 +71,7 @@ empty store in < 30 s (SC-005)
 | networkx | L4 event and route graph (reachability, coverage) | BSD-3-Clause |
 | cel-python (`celpy`) | Parse CEL expressions; evaluation is feature 004 | Apache-2.0 (licence file in dist) |
 | ↳ lark | CEL grammar parser | MIT |
-| ↳ pendulum, python-dateutil | celpy runtime types | MIT; BSD-3-Clause / Apache-2.0 |
+| ↳ pendulum, python-dateutil, tzdata | celpy runtime types | MIT; BSD-3-Clause / Apache-2.0; Apache-2.0 |
 | ↳ google-re2 | celpy regex support | BSD-3-Clause |
 | ↳ pyyaml, jmespath, tomli | celpy runtime | MIT |
 | types-networkx, types-jsonschema (dev) | Type stubs for mypy strict | Apache-2.0 |
