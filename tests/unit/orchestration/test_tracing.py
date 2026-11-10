@@ -13,6 +13,7 @@ from adlc.orchestration import tracing
 
 @pytest.fixture
 def exporter(monkeypatch: pytest.MonkeyPatch) -> Iterator[InMemorySpanExporter]:
+    monkeypatch.delenv("OTEL_SDK_DISABLED", raising=False)  # tests disable the SDK by default
     memory = InMemorySpanExporter()
     provider = TracerProvider()
     provider.add_span_processor(SimpleSpanProcessor(memory))
