@@ -99,6 +99,8 @@ profile covers every tier. Each entry has:
 - `provider`: `anthropic`, `openai` or `gemini`;
 - `model`: the LiteLLM id;
 - `input_per_mtok` and `output_per_mtok`: USD, or null for unknown;
+- `max_output_tokens` and `context_tokens`: the model's limits (the gateway caps `max_tokens`,
+  and skips the entry when the context does not fit);
 - `max_data_class`: a data class id;
 - `params`: optional, a map passed to the provider.
 

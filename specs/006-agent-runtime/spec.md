@@ -24,9 +24,10 @@ tracing. Terminal agents stay stubs until feature 008."
   tier (token budget, step limit, timeout), with optional overrides per terminal. The profile's
   `token_budget` is the pilot agent's and is not used.
 - Q: Which models run in development testing? → A: A `dev` profile of the model catalogue puts
-  Gemini 2.5 Flash first for every tier, with the other models after it. In dev only the Gemini
-  key is set, so the Anthropic and OpenAI entries are skipped. The `default` profile (Anthropic,
-  then OpenAI, then Gemini) stays the production order. The environment selects the profile.
+  OpenAI GPT-4o mini first for every tier, so agents and the reviewer use it. Gemini 2.5 Flash
+  comes second, then the default models. The `default` profile (Anthropic, then OpenAI, then
+  Gemini) stays the production order. The environment selects the profile. (Revised the same
+  day: GPT-4o mini replaces Gemini 2.5 Flash as the dev primary.)
 - Q: How long does a run wait during a full outage of its tier before escalating? → A: 30
   minutes by default, configurable per environment; retries use back-off and do not count as
   attempts.
@@ -303,7 +304,8 @@ without content.
   OpenAI and then Gemini follow as fallbacks per tier.
 
   The catalogue holds named **profiles**, each a full tier-to-models map. `default` is the order
-  above. `dev` puts Gemini 2.5 Flash first for every tier, followed by the default entries. A
+  above. `dev` puts OpenAI GPT-4o mini first for every tier, then Gemini 2.5 Flash, then the default
+  entries. A
   setting selects the profile per environment (default `default`). An unknown profile is refused
   at start-up.
 - **FR-003**: The tier for a call MUST come from the terminal spec's `actors.agent.model_tier`

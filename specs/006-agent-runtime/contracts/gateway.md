@@ -28,11 +28,15 @@ ModelResponse:
 ## Rules
 
 1. **Order:** the gateway walks the tier's entries in the order of the catalogue profile
-   selected by `ADLC_MODEL_PROFILE` (default `default`; `dev` puts Gemini 2.5 Flash first). It
-   skips an entry:
+   selected by `ADLC_MODEL_PROFILE` (default `default`; `dev` puts GPT-4o mini first, then
+   Gemini 2.5 Flash). It skips an entry:
    - with no key: a `skipped` call row with reason `no_key`;
    - whose `max_data_class` ranks below the request's `data_class`: a `skipped` row with reason
-     `data_class`.
+     `data_class`;
+   - whose `context_tokens` is smaller than the estimated request size: a `skipped` row with
+     reason `context`.
+
+   Each call's `max_tokens` is capped at the entry's `max_output_tokens`.
 2. **Outcomes per call:**
    - `outage`: move to the next entry.
    - `refusal`, `truncated` and `request_error`: return immediately. Never move to another

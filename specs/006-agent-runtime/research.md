@@ -135,21 +135,31 @@ records.
 **Rationale**: values live in the catalogue, not in code, so they change through a spec pull
 request.
 
-## R-05a Catalogue profiles: Gemini 2.5 Flash first in dev
+## R-05a Catalogue profiles: GPT-4o mini first in dev
 
 **Decision** (user, 2026-11-10):
 - **Profiles:** the model catalogue holds `profiles: {default: {tiers}, dev: {tiers}}`.
   `ADLC_MODEL_PROFILE` selects one (default `default`); `.env.example` sets `dev`.
-- **The `dev` profile:** every tier starts with `gemini/gemini-2.5-flash` ($0.30 / $2.50 per
-  million tokens, 1M context, 65K output; LiteLLM 1.106.5 price map). The `default` entries of
-  that tier follow.
-- **Dev keys:** only `ADLC_GEMINI_API_KEY` is set, so the Anthropic and OpenAI entries are
-  skipped (`skipped` rows with reason `no_key`). Gemini 2.5 Flash answers as the first runnable
-  entry (`fallback = false`).
+- **The `dev` profile:** every tier, the reviewer's included, starts with:
+  1. `openai/gpt-4o-mini`: $0.15 / $0.60 per million tokens, 128K context, 16,384 output
+     tokens;
+  2. `gemini/gemini-2.5-flash`: $0.30 / $2.50, 1M context, 65,536 output tokens;
+  3. the `default` entries of that tier.
+
+  The figures come from the LiteLLM 1.106.5 price map.
+- **Dev keys:** `ADLC_OPENAI_API_KEY` is set. Entries without a key are skipped (`skipped` rows
+  with reason `no_key`). GPT-4o mini answers as the first entry (`fallback = false`).
+- **Output and context limits:** catalogue entries carry `max_output_tokens` and
+  `context_tokens`. The gateway caps each call's `max_tokens` at the entry's output limit. A
+  context pack larger than the entry's context window is not sent to that entry: it is
+  `skipped` with reason `context`.
+- **Retirement:** OpenAI retires the dated `gpt-4o-mini` snapshot on 2027-01-14 (price map). The
+  dev profile must move to another small model before then.
 - **Validation rules:** every profile must cover every tier, and `default` must exist.
 
 **Rationale**:
-- Cheap real-model testing in development without changing the reviewed production order.
+- Cheap real-model testing in development without changing the reviewed production order. This
+  was the user's choice, revised the same day from Gemini 2.5 Flash to GPT-4o mini.
 - The profiles stay in the reviewed catalogue, not in settings (constitution II).
 
 **Alternative**: a setting that reorders providers. It hides the actual order outside the specs.

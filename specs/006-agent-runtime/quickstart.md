@@ -49,18 +49,19 @@ uv run pytest tests/scenario -q             # stub terminal agents through the r
 make check
 ```
 
-## 5. Live stack in dev (real model: Gemini 2.5 Flash)
+## 5. Live stack in dev (real model: GPT-4o mini)
 
 ```bash
-# .env: ADLC_MODEL_PROFILE=dev, ADLC_GEMINI_API_KEY=..., ADLC_REVIEWER_MODE=model
+# .env: ADLC_MODEL_PROFILE=dev, ADLC_OPENAI_API_KEY=..., ADLC_REVIEWER_MODE=model
 make up && uv run python -m scripts.demo_drive
 ```
 
 **Expect**:
 
-- the reviewer's recommendations come from `gemini/gemini-2.5-flash`, with `fallback = false`;
-- if Gemini is unavailable, the Anthropic and OpenAI entries are recorded as `skipped`
-  (`no_key`), and the run defers, then escalates after the outage limit;
+- the reviewer's recommendations come from `openai/gpt-4o-mini`, with `fallback = false`;
+- if OpenAI is unavailable, Gemini 2.5 Flash is tried (recorded `skipped`, `no_key`, unless its
+  key is set too). With no runnable entry, the run defers, then escalates after the outage
+  limit;
 - costs appear in `run.v_usecase_cost`;
 - `adlc.model.call` spans appear in Jaeger without prompt text.
 
