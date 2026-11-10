@@ -10,49 +10,49 @@
 
 ## Record Completeness and Immutability
 
-- [ ] CHK001 Is every element of the version-2 record listed precisely enough that two implementations would produce the same content and hash (field names, ordering of artifacts, null versus absent)? [Clarity, Spec §FR-001, contracts/record.md]
-- [ ] CHK002 Is the meaning of "previous record" unambiguous when two runs of one use case close at nearly the same time? [Clarity, Spec §FR-002]
-- [ ] CHK003 Is it specified how the binding check finds "T3's package hash", given that a version-2 T3 record holds the artifact's content hash rather than the package hash value? [Clarity, Spec §FR-016, contracts/verification.md]
-- [ ] CHK004 Are the rules for verifying version-1 records stated in the spec as well as in research, so old records cannot be reported as broken? [Consistency, Spec §FR-024]
-- [ ] CHK005 Is "append-only for every identity" reconciled with the stated limit that a database superuser can still change data, and is verification named as the control for that case? [Consistency, Spec §FR-004, Assumptions]
+- [X] CHK001 Is every element of the version-2 record listed precisely enough that two implementations would produce the same content and hash (field names, ordering of artifacts, null versus absent)? [Clarity, Spec §FR-001, contracts/record.md]
+- [X] CHK002 Is the meaning of "previous record" unambiguous when two runs of one use case close at nearly the same time? [Clarity, Spec §FR-002]
+- [X] CHK003 Is it specified how the binding check finds "T3's package hash", given that a version-2 T3 record holds the artifact's content hash rather than the package hash value? [Clarity, Spec §FR-016, contracts/verification.md]
+- [X] CHK004 Are the rules for verifying version-1 records stated in the spec as well as in research, so old records cannot be reported as broken? [Consistency, Spec §FR-024]
+- [X] CHK005 Is "append-only for every identity" reconciled with the stated limit that a database superuser can still change data, and is verification named as the control for that case? [Consistency, Spec §FR-004, Assumptions]
 
 ## Content Storage
 
-- [ ] CHK006 Is the treatment of an unreferenced (orphan) file specified: kept, reported or cleaned up, and by whom? [Gap, Spec §Edge Cases]
-- [ ] CHK007 Are backup and restore expectations for the file store stated, given it is outside the database? [Gap, Spec §Assumptions]
-- [ ] CHK008 Is the size limit unit and format defined (MB = 10^6 or 2^20 bytes)? [Clarity, Spec §FR-012]
-- [ ] CHK009 Is it specified what happens when the file store is unavailable at close time or at upload time? [Gap, Exception Flow]
+- [X] CHK006 Is the treatment of an unreferenced (orphan) file specified: kept, reported or cleaned up, and by whom? [Gap, Spec §Edge Cases]
+- [X] CHK007 Are backup and restore expectations for the file store stated, given it is outside the database? [Gap, Spec §Assumptions]
+- [X] CHK008 Is the size limit unit and format defined (MB = 10^6 or 2^20 bytes)? [Clarity, Spec §FR-012]
+- [X] CHK009 Is it specified what happens when the file store is unavailable at close time or at upload time? [Gap, Exception Flow]
 
 ## Artifact Versions and Edits
 
-- [ ] CHK010 Is "content differs" defined (normal-form hash), so reordered keys do not create versions while reordered rows do? [Clarity, Spec §FR-010, research R-04]
-- [ ] CHK011 Is the effect of an edit on a pending waiver or on approvals already given specified (do earlier pass sign-offs still count after the content changes)? [Gap, Spec §FR-010]
-- [ ] CHK012 Is it specified whether controls are re-run after a human edit, or whether the edited version goes straight to sign-off? [Gap, Spec §FR-010, US2/AC4]
-- [ ] CHK013 Are spreadsheet edge cases (merged cells, formulas without cached values, hidden sheets, header row not in row 1) addressed or explicitly out of scope? [Coverage, Spec §FR-011]
+- [X] CHK010 Is "content differs" defined (normal-form hash), so reordered keys do not create versions while reordered rows do? [Clarity, Spec §FR-010, research R-04]
+- [X] CHK011 Is the effect of an edit on a pending waiver or on approvals already given specified (do earlier pass sign-offs still count after the content changes)? [Gap, Spec §FR-010]
+- [X] CHK012 Is it specified whether controls are re-run after a human edit, or whether the edited version goes straight to sign-off? [Gap, Spec §FR-010, US2/AC4]
+- [X] CHK013 Are spreadsheet edge cases (merged cells, formulas without cached values, hidden sheets, header row not in row 1) addressed or explicitly out of scope? [Coverage, Spec §FR-011]
 
 ## Use-case Profile
 
-- [ ] CHK014 Is the merge rule specified for emitted values that are tables (for example KPIs re-emitted after a rework): replaced whole, or merged by row? [Clarity, Spec §FR-013]
-- [ ] CHK015 Is it stated whether a T9 re-entry, or a terminal re-pass after a later terminal already used the profile, affects runs that are already open? [Coverage, Spec §FR-014]
-- [ ] CHK016 Is it defined which emitted values count as guardrail proposals (name equality with a guardrail) and how a mapping value is reduced to a number? [Clarity, Spec §FR-015, contracts/profile.md]
+- [X] CHK014 Is the merge rule specified for emitted values that are tables (for example KPIs re-emitted after a rework): replaced whole, or merged by row? [Clarity, Spec §FR-013]
+- [X] CHK015 Is it stated whether a T9 re-entry, or a terminal re-pass after a later terminal already used the profile, affects runs that are already open? [Coverage, Spec §FR-014]
+- [X] CHK016 Is it defined which emitted values count as guardrail proposals (name equality with a guardrail) and how a mapping value is reduced to a number? [Clarity, Spec §FR-015, contracts/profile.md]
 
 ## Verification
 
-- [ ] CHK017 Is the performance target (2 s for 10 runs) specified with the conditions it is measured under (file sizes, number of attachments)? [Measurability, Spec §SC-007]
-- [ ] CHK018 Is it specified whether verification of "all" use cases is one recorded run or one per use case? [Clarity, Spec §FR-018]
-- [ ] CHK019 Are the CLI exit codes and machine-readable output part of the requirements, or only the contract? [Traceability, Spec §FR-019, contracts/verification.md]
+- [X] CHK017 Is the performance target (2 s for 10 runs) specified with the conditions it is measured under (file sizes, number of attachments)? [Measurability, Spec §SC-007]
+- [X] CHK018 Is it specified whether verification of "all" use cases is one recorded run or one per use case? [Clarity, Spec §FR-018]
+- [X] CHK019 Are the CLI exit codes and machine-readable output part of the requirements, or only the contract? [Traceability, Spec §FR-019, contracts/verification.md]
 
 ## Security of Uploaded Files
 
-- [ ] CHK020 Is it specified how stored files are served back (download only, never rendered inline), given SVG and Office files can carry active content? [Gap, Spec §FR-012]
-- [ ] CHK021 Are macro-enabled formats (`.xlsm`, `.docm`) explicitly excluded, and is the media type checked against the content rather than trusted from the upload? [Gap, Spec §FR-012]
-- [ ] CHK022 Is the data classification of attachments (which may contain personal data) addressed or explicitly deferred, given SA §10 says every artifact carries a data class? [Gap, Assumption]
-- [ ] CHK023 Is the conflict between an append-only ledger and data erasure requests acknowledged, or declared out of scope for the MVP? [Gap, Assumption]
+- [X] CHK020 Is it specified how stored files are served back (download only, never rendered inline), given SVG and Office files can carry active content? [Gap, Spec §FR-012]
+- [X] CHK021 Are macro-enabled formats (`.xlsm`, `.docm`) explicitly excluded, and is the media type checked against the content rather than trusted from the upload? [Gap, Spec §FR-012]
+- [X] CHK022 Is the data classification of attachments (which may contain personal data) addressed or explicitly deferred, given SA §10 says every artifact carries a data class? [Gap, Assumption]
+- [X] CHK023 Is the conflict between an append-only ledger and data erasure requests acknowledged, or declared out of scope for the MVP? [Gap, Assumption]
 
 ## Read Views
 
-- [ ] CHK024 Are "time in automatic steps" and "time waiting for people" defined for runs still open (counted to now, or excluded)? [Clarity, Spec §FR-022]
-- [ ] CHK025 Is it specified who may read the per-run and per-use-case views, and whether artifact content is included or only references? [Gap, Spec §FR-020]
+- [X] CHK024 Are "time in automatic steps" and "time waiting for people" defined for runs still open (counted to now, or excluded)? [Clarity, Spec §FR-022]
+- [X] CHK025 Is it specified who may read the per-run and per-use-case views, and whether artifact content is included or only references? [Gap, Spec §FR-020]
 
 ## Notes
 
