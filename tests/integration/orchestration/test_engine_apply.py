@@ -9,6 +9,7 @@ from adlc.orchestration.engine import StaleRun
 from adlc.orchestration.service import Actor
 from adlc.orchestration.states import ActorType, InvalidTransition, Signal, SignalKind
 from adlc.orchestration.stubs import StubAgent
+from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness, person
 from tests.support.pg import PlatformDatabase
 
@@ -110,11 +111,10 @@ def test_concurrent_closes_keep_one_chain(orch_template: PlatformDatabase) -> No
     """Two runs of one use case closed at the same moment: one unbroken chain (C3)."""
     agent = StubAgent({"T9": {1: {"change_impact_assessment": {"reentry_terminal": "T2"}}}})
     with harness(orch_template, agent=agent) as h:
-        usecase = h.submit()
-        h.pass_run(h.active(usecase, "T0").run_id, {"risk_tier": "medium"})
+        usecase, t5 = walk_to(h, "T5")  # T9 needs T3 and T4 evidence before it can build
         h.service.raise_operational_event(Actor.system("monitor"), usecase, "drift", {})
-        h.drain()  # T9 opens on the drift event while T1 is still open
-        runs = [h.active(usecase, "T1").run_id, h.active(usecase, "T9").run_id]
+        h.drain()  # T9 opens on the drift event while T5 is still open
+        runs = [t5, h.active(usecase, "T9").run_id]
         barrier = threading.Barrier(2)
         errors: list[BaseException] = []
 
@@ -136,6 +136,6 @@ def test_concurrent_closes_keep_one_chain(orch_template: PlatformDatabase) -> No
             "WHERE usecase_id = :u ORDER BY ledger_record_id",
             u=usecase,
         )
-        assert len(chain) == 3
+        assert len(chain) == 7  # T0-T4, then T5 and T9 closed concurrently
         assert chain[0][1] is None
         assert [c[1] for c in chain[1:]] == [c[0] for c in chain[:-1]]

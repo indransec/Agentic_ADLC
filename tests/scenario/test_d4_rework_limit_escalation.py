@@ -20,6 +20,10 @@ def test_d4(h: Harness) -> None:
     run = h.run(run_id)
     assert (run.run_number, run.state, run.escalation_trigger) == (5, "escalated", "rework_limit")
     assert h.agent.calls["T1"] == 4  # run 5 is not built by the agent
-    h.service.complete_escalation(person("product_owner"), run_id, {"kpis": [{"kpi": "by hand"}]})
+    # The owner completes every artifact by hand (here: the synthetic set with one KPI edited);
+    # the next terminal's prerequisites read them, so a partial completion would block it.
+    completed = {name: [dict(r) for r in rows] for name, rows in h.agent.base["T1"].items()}
+    completed["kpis"][0]["kpi"] = "claim handling minutes (by hand)"
+    h.service.complete_escalation(person("product_owner"), run_id, completed)
     h.pass_run(run_id)
     assert h.active(usecase, "T2").state == "awaiting_sign_off"

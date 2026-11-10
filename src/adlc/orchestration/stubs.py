@@ -10,6 +10,7 @@ and 006 replace them without touching the orchestrator. Scripts are plain dictio
 * ``StubPolicy(script={(<terminal>, <check id>): False})``.
 """
 
+import copy
 from collections import defaultdict
 from collections.abc import Mapping
 from typing import Any
@@ -44,8 +45,16 @@ class StubPolicy:
 
 
 class StubAgent:
-    def __init__(self, script: AgentScript | None = None) -> None:
+    """``base`` gives starting artifacts per terminal (the synthetic data of feature 004);
+    terminals without a base get placeholder rows."""
+
+    def __init__(
+        self,
+        script: AgentScript | None = None,
+        base: Mapping[str, Mapping[str, list[dict[str, Any]]]] | None = None,
+    ) -> None:
         self.script = script or {}
+        self.base = dict(base or {})
         self.calls: dict[str, int] = defaultdict(int)
         self.contexts: list[BuildContext] = []
 
@@ -56,12 +65,16 @@ class StubAgent:
         if entry is not None and not isinstance(entry, Mapping):
             return entry
         overrides: Mapping[str, Mapping[str, Any]] = entry or {}
-        artifacts = {
-            a.id: [{column: f"{column} (stub)" for column in a.columns}]
+        base = self.base.get(context.terminal_id, {})
+        artifacts: dict[str, list[dict[str, Any]]] = {
+            a.id: copy.deepcopy(base[a.id])
+            if a.id in base
+            else [{column: f"{column} (stub)" for column in a.columns}]
             for a in spec_view.artifacts(context.spec)
         }
         for artifact_id, cells in overrides.items():
-            artifacts.setdefault(artifact_id, [{}])[0].update(cells)
+            empty: list[dict[str, Any]] = [{}]
+            artifacts.setdefault(artifact_id, empty)[0].update(cells)
         return Artifacts(artifacts)
 
 

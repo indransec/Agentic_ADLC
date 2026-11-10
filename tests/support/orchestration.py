@@ -16,16 +16,20 @@ from sqlalchemy import Engine, create_engine, text
 
 from adlc.orchestration import routing
 from adlc.orchestration.engine import EngineConfig
+from adlc.orchestration.interfaces import PolicyEngine
 from adlc.orchestration.router import FaultHook
 from adlc.orchestration.service import Actor
 from adlc.orchestration.store import RunRow
 from adlc.orchestration.stubs import StubAgent, StubPolicy, StubReviewer
 from adlc.orchestration.worker import Orchestrator, build_orchestrator
+from adlc.policy.factory import build_policy_engine
+from adlc.policy.synthetic import load_synthetic_artifacts
 from adlc.spec_toolkit.register import register
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 from tests.support.pg import REPO_ROOT, PlatformDatabase, alembic
 
 SPECS = REPO_ROOT / "adlc-specs"
+SYNTHETIC = REPO_ROOT / "data" / "synthetic"
 TEMPLATE = "orch_template"
 DEADLETTER_ROLE = "adlc_coe"
 _counter = itertools.count(1)
@@ -100,7 +104,7 @@ class Harness:
     clock: FakeClock
     agent: StubAgent
     reviewer: StubReviewer
-    policy: StubPolicy
+    policy: Any  # StubPolicy when a test scripts answers, otherwise the real CelPolicyEngine
     orch: Orchestrator
     approvers: dict[str, list[Actor]] = field(default_factory=dict)
 
@@ -175,13 +179,18 @@ def harness(
         app = create_engine(fresh.app_url)
         owner = create_engine(fresh.owner_url)
         clock = FakeClock()
+        registry = SqlSpecRegistry(app)
         agent = agent or StubAgent()
+        if not agent.base:
+            agent.base = load_synthetic_artifacts(SYNTHETIC)
         reviewer = reviewer or StubReviewer()
-        policy = policy or StubPolicy()
+        engine_policy: PolicyEngine = policy or build_policy_engine(
+            app, registry, clock, synthetic_dir=SYNTHETIC
+        )
         orch = build_orchestrator(
             app,
-            SqlSpecRegistry(app),
-            policy,
+            registry,
+            engine_policy,
             agent,
             reviewer,
             clock,
@@ -191,7 +200,7 @@ def harness(
             worker_id="test-worker",
         )
         try:
-            yield Harness(fresh, app, owner, clock, agent, reviewer, policy, orch)
+            yield Harness(fresh, app, owner, clock, agent, reviewer, engine_policy, orch)
         finally:
             app.dispose()
             owner.dispose()

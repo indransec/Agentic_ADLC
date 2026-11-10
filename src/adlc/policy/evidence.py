@@ -176,8 +176,10 @@ class SqlEvidenceProvider:
             if w["run_id"] == run.run_id
         ]
         record: dict[str, Any] = {
-            **run.artifacts,
+            # Emitted values first: an emitted name that is an artifact is only a reference to
+            # it, so the artifact itself must win (FR-008).
             **({} if own else policy_store.emitted_values(conn, run.run_id)),
+            **run.artifacts,
             "status": run.final_status if run.final_status else "open",
             "signed_by": [s["person"] for s in sign_offs],
             "signed_roles": [s["role"] for s in sign_offs],

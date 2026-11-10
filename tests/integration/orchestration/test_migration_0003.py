@@ -91,7 +91,7 @@ def test_tables_exist(owner_engine: Engine) -> None:
                 )
             )
         }
-    assert {t for s, t in rows if s == "run"} == RUN_TABLES
+    assert {t for s, t in rows if s == "run"} >= RUN_TABLES  # later features add their own
     assert {t for s, t in rows if s == "events"} == EVENT_TABLES
     assert {"run_id", "usecase_id", "content_json"} <= ledger_cols
 
@@ -106,7 +106,7 @@ def test_app_grants_are_exact(app: Connection) -> None:
         )
     ):
         grants.setdefault(table, set()).add(privilege)
-    assert grants == EXPECTED_GRANTS
+    assert {t: g for t, g in grants.items() if t in EXPECTED_GRANTS} == EXPECTED_GRANTS
     pin = app.execute(
         text(
             "SELECT privilege_type FROM information_schema.role_table_grants "
