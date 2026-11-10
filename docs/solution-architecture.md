@@ -492,7 +492,7 @@ Choices below are **proposed** for the MVP and need confirmation (ADR status). E
 | Component | MVP choice (proposed) | Alternatives | Rationale | Swap boundary |
 | --- | --- | --- | --- | --- |
 | Spec format | YAML + JSON Schema + CEL | CUE / Pkl, BPMN | Readable by owners, Git-reviewable, validatable | Registry stores JSON; source format can change |
-| Workflow / orchestration | LangGraph with Postgres checkpointer | Temporal, Camunda | Native fit for agent graphs and human interrupts; light to run | Terminal-run state machine interface |
+| Workflow / orchestration | PostgreSQL state machine (one row per run, one transaction per signal); LangGraph for agent graphs only. Changed by feature 003 (CoE to confirm) | LangGraph with Postgres checkpointer, Temporal, Camunda | One copy of run state; the close writes the run, ledger record and outcome event atomically; restart safety from the database | Terminal-run state machine interface (`TerminalRun`) |
 | Lifecycle agents | Python agents on the same framework; model via gateway | Claude Agent SDK, other agent SDKs | One runtime pattern for all terminals | Agent registry entry + context pack contract |
 | Model access | One model gateway with model catalogue (tiers) | Direct provider SDKs | Central model swap, cost tracking | Model tier names |
 | Policy engine | CEL evaluator + predicate catalogue in a small service | OPA / Rego, Cedar | Fast to build; expressive enough | `evaluate()` and `authorize()` |

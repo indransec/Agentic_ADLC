@@ -37,3 +37,30 @@ def test_no_role_ids(path: Path) -> None:
         if pattern.search(line)
     ]
     assert hits == []
+
+
+ORCHESTRATION = sorted((ROOT / "src" / "adlc" / "orchestration").rglob("*.py"))
+
+
+def _destination_ids() -> set[str]:
+    from ruamel.yaml import YAML
+
+    data = YAML(typ="safe").load(
+        (ROOT / "adlc-specs" / "shared" / "route_destinations.yaml").read_text()
+    )
+    items = data["route_destinations"]
+    kinds = {str(i["kind"]) for i in items}
+    # A destination is handled by its kind (FR-016); an id that is also a kind name is the kind.
+    return {str(i["id"]) for i in items} - kinds
+
+
+@pytest.mark.parametrize("path", ORCHESTRATION, ids=lambda p: str(p.relative_to(ROOT)))
+def test_orchestration_names_no_route_destination(path: Path) -> None:
+    """003 T072: special destinations are handled by kind, never by name (constitution I)."""
+    pattern = re.compile(r"\b(" + "|".join(sorted(_destination_ids())) + r")\b")
+    hits = [
+        f"{path.name}:{number}: {line.strip()}"
+        for number, line in _code_lines(path)
+        if pattern.search(line)
+    ]
+    assert hits == []

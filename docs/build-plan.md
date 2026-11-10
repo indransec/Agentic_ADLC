@@ -98,7 +98,7 @@ Every platform component is open source and, except the database, the proxy and 
 | --- | --- | --- | --- |
 | Language and tooling | Python 3.12, uv, ruff, mypy, pytest | Python PSF; MIT / Apache | — |
 | API | FastAPI + Pydantic v2 | MIT | Platform API contracts |
-| Workflow / orchestration | LangGraph + Postgres checkpointer | MIT | `TerminalRun` interface; Temporal (MIT) later |
+| Workflow / orchestration | PostgreSQL state machine behind `TerminalRun` (changed by feature 003, ADR-01; CoE to confirm). LangGraph stays for agent graphs (006) | — (own code) | `TerminalRun` interface; Temporal (MIT) later |
 | Database | PostgreSQL 16; SQLAlchemy 2 + Alembic; psycopg 3 | PostgreSQL; MIT; LGPL-3.0 | Schema-per-concern |
 | Event delivery | Postgres outbox + poller (LISTEN/NOTIFY) | — (own code) | Router interface; Kafka later |
 | Policy engine | cel-python + predicate catalogue | Apache-2.0 | `evaluate` / `authorize`; OPA or Cedar later |
@@ -187,6 +187,13 @@ The demo date of 15 December is an assumption for "mid-December"; confirm it, an
 ## 8. Worked example: feature 003, lifecycle orchestration
 
 The same pattern applies to every feature: what and why at `/speckit.specify`, tech choices only at `/speckit.plan`.
+
+> **Changed by feature 003 (ADR-01, CoE to confirm):** the terminal-run engine is a plain
+> PostgreSQL state machine, not a LangGraph checkpointer. Run state lives in one row per run
+> and each signal is applied in one transaction, so the run, its ledger record and its outcome
+> event are written together. LangGraph remains the choice for agent graphs (feature 006). The
+> step 2 text below is the original proposal; see
+> `specs/003-lifecycle-orchestration/research.md` R-01.
 
 **Step 1: `/speckit.specify`** (what and why, no stack)
 

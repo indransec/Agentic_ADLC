@@ -36,6 +36,9 @@ git checkout adlc-specs/terminals/T3.yaml
 In VS Code with the Red Hat YAML extension, the unknown `rul:` field is underlined while you
 type (SC-008).
 
+**Result (2026-11-10, manual check by the project owner)**: confirmed. An unknown field added
+to `adlc-specs/terminals/T0.yaml` is flagged by the Red Hat YAML extension.
+
 ## 4. Conversion record (US3)
 
 Open `adlc-specs/CONVERSION.md`. Each terminal has a row for every TDS trigger,

@@ -16,7 +16,7 @@ from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, SpanExportResult
 
-from adlc.config.settings import Settings
+from adlc.config.settings import RuntimeSettings, Settings
 
 SERVICE_NAME = "adlc-api"
 EXCLUDED_URLS = "/health$"
@@ -68,7 +68,7 @@ class WarnOnFailureExporter(SpanExporter):
             return False
 
 
-def _otlp_exporter(settings: Settings) -> SpanExporter:
+def _otlp_exporter(settings: RuntimeSettings) -> SpanExporter:
     from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 
     endpoint = settings.otlp_endpoint.rstrip("/") + "/v1/traces"
@@ -90,4 +90,17 @@ def setup_tracing(
         http_capture_headers_server_response=[],
     )
     app.state.tracer_provider = provider
+    return provider
+
+
+def setup_process_tracing(
+    service_name: str, settings: RuntimeSettings, exporter: SpanExporter | None = None
+) -> TracerProvider:
+    """Tracing for a non-HTTP process (the orchestrator): sets the global tracer provider."""
+    from opentelemetry import trace
+
+    provider = TracerProvider(resource=Resource.create({"service.name": service_name}))
+    inner = exporter if exporter is not None else _otlp_exporter(settings)
+    provider.add_span_processor(BatchSpanProcessor(WarnOnFailureExporter(inner)))
+    trace.set_tracer_provider(provider)
     return provider

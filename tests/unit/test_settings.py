@@ -114,3 +114,71 @@ def test_repr_and_dump_hide_secrets(valid_env: dict[str, str]) -> None:
     for text in (repr(settings), str(settings), settings.model_dump_json()):
         assert APP_PW not in text
         assert SESSION not in text
+
+
+# ---------------------------------------------------------------- 003 orchestrator settings
+
+
+@pytest.fixture
+def orchestrator_env(valid_env: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("ADLC_SESSION_SECRET")
+    monkeypatch.delenv("ADLC_ACCOUNTS_FILE")
+    monkeypatch.setenv("ADLC_DEADLETTER_ROLE", "adlc_coe")
+
+
+def _orchestrator_error() -> str:
+    from adlc.config.settings import OrchestratorSettings
+
+    try:
+        OrchestratorSettings()  # type: ignore[call-arg]
+    except ValidationError as exc:
+        return format_settings_error(exc, OrchestratorSettings)
+    raise AssertionError("expected a validation error")
+
+
+def test_orchestrator_defaults(orchestrator_env: None) -> None:
+    from datetime import timedelta
+
+    from adlc.config.settings import OrchestratorSettings
+
+    s = OrchestratorSettings()  # type: ignore[call-arg]
+    assert s.time_scale == 1.0
+    assert s.poll_interval == timedelta(seconds=1)
+    assert s.lease == timedelta(minutes=5)
+    assert s.deadletter_role == "adlc_coe"  # from the environment: no role names in code
+    assert s.heartbeat_max_age == timedelta(seconds=30)
+
+
+def test_orchestrator_needs_deadletter_role(
+    orchestrator_env: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("ADLC_DEADLETTER_ROLE")
+    assert "ADLC_DEADLETTER_ROLE" in _orchestrator_error()
+
+
+def test_orchestrator_needs_no_session_or_accounts(orchestrator_env: None) -> None:
+    from adlc.config.settings import OrchestratorSettings
+
+    assert OrchestratorSettings().db_app_password.get_secret_value() == APP_PW  # type: ignore[call-arg]
+
+
+@pytest.mark.parametrize(
+    ("name", "value"),
+    [
+        ("ADLC_TIME_SCALE", "0"),
+        ("ADLC_TIME_SCALE", "-1"),
+        ("ADLC_TIME_SCALE", "fast"),
+        ("ADLC_POLL_INTERVAL", "1m"),
+        ("ADLC_LEASE", "soon"),
+        ("ADLC_HEARTBEAT_MAX_AGE", "30"),
+        ("ADLC_DEADLETTER_ROLE", "no_such_role"),
+    ],
+)
+def test_orchestrator_invalid_values_name_the_setting(
+    orchestrator_env: None, monkeypatch: pytest.MonkeyPatch, name: str, value: str
+) -> None:
+    monkeypatch.setenv(name, value)
+    message = _orchestrator_error()
+    assert name in message
+    if len(value) > 3:  # short numbers can appear in the expected form ("greater than zero")
+        assert value not in message.replace(name, "")

@@ -10,7 +10,7 @@ from datetime import timedelta
 from sqlalchemy import URL, Engine, create_engine, text
 from sqlalchemy.exc import OperationalError
 
-from adlc.config.settings import DatabaseSettings, Settings
+from adlc.config.settings import DatabaseSettings, RuntimeSettings
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ def owner_url(settings: DatabaseSettings) -> URL:
     return _url(settings, settings.db_owner_user, settings.db_owner_password.get_secret_value())
 
 
-def app_url(settings: Settings) -> URL:
+def app_url(settings: RuntimeSettings) -> URL:
     return _url(settings, settings.db_app_user, settings.db_app_password.get_secret_value())
 
 
@@ -50,7 +50,7 @@ def owner_engine(settings: DatabaseSettings) -> Engine:
     return create_engine(owner_url(settings), pool_pre_ping=True)
 
 
-def app_engine(settings: Settings) -> Engine:
+def app_engine(settings: RuntimeSettings) -> Engine:
     return create_engine(
         app_url(settings),
         pool_pre_ping=True,

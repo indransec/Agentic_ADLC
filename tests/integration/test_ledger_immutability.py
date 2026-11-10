@@ -111,7 +111,13 @@ def test_app_has_no_privileges_beyond_ledger_record(app_engine: Engine) -> None:
         ).all()
     writes = sorted(g for g in grants if g[1] != "SELECT")
     reads = {table for table, privilege in grants if privilege == "SELECT"}
-    assert writes == [("ledger.ledger_record", "INSERT")]
-    # Feature 002 adds read-only access to the spec registry; nothing else is readable.
-    assert all(t == "ledger.ledger_record" or t.startswith("spec.") for t in reads), reads
+    # The ledger is insert-only. Feature 002 adds spec reads; 003 adds pin inserts and the run
+    # and events schemas (exact grants tested in tests/integration/orchestration).
+    outside_runtime = [w for w in writes if not w[0].startswith(("run.", "events."))]
+    assert outside_runtime == [
+        ("ledger.ledger_record", "INSERT"),
+        ("spec.usecase_spec_pin", "INSERT"),
+    ]
+    assert not [w for w in writes if w[1] in ("DELETE", "TRUNCATE", "REFERENCES", "TRIGGER")]
+    assert all(t.split(".")[0] in ("ledger", "spec", "run", "events") for t in reads), reads
     assert create_rights == []
