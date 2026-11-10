@@ -10,54 +10,54 @@
 
 ## Outcome Rights (Constitution III)
 
-- [ ] CHK001 Is the rule for which sign-off rule applies (plain, `by_tier` by the use case's risk tier, `by_mode` by run mode) stated in the spec, including how the run mode is determined? [Gap, Spec §FR-009, research R-05, R-12]
-- [ ] CHK002 Is it specified whether a conditional `plus` approver (T3 solution architect on deviation) counts toward `min_approvers` or is required in addition? [Clarity, Spec §FR-011]
-- [ ] CHK003 Are board approvals (`sign_off.board`, for example the T5 RAI board) and external approvals (T6 CAB) in or out of scope for closing a run? [Gap, Spec §FR-011]
-- [ ] CHK004 Is the T7 in-run stage approval (`stage_approval.full_rollout`) addressed or explicitly deferred to the deployment feature? [Gap]
-- [ ] CHK005 Is it specified whether an exception proposal and its approval count toward `min_approvers`, or replace the pass approvals? [Clarity, Spec §FR-011, §FR-012a]
-- [ ] CHK006 Is the demo impact of "waiver approver must differ from the proposer" addressed, given that one person may hold several roles in the demo (001 assumption)? [Assumption, Spec §FR-012a]
+- [X] CHK001 Is the rule for which sign-off rule applies (plain, `by_tier` by the use case's risk tier, `by_mode` by run mode) stated in the spec, including how the run mode is determined? [Gap, Spec §FR-009, research R-05, R-12]
+- [X] CHK002 Is it specified whether a conditional `plus` approver (T3 solution architect on deviation) counts toward `min_approvers` or is required in addition? [Clarity, Spec §FR-011]
+- [X] CHK003 Are board approvals (`sign_off.board`, for example the T5 RAI board) and external approvals (T6 CAB) in or out of scope for closing a run? [Gap, Spec §FR-011]
+- [X] CHK004 Is the T7 in-run stage approval (`stage_approval.full_rollout`) addressed or explicitly deferred to the deployment feature? [Gap]
+- [X] CHK005 Is it specified whether an exception proposal and its approval count toward `min_approvers`, or replace the pass approvals? [Clarity, Spec §FR-011, §FR-012a]
+- [X] CHK006 Is the demo impact of "waiver approver must differ from the proposer" addressed, given that one person may hold several roles in the demo (001 assumption)? [Assumption, Spec §FR-012a]
 
 ## Routing from Pinned Specs
 
-- [ ] CHK007 Do FR-015 ("a terminal that does not subscribe must not open") and the `owning_terminal` resolver (research R-06: open the named terminal without a subscription) conflict, and is the exception stated in the spec? [Conflict, Spec §FR-015, §FR-016]
-- [ ] CHK008 Is it specified how emitted values (for example T0 `risk_tier`) are taken from the closing run's artifacts and stored on the use case? [Gap, Spec §Assumptions, Key Entities]
-- [ ] CHK009 Is the cadence of continuous review runs defined (what opens the next T8 review run after `continue`, and how `review_schedule` is used)? [Gap, Spec US5/AC4]
-- [ ] CHK010 Is the effect of a use case terminate on its other active runs (for example a running T8) specified? [Gap, Spec US2/AC6]
-- [ ] CHK011 Is it specified what happens when an event names a terminal whose pinned version is missing (no pin for that terminal)? [Edge Case, Gap]
-- [ ] CHK012 Are notifications (outcome `notify` roles, escalation `notify`, event route `notify`) given a defined record (who, when, about what), or only "recorded as notified"? [Clarity, Spec §FR-016, §FR-017]
+- [X] CHK007 Do FR-015 ("a terminal that does not subscribe must not open") and the `owning_terminal` resolver (research R-06: open the named terminal without a subscription) conflict, and is the exception stated in the spec? [Conflict, Spec §FR-015, §FR-016]
+- [X] CHK008 Is it specified how emitted values (for example T0 `risk_tier`) are taken from the closing run's artifacts and stored on the use case? [Gap, Spec §Assumptions, Key Entities]
+- [X] CHK009 Is the cadence of continuous review runs defined (what opens the next T8 review run after `continue`, and how `review_schedule` is used)? [Gap, Spec US5/AC4]
+- [X] CHK010 Is the effect of a use case terminate on its other active runs (for example a running T8) specified? [Gap, Spec US2/AC6]
+- [X] CHK011 Is it specified what happens when an event names a terminal whose pinned version is missing (no pin for that terminal)? [Edge Case, Gap]
+- [X] CHK012 Are notifications (outcome `notify` roles, escalation `notify`, event route `notify`) given a defined record (who, when, about what), or only "recorded as notified"? [Clarity, Spec §FR-016, §FR-017]
 
 ## Atomic Close and Delivery (Constitution V)
 
-- [ ] CHK013 Is the ledger record content listed completely enough that two implementations would hash the same content? [Clarity, Spec §FR-027]
-- [ ] CHK014 Is the requirement for a single, unforked ledger chain per use case stated, including concurrent closes for the same use case? [Gap, Spec §FR-026]
-- [ ] CHK015 Are the delivery guarantees (at-least-once delivery, exactly-once processing per event id, per-use-case order) stated consistently between the spec, the events contract and the 2-second routing target, given that a retrying earlier event blocks later ones? [Consistency, Spec §FR-028, §FR-031]
-- [ ] CHK016 Is the `T<n>.escalate` notification event required by the spec, or introduced only by the contract? [Traceability, contracts/events.md]
-- [ ] CHK017 Is it specified which actions write events for a use case that is already terminated or closed (recorded and ignored), and whether they still count toward ordering? [Edge Case, Spec §Edge Cases]
+- [X] CHK013 Is the ledger record content listed completely enough that two implementations would hash the same content? [Clarity, Spec §FR-027]
+- [X] CHK014 Is the requirement for a single, unforked ledger chain per use case stated, including concurrent closes for the same use case? [Gap, Spec §FR-026]
+- [X] CHK015 Are the delivery guarantees (at-least-once delivery, exactly-once processing per event id, per-use-case order) stated consistently between the spec, the events contract and the 2-second routing target, given that a retrying earlier event blocks later ones? [Consistency, Spec §FR-028, §FR-031]
+- [X] CHK016 Is the `T<n>.escalate` notification event required by the spec, or introduced only by the contract? [Traceability, contracts/events.md]
+- [X] CHK017 Is it specified which actions write events for a use case that is already terminated or closed (recorded and ignored), and whether they still count toward ordering? [Edge Case, Spec §Edge Cases]
 
 ## Timers and Escalation
 
-- [ ] CHK018 Is it stated whether `escalate_after` is measured from the run's open, from entry into the current waiting state, or from the lifecycle start? [Clarity, Spec §FR-021]
-- [ ] CHK019 Is the source of the agent budget (spec token budget, profile, configuration) defined for the "budget exceeded" trigger? [Gap, Spec §FR-022]
-- [ ] CHK020 Is it specified what happens to an escalated run's `escalate_after` timer (does it stop, or can an escalated run escalate again)? [Clarity, contracts/state-machine.md]
-- [ ] CHK021 Is the time scale requirement bounded (which timers it affects, including delivery retry delays, and whether production may set it)? [Clarity, Spec §FR-021]
+- [X] CHK018 Is it stated whether `escalate_after` is measured from the run's open, from entry into the current waiting state, or from the lifecycle start? [Clarity, Spec §FR-021]
+- [X] CHK019 Is the source of the agent budget (spec token budget, profile, configuration) defined for the "budget exceeded" trigger? [Gap, Spec §FR-022]
+- [X] CHK020 Is it specified what happens to an escalated run's `escalate_after` timer (does it stop, or can an escalated run escalate again)? [Clarity, contracts/state-machine.md]
+- [X] CHK021 Is the time scale requirement bounded (which timers it affects, including delivery retry delays, and whether production may set it)? [Clarity, Spec §FR-021]
 
 ## Clarification and Waiver Flows
 
-- [ ] CHK022 Is the addressed role defined when a terminal has several A roles with different scopes and no R (for example T9)? [Edge Case, Spec §FR-024, US4/AC1]
-- [ ] CHK023 Is it specified whether several people holding the addressed role may answer, and which answer counts? [Clarity, Spec §FR-024]
-- [ ] CHK024 Are waiver expiry rules (must be in the future; who checks expiry later) stated in the requirements rather than only in the data model? [Traceability, data-model `run.waiver`]
+- [X] CHK022 Is the addressed role defined when a terminal has several A roles with different scopes and no R (for example T9)? [Edge Case, Spec §FR-024, US4/AC1]
+- [X] CHK023 Is it specified whether several people holding the addressed role may answer, and which answer counts? [Clarity, Spec §FR-024]
+- [X] CHK024 Are waiver expiry rules (must be in the future; who checks expiry later) stated in the requirements rather than only in the data model? [Traceability, data-model `run.waiver`]
 
 ## Restart and Idempotency
 
-- [ ] CHK025 Is the behaviour defined for an automatic step (agent build) interrupted by a restart: retried, with what limit, and without counting as rework or retry? [Gap, Spec §FR-030, research R-02]
-- [ ] CHK026 Are stale results (an agent result arriving after a human terminated the run) covered by a requirement, not only the plan? [Gap, research R-02]
-- [ ] CHK027 Can SC-004 ("100% of runs continue correctly") be checked objectively: is "correctly" defined per waiting state? [Measurability, Spec §SC-004]
+- [X] CHK025 Is the behaviour defined for an automatic step (agent build) interrupted by a restart: retried, with what limit, and without counting as rework or retry? [Gap, Spec §FR-030, research R-02]
+- [X] CHK026 Are stale results (an agent result arriving after a human terminated the run) covered by a requirement, not only the plan? [Gap, research R-02]
+- [X] CHK027 Can SC-004 ("100% of runs continue correctly") be checked objectively: is "correctly" defined per waiting state? [Measurability, Spec §SC-004]
 
 ## Constitution I and Scope
 
-- [ ] CHK028 Is the run-mode rule (`retire` when triggered by a terminate event) worded generically, and is it consistent with constitution I (no terminal-specific behaviour)? [Consistency, research R-05]
-- [ ] CHK029 Is the dead-letter role taken from configuration consistent with "no role names in code", and is that setting documented in the settings contract? [Consistency, research R-12]
-- [ ] CHK030 Is the ADR-01 change (PostgreSQL state machine instead of a LangGraph checkpointer) recorded where the architecture documents will be updated, with an owner? [Traceability, research R-01]
+- [X] CHK028 Is the run-mode rule (`retire` when triggered by a terminate event) worded generically, and is it consistent with constitution I (no terminal-specific behaviour)? [Consistency, research R-05]
+- [X] CHK029 Is the dead-letter role taken from configuration consistent with "no role names in code", and is that setting documented in the settings contract? [Consistency, research R-12]
+- [X] CHK030 Is the ADR-01 change (PostgreSQL state machine instead of a LangGraph checkpointer) recorded where the architecture documents will be updated, with an owner? [Traceability, research R-01]
 
 ## Notes
 
