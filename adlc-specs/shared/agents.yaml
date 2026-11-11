@@ -1,12 +1,45 @@
 # yaml-language-server: $schema=../schema/catalogues/agents.schema.json
-# Lifecycle agent registry (SA 7.3, feature 006). Terminal agents are stubs until feature 008
-# switches them to implementation: model with a prompt. The reviewer is a model agent.
+# Lifecycle agent registry (SA 7.3, features 006 and 008). T0-T2 agents are model agents with a
+# prompt and knowledge tools (feature 008): a source gets tools only when the terminal's tool_scopes
+# and grounding both name it. T3-T9 stay stubs until features 011 and 012. The reviewer is a model
+# agent.
 catalogue: agents
-version: "1.0.0"
+version: "3.0.0"
 agents:
-  - {id: t0-intake-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
-  - {id: t1-requirements-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
-  - {id: t2-architect-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
+  - id: t0-intake-agent
+    version: "1.2.0"
+    implementation: model
+    model_tier: reasoning
+    prompt: {id: t0-intake-agent, version: "1.1.0"}
+    tools:
+      - {tool: confluence_search, permission: "mcp:confluence:read"}
+      - {tool: confluence_read, permission: "mcp:confluence:read"}
+      - {tool: sharepoint_search, permission: "mcp:sharepoint:read"}
+      - {tool: sharepoint_read, permission: "mcp:sharepoint:read"}
+      - {tool: portfolio_search, permission: "mcp:portfolio:read"}
+      - {tool: portfolio_read, permission: "mcp:portfolio:read"}
+  - id: t1-requirements-agent
+    version: "1.2.0"
+    implementation: model
+    model_tier: reasoning
+    prompt: {id: t1-requirements-agent, version: "1.1.0"}
+    tools:
+      - {tool: confluence_search, permission: "mcp:confluence:read"}
+      - {tool: confluence_read, permission: "mcp:confluence:read"}
+      - {tool: jira_search, permission: "mcp:jira:read"}
+      - {tool: jira_read, permission: "mcp:jira:read"}
+  - id: t2-architect-agent
+    version: "1.2.0"
+    implementation: model
+    model_tier: reasoning
+    prompt: {id: t2-architect-agent, version: "1.1.0"}
+    tools:
+      - {tool: confluence_search, permission: "mcp:confluence:read"}
+      - {tool: confluence_read, permission: "mcp:confluence:read"}
+      - {tool: arch_repo_search, permission: "mcp:arch_repo:read"}
+      - {tool: arch_repo_read, permission: "mcp:arch_repo:read"}
+      - {tool: mcp_registry_search, permission: "mcp:mcp_registry:read"}
+      - {tool: mcp_registry_read, permission: "mcp:mcp_registry:read"}
   - {id: t3-builder-agent, version: "1.0.0", implementation: stub, model_tier: coding, tools: []}
   - {id: t4-evaluation-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
   - {id: t5-assurance-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}

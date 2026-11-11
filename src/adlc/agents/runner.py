@@ -5,6 +5,7 @@ context pack, then either runs the stub (terminal agents until feature 008) or t
 loop. Output is validated in both cases, and every attempt is recorded in ``run.agent_attempt``.
 """
 
+import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -31,6 +32,7 @@ from adlc.agents.store import insert_attempt
 from adlc.agents.telemetry import set_attributes
 
 if TYPE_CHECKING:
+    from adlc.agents.knowledge import RetrievalLog
     from adlc.agents.tools import ToolGate
 from adlc.config.settings import AgentLimit, AgentLimitOverride
 from adlc.ledger.profile import version_values
@@ -54,6 +56,7 @@ from adlc.orchestration.interfaces import (
 from adlc.orchestration.tracing import span
 from adlc.spec_toolkit.registry import SpecRegistry
 
+PARAMETER = re.compile(r"\bparam\.([a-z][a-z0-9_]*)")
 MAX_CALL_TOKENS = 16_000  # per call; the gateway also caps at the model's output limit
 ToolHandler = Callable[[Mapping[str, Any]], str]
 
@@ -72,6 +75,7 @@ class RuntimeDeps:
     corrections: int = 2
     clock: Clock = field(default_factory=SystemClock)
     tools: "ToolGate | None" = None  # US4: tool calls are authorized first
+    retrievals: "RetrievalLog | None" = None  # 008: knowledge results, for citation checks
 
 
 @dataclass
@@ -288,6 +292,9 @@ class RuntimeAgentRunner:
             failed_controls=context.failed_controls,
             previous_artifacts=context.previous_artifacts,
             playbooks=playbook_texts(deps.texts, spec),
+            parameters={}
+            if agent.implementation == "stub"
+            else self._parameters(spec, context, usecase_id),
         )
         required = self._required(context, usecase_id)
         started = deps.clock.now()
@@ -308,14 +315,32 @@ class RuntimeAgentRunner:
                 handler = (
                     None
                     if deps.tools is None or not agent.tools
-                    else deps.tools.handler(context.run_id, usecase_id, context.terminal_id, agent)
+                    else deps.tools.handler(
+                        context.run_id,
+                        usecase_id,
+                        context.terminal_id,
+                        agent,
+                        spec=spec,
+                        attempt=context.attempt,
+                    )
                 )
+                tools = [] if deps.tools is None else deps.tools.describe(agent)
+                roles = {r.role for r in spec_view.human_roles(spec)}
+                log = deps.retrievals
+
+                def retrieved() -> list[Any]:
+                    return [] if log is None else log.for_attempt(context.run_id, context.attempt)
+
                 outcome = run_loop(
                     deps,
                     tier=agent.model_tier,
                     data_class=ceiling,
                     messages=builder_messages(
-                        pack, prompt, spec, [a.id for a in spec_view.artifacts(spec) if required(a)]
+                        pack,
+                        prompt,
+                        spec,
+                        [a.id for a in spec_view.artifacts(spec) if required(a)],
+                        tools,
                     ),
                     ids=CallIds(
                         context.run_id,
@@ -327,7 +352,7 @@ class RuntimeAgentRunner:
                     prompt_hash=prompt.hash,
                     context_hash=pack.hash,
                     limits=limits,
-                    parse=lambda raw: parse_builder(raw, spec, required),
+                    parse=lambda raw: parse_builder(raw, spec, required, roles, retrieved),
                     on_tool=handler,
                 )
             set_attributes(
@@ -368,6 +393,24 @@ class RuntimeAgentRunner:
             if problems:
                 return AttemptFailed("; ".join(problems))
         return result
+
+    def _parameters(
+        self, spec: Mapping[str, Any], context: BuildContext, usecase_id: str
+    ) -> dict[str, Any]:
+        """008: the resolved run parameters the terminal's controls use, so the agent can meet
+        them (the same values the controls are checked against)."""
+        names = sorted(
+            {m for c in spec_view.controls(spec) for m in PARAMETER.findall(c.expression)}
+        )
+        found: dict[str, Any] = {}
+        for name in names:
+            result = self.deps.policy.evaluate(
+                f"param.{name}",
+                EvalContext(context.terminal_id, f"parameter:{name}", context.run_id, usecase_id),
+            )
+            if result.value is not None:
+                found[name] = result.value
+        return found
 
     def _required(
         self, context: BuildContext, usecase_id: str

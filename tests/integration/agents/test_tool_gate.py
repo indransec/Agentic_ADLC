@@ -35,6 +35,9 @@ def _agents() -> AgentCatalogue:
                     {"tool": "ledger_writer", "permission": "write:ledger.T0"},
                 ],
             }
+        elif a.get("prompt", {}).get("id") != "common-terminal-reviewer":
+            # 008: other builders (T0 and T2 are model agents now) stay stubs in these tests.
+            a = {**a, "implementation": "stub", "prompt": None, "tools": []}
         agents.append(a)
     return AgentCatalogue.from_content({"agents": agents})
 

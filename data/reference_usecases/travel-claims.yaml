@@ -1,0 +1,26 @@
+# Reference use case (feature 008, FR-018): the pilot. Replayed through T0-T2 by adlc-replay.
+id: travel-claims
+name: Travel Claims Assistant
+intake_text: >-
+  Our travel claims handlers spend about twelve minutes triaging every trip delay, cancellation and
+  baggage claim before an assessor sees it, and around 40% of claims come back because receipts or
+  carrier letters are missing. We receive roughly 9,500 travel claims a month through the web form
+  and email. We want an assistant that reads each new claim and its documents, checks the policy
+  cover and trip dates, tells the handler whether the claim can be fast-tracked, and drafts one
+  consolidated request to the customer for anything missing. Handlers must still approve every
+  payout and every message to a customer. Success means triage under three minutes and half the
+  re-work.
+# The terminal whose review ends the replay (it is not passed).
+until: T2
+answers:
+  business_owner:
+    - "Claims history is owned by the head of claims operations; we use masked copies only (confidential_masked)."
+  product_owner:
+    - "Handlers approve every customer message; fast-track is only for complete claims under 300 EUR."
+  any:
+    - "Use the Halcyon policies and process documents in the knowledge sources; meet the parameters you are given; payouts and customer messages always need a person's approval."
+approver_fields:
+  T0: {risk_tier: medium}
+expected:
+  risk_tier: medium
+  minimum_outcome: "T2 reached, every mandatory artifact present, every blocking control passing"

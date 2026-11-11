@@ -115,6 +115,7 @@ def build_pack(
     failed_controls: Sequence[Mapping[str, Any]],
     previous_artifacts: Mapping[str, Any],
     playbooks: Sequence[SpecText],
+    parameters: Mapping[str, Any] | None = None,
 ) -> ContextPack:
     content = {
         "agent": {
@@ -146,6 +147,8 @@ def build_pack(
             {"id": c.get("id"), "reason": c.get("reason")} for c in failed_controls
         ],
         "previous_artifacts": dict(previous_artifacts),
+        # 008: the resolved values the terminal's controls check (e.g. minimum counts)
+        "parameters": dict(parameters or {}),
         "playbooks": [
             {"id": p.id, "version": p.version, "hash": p.hash, "text": p.body} for p in playbooks
         ],
@@ -153,21 +156,69 @@ def build_pack(
     return ContextPack(content, structured_hash(content), {p.id: p.hash for p in playbooks})
 
 
-def output_instruction(spec: Mapping[str, Any], required: Sequence[str]) -> str:
-    lines = [
-        "Required answer: one JSON object, either",
+def tools_section(tools: Sequence[Mapping[str, Any]]) -> str:
+    """The agent's tools as the platform describes them (008 research R-05)."""
+    lines = ["Tools you can call (one call per answer; the result comes back as data):"]
+    for tool in tools:
+        args = ", ".join(f"{k}: {v}" for k, v in (tool.get("arguments") or {}).items())
+        lines.append(f"- {tool['name']}: {tool.get('description', '')} Arguments: {args}")
+    return "\n".join(lines)
+
+
+MIN_ROWS = re.compile(
+    r"size\(\s*[A-Za-z0-9_]+\.([a-z][a-z0-9_]*)\s*\)\s*>=\s*(?:param\.([a-z][a-z0-9_]*)|(\d+))"
+)
+
+
+def minimum_rows(spec: Mapping[str, Any], parameters: Mapping[str, Any]) -> dict[str, int]:
+    """008: row minimums the terminal's controls check, as ``size(<artifact>) >= <n>`` with a
+    number or a resolved parameter (read from the spec, never named in code)."""
+    found: dict[str, int] = {}
+    for control in spec_view.controls(spec):
+        for artifact, param, number in MIN_ROWS.findall(control.expression):
+            value = number or parameters.get(param)
+            if isinstance(value, int | float | str) and str(value).isdigit():
+                found[artifact] = max(found.get(artifact, 0), int(value))
+    return found
+
+
+def output_instruction(
+    spec: Mapping[str, Any],
+    required: Sequence[str],
+    tools: Sequence[Mapping[str, Any]] = (),
+    parameters: Mapping[str, Any] | None = None,
+) -> str:
+    lines = ["Required answer: one JSON object, either"]
+    if tools:
+        lines.append(
+            '{"tool": {"name": "<tool name>", "arguments": {...}}} to call one tool (look things '
+            "up this way before you draft),"
+        )
+    lines += [
         '{"artifacts": {"<artifact id>": [{"<column>": <value>, ...}, ...], ...}}',
         'or {"clarification": {"questions": [...], "addressed_role": null, "looked_in": [...]}}.',
-        "Artifacts and their exact columns (every row has exactly these keys):",
     ]
+    if tools:
+        lines.append(
+            'With artifacts you may add "citations": [{"artifact": "<artifact id>", "row": '
+            '<row index or null>, "source": ..., "document": ..., "section": ...}] naming only '
+            "passages you retrieved in this attempt."
+        )
+    minimums = minimum_rows(spec, parameters or {})
+    lines.append("Artifacts and their exact columns (every row has exactly these keys):")
     for a in spec_view.artifacts(spec):
         need = "required" if a.id in required else "optional"
-        lines.append(f"- {a.id} ({need}): {', '.join(a.columns)}")
+        least = f", at least {minimums[a.id]} rows" if a.id in minimums else ""
+        lines.append(f"- {a.id} ({need}{least}): {', '.join(a.columns)}")
     return "\n".join(lines)
 
 
 def builder_messages(
-    pack: ContextPack, prompt: SpecText, spec: Mapping[str, Any], required: Sequence[str]
+    pack: ContextPack,
+    prompt: SpecText,
+    spec: Mapping[str, Any],
+    required: Sequence[str],
+    tools: Sequence[Mapping[str, Any]] = (),
 ) -> tuple[dict[str, str], ...]:
     c = pack.content
     stable = [data_block("spec", c["spec"])]
@@ -180,8 +231,11 @@ def builder_messages(
         data_block("clarifications", c["clarifications"]),
         data_block("failed_controls", c["failed_controls"]),
         data_block("previous_artifacts", c["previous_artifacts"]),
+        *([data_block("parameters", c["parameters"])] if c.get("parameters") else []),
     ]
-    user = "\n\n".join([*stable, *volatile, output_instruction(spec, required)])
+    listed = [tools_section(tools)] if tools else []
+    instruction = output_instruction(spec, required, tools, c.get("parameters"))
+    user = "\n\n".join([*stable, *volatile, *listed, instruction])
     return (
         {"role": "system", "content": f"{prompt.body.strip()}\n\n{RUNTIME_RULES}"},
         {"role": "user", "content": user},

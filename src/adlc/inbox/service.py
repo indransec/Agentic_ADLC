@@ -346,6 +346,13 @@ class InboxService:
                 aid: ledger_store.attachments(conn, run_id, aid, int(v["version"]))
                 for aid, v in versions.items()
             }
+            cited: dict[str, list[dict[str, Any]]] = {}
+            for c in ledger_store.citations(conn, run_id):  # 008: of each current version
+                current = versions.get(c["artifact_id"])
+                if current is not None and int(current["version"]) == int(c["version"]):
+                    cited.setdefault(c["artifact_id"], []).append(
+                        {k: c[k] for k in ("row_index", "source", "document", "section")}
+                    )
             waiver = (
                 run_store.load_waiver(conn, run.pending_waiver_id)
                 if run.pending_waiver_id
@@ -368,6 +375,7 @@ class InboxService:
                     "rows": run.artifacts.get(a.id),
                     "version": _version(versions.get(a.id)),
                     "attachments": attachments.get(a.id, []),
+                    "citations": cited.get(a.id, []),
                 }
                 for a in spec_view.artifacts(spec)
             ],

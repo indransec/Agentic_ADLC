@@ -25,6 +25,7 @@ from adlc.agents.output import REVIEW_STATUSES, parse_review
 from adlc.agents.prompts import ChecklistItem
 from adlc.agents.runner import LoopOutcome, RuntimeDeps, outcome_name, record_attempt, run_loop
 from adlc.agents.telemetry import set_attributes
+from adlc.ledger import store as ledger_store
 from adlc.ledger.storage import structured_hash
 from adlc.orchestration import spec_view
 from adlc.orchestration import store as run_store
@@ -87,6 +88,11 @@ class RuntimeReviewer:
                 raise ValueError(f"spec {context.terminal_id}@{run.spec_version} not registered")
             spec = entry.spec
             evidence = read_evidence(conn, run.usecase_id, prerequisite_terminals(spec))
+            # 008: the sources the builder cited are evidence, not its reasoning (SA 7.2 point 5)
+            cited = [
+                {k: c[k] for k in ("artifact_id", "row_index", "source", "document", "section")}
+                for c in ledger_store.citations(conn, context.run_id)
+            ]
             classes = deps.registry.catalogue("data_classes")
             ceiling = resolve_ceiling(
                 conn, run.usecase_id, _ceiling(spec), {} if classes is None else classes.content
@@ -121,6 +127,8 @@ class RuntimeReviewer:
             "evidence": evidence,
             "clarifications": answered,
         }
+        if cited:
+            content["citations"] = cited
         pack = ContextPack(content, structured_hash(content), {})
         started = deps.clock.now()
         ids = {
@@ -149,6 +157,7 @@ class RuntimeReviewer:
                         data_block("artifacts", content["artifacts"]),
                         data_block("control_results", content["control_results"]),
                         data_block("evidence", content["evidence"]),
+                        *([data_block("citations", cited)] if cited else []),
                         data_block("clarifications", content["clarifications"]),
                         review_instruction(items, root_causes),
                     ]

@@ -47,6 +47,7 @@ def test_no_active_specs(h: Harness) -> None:
 def test_pinned_version_survives_a_new_registration(h: Harness) -> None:
     """Spec Edge Cases: a use case keeps its pinned versions (C1)."""
     usecase = h.submit()
+    pinned = h.sql("SELECT version FROM spec.spec_registry WHERE terminal_id = 'T1'")[0][0]
     with h.owner.begin() as conn:
         conn.execute(
             text(
@@ -58,10 +59,10 @@ def test_pinned_version_survives_a_new_registration(h: Harness) -> None:
             text(
                 "INSERT INTO spec.spec_registry (terminal_id, version, status, schema_version, "
                 "spec_yaml, spec_json, content_hash, trigger_events, emitted_events) "
-                "SELECT terminal_id, '1.1.0', 'active', schema_version, spec_yaml, spec_json, "
+                "SELECT terminal_id, '99.0.0', 'active', schema_version, spec_yaml, spec_json, "
                 "content_hash, trigger_events, emitted_events FROM spec.spec_registry "
                 "WHERE terminal_id = 'T1'"
             )
         )
     h.pass_run(h.active(usecase, "T0").run_id, {"risk_tier": "low"})
-    assert h.active(usecase, "T1").spec_version == "1.0.0"
+    assert h.active(usecase, "T1").spec_version == pinned

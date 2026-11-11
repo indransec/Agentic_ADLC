@@ -230,8 +230,8 @@ def test_snapshot_sources_cover_every_root(h: Harness, unused: None) -> None:
         root
         for t in range(10)
         for check in (
-            *spec_view.prerequisites(h.orch.runs.entry(f"T{t}", "1.0.0").spec),
-            *spec_view.controls(h.orch.runs.entry(f"T{t}", "1.0.0").spec),
+            *spec_view.prerequisites(h.orch.runs.registry.entry(f"T{t}").spec),  # type: ignore[union-attr]
+            *spec_view.controls(h.orch.runs.registry.entry(f"T{t}").spec),  # type: ignore[union-attr]
         )
         for root in compile_rule(check.expression).roots
     }

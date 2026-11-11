@@ -1,1 +1,1 @@
-- {file: shared/agents.yaml, op: set, path: /agents/0/implementation, value: model}
+- {file: shared/agents.yaml, op: set, path: /agents/3/implementation, value: model}

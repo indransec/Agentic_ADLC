@@ -2,7 +2,13 @@
 
 from pathlib import Path
 
-from adlc.config.settings import OrchestratorSettings, Settings, UiSettings, env_name
+from adlc.config.settings import (
+    KnowledgeSettings,
+    OrchestratorSettings,
+    Settings,
+    UiSettings,
+    env_name,
+)
 
 ENV_EXAMPLE = Path(__file__).resolve().parents[2] / ".env.example"
 COMPOSE_ONLY = {"POSTGRES_PASSWORD", "ADLC_API_PORT", "ADLC_JAEGER_UI_PORT", "ADLC_UI_PORT"}
@@ -32,6 +38,7 @@ def test_keys_match_settings() -> None:
         set(Settings.model_fields)
         | set(OrchestratorSettings.model_fields)
         | set(UiSettings.model_fields)
+        | set(KnowledgeSettings.model_fields)
     )
     expected = {env_name(name) for name in fields} | COMPOSE_ONLY
     assert set(_entries()) == expected

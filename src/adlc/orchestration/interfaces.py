@@ -49,6 +49,21 @@ class PolicyEngine(Protocol):
 @dataclass(frozen=True)
 class Artifacts:
     artifacts: ArtifactSet
+    citations: tuple["Citation", ...] = ()  # 008: validated against the attempt's retrievals
+
+
+@dataclass(frozen=True)
+class Citation:
+    """A knowledge passage an artifact (or one of its rows) relies on (008 FR-015). The hash and
+    retrieval id come from the retrieval record, never from the model."""
+
+    artifact: str
+    row: int | None
+    source: str
+    document: str
+    section: str
+    content_hash: str
+    retrieval_id: int
 
 
 @dataclass(frozen=True)

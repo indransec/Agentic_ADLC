@@ -1,6 +1,8 @@
 """SQL for the evidence ledger tables (data-model.md), on the caller's connection."""
 
 import json
+from collections.abc import Mapping
+from datetime import datetime
 from typing import Any
 
 from sqlalchemy import Connection, text
@@ -98,6 +100,43 @@ def attachments(
             "AND version = :v ORDER BY file_name, content_hash"
         ),
         {"r": run_id, "a": artifact_id, "v": version},
+    ).mappings()
+    return [dict(r) for r in rows]
+
+
+def insert_citation(
+    conn: Connection, run_id: str, version: int, citation: Mapping[str, Any], now: datetime
+) -> None:
+    """008: a citation an agent gave, bound to the artifact version it supports; the hash and
+    retrieval id were taken from the retrieval record when the output was validated."""
+    conn.execute(
+        text(
+            "INSERT INTO run.artifact_citation (run_id, artifact_id, version, row_index, source, "
+            "document, section, content_hash, knowledge_retrieval_id, cited_at) VALUES (:r, :a, "
+            ":v, :row, :source, :document, :section, :hash, :retrieval, :at)"
+        ),
+        {
+            "r": run_id,
+            "a": citation["artifact"],
+            "v": version,
+            "row": citation.get("row"),
+            "source": citation["source"],
+            "document": citation["document"],
+            "section": citation.get("section") or "",
+            "hash": citation["content_hash"],
+            "retrieval": citation["retrieval_id"],
+            "at": now,
+        },
+    )
+
+
+def citations(conn: Connection, run_id: str) -> list[dict[str, Any]]:
+    rows = conn.execute(
+        text(
+            "SELECT artifact_id, version, row_index, source, document, section, content_hash "
+            "FROM run.artifact_citation WHERE run_id = :r ORDER BY artifact_citation_id"
+        ),
+        {"r": run_id},
     ).mappings()
     return [dict(r) for r in rows]
 

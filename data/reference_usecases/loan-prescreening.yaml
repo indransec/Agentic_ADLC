@@ -1,0 +1,25 @@
+# Reference use case (feature 008, FR-018): high tier, regulated credit decisions.
+id: loan-prescreening
+name: Loan Pre-screening Assistant
+intake_text: >-
+  Our consumer lending team pre-screens about 3,200 personal loan applications a month before full
+  underwriting, and each pre-screen takes an analyst around 25 minutes. We want an assistant that
+  checks each application for completeness, affordability indicators and policy exclusions and
+  writes a short summary of flags with reasons for the credit analyst. The assistant must never
+  decline an application; every credit decision stays with a credit officer and every decline must
+  be explainable to the applicant. The data includes credit bureau reports and income details.
+  Success means pre-screening under 8 minutes with no increase in adverse decisions.
+# The terminal whose review ends the replay (it is not passed).
+until: T2
+answers:
+  business_owner:
+    - "Credit bureau and income data are restricted and owned by the chief credit risk officer."
+  product_owner:
+    - "Every flag needs a reason a credit analyst can explain; no automated declines."
+  any:
+    - "Use the Halcyon policies and process documents in the knowledge sources; meet the parameters you are given; every credit decision stays with a credit officer."
+approver_fields:
+  T0: {risk_tier: high}
+expected:
+  risk_tier: high
+  minimum_outcome: "T2 reached, every mandatory artifact present, every blocking control passing"

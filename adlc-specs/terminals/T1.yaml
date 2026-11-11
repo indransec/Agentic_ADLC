@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T1
     name: Requirements & Outcome
-    version: "1.0.0"
+    version: "2.0.0"
     schema_version: "1.1.0"
     purpose: What exactly must the agent achieve?
     owner_role: adlc_coe
@@ -52,9 +52,9 @@ terminal:
     status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
   playbooks:
     procedures:
-      - {id: PB-T1-01, ref: playbooks/t1-requirements.md, version: "1.0.0"}
-      - {id: PB-T1-02, ref: playbooks/autonomy-levels.md, version: "1.0.0"}
-      - {id: PB-T1-03, ref: playbooks/metric-catalogue.md, version: "1.0.0"}
+      - {id: PB-T1-01, ref: playbooks/t1-requirements.md, version: "1.1.0"}
+      - {id: PB-T1-02, ref: playbooks/autonomy-levels.md, version: "1.1.0"}
+      - {id: PB-T1-03, ref: playbooks/metric-catalogue.md, version: "1.1.0"}
     grounding:
       - {mcp: confluence, scope: "/process-docs, /sops"}
       - {mcp: jira, scope: related epics}

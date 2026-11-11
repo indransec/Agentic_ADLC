@@ -17,7 +17,10 @@ it, behind feature 003's `AgentRunner` and `Reviewer` interfaces. Specification:
 | `limits.py` | Step, token and time limits per tier, with terminal overrides |
 | `runner.py` | `RuntimeAgentRunner` and the bounded model loop shared with the reviewer |
 | `reviewer.py` | `RuntimeReviewer`: independent input, scores, recommendation |
-| `tools.py` | `ToolGate`: every tool call is authorized by feature 004 first |
+| `tools.py` | `ToolGate`: every tool call is authorized by feature 004 first; tools get the run's context (`ToolContext`) and describe themselves to the model |
+| `knowledge.py` | `KnowledgeTool` (one source operation), `knowledge_tools` (from bindings `<source>_<operation>` with permission `mcp:<source>:read`), `McpCaller` (the MCP client) |
+| `citations.py` | `SqlRetrievalLog`: every knowledge result returned to an agent, in `run.knowledge_retrieval` |
+| `replay.py`, `replay_cli.py` | `adlc-replay`: reference use cases through the grounded terminals, from recordings or live, with a quality report |
 | `cost.py` | Cost alerts and cost readers |
 | `store.py` | SQL for `run.model_call` and `run.agent_attempt` |
 | `startup.py` | Refuses to start when a needed tier has no keyed model |
@@ -176,6 +179,45 @@ resource come from the tool binding's `permission` in `agents.yaml`, for example
 - Output reaches the model as a data block.
 - Real tools (MCP servers) arrive with features 008 and 010.
 
+### Knowledge tools (feature 008)
+
+- **Bindings.** An agent gets `<source>_search` and `<source>_read` for each source that its
+  terminal names both in `tool_scopes` and in its grounding entries (FR-002). The model is told
+  each tool's name, description and the arguments it may set.
+- **Scope and class.** `KnowledgeTool` passes on only the model's allowed arguments and adds the
+  terminal's grounding scope and maximum data class from the pinned spec. A source without a
+  grounding entry is not called.
+- **Failures.** An unreachable server (10 s timeout) returns "knowledge source unavailable:
+  <source>" to the agent, with no retry inside the attempt.
+- **Records.** Every result returned is written to `run.knowledge_retrieval` (append-only) before
+  the model sees it.
+- **Startup.** The orchestrator refuses to start when an agent has knowledge tools and
+  `ADLC_KNOWLEDGE_TOKEN` is not set.
+
+## Citations (feature 008)
+
+A builder may add `"citations"` beside `"artifacts"`: `artifact`, optional `row`, `source`,
+`document` and `section`. Citations are optional; each one given must match a retrieval of the
+same attempt, or the answer fails validation and is corrected. The content hash and retrieval id
+come from the retrieval, never from the model. The engine stores them in `run.artifact_citation`
+with the artifact version they support. The run detail (feature 007) and the reviewer's input
+show them; the reviewer never sees the builder's tool calls.
+
+## Replay (feature 008)
+
+```bash
+uv run adlc-replay --recording tests/fixtures/replays          # no provider
+uv run adlc-replay --profile dev --record tests/fixtures/replays # live, and save the replies
+uv run adlc-replay --profile dev --baseline reports/replays/<earlier>
+```
+
+The replay acts as the people of the account file and refuses to run while another orchestrator
+worker is active. Recordings are `<use case>/<agent>.jsonl`, replies only; the agent is recognised
+by its registered prompt. The report (`report.json`, `report.md`) lists, per use case and terminal:
+mandatory artifacts, blocking controls, whether the first attempt was clean, the recommendation
+(and a change against the baseline), clarifications, citations, steps, tokens, cost, and the
+agent, prompt, playbook and model versions.
+
 ## Traces
 
 | Span | Covers | Attributes |
@@ -184,6 +226,8 @@ resource come from the tool binding's `permission` in `agents.yaml`, for example
 | `adlc.agent.attempt` | One build attempt by the runtime | outcome, steps, tokens, corrections, limit reached |
 | `adlc.reviewer.review` | The engine's review step | — |
 | `adlc.agent.review` | One review attempt | as for build attempts |
+| `adlc.agent.tool` | One tool call through the gate (feature 008) | run, use case, terminal |
+| `adlc.agent.retrieval` | Writing a knowledge call's retrieval records (feature 008) | run, terminal |
 | `adlc.model.call` | One gateway request | tier, provider, model, tokens, cost, outcome, fallback, latency |
 
 Attributes come from the allow list in `telemetry.py`, each value at most 200 characters, and

@@ -38,6 +38,17 @@ def _edit(path: Path, pointer: str, value: object) -> None:
         yaml.dump(data, handle)
 
 
+def _version(path: Path) -> str:
+    return str(YAML(typ="safe").load(path.read_text())["terminal"]["metadata"]["version"])
+
+
+def _bump(version: str, part: str) -> str:
+    major, minor, patch = (int(p) for p in version.split("."))
+    if part == "major":
+        return f"{major + 1}.0.0"
+    return f"{major}.{minor}.{patch + 1}"
+
+
 def _count(engine: Engine, sql: str) -> int:
     with engine.connect() as conn:
         return int(conn.execute(text(sql)).scalar_one())
@@ -47,7 +58,7 @@ def test_first_registration_creates_everything(owner_engine: Engine, specs: Path
     started = time.monotonic()
     report = register(specs, owner_engine)
     assert time.monotonic() - started < 30  # SC-005
-    assert report.registered_count == 10 + 16 + 31 + 1  # 006: two catalogues and one prompt
+    assert report.registered_count == 10 + 16 + 31 + 4  # 006 catalogues; 006 and 008 prompts
     assert (
         _count(owner_engine, "SELECT count(*) FROM spec.spec_registry WHERE status='active'") == 10
     )
@@ -55,7 +66,7 @@ def test_first_registration_creates_everything(owner_engine: Engine, specs: Path
         _count(owner_engine, "SELECT count(*) FROM spec.spec_catalogue WHERE status='active'") == 16
     )
     assert _count(owner_engine, "SELECT count(*) FROM spec.playbook_registry") == 31
-    assert _count(owner_engine, "SELECT count(*) FROM spec.prompt_registry") == 1
+    assert _count(owner_engine, "SELECT count(*) FROM spec.prompt_registry") == 4
     assert _count(owner_engine, "SELECT count(*) FROM spec.spec_timeline") == 30
     assert _count(owner_engine, "SELECT count(*) FROM spec.spec_event_route") == 7
 
@@ -64,7 +75,7 @@ def test_second_registration_writes_nothing(owner_engine: Engine, specs: Path) -
     register(specs, owner_engine)
     report = register(specs, owner_engine)
     assert report.registered_count == 0
-    assert report.unchanged_count == 58
+    assert report.unchanged_count == 61
 
 
 def test_changed_content_same_version_refused(owner_engine: Engine, specs: Path) -> None:
@@ -78,8 +89,10 @@ def test_changed_content_same_version_refused(owner_engine: Engine, specs: Path)
 def test_bump_registers_and_deprecates(owner_engine: Engine, specs: Path) -> None:
     register(specs, owner_engine)
     path = specs / "terminals" / "T0.yaml"
+    current = _version(path)
+    patch = _bump(current, "patch")
     _edit(path, "/terminal/metadata/purpose", "Should we do this at all? (reworded)")
-    _edit(path, "/terminal/metadata/version", "1.0.1")
+    _edit(path, "/terminal/metadata/version", patch)
     report = register(specs, owner_engine)
     assert report.registered_count == 1
     with owner_engine.connect() as conn:
@@ -89,14 +102,14 @@ def test_bump_registers_and_deprecates(owner_engine: Engine, specs: Path) -> Non
                 "WHERE terminal_id='T0' ORDER BY version"
             )
         ).all()
-    assert [tuple(r) for r in rows] == [("1.0.0", "deprecated", True), ("1.0.1", "active", False)]
+    assert [tuple(r) for r in rows] == [(current, "deprecated", True), (patch, "active", False)]
 
 
 def test_insufficient_bump_refused(owner_engine: Engine, specs: Path) -> None:
     register(specs, owner_engine)
     path = specs / "terminals" / "T0.yaml"
     _edit(path, "/terminal/outcome_model/pass/route", "lifecycle_closed")
-    _edit(path, "/terminal/metadata/version", "1.0.1")
+    _edit(path, "/terminal/metadata/version", _bump(_version(path), "patch"))
     with pytest.raises(RegistrationRefused, match="major"):
         register(specs, owner_engine)
 
@@ -122,7 +135,7 @@ def test_validation_errors_refused_before_writing(owner_engine: Engine, specs: P
 
 def test_dry_run_leaves_nothing(owner_engine: Engine, specs: Path) -> None:
     report = register(specs, owner_engine, dry_run=True)
-    assert report.registered_count == 58
+    assert report.registered_count == 61
     assert _count(owner_engine, "SELECT count(*) FROM spec.spec_registry") == 0
 
 
@@ -160,7 +173,7 @@ def test_concurrent_registrations_serialise(
     for t in threads:
         t.join()
     assert errors == []
-    assert sorted(results) == [0, 58]
+    assert sorted(results) == [0, 61]
     assert (
         _count(owner_engine, "SELECT count(*) FROM spec.spec_registry WHERE status='active'") == 10
     )

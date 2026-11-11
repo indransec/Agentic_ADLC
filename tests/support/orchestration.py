@@ -15,11 +15,12 @@ from typing import Any
 
 from sqlalchemy import Engine, create_engine, text
 
-from adlc.agents.catalogue import AgentCatalogue
+from adlc.agents.catalogue import AgentCatalogue, load_catalogues
 from adlc.agents.gateway import ModelGateway
+from adlc.agents.knowledge import KnowledgeCaller
 from adlc.agents.reviewer import RuntimeReviewer
 from adlc.agents.runner import RuntimeAgentRunner, RuntimeDeps
-from adlc.agents.wiring import build_runtime
+from adlc.agents.wiring import build_runtime, reviewer_ids
 from adlc.config.settings import DEFAULT_AGENT_LIMITS, AgentLimit
 from adlc.orchestration import routing
 from adlc.orchestration.engine import EngineConfig
@@ -174,6 +175,17 @@ class Harness:
             return list(conn.execute(text(statement), params))
 
 
+def stub_builders(catalogue: AgentCatalogue, reviewers: set[str]) -> AgentCatalogue:
+    """The catalogue with every terminal builder as a stub (no prompt, no tools); reviewers keep
+    their implementation."""
+    return AgentCatalogue(
+        {
+            aid: a if aid in reviewers else replace(a, implementation="stub", prompt=None, tools=())
+            for aid, a in catalogue.agents.items()
+        }
+    )
+
+
 @contextmanager
 def harness(
     db: PlatformDatabase,
@@ -190,6 +202,8 @@ def harness(
     config: EngineConfig | None = None,
     reviewer_mode: str = "stub",
     tools: Mapping[str, Any] | None = None,
+    real_agents: bool = False,
+    knowledge_caller: KnowledgeCaller | None = None,
 ) -> Iterator[Harness]:
     with fresh_database(db) as fresh:
         app = create_engine(fresh.app_url)
@@ -204,7 +218,11 @@ def harness(
             app, registry, clock, synthetic_dir=synthetic_dir
         )
         # 006: stub terminal agents run through the runtime (FR-024); tests script models with
-        # a FakeGateway and switch agents to implementation: model with ``agents``.
+        # a FakeGateway and switch agents to implementation: model with ``agents``. Since 008 the
+        # registered T0-T2 agents are model agents: unless ``real_agents`` (or ``agents``) is
+        # given, every terminal builder runs as a stub, as the 003-007 suites expect.
+        if agents is None and not real_agents:
+            agents = stub_builders(load_catalogues(registry, "default")[1], reviewer_ids(app))
         runtime = build_runtime(
             app,
             registry,
@@ -219,6 +237,7 @@ def harness(
             agents=agents,
             check_keys=False,
             tools=tools,
+            knowledge_caller=knowledge_caller,
         )
         orch = build_orchestrator(
             app,

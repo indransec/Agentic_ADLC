@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T2
     name: Architecture & Design
-    version: "1.0.0"
+    version: "2.0.0"
     schema_version: "1.1.0"
     purpose: How should the agent operate?
     owner_role: adlc_coe
@@ -54,9 +54,9 @@ terminal:
     status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
   playbooks:
     procedures:
-      - {id: PB-T2-01, ref: playbooks/t2-architecture.md, version: "1.0.0"}
-      - {id: PB-T2-02, ref: playbooks/agentic-patterns.md, version: "1.0.0"}
-      - {id: PB-T2-03, ref: playbooks/reference-architectures.md, version: "1.0.0"}
+      - {id: PB-T2-01, ref: playbooks/t2-architecture.md, version: "1.1.0"}
+      - {id: PB-T2-02, ref: playbooks/agentic-patterns.md, version: "1.1.0"}
+      - {id: PB-T2-03, ref: playbooks/reference-architectures.md, version: "1.1.0"}
     grounding:
       - {mcp: arch_repo, scope: "reference architectures, ADRs"}
       - {mcp: mcp_registry, scope: approved MCP servers and tools}
