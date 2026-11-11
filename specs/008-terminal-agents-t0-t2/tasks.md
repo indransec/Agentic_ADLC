@@ -160,50 +160,50 @@ US5 P2), then polish.
 
 ## Phase 4: User Story 1 – T0 drafts the intake (P1) 🎯 MVP
 
-- [ ] T020 [US1] Write failing tests in `tests/integration/agents/test_t0_agent.py`, with scripted `FakeTransport` replies:
+- [X] T020 [US1] Write failing tests in `tests/integration/agents/test_t0_agent.py`, with scripted `FakeTransport` replies:
   - T0 builds with knowledge calls and reaches sign-off with every mandatory artifact in its declared columns;
   - retrievals are recorded and the given citations are stored with their content hash;
   - the run detail (007) lists the citations;
   - a missing data owner leads to a clarification addressed to `business_owner`, with "looked in", and the answer resumes the same run;
   - attempts record the prompt and playbook hashes;
   - a citation keeps the content hash of the text that was read, even after the document changes.
-- [ ] T021 [US1] Make T0 pass end to end. This should only need content and wiring fixes; any runtime change must stay generic.
+- [X] T021 [US1] Make T0 pass end to end. This should only need content and wiring fixes; any runtime change must stay generic.
 
 ---
 
 ## Phase 5: User Story 2 – T1 builds on T0 (P1)
 
-- [ ] T022 [US2] Write failing tests in `tests/integration/agents/test_t1_agent.py`:
+- [X] T022 [US2] Write failing tests in `tests/integration/agents/test_t1_agent.py`:
   - T1's context holds T0's evidence;
   - its blocking controls pass with the scripted replies;
   - a failed control (non-numeric KPI target) reaches the retry with its reason;
   - a rework comment and root cause are in the next build's context.
-- [ ] T023 [US2] Make T1 pass end to end (content and wiring only).
+- [X] T023 [US2] Make T1 pass end to end (content and wiring only).
 
 ---
 
 ## Phase 6: User Story 3 – T2 designs against standards (P1)
 
-- [ ] T024 [US3] Write failing tests in `tests/integration/agents/test_t2_agent.py`:
+- [X] T024 [US3] Write failing tests in `tests/integration/agents/test_t2_agent.py`:
   - T2 maps every T1 requirement to a decision;
   - tools are registered or flagged;
   - all T2 blocking controls pass;
   - it cites an architecture repository document;
   - it has no SharePoint tool (no grounding entry, FR-002).
-- [ ] T025 [US3] Make T2 pass end to end (content and wiring only).
+- [X] T025 [US3] Make T2 pass end to end (content and wiring only).
 
 ---
 
 ## Phase 7: User Story 4 – Governance (P1)
 
-- [ ] T026 [US4] Write failing tests in `tests/integration/agents/test_governance.py`:
+- [X] T026 [US4] Write failing tests in `tests/integration/agents/test_governance.py`:
   - T0 asking for `arch_repo_search` is refused by the policy engine, the refusal reaches the agent and the decision log has it, and the server receives no call (SC-003);
   - after an agent reads the injection document, its artifacts, tool calls and the run's states match the run without the injection (SC-004);
   - the `confidential` document is never returned to T0–T2;
   - a citation to a document not retrieved in the attempt is corrected;
   - an answer with a status key is corrected;
   - the knowledge server being down gives the agent "knowledge source unavailable", and the run continues or clarifies.
-- [ ] T027 [US4] Fix whatever T026 shows (generic code only).
+- [X] T027 [US4] Fix whatever T026 shows (generic code only).
 
 ---
 
