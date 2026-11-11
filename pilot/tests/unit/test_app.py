@@ -72,7 +72,7 @@ def real(transport: httpx.MockTransport) -> RealModel:
 
 
 def test_real_model_answer_and_fallbacks() -> None:
-    incident = Incident(**INCIDENT)
+    incident = Incident.model_validate(INCIDENT)
     good = real(
         reply(
             {
