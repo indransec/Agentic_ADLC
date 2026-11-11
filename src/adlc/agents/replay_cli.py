@@ -35,6 +35,7 @@ from adlc.config.settings import OrchestratorSettings
 from adlc.db.engine import app_engine
 from adlc.identity.accounts import load_accounts
 from adlc.identity.catalogue import load_role_ids
+from adlc.observability.tracing import setup_process_tracing
 from adlc.orchestration import store
 from adlc.orchestration.engine import EngineConfig
 from adlc.orchestration.interfaces import SystemClock
@@ -45,6 +46,8 @@ from adlc.policy.directory import AccountFileDirectory
 from adlc.policy.factory import build_policy_engine
 from adlc.policy.synthetic import load_synthetic_artifacts
 from adlc.spec_toolkit.registry import SqlSpecRegistry
+
+SERVICE_NAME = "adlc-replay"
 
 
 class SwitchGateway:
@@ -70,6 +73,7 @@ def run_cli(
     recording: Path | None,
 ) -> Report:
     settings = load_settings_or_exit(OrchestratorSettings)
+    provider = setup_process_tracing(SERVICE_NAME, settings)  # spans go to the same collector
     engine = app_engine(settings)
     with engine.connect() as conn:
         beat = store.last_beat(conn)
@@ -163,4 +167,5 @@ def run_cli(
         results.append(replayer.run(ref))
         if capture is not None and record is not None:
             capture.save(record / ref.id)
+    provider.force_flush()
     return Report("recording" if recording else "live", chosen, results)
