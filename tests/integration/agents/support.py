@@ -17,6 +17,7 @@ BUNDLE = load_bundle(SPECS)
 MODELS, AGENTS = load_catalogues(InMemorySpecRegistry.from_bundle(BUNDLE), "default")
 PRIMARY = MODELS.entries("reasoning")[0].model
 T1_AGENT = "t1-requirements-agent"
+REVIEWER = "common-terminal-reviewer"
 GOOD = json.dumps({"artifacts": load_synthetic_artifacts(SYNTHETIC)["T1"]})
 BAD = json.dumps({"artifacts": {"kpis": [{"kpi": "x"}]}})
 
@@ -30,7 +31,11 @@ def _model_t1() -> AgentCatalogue:
                 **a,
                 "implementation": "model",
                 "prompt": {"id": "common-terminal-reviewer", "version": "1.0.0"},
+                "tools": [],
             }
+        elif a.get("prompt", {}).get("id") != REVIEWER:
+            # 008: other builders (T0 and T2 are model agents now) stay stubs in these tests.
+            a = {**a, "implementation": "stub", "prompt": None, "tools": []}
         agents.append(a)
     return AgentCatalogue.from_content({"agents": agents})
 

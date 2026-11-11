@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T0
     name: Intake & Qualification
-    version: "1.0.0"
+    version: "2.0.0"
     schema_version: "1.1.0"
     purpose: Should we do this at all?
     owner_role: adlc_coe
@@ -47,9 +47,9 @@ terminal:
     status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
   playbooks:
     procedures:
-      - {id: PB-T0-01, ref: playbooks/t0-intake.md, version: "1.0.0"}
-      - {id: PB-T0-02, ref: playbooks/agentic-suitability-rubric.md, version: "1.0.0"}
-      - {id: PB-T0-03, ref: playbooks/risk-classification.md, version: "1.0.0"}
+      - {id: PB-T0-01, ref: playbooks/t0-intake.md, version: "1.1.0"}
+      - {id: PB-T0-02, ref: playbooks/agentic-suitability-rubric.md, version: "1.1.0"}
+      - {id: PB-T0-03, ref: playbooks/risk-classification.md, version: "1.1.0"}
     grounding:
       - {mcp: confluence, scope: /business-capabilities}
       - {mcp: sharepoint, scope: "/strategy, /policies"}

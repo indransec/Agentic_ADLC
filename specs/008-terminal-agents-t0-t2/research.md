@@ -156,16 +156,17 @@ sources. The retrieval log records nothing for a failed call; the span records t
   and `t2-architect-agent.md`. Each has front matter (id, version, agent) and a body stating the
   role, method (use the playbooks, ground and cite, build on evidence, ask instead of guessing,
   address the role that owns the fact) and the data rule.
-- **Agents catalogue:** goes to 1.1.0. The T0–T2 agents become `implementation: model`, with a
+- **Agents catalogue:** goes to 2.0.0 (changed values are a major change under rule V-24). The T0–T2 agents become `implementation: model`, with a
   prompt and knowledge tool bindings (R-03).
 - **Playbooks:** the nine playbooks get real procedures, each with at least: purpose; the steps
   per artifact it covers; the scales or criteria it applies (for example the suitability score
   scale and the risk tier criteria); and when to ask a clarification. Changed content needs a new version (the
   registry refuses changed content under an existing version), so each moves to 1.1.0 with
   `status: active`.
-- **Terminal specs:** the T0, T1 and T2 specs pin their playbook versions, so they move to 1.1.0,
+- **Terminal specs:** the T0, T1 and T2 specs pin their playbook versions, so they move to 2.0.0
+  (a changed value is a major change under rule V-24),
   referencing the new playbooks. Nothing else in the specs changes.
-- **Pinned use cases:** new use cases pin 1.1.0. A use case already pinned to 1.0.0 cannot build
+- **Pinned use cases:** new use cases pin 2.0.0. A use case already pinned to 1.0.0 cannot build
   T0–T2 again, because the 1.0.0 playbook text is no longer on disk. That is acceptable: there are
   no production use cases yet, and dev data is reset (quickstart).
 

@@ -7,7 +7,7 @@
 ## Summary
 
 The T0, T1 and T2 agents become model agents. This is content plus registry entries: three prompts,
-nine real playbooks, the agents catalogue at 1.1.0, and the T0–T2 specs at 1.1.0 (playbook
+nine real playbooks, the agents catalogue at 2.0.0, and the T0–T2 specs at 2.0.0 (playbook
 references only).
 
 They ground on a new **knowledge MCP server**, a separate `knowledge` container on the MCP Python
@@ -154,10 +154,10 @@ src/adlc/inbox/service.py           # run detail: citations
 src/adlc/ui/pages/run.py            # Citations section (plain text)
 src/adlc/config/settings.py         # KnowledgeSettings (server), knowledge URL and token (runtime)
 db/migrations/versions/0008_terminal_agents.py
-adlc-specs/shared/agents.yaml       # 1.1.0
+adlc-specs/shared/agents.yaml       # 2.0.0
 adlc-specs/prompts/t0-intake-agent.md  t1-requirements-agent.md  t2-architect-agent.md
 adlc-specs/playbooks/*.md           # nine playbooks at 1.1.0
-adlc-specs/terminals/T0.yaml T1.yaml T2.yaml   # 1.1.0 (playbook refs)
+adlc-specs/terminals/T0.yaml T1.yaml T2.yaml   # 2.0.0 (playbook refs; V-24 major)
 data/knowledge/<source>/...         # synthetic enterprise knowledge set
 data/reference_usecases/*.yaml      # three reference use cases
 deploy/compose.yaml                 # knowledge service; orchestrator settings

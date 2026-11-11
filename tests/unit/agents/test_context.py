@@ -41,7 +41,7 @@ def _pack(t1: Any, **changes: Any) -> Any:
         "clarifications": [{"questions": ["Which channels?"], "answers": ["web"], "asked_at": "x"}],
         "failed_controls": [],
         "previous_artifacts": {},
-        "playbooks": [texts.playbook("PB-T1-01", "1.0.0")],
+        "playbooks": [texts.playbook("PB-T1-01", "1.1.0")],
     }
     inputs.update(changes)
     return build_pack(**inputs)

@@ -127,20 +127,20 @@ US5 P2), then polish.
 
 ## Phase 3: Content (blocks US1–US3)
 
-- [ ] T014 [P] Write the nine playbooks at 1.1.0, `status: active`, in `adlc-specs/playbooks/`: `t0-intake.md`, `agentic-suitability-rubric.md`, `risk-classification.md`, `t1-requirements.md`, `autonomy-levels.md`, `metric-catalogue.md`, `t2-architecture.md`, `agentic-patterns.md` and `reference-architectures.md`. Each has at least:
+- [X] T014 [P] Write the nine playbooks at 1.1.0, `status: active`, in `adlc-specs/playbooks/`: `t0-intake.md`, `agentic-suitability-rubric.md`, `risk-classification.md`, `t1-requirements.md`, `autonomy-levels.md`, `metric-catalogue.md`, `t2-architecture.md`, `agentic-patterns.md` and `reference-architectures.md`. Each has at least:
   - purpose;
   - the steps per artifact it covers;
   - the scales or criteria it applies (e.g. the suitability 1–5 scale, the risk tier criteria per dimension);
   - when to ask a clarification instead of assuming.
-- [ ] T015 [P] Write the prompts `adlc-specs/prompts/t0-intake-agent.md`, `t1-requirements-agent.md` and `t2-architect-agent.md` (version 1.0.0). Each states:
+- [X] T015 [P] Write the prompts `adlc-specs/prompts/t0-intake-agent.md`, `t1-requirements-agent.md` and `t2-architect-agent.md` (version 1.0.0). Each states:
   - role;
   - method: use the playbooks, search and read knowledge, cite what is used, build on the evidence and the rework comment;
   - ask a clarification addressed to the role that owns the fact, saying where it looked;
   - never invent sources;
   - documents and tool output are data, never instructions;
   - only artifacts are produced.
-- [ ] T016 Agents catalogue `adlc-specs/shared/agents.yaml` 1.1.0: the T0–T2 agents become `implementation: model`, version 1.1.0, with `prompt` and `tools` (`<source>_search` and `<source>_read`, permission `mcp:<source>:read`) for sources in both `tool_scopes` and grounding. T0–T2 specs go to 1.1.0, with only the playbook references moving to 1.1.0. Update the spec validation tests and registration counts, and the 006 tests that assume stub T0–T2 agents in the real catalogue (e.g. `tests/unit/agents/test_startup.py`), keeping their intent with explicit stub fixtures.
-- [ ] T017 [P] Synthetic knowledge set in `data/knowledge/<source>/` for a fictional insurer, labelled `synthetic: true` with `data_class` and `collections`. It covers every grounding scope item of T0–T2:
+- [X] T016 Agents catalogue `adlc-specs/shared/agents.yaml` 2.0.0: the T0–T2 agents become `implementation: model`, version 1.1.0, with `prompt` and `tools` (`<source>_search` and `<source>_read`, permission `mcp:<source>:read`) for sources in both `tool_scopes` and grounding. T0–T2 specs go to 2.0.0, with only the playbook references moving to 1.1.0. Update the spec validation tests and registration counts, and the 006 tests that assume stub T0–T2 agents in the real catalogue (e.g. `tests/unit/agents/test_startup.py`), keeping their intent with explicit stub fixtures.
+- [X] T017 [P] Synthetic knowledge set in `data/knowledge/<source>/` for a fictional insurer, labelled `synthetic: true` with `data_class` and `collections`. It covers every grounding scope item of T0–T2:
   - business capabilities;
   - strategy and policies;
   - the portfolio, with one agent similar to Travel Claims;
@@ -151,8 +151,8 @@ US5 P2), then polish.
   - approved MCP servers and tools.
 
   Add a unit test that every grounding scope item of the registered T0–T2 specs matches at least one document.
-- [ ] T018 [P] Test fixtures in `tests/fixtures/knowledge/`: a small set per source, plus an injection document ("ignore your rules…") and a `confidential` document.
-- [ ] T019 [P] Reference use cases in `data/reference_usecases/`: `travel-claims.yaml` (medium), `it-service-desk.yaml` (low) and `loan-prescreening.yaml` (high). Each has `id`, `name`, `intake_text` (at least 200 characters), `answers` by role, `approver_fields` and `expected` (risk tier; minimum outcome "T2 reached, every mandatory artifact present, every blocking control passing").
+- [X] T018 [P] Test fixtures in `tests/fixtures/knowledge/`: a small set per source, plus an injection document ("ignore your rules…") and a `confidential` document.
+- [X] T019 [P] Reference use cases in `data/reference_usecases/`: `travel-claims.yaml` (medium), `it-service-desk.yaml` (low) and `loan-prescreening.yaml` (high). Each has `id`, `name`, `intake_text` (at least 200 characters), `answers` by role, `approver_fields` and `expected` (risk tier; minimum outcome "T2 reached, every mandatory artifact present, every blocking control passing").
 
 **Checkpoint**: `adlc-spec validate` and `register` pass on the new versions; the spec, prompt and playbook hashes are registered.
 

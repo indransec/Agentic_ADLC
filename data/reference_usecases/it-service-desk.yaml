@@ -1,0 +1,21 @@
+# Reference use case (feature 008, FR-018): low tier, internal data only.
+id: it-service-desk
+name: IT Service Desk Triage
+intake_text: >-
+  The IT service desk receives about 14,000 tickets a month from our 6,000 employees. First-line
+  analysts read each ticket, choose a category and priority and route it to one of 18 resolver
+  groups, and 22% of tickets are reassigned at least once because they were routed to the wrong
+  group. We want an assistant that proposes the category, priority and resolver group for each new
+  ticket and drafts the first reply for the analyst to send. Analysts keep the final decision, and
+  security tickets must never be closed automatically. Success means fewer than 10% reassignments
+  and first assignment within 15 minutes.
+answers:
+  business_owner:
+    - "Tickets are internal data owned by the IT operations director; personal data is masked."
+  product_owner:
+    - "Analysts approve every reply; the assistant never closes tickets."
+approver_fields:
+  T0: {risk_tier: low}
+expected:
+  risk_tier: low
+  minimum_outcome: "T2 reached, every mandatory artifact present, every blocking control passing"

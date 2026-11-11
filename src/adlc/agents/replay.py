@@ -1,4 +1,4 @@
-"""``adlc-replay``: replays the reference use cases through T0-T2 (feature 008, task T029)."""
+"""``adlc-replay``: replays the reference use cases through the grounded terminals (008 T029)."""
 
 import typer
 

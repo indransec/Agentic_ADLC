@@ -14,7 +14,12 @@ def test_repository_catalogues_have_no_errors() -> None:
     bundle = load_bundle(SPECS)
     errors = [f for f in validate(Context(bundle)) if f.severity == "error"]
     assert errors == []
-    assert [p.data["id"] for p in bundle.prompts.values()] == ["common-terminal-reviewer"]
+    assert sorted(p.data["id"] for p in bundle.prompts.values()) == [
+        "common-terminal-reviewer",
+        "t0-intake-agent",
+        "t1-requirements-agent",
+        "t2-architect-agent",
+    ]
 
 
 def test_profiles_order_and_data_class() -> None:
@@ -31,8 +36,23 @@ def test_profiles_order_and_data_class() -> None:
         }
 
 
-def test_every_terminal_agent_is_a_stub_until_008_and_the_reviewer_is_a_model() -> None:
-    agents = load_bundle(SPECS).catalogue_data("agents")["agents"]
-    implementations = {a["id"]: a["implementation"] for a in agents}
-    assert implementations.pop("common-terminal-reviewer") == "model"
-    assert set(implementations.values()) == {"stub"} and len(implementations) == 10
+def test_t0_to_t2_are_grounded_models_and_the_rest_stubs() -> None:
+    """008: T0-T2 agents are model agents with a prompt and knowledge tools for exactly the
+    sources in both their terminal's tool scopes and grounding (FR-002); T3-T9 stay stubs."""
+    bundle = load_bundle(SPECS)
+    agents = {a["id"]: a for a in bundle.catalogue_data("agents")["agents"]}
+    assert agents.pop("common-terminal-reviewer")["implementation"] == "model"
+    terminals = {
+        t.data["terminal"]["actors"]["agent"]["id"]: t.data["terminal"]
+        for t in bundle.terminals.values()
+    }
+    models = {aid for aid, a in agents.items() if a["implementation"] == "model"}
+    assert len(models) == 3 and len(agents) == 10
+    for aid in models:
+        terminal = terminals[aid]
+        scoped = {s.split(":")[1] for s in terminal["authorities"]["tool_scopes"]}
+        grounded = {g["mcp"] for g in terminal["playbooks"]["grounding"]}
+        bound = {t["permission"].split(":")[1] for t in agents[aid]["tools"]}
+        assert bound == scoped & grounded, aid
+        assert agents[aid]["prompt"]["id"] == aid
+    assert all(not a["tools"] for aid, a in agents.items() if aid not in models)

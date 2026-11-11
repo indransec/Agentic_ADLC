@@ -20,7 +20,7 @@ citations given, and the agent, prompt and playbook hashes.
 
 ```bash
 make up                                      # adds the knowledge container
-uv run adlc-spec register adlc-specs         # registers T0–T2 1.1.0, prompts and playbooks
+uv run adlc-spec register adlc-specs         # registers T0–T2 2.0.0, prompts and playbooks
 open http://localhost:8501
 ```
 
@@ -52,4 +52,4 @@ uv run adlc-replay --profile dev --baseline <offline report dir>
 ## 3. Reset after the spec change
 
 Use cases pinned to T0–T2 1.0.0 cannot rebuild those terminals (research R-08). Start new use cases
-after registering 1.1.0.
+after registering 2.0.0.

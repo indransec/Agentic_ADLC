@@ -49,10 +49,10 @@ Index: `(run_id, artifact_id, version)`.
 
 | Item | Change |
 | --- | --- |
-| `adlc-specs/shared/agents.yaml` | 1.1.0. T0–T2 agents become `implementation: model`, `version: 1.1.0`, with `prompt` and `tools` (`<source>_search` and `<source>_read`, permission `mcp:<source>:read`) for the sources in both `tool_scopes` and the grounding entries |
+| `adlc-specs/shared/agents.yaml` | 2.0.0. T0–T2 agents become `implementation: model`, `version: 1.1.0`, with `prompt` and `tools` (`<source>_search` and `<source>_read`, permission `mcp:<source>:read`) for the sources in both `tool_scopes` and the grounding entries |
 | `adlc-specs/prompts/t0-intake-agent.md`, `t1-requirements-agent.md`, `t2-architect-agent.md` | New, version 1.0.0 |
 | Nine playbooks (T0–T2) | 1.1.0, `status: active`, real procedures |
-| `adlc-specs/terminals/T0.yaml`, `T1.yaml`, `T2.yaml` | 1.1.0. The playbook references move to 1.1.0; nothing else changes |
+| `adlc-specs/terminals/T0.yaml`, `T1.yaml`, `T2.yaml` | 2.0.0 (a changed value is a major change, rule V-24). The playbook references move to 1.1.0; nothing else changes |
 | Builder output (feature 006) | Optional `citations: [{artifact, row?, source, document, section}]` beside `artifacts` |
 | Agent attempt (feature 006) | Unchanged columns; retrievals and citations link by run and attempt |
 | Run detail (feature 007) | `citations` per artifact |
