@@ -205,10 +205,10 @@ Test tasks come first in each phase and must fail before their implementation.
 
 ## Phase 7: User Story 5 – Evidence from the application (P2)
 
-- [ ] T028 [P] [US5] Write failing tests in `tests/integration/api/test_evidence.py` and `tests/integration/ui/test_evidence.py`:
+- [X] T028 [P] [US5] Write failing tests in `tests/integration/api/test_evidence.py` and `tests/integration/ui/test_evidence.py`:
   - the timeline, checks, versions and ledger reference are in the run detail;
   - `POST /usecases/{id}/verify` returns the report and records the run under the account.
-- [ ] T029 [US5] Implement the verify route and the evidence sections in `pages/run.py` and `pages/usecases.py`.
+- [X] T029 [US5] Implement the verify route and the evidence sections in `pages/run.py` and `pages/usecases.py`.
 
 ---
 

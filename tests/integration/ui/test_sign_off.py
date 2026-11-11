@@ -18,6 +18,7 @@ SECTIONS = [
     "Waiver",
     "Cost",
     "Activity",
+    "Evidence",
     "Decision",
 ]
 

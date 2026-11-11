@@ -64,3 +64,11 @@ def journey(api: ApiClient, usecase_id: str) -> None:
         if st.button("Open", key="open_run"):
             navigate("Run", run_id=pick)
     field("Total cost (USD)", data["cost"]["total"].get("cost_usd"))
+    st.subheader("Evidence")
+    if st.button("Verify the ledger for this use case", key="verify"):
+        report = api.post(f"/usecases/{usecase_id}/verify")
+        if report["verified"]:
+            st.success(f"Verified: {report['records_checked']} records, no breaks")
+        else:
+            st.error(f"{len(report['breaks'])} break(s) found")
+            table(report["breaks"])

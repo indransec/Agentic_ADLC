@@ -169,6 +169,17 @@ def sections(data: dict[str, Any]) -> None:
     st.subheader("Activity")
     table(data["timeline"])
 
+    st.subheader("Evidence")
+    st.caption("Checks")
+    table(data["checks"])
+    st.caption("Checklist results")
+    table(data["checklist_results"] or [])
+    st.caption("Artifact versions")
+    table([{"artifact": a["id"], **(a["version"] or {})} for a in data["artifacts"]])
+    st.caption("Ledger record")
+    record = data["ledger_record"]
+    st.text("(not yet recorded: the run is open)" if record is None else str(record))
+
 
 def decision_form(api: ApiClient, data: dict[str, Any], seen: int) -> None:
     form = data["form"]

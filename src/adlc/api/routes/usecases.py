@@ -6,6 +6,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
 
 from adlc.api.deps import ActorDep, ServicesDep, traced
+from adlc.api.errors import NotFound
 
 router = APIRouter(prefix="/usecases")
 
@@ -28,6 +29,15 @@ def list_usecases(
     actor: ActorDep, services: ServicesDep, mine: bool = False
 ) -> list[dict[str, Any]]:
     return services.inbox.usecases(actor, mine)
+
+
+@router.post("/{usecase_id}/verify")
+def verify(usecase_id: str, actor: ActorDep, services: ServicesDep) -> dict[str, Any]:
+    """Any signed-in person may verify a use case's chain; the run is recorded under them."""
+    traced(usecase_id=usecase_id)
+    if services.orchestration.get_usecase(usecase_id) is None:
+        raise NotFound(f"no use case {usecase_id}")
+    return services.ledger.verify(actor, usecase_id).as_dict()
 
 
 @router.get("/{usecase_id}")
