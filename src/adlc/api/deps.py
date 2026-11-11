@@ -5,9 +5,9 @@ never advances runs: the orchestrator worker does. It gets stub agent and review
 satisfy the engine's constructor.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from functools import cached_property
-from typing import Annotated
+from typing import TYPE_CHECKING, Annotated
 
 from fastapi import Depends, Request
 from opentelemetry import trace
@@ -19,23 +19,27 @@ from adlc.identity.protocol import Person
 from adlc.ledger.service import LedgerService
 from adlc.ledger.storage import FileStore, LedgerContentStore
 from adlc.orchestration.engine import EngineConfig, PostgresTerminalRun
-from adlc.orchestration.interfaces import SystemClock
+from adlc.orchestration.interfaces import Clock, SystemClock
 from adlc.orchestration.service import Actor, OrchestratorService
 from adlc.orchestration.stubs import StubAgent, StubReviewer
 from adlc.policy.directory import AccountFileDirectory
 from adlc.policy.factory import build_policy_engine
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 
+if TYPE_CHECKING:
+    from adlc.inbox.service import InboxService
+
 
 @dataclass
 class Services:
     settings: Settings
     engine: Engine
+    clock: Clock = field(default_factory=SystemClock)  # tests share the harness clock
 
     @cached_property
     def runs(self) -> PostgresTerminalRun:
         registry = SqlSpecRegistry(self.engine)
-        clock = SystemClock()
+        clock = self.clock
         policy = build_policy_engine(
             self.engine,
             registry,
@@ -52,6 +56,12 @@ class Services:
     @cached_property
     def orchestration(self) -> OrchestratorService:
         return OrchestratorService(self.runs, self.settings.deadletter_role or "")
+
+    @cached_property
+    def inbox(self) -> "InboxService":
+        from adlc.inbox.service import InboxService  # noqa: PLC0415 - avoids an import cycle
+
+        return InboxService(self.runs, self.ledger, self.settings.deadletter_role)
 
     @cached_property
     def ledger(self) -> LedgerService:

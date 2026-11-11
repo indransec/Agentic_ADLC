@@ -59,7 +59,7 @@ journey within one orchestrator round.
 
 1. **Given** a signed-in business owner, **When** they submit a name and description, **Then**
    the use case is created and T0 opens. The use case is listed under **My use cases**.
-2. **Given** a person without the role allowed to submit (per T0's sign-off rule), **When**
+2. **Given** a person without the accountable role of the terminals a submission opens, **When**
    they submit, **Then** the request is refused with the reason.
 3. **Given** a use case with closed and open runs, **When** its journey is opened, **Then** it
    lists each run with:
@@ -263,8 +263,9 @@ records checked.
 **Use cases and journey**
 
 - **FR-004**: A signed-in person MUST be able to submit a use case (name of 1–200 characters,
-  description of 1–20,000 characters). The submitter must hold a role allowed by T0's sign-off
-  rule, as feature 003 already checks.
+  description of 1–20,000 characters). The submitter must hold the accountable role of the
+  terminals a submission opens (T0's business owner, read from the registered specs). This rule
+  is added to feature 003's submit operation, so every channel enforces it.
 - **FR-005**: **My use cases** MUST list the use cases the person submitted or holds a role in.
   The journey of a use case MUST list its runs with:
   - terminal, run number, state and final status;

@@ -89,22 +89,22 @@ Test tasks come first in each phase and must fail before their implementation.
 
 ### Tests first
 
-- [ ] T010 [P] [US1] Write failing API tests in `tests/integration/api/test_usecases.py`:
+- [X] T010 [P] [US1] Write failing API tests in `tests/integration/api/test_usecases.py`:
   - `POST /usecases` opens T0 (201 with an id);
   - a person not allowed by T0's rule is refused (403);
   - input limits (422);
   - `GET /usecases?mine=true` lists the submitter's use cases and those where the person holds a role;
   - `GET /usecases/{id}` returns runs, summary and cost;
   - every operation answers 401 without a session (SC-006).
-- [ ] T011 [P] [US1] Write failing UI tests in `tests/integration/ui/test_intake.py` (AppTest):
+- [X] T011 [P] [US1] Write failing UI tests in `tests/integration/ui/test_intake.py` (AppTest):
   - sign-in, then the intake form submits and shows the new use case's journey with T0;
   - sign-out clears the token;
   - an expired session returns to sign-in.
 
 ### Implementation
 
-- [ ] T012 [US1] Implement `src/adlc/api/routes/usecases.py` (contracts/api.md: use cases).
-- [ ] T013 [US1] Implement the UI base and the first page:
+- [X] T012 [US1] Implement `src/adlc/api/routes/usecases.py` (contracts/api.md: use cases).
+- [X] T013 [US1] Implement the UI base and the first page:
   - `src/adlc/ui/client.py`: `ApiClient` (httpx; token; typed errors; injectable through session state);
   - `src/adlc/ui/render.py`: plain-text helpers, tables, error display;
   - `src/adlc/ui/app.py`: sign-in, navigation, sign-out;

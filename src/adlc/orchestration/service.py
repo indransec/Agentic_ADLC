@@ -43,6 +43,9 @@ __all__ = [
 SUBMIT_REASON = "pinned at submit"
 
 
+SUBMITTED_EVENT = "usecase.submitted"
+
+
 class NotAuthorised(Exception):
     pass
 
@@ -103,6 +106,9 @@ class OrchestratorService:
         self._human(actor)
         if not name.strip() or len(name) > 200:
             raise InvalidDecision("name must be 1 to 200 characters")
+        allowed = self.submitter_roles()
+        if allowed and not actor.roles & allowed:
+            raise NotAuthorised(f"submitting a use case needs one of {sorted(allowed)}")
         with self.runs.engine.begin() as conn:
             versions = store.active_spec_versions(conn)
             if not versions:
@@ -114,7 +120,7 @@ class OrchestratorService:
             store.insert_event(
                 conn,
                 event_id=ids.uuid7(),
-                event_type="usecase.submitted",
+                event_type=SUBMITTED_EVENT,
                 usecase_id=usecase,
                 correlation_id=ids.correlation_id(usecase),
                 causation_run_id=None,
@@ -122,6 +128,16 @@ class OrchestratorService:
                 now=self._now,
             )
         return usecase
+
+    def submitter_roles(self) -> frozenset[str]:
+        """007: the accountable roles of the terminals a submission opens (SA 8.1: the business
+        owner submits), read from the registered specs."""
+        roles: set[str] = set()
+        for ref in self.runs.registry.terminals_opened_by(SUBMITTED_EVENT):
+            entry = self.runs.registry.entry(ref.terminal_id, ref.version)
+            if entry is not None:
+                roles |= spec_view.accountable_roles(entry.spec)
+        return frozenset(roles)
 
     def get_usecase(self, usecase_id: str) -> UseCaseRow | None:
         with self.runs.engine.connect() as conn:
