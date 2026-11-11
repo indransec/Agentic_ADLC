@@ -125,13 +125,13 @@ then polish.
 
 ## Phase 5: User Story 3 – Synthetic incidents (P1)
 
-- [ ] T016 [P] [US3] Write failing tests in `pilot/tests/unit/test_incidents.py`:
+- [X] T016 [P] [US3] Write failing tests in `pilot/tests/unit/test_incidents.py`:
   - the same seed and size give identical files;
   - every category, priority and edge case is present (`unknown_service`, `multi_service`, `security`, `missing_details`, `duplicate`, `out_of_scope`);
   - every incident has `synthetic: true` and expected team, category and priority;
   - no planted data by default, and planted data only in the requested share, marked;
   - the simulated model routes at least 90% of a seeded 500-incident set to the expected team (SC-005).
-- [ ] T017 [US3] Implement `pilot/src/pilot_tools/incidents.py` (`pilot-incidents`) with Faker seeded per research R-08.
+- [X] T017 [US3] Implement `pilot/src/pilot_tools/incidents.py` (`pilot-incidents`) with Faker seeded per research R-08.
 
 ---
 
