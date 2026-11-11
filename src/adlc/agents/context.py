@@ -165,25 +165,51 @@ def tools_section(tools: Sequence[Mapping[str, Any]]) -> str:
     return "\n".join(lines)
 
 
+MIN_ROWS = re.compile(
+    r"size\(\s*[A-Za-z0-9_]+\.([a-z][a-z0-9_]*)\s*\)\s*>=\s*(?:param\.([a-z][a-z0-9_]*)|(\d+))"
+)
+
+
+def minimum_rows(spec: Mapping[str, Any], parameters: Mapping[str, Any]) -> dict[str, int]:
+    """008: row minimums the terminal's controls check, as ``size(<artifact>) >= <n>`` with a
+    number or a resolved parameter (read from the spec, never named in code)."""
+    found: dict[str, int] = {}
+    for control in spec_view.controls(spec):
+        for artifact, param, number in MIN_ROWS.findall(control.expression):
+            value = number or parameters.get(param)
+            if isinstance(value, int | float | str) and str(value).isdigit():
+                found[artifact] = max(found.get(artifact, 0), int(value))
+    return found
+
+
 def output_instruction(
-    spec: Mapping[str, Any], required: Sequence[str], tools: Sequence[Mapping[str, Any]] = ()
+    spec: Mapping[str, Any],
+    required: Sequence[str],
+    tools: Sequence[Mapping[str, Any]] = (),
+    parameters: Mapping[str, Any] | None = None,
 ) -> str:
-    lines = [
-        "Required answer: one JSON object, either",
+    lines = ["Required answer: one JSON object, either"]
+    if tools:
+        lines.append(
+            '{"tool": {"name": "<tool name>", "arguments": {...}}} to call one tool (look things '
+            "up this way before you draft),"
+        )
+    lines += [
         '{"artifacts": {"<artifact id>": [{"<column>": <value>, ...}, ...], ...}}',
         'or {"clarification": {"questions": [...], "addressed_role": null, "looked_in": [...]}}.',
     ]
     if tools:
-        lines += [
-            'or {"tool": {"name": "<tool name>", "arguments": {...}}} to call one tool.',
+        lines.append(
             'With artifacts you may add "citations": [{"artifact": "<artifact id>", "row": '
             '<row index or null>, "source": ..., "document": ..., "section": ...}] naming only '
-            "passages you retrieved in this attempt.",
-        ]
+            "passages you retrieved in this attempt."
+        )
+    minimums = minimum_rows(spec, parameters or {})
     lines.append("Artifacts and their exact columns (every row has exactly these keys):")
     for a in spec_view.artifacts(spec):
         need = "required" if a.id in required else "optional"
-        lines.append(f"- {a.id} ({need}): {', '.join(a.columns)}")
+        least = f", at least {minimums[a.id]} rows" if a.id in minimums else ""
+        lines.append(f"- {a.id} ({need}{least}): {', '.join(a.columns)}")
     return "\n".join(lines)
 
 
@@ -208,7 +234,8 @@ def builder_messages(
         *([data_block("parameters", c["parameters"])] if c.get("parameters") else []),
     ]
     listed = [tools_section(tools)] if tools else []
-    user = "\n\n".join([*stable, *volatile, *listed, output_instruction(spec, required, tools)])
+    instruction = output_instruction(spec, required, tools, c.get("parameters"))
+    user = "\n\n".join([*stable, *volatile, *listed, instruction])
     return (
         {"role": "system", "content": f"{prompt.body.strip()}\n\n{RUNTIME_RULES}"},
         {"role": "user", "content": user},

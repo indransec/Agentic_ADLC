@@ -240,3 +240,12 @@ def test_tool_span_names_tool_source_outcome_and_count(exporter: Any) -> None:
         "ok",
     )
     assert all("claims" not in str(v) for v in attrs.values())
+
+
+def test_row_minimums_come_from_the_controls_and_parameters() -> None:
+    """008: a control ``size(<artifact>) >= param.x`` becomes "at least N rows" in the request."""
+    text = output_instruction(
+        spec("T1"), ["acceptance_and_failure"], [], {"test_scenarios_min": 30}
+    )
+    assert "acceptance_and_failure (required, at least 30 rows)" in text
+    assert "at least" not in output_instruction(spec("T1"), ["acceptance_and_failure"], [], {})
