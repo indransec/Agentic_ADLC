@@ -248,7 +248,9 @@ US5 P2), then polish.
   run 4, so T2 invented MCP server ids and data classes and no citation was given. SC-001 is not
   met on the dev model; SC-006 is met (under 0.05 USD per full replay). Grounding with a stronger
   model or a ground-first rule is left for later.
-- [ ] T034 Run the 003–008 suites 10 times in a row and record the result.
+- [X] T034 Run the 003–008 suites 10 times in a row and record the result.
+  Result (2026-11-11): integration orchestration, policy, ledger, agents, knowledge, api, ui and
+  the scenarios, 10 runs in a row, 322 passed every run (about 3 min 15 s each), no flakes.
 - [ ] T035 Run `make check` and fix any failure (coverage gate including `knowledge/`).
 - [ ] T036 Live check (quickstart §2):
   - `make up`, then register the specs;
