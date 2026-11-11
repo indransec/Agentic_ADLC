@@ -159,3 +159,14 @@ The UI offers it through a download button and never renders it.
 - **Records:** every human action already writes its run activity and sign-off rows through the
   services (SA §8.2). The API adds no other records.
 - **Logging:** the API logs no request bodies, because they may hold artifact content.
+
+## R-11 Gate 2 defaults (approved 2026-11-11)
+
+- **Prior rework comments:** every earlier run of this terminal in this use case that closed as
+  rework, newest first, each with who, when, comment and root cause.
+- **Large tables:** artifact tables are editable up to 1,000 rows, with scrolling. Above that the
+  table is read-only, and spreadsheet upload is offered instead.
+- **Inbox order:** soonest due first, then by arrival. Items without a due time come last.
+- **Sign-out:** sign-out, or an expired session, clears the token from the UI session and returns
+  to sign-in. Nothing else is kept.
+- **UI port:** the default is 8501, changed with `ADLC_UI_PORT`.

@@ -238,8 +238,9 @@ records checked.
 
 **Uploads and display**
 
-- A very large artifact table (hundreds of rows) is shown with paging. Editing still saves the
-  whole table as one version.
+- A large artifact table is editable up to 1,000 rows, with scrolling, and saving keeps the whole
+  table as one version. Above 1,000 rows the table is read-only, and spreadsheet upload is
+  offered instead.
 - An attachment with an allowed type but a dangerous name (path characters) is refused or renamed
   safely (feature 005 rule).
 - Text from agents or people (artifacts, comments, findings) is shown as text, never interpreted
@@ -282,6 +283,7 @@ records checked.
   - for the CoE role, dead-lettered events.
 
   Each item shows the use case, terminal, what is asked, when it arrived and its due time.
+  Items are ordered soonest due first, then by arrival; items without a due time come last.
 - **FR-007**: The inbox MUST reflect a change (a decision, a new run, an answer) within one
   refresh. The application refreshes the inbox at least every 30 seconds while it is open.
 
@@ -292,7 +294,8 @@ records checked.
   - control results with reasons, and the synthetic marker where evidence was synthetic;
   - the reviewer's recommendation: status, reason, root cause, scores per checklist item with the
     item text, and findings;
-  - prior rework comments of the terminal in this use case;
+  - prior rework comments: every earlier run of this terminal in this use case that closed as
+    rework, newest first, with who, when, comment and root cause;
   - clarification history;
   - approvals given so far;
   - the timer state;
