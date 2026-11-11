@@ -32,20 +32,20 @@ then polish.
 
 ## Phase 1: Setup
 
-- [ ] T001 Create the pilot project `pilot/pyproject.toml`:
+- [X] T001 Create the pilot project `pilot/pyproject.toml`:
   - Python 3.12;
   - dependencies: FastAPI, uvicorn, httpx, pydantic, ruamel.yaml and the OpenTelemetry SDK and OTLP exporter, at the platform's pinned versions, plus `faker==40.43.0` (MIT);
   - dev dependencies: pytest, ruff, mypy;
   - entry points `pilot-build`, `pilot-host`, `pilot-traffic`, `pilot-incidents`, `pilot-env`, `pilot-split`, `pilot-fault`, `pilot-traffic-ctl`;
   - lock with `uv lock --project pilot`;
   - `pilot/README.md` stub.
-- [ ] T002 [P] Skeleton:
+- [X] T002 [P] Skeleton:
   - `pilot/template/{template.yaml,agent/triage_agent/__init__.py,reference/,infra/}`;
   - `pilot/fills/{default,variant}/`;
   - `pilot/src/pilot_tools/__init__.py`;
   - `pilot/tests/{unit,integration}/`.
-- [ ] T003 [P] `Makefile`: `check` also runs `ruff check`, `ruff format --check`, `mypy` and `pytest` for the pilot project. Coverage for the pilot is reported separately, with an 80% gate on `pilot_tools` and the template agent.
-- [ ] T004 [P] Boundary and isolation tests, written first, in `tests/unit/test_pilot_boundary.py`:
+- [X] T003 [P] `Makefile`: `check` also runs `ruff check`, `ruff format --check`, `mypy` and `pytest` for the pilot project. Coverage for the pilot is reported separately, with an 80% gate on `pilot_tools` and the template agent.
+- [X] T004 [P] Boundary and isolation tests, written first, in `tests/unit/test_pilot_boundary.py`:
   - no `pilot`/`pilot_tools`/`triage_agent` import in `src/adlc`, and no `adlc` import in `pilot/`;
   - from `deploy/compose.yaml`: no pilot service on the `platform` network, no platform service on the `pilot` network, only `jaeger` on both, no published ports for pilot services, no Docker socket mount anywhere.
 

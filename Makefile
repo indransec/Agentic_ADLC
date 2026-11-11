@@ -74,6 +74,14 @@ test:
 	@echo "core-module coverage (gate 80%):"
 	$(UV) coverage report --include='$(CORE_MODULES)' --skip-covered --fail-under=80
 
+# The pilot (feature 009) is its own uv project: lint, types and tests, with an 80% coverage gate.
+pilot-check:
+	@echo "==> pilot-check"
+	cd pilot && $(UV) ruff check . && $(UV) ruff format --check .
+	cd pilot && $(UV) mypy
+	cd pilot && $(UV) pytest
+	cd pilot && $(UV) coverage report --skip-covered --fail-under=80
+
 spec-validate:
 	@echo "==> spec-validate"
 	$(UV) adlc-spec validate adlc-specs --baseline-ref $(ADLC_SPEC_BASELINE_REF)
@@ -100,6 +108,7 @@ check:
 	@$(MAKE) --no-print-directory typecheck
 	@$(MAKE) --no-print-directory spec-validate
 	@$(MAKE) --no-print-directory test
+	@$(MAKE) --no-print-directory pilot-check
 	@$(MAKE) --no-print-directory migration-check
 	@$(MAKE) --no-print-directory secret-scan
 	@echo "==> check passed"

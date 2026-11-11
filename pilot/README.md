@@ -1,5 +1,3 @@
-# pilot
+# Incident Triage Assistant (pilot)
 
-Placeholder created by feature 001-platform-foundation.
-
-Travel Claims pilot: golden template, synthetic data, traffic, faults. Feature **009-pilot-environments**.
+The pilot use case of feature 009. Full description: task T026.
