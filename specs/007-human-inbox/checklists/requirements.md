@@ -32,5 +32,4 @@
 ## Notes
 
 - The web application stack appears only in Assumptions, as the build plan's recorded choice.
-- Open points for `/speckit-clarify`: email notifications; who may read a use case's detail; how
-  the inbox is kept current.
+- Clarified 2026-11-11: in-app notifications only; any signed-in person may read use cases.

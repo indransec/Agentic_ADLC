@@ -13,6 +13,17 @@ ledger verification, and one web application (intake form, inbox, run detail wit
 artifact editor, clarification, waiver and escalation forms, journey view) that uses only those
 operations."
 
+## Clarifications
+
+### Session 2026-11-11
+
+- Q: Should feature 007 send email notifications, or only show them in the in-app inbox? → A:
+  In-app only. Email comes later on the same notification point. No mail server or account email
+  addresses are needed now.
+- Q: Who may read a use case's journey, run details, artifacts and evidence? → A: Any signed-in
+  person. Actions stay limited by role. This matches feature 005's views; restriction by data
+  class comes later.
+
 ## User Scenarios & Testing *(mandatory)*
 
 Agents build, humans decide (constitution III). Until now people could act on the platform only
@@ -394,7 +405,9 @@ records checked.
 - **Out of scope:**
   - T7 rollout-stage approvals arrive with the deployment features.
   - Teams and ServiceNow approvals come later, on the same operations.
-- **Visibility:** any signed-in person may read any use case's journey, run detail and evidence,
-  as feature 005 decided for its views. Actions are limited by role. MVP data is synthetic.
-- **Notifications:** an in-app inbox only in this feature. Email is to be confirmed at
-  clarification (SA §8.2 mentions email).
+- **Visibility:** any signed-in person may read any use case's journey, run detail and evidence
+  (clarified), as feature 005 decided for its views. Actions are limited by role. MVP data is
+  synthetic.
+- **Notifications:** an in-app inbox only in this feature (clarified). Email, Teams and
+  ServiceNow come later on the same inbox and operations. SA §8.2's email for the MVP is
+  deferred.
