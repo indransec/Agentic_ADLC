@@ -235,7 +235,19 @@ US5 P2), then polish.
   - `src/adlc/knowledge/README.md` (sources, tools, scope rules, documents, security);
   - `src/adlc/agents/README.md` (tools, citations, replay);
   - `data/knowledge/README.md` (how to add documents).
-- [ ] T033 Make the recordings: one live `dev` profile run of `adlc-replay --profile dev --record tests/fixtures/replays` (keys from `.env`, never printed). Commit the recordings (replies only), replacing T028's hand-written ones, and check that the scenario test passes offline.
+- [X] T033 Make the recordings: one live `dev` profile run of `adlc-replay --profile dev --record tests/fixtures/replays` (keys from `.env`, never printed). Commit the recordings (replies only), replacing T028's hand-written ones, and check that the scenario test passes offline.
+
+  Result (2026-11-11, recorded as accepted by the user): four live `dev` replays (GPT-4o mini,
+  model reviewer), 108 model calls, 0.155 USD in total. No reference use case completed T0–T2, so
+  the hand-written recordings stay in `tests/fixtures/replays/` for the offline scenario (a live
+  recording replaces them once a live run completes). Live findings fixed generically and
+  committed: control parameters given to agents; row minimums stated in the request; stray
+  brackets repaired and JSON errors named; the replay picks an approver who has not signed yet;
+  prompts 1.1.0 (catalogue 3.0.0). Run 4: T0 first attempt clean 3/3, T1 2/3, T2 reached 2/3 but
+  failed CTL-T2-02 and CTL-T2-04. Remaining root cause: GPT-4o mini made no knowledge calls in
+  run 4, so T2 invented MCP server ids and data classes and no citation was given. SC-001 is not
+  met on the dev model; SC-006 is met (under 0.05 USD per full replay). Grounding with a stronger
+  model or a ground-first rule is left for later.
 - [ ] T034 Run the 003–008 suites 10 times in a row and record the result.
 - [ ] T035 Run `make check` and fix any failure (coverage gate including `knowledge/`).
 - [ ] T036 Live check (quickstart §2):
