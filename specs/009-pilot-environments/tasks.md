@@ -159,12 +159,12 @@ then polish.
 
 ## Phase 7: User Story 5 – Faults (P2)
 
-- [ ] T022 [P] [US5] Write failing tests in `pilot/tests/integration/test_faults.py`:
+- [X] T022 [P] [US5] Write failing tests in `pilot/tests/integration/test_faults.py`:
   - `model_swap` lowers routing accuracy below baseline by the configured margin and revert restores it (SC-005, scaled);
   - `pii_leak` exposes planted data in at least 10% of answers and the check detects it (SC-006), with 0% after revert;
   - a second trigger gives `409`;
   - every trigger and revert is recorded in `faults.jsonl` with its parameters and affected packages and replicas.
-- [ ] T023 [US5] Implement the fault routes in `host.py` (switching the workers' model mode or leak setting through a worker admin call) and `pilot-fault`.
+- [X] T023 [US5] Implement the fault routes in `host.py` (switching the workers' model mode or leak setting through a worker admin call) and `pilot-fault`.
 
 ---
 
