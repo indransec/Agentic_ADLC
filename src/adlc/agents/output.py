@@ -27,14 +27,62 @@ class Parsed:
     problems: tuple[str, ...] = field(default_factory=tuple)
 
 
-def parse_json(raw: str) -> dict[str, Any] | None:
-    """One JSON object from a fenced block, or the outermost braces."""
+OPENERS = {"{": "}", "[": "]"}
+
+
+def balance(text: str) -> str:
+    """Drop closing brackets that match no open bracket and add missing ones, outside strings
+    (008: small models sometimes emit one brace too many in long answers). The result is still
+    validated in full, so a wrong repair cannot pass."""
+    out: list[str] = []
+    stack: list[str] = []
+    in_string = escaped = False
+    for ch in text:
+        if in_string:
+            out.append(ch)
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch in OPENERS:
+            stack.append(OPENERS[ch])
+        elif ch in "}]":
+            if not stack or stack[-1] != ch:
+                continue  # an unmatched closer
+            stack.pop()
+        out.append(ch)
+    return "".join(out) + "".join(reversed(stack))
+
+
+def _candidates(raw: str) -> list[str]:
     match = FENCED.search(raw)
     candidates = [match.group(1)] if match else []
     start, end = raw.find("{"), raw.rfind("}")
     if start != -1 and end > start:
         candidates.append(raw[start : end + 1])
-    for candidate in candidates:
+    return candidates
+
+
+def json_error(raw: str) -> str:
+    """Why the answer is not one JSON object, for the correction message."""
+    for candidate in _candidates(raw):
+        try:
+            json.loads(candidate)
+        except json.JSONDecodeError as exc:
+            return f"the answer is not valid JSON ({exc.msg} at character {exc.pos})"
+    return "the answer is not one JSON object"
+
+
+def parse_json(raw: str) -> dict[str, Any] | None:
+    """One JSON object from a fenced block, or the outermost braces; failing that, the same with
+    unmatched brackets repaired."""
+    candidates = _candidates(raw)
+    for candidate in [*candidates, *(balance(c) for c in candidates)]:
         try:
             value = json.loads(candidate)
         except json.JSONDecodeError:
@@ -170,7 +218,7 @@ def parse_builder(
 ) -> Parsed:
     data = parse_json(raw)
     if data is None:
-        return Parsed(problems=("the answer is not one JSON object",))
+        return Parsed(problems=(json_error(raw),))
     keys = set(data)
     if keys == {"clarification"}:
         result, problems = _clarification(data["clarification"], role_ids)
@@ -212,7 +260,7 @@ def parse_review(
     """The reviewer's answer (contracts/reviewer.md), mapped to a ``Recommendation``."""
     data = parse_json(raw)
     if data is None:
-        return Parsed(problems=("the answer is not one JSON object",))
+        return Parsed(problems=(json_error(raw),))
     if set(data) == {"clarification"}:
         asked, asking_problems = _clarification(data["clarification"], role_ids)
         return Parsed(asked, problems=tuple(asking_problems))

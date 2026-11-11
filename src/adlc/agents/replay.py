@@ -31,7 +31,7 @@ from adlc.orchestration.states import RunState
 from adlc.orchestration.store import RunRow
 
 Planned = str | ProviderReply | Callable[[Sequence[Mapping[str, str]]], str | ProviderReply]
-People = Callable[[str], Actor]
+People = Callable[[str], Sequence[Actor]]  # every account holding the role, in order
 SIGNATURE = 300  # characters of a system prompt that identify its agent
 MAX_ROUNDS = 80
 REPLAY_REASON = "replay: the approver continues to the next terminal"
@@ -223,7 +223,7 @@ class Replayer:
 
     def run(self, ref: Reference) -> UseCaseResult:
         submitter = sorted(self.service.submitter_roles())[0]
-        usecase = self.service.submit_usecase(self.people(submitter), ref.name, ref.intake_text)
+        usecase = self.service.submit_usecase(self.people(submitter)[0], ref.name, ref.intake_text)
         result = UseCaseResult(ref.id, usecase, "stopped", ref.expected.get("risk_tier"))
         answers = {role: list(given) for role, given in ref.answers.items()}
         seen: dict[str, TerminalResult] = {}
@@ -282,7 +282,7 @@ class Replayer:
         else:
             return False
         self.service.answer_clarification(
-            self.people(role), str(open_round[0]), [reply_text] * max(1, len(questions))
+            self.people(role)[0], str(open_round[0]), [reply_text] * max(1, len(questions))
         )
         return True
 
@@ -303,10 +303,13 @@ class Replayer:
             needed = sorted(ctx.required_plus_roles - {r for _, r in ctx.approvals}) + sorted(
                 ctx.rule_roles
             )
-            role = next((r for r in needed if self.people(r).account_name not in signed), None)
-            if role is None:
+            # a person who has not approved yet: one account may hold several roles
+            approver = next(
+                (a for r in needed for a in self.people(r) if a.account_name not in signed), None
+            )
+            if approver is None:
                 return
-            self.service.decide(self.people(role), run.run_id, "pass", reason=reason, fields=typed)
+            self.service.decide(approver, run.run_id, "pass", reason=reason, fields=typed)
 
     def _result(self, run: RunRow) -> TerminalResult:
         spec = self.runs.entry(run.terminal_id, run.spec_version).spec

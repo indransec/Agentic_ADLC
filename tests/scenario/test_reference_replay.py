@@ -18,7 +18,9 @@ RECORDINGS = REPO_ROOT / "tests" / "fixtures" / "replays"
 @pytest.mark.parametrize("ref", REFERENCES, ids=lambda r: r.id)
 def test_reference_replays_to_t2(orch_template: PlatformDatabase, ref: Reference) -> None:
     with grounded(orch_template, read_recording(RECORDINGS / ref.id)) as g:
-        result = Replayer(g.h.service, g.h.orch.runs, g.h.drain, person).run(ref)
+        result = Replayer(g.h.service, g.h.orch.runs, g.h.drain, lambda role: [person(role)]).run(
+            ref
+        )
     assert result.outcome == "completed", result.outcome
     assert [t.terminal_id for t in result.terminals] == ["T0", "T1", "T2"]
     assert result.ok and Report("recording", None, [result]).ok
@@ -36,6 +38,26 @@ def test_unanswered_clarification_stops_the_use_case(orch_template: PlatformData
         }
     }
     with grounded(orch_template, {"t0-intake-agent": [json.dumps(ask)]}) as g:
-        result = Replayer(g.h.service, g.h.orch.runs, g.h.drain, person).run(ref)
+        result = Replayer(g.h.service, g.h.orch.runs, g.h.drain, lambda role: [person(role)]).run(
+            ref
+        )
     assert result.outcome == "unanswered clarification"
     assert not Report("recording", None, [result]).ok
+
+
+def test_an_account_with_several_roles_does_not_block_two_approvers(
+    orch_template: PlatformDatabase,
+) -> None:
+    """A rule needing two people still completes when one account holds both roles: the replay
+    picks another holder of the second role (seen in a live account file)."""
+    from adlc.orchestration.service import Actor
+
+    shared = Actor("shared-person", frozenset({"business_owner", "product_owner"}))
+
+    def people(role: str) -> list[Actor]:
+        return [shared, person(role)] if role in shared.roles else [person(role)]
+
+    ref = REFERENCES[0]
+    with grounded(orch_template, read_recording(RECORDINGS / ref.id)) as g:
+        result = Replayer(g.h.service, g.h.orch.runs, g.h.drain, people).run(ref)
+    assert result.outcome == "completed" and result.ok

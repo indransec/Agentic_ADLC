@@ -82,12 +82,12 @@ def run_cli(
     accounts = load_accounts(
         settings.accounts_file, load_role_ids(settings.role_catalogue), settings.env
     )
-    by_role: dict[str, Actor] = {}
-    for account in accounts.values():
-        for role in sorted(account.roles):
-            by_role.setdefault(role, Actor(account.account_name, account.roles))
+    by_role: dict[str, list[Actor]] = {}
+    for account in sorted(accounts.values(), key=lambda a: (len(a.roles), a.account_name)):
+        for role in sorted(account.roles):  # single-role accounts first
+            by_role.setdefault(role, []).append(Actor(account.account_name, account.roles))
 
-    def people(role: str) -> Actor:
+    def people(role: str) -> list[Actor]:
         if role not in by_role:
             raise _fail(f"no account in the account file holds role {role}")
         return by_role[role]

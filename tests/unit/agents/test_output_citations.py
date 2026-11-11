@@ -102,3 +102,24 @@ def test_addressee_must_be_a_terminal_role() -> None:
     assert isinstance(good.result, Clarification)
     assert parse({"clarification": {**ask, "addressed_role": None}}).result is not None
     assert parse({"clarification": {**ask, "addressed_role": "sre"}}).problems  # not a T0 role
+
+
+def test_one_stray_brace_is_repaired_and_still_validated() -> None:
+    """008: a long answer with one closing brace too many (seen live) is repaired, then
+    validated in full; anything still invalid names the error position."""
+    good = json.dumps({"artifacts": full()})
+    stray = good[:-2] + "}" + good[-2:]  # one extra closing brace before the end
+    assert isinstance(parse(json.loads(good)).result, Artifacts)
+    parsed = parse_builder(stray, t0(), lambda a: True)
+    assert isinstance(parsed.result, Artifacts) and not parsed.problems
+    broken = parse_builder('{"artifacts": {"raci": [ {"activity": ', t0(), lambda a: True)
+    assert broken.problems  # the repair only closes brackets; the shape check still fails
+    hopeless = parse_builder('{"artifacts": oops}', t0(), lambda a: True)
+    assert "not valid JSON" in hopeless.problems[0] and "character" in hopeless.problems[0]
+
+
+def test_brackets_inside_strings_are_untouched() -> None:
+    from adlc.agents.output import balance
+
+    assert balance('{"a": "x}]"}}') == '{"a": "x}]"}'
+    assert balance('{"a": ["b"') == '{"a": ["b"]}'
