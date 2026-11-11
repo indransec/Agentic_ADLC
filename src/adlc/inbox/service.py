@@ -284,6 +284,18 @@ class InboxService:
             for item in spec_view.checklist_items(spec)
         ]
 
+    def attachment(self, run_id: str, content_hash: str) -> tuple[str, str] | None:
+        """(file name, media type) of an attachment recorded on this run, else None (R-06)."""
+        with self.runs.engine.connect() as conn:
+            row = conn.execute(
+                text(
+                    "SELECT file_name, media_type FROM run.artifact_attachment "
+                    "WHERE run_id = :r AND content_hash = :h ORDER BY version DESC LIMIT 1"
+                ),
+                {"r": run_id, "h": content_hash},
+            ).first()
+        return None if row is None else (str(row[0]), str(row[1]))
+
     def _root_causes(self) -> tuple[str, ...]:
         catalogue = self.runs.registry.catalogue("root_causes")
         return tuple(

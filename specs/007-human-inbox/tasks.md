@@ -160,7 +160,7 @@ Test tasks come first in each phase and must fail before their implementation.
 
 ### Tests first
 
-- [ ] T020 [P] [US3] Write failing API tests in `tests/integration/api/test_artifacts.py`:
+- [X] T020 [P] [US3] Write failing API tests in `tests/integration/api/test_artifacts.py`:
   - `PUT` of an edited table creates a person version, resets approvals and shows `controls_pending` until the worker re-checks;
   - an unchanged table → `changed: false`;
   - spreadsheet upload: fitting replaces the rows; not fitting → 422 with the reason;
@@ -170,7 +170,7 @@ Test tasks come first in each phase and must fail before their implementation.
   - a person without a sign-off or accountable role → 403;
   - an edit, upload or attachment with an old `expected_version` → 409 `stale`, and no version is
     created (FR-011).
-- [ ] T021 [P] [US3] Write failing UI tests in `tests/integration/ui/test_artifacts.py`:
+- [X] T021 [P] [US3] Write failing UI tests in `tests/integration/ui/test_artifacts.py`:
   - the data editor saves a change;
   - read-only for non-editors;
   - read-only above 1,000 rows, with upload offered;
@@ -179,8 +179,8 @@ Test tasks come first in each phase and must fail before their implementation.
 
 ### Implementation
 
-- [ ] T022 [US3] Implement `src/adlc/api/routes/artifacts.py` (edit, spreadsheet, attachments, history, download).
-- [ ] T023 [US3] Add the artifact editor, uploads, attachments, downloads and history to `src/adlc/ui/pages/run.py`.
+- [X] T022 [US3] Implement `src/adlc/api/routes/artifacts.py` (edit, spreadsheet, attachments, history, download).
+- [X] T023 [US3] Add the artifact editor, uploads, attachments, downloads and history to `src/adlc/ui/pages/run.py`.
 
 ---
 

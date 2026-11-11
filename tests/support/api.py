@@ -72,7 +72,12 @@ class Api:
 
 
 @contextmanager
-def api_for(h: Harness, tmp_path: Path, span_exporter: SpanExporter | None = None) -> Iterator[Api]:
+def api_for(
+    h: Harness,
+    tmp_path: Path,
+    span_exporter: SpanExporter | None = None,
+    **overrides: object,
+) -> Iterator[Api]:
     accounts = write_accounts(tmp_path / "accounts.yaml")
     settings = settings_for(
         h.db,
@@ -82,6 +87,7 @@ def api_for(h: Harness, tmp_path: Path, span_exporter: SpanExporter | None = Non
         spec_dir=SPECS,
         file_store_dir=tmp_path / "files",
         db_name=h.db.name,  # the harness's per-test database
+        **overrides,
     )
     app = create_app(settings, span_exporter)
     app.state.services.clock = h.clock  # one clock for the API and the harness worker

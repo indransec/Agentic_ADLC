@@ -5,6 +5,8 @@ decision form is built from the API's ``form``; the run version the person saw g
 action, and a stale answer reloads the page with a message.
 """
 
+from collections.abc import Callable
+from functools import partial
 from typing import Any
 
 import streamlit as st
@@ -13,6 +15,9 @@ from adlc.ui.client import ApiClient, ApiError
 from adlc.ui.render import error, field, table
 
 STALE_NOTE = "stale_note"
+MAX_EDIT_ROWS = 1000  # research R-11: larger tables are read-only, with upload offered
+XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+FALLBACK_DOWNLOAD = "application/octet-stream"
 
 
 def render(api: ApiClient) -> None:
@@ -31,6 +36,7 @@ def render(api: ApiClient) -> None:
     seen = int(st.session_state.get(seen_key, data["run"]["version"]))
     st.session_state[seen_key] = data["run"]["version"]
     header(data)
+    artifacts(api, data, seen)
     sections(data)
     decision_form(api, data, seen)
 
@@ -46,18 +52,81 @@ def header(data: dict[str, Any]) -> None:
     field("Due", f"{timer['due_at']}{' (overdue)' if timer['overdue'] else ''}")
 
 
-def sections(data: dict[str, Any]) -> None:
-    st.subheader("Artifacts")
-    for artifact in data["artifacts"]:
-        st.caption(artifact["id"])
-        rows = artifact["rows"]
-        if isinstance(rows, list):
-            table(rows)
-        else:
-            st.text("" if rows is None else str(rows))
-        if artifact["attachments"]:
-            table(artifact["attachments"])
+def act(call: Callable[[], Any], done: str) -> None:
+    """Run one action; a stale answer reloads the page with a message (FR-011)."""
+    try:
+        call()
+    except ApiError as exc:
+        if exc.kind == "stale":
+            st.session_state[STALE_NOTE] = (
+                "This run changed since you opened it. It has been reloaded; check it and act "
+                "again."
+            )
+            st.rerun()
+        error(exc)
+        return
+    st.success(done)
 
+
+def artifacts(api: ApiClient, data: dict[str, Any], seen: int) -> None:
+    st.subheader("Artifacts")
+    run_id = data["run"]["run_id"]
+    editable = data["form"]["can_edit"]
+    for artifact in data["artifacts"]:
+        aid = artifact["id"]
+        key = f"{run_id}:{aid}"
+        st.caption(aid)
+        rows = artifact["rows"]
+        if not isinstance(rows, list):
+            st.text("" if rows is None else str(rows))
+        elif editable and len(rows) <= MAX_EDIT_ROWS:
+            edited = st.data_editor(
+                [{c: row.get(c) for c in artifact["columns"] or row} for row in rows],
+                num_rows="dynamic",
+                use_container_width=True,
+                hide_index=True,
+                key=f"edit:{key}",
+            )
+            if st.button(f"Save {aid}", key=f"save:{key}"):
+                body = {"rows": edited, "expected_version": seen}
+                act(partial(api.put, f"/runs/{run_id}/artifacts/{aid}", body), "Saved")
+        else:
+            table(rows)
+            if editable:
+                st.caption(f"More than {MAX_EDIT_ROWS} rows: upload a spreadsheet to change it.")
+        for attachment in artifact["attachments"]:
+            content = api.get(f"/runs/{run_id}/attachments/{attachment['content_hash']}")
+            st.download_button(
+                f"Download {attachment['name']}",
+                data=content,
+                file_name=attachment["name"],
+                mime=FALLBACK_DOWNLOAD,  # never rendered in the browser
+                key=f"download:{key}:{attachment['content_hash']}",
+            )
+        if editable:
+            uploads(api, run_id, aid, seen)
+        if st.toggle("History", key=f"history:{key}"):
+            table(api.get(f"/runs/{run_id}/artifacts/{aid}/history"))
+
+
+def uploads(api: ApiClient, run_id: str, aid: str, seen: int) -> None:
+    key = f"{run_id}:{aid}"
+    base = f"/runs/{run_id}/artifacts/{aid}"
+    sheet = st.file_uploader(f"Spreadsheet for {aid}", type=["xlsx"], key=f"sheet:{key}")
+    if sheet is not None and st.button(f"Upload spreadsheet to {aid}", key=f"upload:{key}"):
+        data = sheet.getvalue()
+        act(
+            lambda: api.upload(f"{base}/spreadsheet", sheet.name, data, XLSX, seen),
+            "Spreadsheet uploaded",
+        )
+    file = st.file_uploader(f"Attach a file to {aid}", key=f"file:{key}")
+    if file is not None and st.button(f"Attach to {aid}", key=f"attach:{key}"):
+        data = file.getvalue()
+        media = file.type or FALLBACK_DOWNLOAD
+        act(lambda: api.upload(f"{base}/attachments", file.name, data, media, seen), "Attached")
+
+
+def sections(data: dict[str, Any]) -> None:
     st.subheader("Control results")
     table(data["control_results"])
 
@@ -135,15 +204,4 @@ def decision_form(api: ApiClient, data: dict[str, Any], seen: int) -> None:
         body["reason"] = st.text_area("Reason", key=f"reason:{key}") or None
 
     if st.button("Submit decision", key=f"submit:{key}"):
-        try:
-            api.post(f"/runs/{key}/decisions", body)
-        except ApiError as exc:
-            if exc.kind == "stale":
-                st.session_state[STALE_NOTE] = (
-                    "This run changed since you opened it. It has been reloaded; check it and "
-                    "decide again."
-                )
-                st.rerun()
-            error(exc)
-            return
-        st.success("Decision recorded")
+        act(lambda: api.post(f"/runs/{key}/decisions", body), "Decision recorded")
