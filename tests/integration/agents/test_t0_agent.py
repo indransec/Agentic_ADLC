@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+from adlc.agents.replay import Planned
 from adlc.policy.synthetic import load_synthetic_artifacts
 from tests.support.grounded import KNOWLEDGE, grounded
 from tests.support.orchestration import SYNTHETIC, person
@@ -151,9 +152,10 @@ def test_the_model_reviewer_receives_the_citations(orch_template: PlatformDataba
             }
         )
 
-    replies = {T0: GROUNDED, "common-terminal-reviewer": [review]}
+    replies: dict[str, list[Planned]] = {T0: list(GROUNDED), "common-terminal-reviewer": [review]}
     with grounded(orch_template, replies, reviewer_mode="model") as g:
         usecase = g.h.submit()
-        assert g.h.active(usecase, "T0").recommendation["status"] == "pass"
+        recommendation = g.h.active(usecase, "T0").recommendation
+        assert recommendation is not None and recommendation["status"] == "pass"
     assert '<data source="citations">' in seen[0] and POLICY in seen[0]
     assert "sharepoint_read" not in seen[0]  # not the builder's tool calls
