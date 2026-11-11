@@ -1,0 +1,8 @@
+# Infrastructure definition: pilot prod-sim (rollout and live traffic). Fixed in the template.
+environment: prod-sim
+version: "1.0.0"
+replicas: 2
+request_timeout_s: 10
+model_modes: [simulated]
+overridable: {}
+splitter: {modes: [shadow, canary, full], default_share: 0.2}

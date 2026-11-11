@@ -98,19 +98,19 @@ then polish.
 
 ## Phase 3: User Story 1 – The template builds into one package (P1) 🎯 MVP
 
-- [ ] T010 [P] [US1] Write failing tests in `pilot/tests/unit/test_build.py`:
+- [X] T010 [P] [US1] Write failing tests in `pilot/tests/unit/test_build.py`:
   - two builds of the same fill give the same `sha256:` hash and identical bytes;
   - changing any filled part, any agent file or any infra definition changes the hash;
   - an invalid fill names the part and writes nothing;
   - the manifest lists every file with its hash.
-- [ ] T011 [US1] Implement `pilot/src/pilot_tools/build.py` (`pilot-build`): fill validation (T005) and a deterministic tar.gz per research R-02 (sorted entries, mtime 0, uid and gid 0, normalised modes, gzip mtime 0), with the archive and manifest written to the registry.
-- [ ] T012 [P] [US1] Write a failing integration test in `pilot/tests/integration/test_package_runs.py`: a built package, extracted and started as a worker process, answers a synthetic incident, and `GET /health` reports the package hash.
+- [X] T011 [US1] Implement `pilot/src/pilot_tools/build.py` (`pilot-build`): fill validation (T005) and a deterministic tar.gz per research R-02 (sorted entries, mtime 0, uid and gid 0, normalised modes, gzip mtime 0), with the archive and manifest written to the registry.
+- [X] T012 [P] [US1] Write a failing integration test in `pilot/tests/integration/test_package_runs.py`: a built package, extracted and started as a worker process, answers a synthetic incident, and `GET /health` reports the package hash.
 
 ---
 
 ## Phase 4: User Story 2 – Environments from the template's infrastructure (P1)
 
-- [ ] T013 [P] [US2] Infra definitions `pilot/template/infra/dev.yaml`, `test.yaml` and `prod-sim.yaml` per data-model.md. Dev and test allow `model_mode: [simulated, real]`; prod-sim allows only simulated.
+- [X] T013 [P] [US2] Infra definitions `pilot/template/infra/dev.yaml`, `test.yaml` and `prod-sim.yaml` per data-model.md. Dev and test allow `model_mode: [simulated, real]`; prod-sim allows only simulated.
 - [ ] T014 [P] [US2] Write failing integration tests in `pilot/tests/integration/test_host_environments.py` for a host (`pilot-host --env dev`, in-process app with real worker processes):
   - create for a hash gives running replicas, status with the hash, and a triage answer;
   - create again gives `409`;
