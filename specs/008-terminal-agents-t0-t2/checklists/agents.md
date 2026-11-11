@@ -21,55 +21,55 @@
 
 ## Scope and Authorization
 
-- [ ] CHK001 Is it unambiguous which knowledge sources each agent may call, and is the rule (tool scopes intersected with grounding entries) stated where FR-002 says "exactly the scopes its terminal spec grants"? [Consistency, Spec §FR-002, research R-03]
-- [ ] CHK002 Is the meaning of a grounding scope item defined for both forms (path prefix and collection label), including comma-separated lists? [Clarity, research R-03]
-- [ ] CHK003 Is it specified that the policy engine authorizes every knowledge call before it reaches the server, and that a refusal is returned to the agent and logged? [Completeness, Spec §FR-013]
-- [ ] CHK004 Is server-side enforcement of scope and data class required independently of the platform's check, and is it stated that the model cannot set scope or class? [Coverage, contracts/knowledge-mcp.md]
-- [ ] CHK005 Is the data class rule complete: the comparison against the terminal's maximum, a missing or unknown class on a document, and an unresolved ceiling? [Edge Case, Spec §FR-010, research R-07]
+- [X] CHK001 Is it unambiguous which knowledge sources each agent may call, and is the rule (tool scopes intersected with grounding entries) stated where FR-002 says "exactly the scopes its terminal spec grants"? [Consistency, Spec §FR-002, research R-03]
+- [X] CHK002 Is the meaning of a grounding scope item defined for both forms (path prefix and collection label), including comma-separated lists? [Clarity, research R-03]
+- [X] CHK003 Is it specified that the policy engine authorizes every knowledge call before it reaches the server, and that a refusal is returned to the agent and logged? [Completeness, Spec §FR-013]
+- [X] CHK004 Is server-side enforcement of scope and data class required independently of the platform's check, and is it stated that the model cannot set scope or class? [Coverage, contracts/knowledge-mcp.md]
+- [X] CHK005 Is the data class rule complete: the comparison against the terminal's maximum, a missing or unknown class on a document, and an unresolved ceiling? [Edge Case, Spec §FR-010, research R-07]
 
 ## Untrusted Content and Agent Authority
 
-- [ ] CHK006 Are the requirements for treating documents and tool output as data stated in the prompt rules, the request format and the tests (planted instructions)? [Coverage, Spec §FR-008, §FR-014, US4]
-- [ ] CHK007 Is "injected instructions do not change behaviour" measurable: which outputs (artifacts, statuses, tool calls) are compared, and against what baseline? [Measurability, Spec §SC-004]
-- [ ] CHK008 Is it specified what happens when an agent's answer contains a status or any key beyond artifacts, citations, clarification or tool? [Completeness, Spec §FR-005, contracts/agent-output.md]
+- [X] CHK006 Are the requirements for treating documents and tool output as data stated in the prompt rules, the request format and the tests (planted instructions)? [Coverage, Spec §FR-008, §FR-014, US4]
+- [X] CHK007 Is "injected instructions do not change behaviour" measurable: which outputs (artifacts, statuses, tool calls) are compared, and against what baseline? [Measurability, Spec §SC-004]
+- [X] CHK008 Is it specified what happens when an agent's answer contains a status or any key beyond artifacts, citations, clarification or tool? [Completeness, Spec §FR-005, contracts/agent-output.md]
 
 ## Citations
 
-- [ ] CHK009 Are the citation fields (source, document, section, row, content hash) and their origin (the hash from the retrieval, never from the model) specified? [Clarity, Spec §FR-011, §FR-015, data-model]
-- [ ] CHK010 Is the rule "a citation must match a retrieval of the same attempt" defined precisely, including retrievals from earlier attempts or steps? [Clarity, Spec §FR-016]
-- [ ] CHK011 Is it consistent that citations are optional (clarification 2) while SC-002 measures that 100% of the citations given are valid? [Consistency, Spec §SC-002]
-- [ ] CHK012 Is the binding between a citation and the artifact version it supports defined, and is the decision to leave citations outside the ledger record content recorded with its rationale? [Assumption, research R-04]
-- [ ] CHK013 Are the run detail and reviewer requirements for showing citations specified (what is shown, and as plain text)? [Completeness, research R-11]
+- [X] CHK009 Are the citation fields (source, document, section, row, content hash) and their origin (the hash from the retrieval, never from the model) specified? [Clarity, Spec §FR-011, §FR-015, data-model]
+- [X] CHK010 Is the rule "a citation must match a retrieval of the same attempt" defined precisely, including retrievals from earlier attempts or steps? [Clarity, Spec §FR-016]
+- [X] CHK011 Is it consistent that citations are optional (clarification 2) while SC-002 measures that 100% of the citations given are valid? [Consistency, Spec §SC-002]
+- [X] CHK012 Is the binding between a citation and the artifact version it supports defined, and is the decision to leave citations outside the ledger record content recorded with its rationale? [Assumption, research R-04]
+- [X] CHK013 Are the run detail and reviewer requirements for showing citations specified (what is shown, and as plain text)? [Completeness, research R-11]
 
 ## Clarifications
 
-- [ ] CHK014 Is the addressee rule complete: the named role must be a terminal human role, an empty role falls back to feature 003's default, and an invalid role is corrected? [Completeness, Spec §FR-017, research R-09]
-- [ ] CHK015 Is "where it looked" required in every clarification, and is its form defined? [Clarity, Spec §FR-017, contracts/agent-output.md]
+- [X] CHK014 Is the addressee rule complete: the named role must be a terminal human role, an empty role falls back to feature 003's default, and an invalid role is corrected? [Completeness, Spec §FR-017, research R-09]
+- [X] CHK015 Is "where it looked" required in every clarification, and is its form defined? [Clarity, Spec §FR-017, contracts/agent-output.md]
 
 ## Versioning and Content
 
-- [ ] CHK016 Is the consequence of immutable versions documented: the playbooks and T0–T2 specs move to 1.1.0, and use cases pinned to 1.0.0 cannot rebuild T0–T2? [Completeness, research R-08, quickstart §3]
-- [ ] CHK017 Are the required contents of each playbook and prompt defined well enough to review them (sections, rubric scales, risk tier criteria)? [Gap, Spec §FR-007]
-- [ ] CHK018 Is the synthetic knowledge set's coverage defined per grounding scope of T0–T2, so that every scope item has at least one document? [Coverage, Spec §FR-012]
+- [X] CHK016 Is the consequence of immutable versions documented: the playbooks and T0–T2 specs move to 1.1.0, and use cases pinned to 1.0.0 cannot rebuild T0–T2? [Completeness, research R-08, quickstart §3]
+- [X] CHK017 Are the required contents of each playbook and prompt defined well enough to review them (sections, rubric scales, risk tier criteria)? [Gap, Spec §FR-007]
+- [X] CHK018 Is the synthetic knowledge set's coverage defined per grounding scope of T0–T2, so that every scope item has at least one document? [Coverage, Spec §FR-012]
 
 ## Knowledge Server Security and Operation
 
-- [ ] CHK019 Are the authentication (service token), read-only behaviour and start-up refusal without a token specified? [Completeness, research R-02, contracts/knowledge-mcp.md]
-- [ ] CHK020 Are the behaviours when the knowledge server is unavailable or slow specified (the agent's view, retries, no invented sources)? [Edge Case, Spec Edge Cases]
-- [ ] CHK021 Are the output caps (snippet, section, total) and the "cut" note specified? [Clarity, Spec §FR-014, research R-06]
+- [X] CHK019 Are the authentication (service token), read-only behaviour and start-up refusal without a token specified? [Completeness, research R-02, contracts/knowledge-mcp.md]
+- [X] CHK020 Are the behaviours when the knowledge server is unavailable or slow specified (the agent's view, retries, no invented sources)? [Edge Case, Spec Edge Cases]
+- [X] CHK021 Are the output caps (snippet, section, total) and the "cut" note specified? [Clarity, Spec §FR-014, research R-06]
 
 ## Quality, Cost and Time
 
-- [ ] CHK022 Are the three reference use cases and their expected outcomes defined (tier, minimum checks), so the replay result can be judged? [Measurability, Spec §FR-018, data-model]
-- [ ] CHK023 Is it unambiguous what "reviewer agreement" and "recommendation changed against a baseline" mean in the report? [Clarity, Spec §FR-019, §FR-020]
-- [ ] CHK024 Are SC-001 (2 of 3 live on the first attempt), SC-005 (5 minutes) and SC-006 (under 1 USD) stated with the model profile and the measurement point? [Measurability, Spec §SC-001, §SC-005, §SC-006]
-- [ ] CHK025 Are step limits for tool use addressed (tool calls count as steps; how limits are raised by configuration)? [Dependency, research R-13]
+- [X] CHK022 Are the three reference use cases and their expected outcomes defined (tier, minimum checks), so the replay result can be judged? [Measurability, Spec §FR-018, data-model]
+- [X] CHK023 Is it unambiguous what "reviewer agreement" and "recommendation changed against a baseline" mean in the report? [Clarity, Spec §FR-019, §FR-020]
+- [X] CHK024 Are SC-001 (2 of 3 live on the first attempt), SC-005 (5 minutes) and SC-006 (under 1 USD) stated with the model profile and the measurement point? [Measurability, Spec §SC-001, §SC-005, §SC-006]
+- [X] CHK025 Are step limits for tool use addressed (tool calls count as steps; how limits are raised by configuration)? [Dependency, research R-13]
 
 ## Observability and Compatibility
 
-- [ ] CHK026 Is the trace and record content of a knowledge call defined, with content excluded? [Completeness, Spec §FR-021, research R-12]
-- [ ] CHK027 Is it specified that the runtime changes are generic (no terminal names), and is the scan of new code required? [Consistency, Spec §FR-003, plan Constitution Check]
-- [ ] CHK028 Are the changes to features 006 and 007 (tool context argument, output shape, run detail) shown to be additive, with SC-007 covering the 003–007 suites? [Consistency, Spec §SC-007, data-model]
+- [X] CHK026 Is the trace and record content of a knowledge call defined, with content excluded? [Completeness, Spec §FR-021, research R-12]
+- [X] CHK027 Is it specified that the runtime changes are generic (no terminal names), and is the scan of new code required? [Consistency, Spec §FR-003, plan Constitution Check]
+- [X] CHK028 Are the changes to features 006 and 007 (tool context argument, output shape, run detail) shown to be additive, with SC-007 covering the 003–007 suites? [Consistency, Spec §SC-007, data-model]
 
 ## Notes
 
