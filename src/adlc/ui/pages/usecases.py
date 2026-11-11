@@ -3,7 +3,7 @@
 import streamlit as st
 
 from adlc.ui.client import ApiClient
-from adlc.ui.render import field, table
+from adlc.ui.render import field, navigate, table
 
 
 def render(api: ApiClient) -> None:
@@ -62,7 +62,5 @@ def journey(api: ApiClient, usecase_id: str) -> None:
     if run_ids:
         pick = st.selectbox("Open run", run_ids, key="journey_run")
         if st.button("Open", key="open_run"):
-            st.session_state["run_id"] = pick
-            st.session_state["page"] = "Run"
-            st.rerun()
+            navigate("Run", run_id=pick)
     field("Total cost (USD)", data["cost"]["total"].get("cost_usd"))

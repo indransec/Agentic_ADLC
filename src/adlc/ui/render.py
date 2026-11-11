@@ -5,6 +5,7 @@ and ``st.data_editor``, which never interpret Markdown or HTML. Markdown is used
 the platform writes itself (``label`` arguments below are always platform text).
 """
 
+import json
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -19,11 +20,31 @@ def field(label: str, value: Any) -> None:
     st.text("" if value is None else str(value))
 
 
+def cell(value: Any) -> Any:
+    """Nested values are shown as JSON text, so every cell is a scalar."""
+    if isinstance(value, Mapping | list | tuple):
+        return json.dumps(value, default=str, ensure_ascii=False)
+    return value
+
+
 def table(rows: Sequence[Mapping[str, Any]], key: str | None = None) -> None:
     if rows:
-        st.dataframe([dict(r) for r in rows], use_container_width=True, hide_index=True, key=key)
+        st.dataframe(
+            [{k: cell(v) for k, v in r.items()} for r in rows],
+            use_container_width=True,
+            hide_index=True,
+            key=key,
+        )
     else:
         st.caption("(none)")
+
+
+def navigate(page: str, *, run_id: str | None = None) -> None:
+    """Go to another page on the next run (the page selector cannot change once drawn)."""
+    if run_id is not None:
+        st.session_state["run_id"] = run_id
+    st.session_state["goto"] = page
+    st.rerun(scope="app")
 
 
 def error(exc: ApiError) -> None:

@@ -53,6 +53,9 @@ def main() -> None:
         sign_in(api)
         return
     person = api.person or {}
+    if goto := st.session_state.pop("goto", None):
+        st.session_state["page"] = goto
+        st.session_state.pop("run_input", None)  # show the run just chosen
     with st.sidebar:
         st.text(f"{person.get('display_name', '')} ({', '.join(person.get('roles', []))})")
         page = st.radio("Page", list(PAGES), key="page")

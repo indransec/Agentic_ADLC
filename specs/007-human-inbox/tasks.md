@@ -75,7 +75,7 @@ Test tasks come first in each phase and must fail before their implementation.
 
 - [X] T007 Implement `src/adlc/inbox/rules.py` (T006). Make `OrchestratorService.decide_waiver`, `answer_clarification` and `complete_escalation`, and `LedgerService._editable`, use these rules so the inbox and the operations never disagree. The 003 and 005 suites stay green.
 - [X] T008 Add optional `expected_version` to `OrchestratorService.complete_escalation` and to `LedgerService.edit_artifact`, `upload_spreadsheet` and `attach_file`. A mismatch raises `StaleRun`. Tests go in the existing suites.
-- [ ] T009 Implement `src/adlc/api/errors.py` (T005, exception handlers registered in `create_app`) and `src/adlc/api/deps.py`:
+- [X] T009 Implement `src/adlc/api/errors.py` (T005, exception handlers registered in `create_app`) and `src/adlc/api/deps.py`:
   - the current `Actor` from the session person;
   - the services from `app.state`.
 
@@ -118,14 +118,14 @@ Test tasks come first in each phase and must fail before their implementation.
 
 ### Tests first
 
-- [ ] T014 [P] [US2] Write failing unit tests in `tests/unit/inbox/test_forms.py` for the decision form built from the pinned specs of T0–T8:
+- [X] T014 [P] [US2] Write failing unit tests in `tests/unit/inbox/test_forms.py` for the decision form built from the pinned specs of T0–T8:
   - the outcomes come from `status_rights.human`;
   - `requires` per outcome (e.g. the exception fields);
   - root causes from the rework routes;
   - typed emitted values;
   - `can_decide` and `can_edit` per person;
   - `reason_required_unless` from the recommendation.
-- [ ] T015 [P] [US2] Write failing API tests in `tests/integration/api/test_inbox_and_decisions.py`:
+- [X] T015 [P] [US2] Write failing API tests in `tests/integration/api/test_inbox_and_decisions.py`:
   - T1 appears in the inbox of each sign-off role holder only (SC-002), ordered soonest due first;
   - a two-approver rule keeps the run in the second approver's inbox;
   - the run detail has every SA §8.2 field, with prior rework comments newest first;
@@ -135,7 +135,7 @@ Test tasks come first in each phase and must fail before their implementation.
   - a decision with an old version → 409 `stale`, and nothing is recorded (SC-004);
   - a body that names another actor or role (`actor`, `account_name`, `roles`) is refused (422);
     the decision is always recorded under the signed-in person (FR-002).
-- [ ] T016 [P] [US2] Write failing UI tests in `tests/integration/ui/test_sign_off.py`:
+- [X] T016 [P] [US2] Write failing UI tests in `tests/integration/ui/test_sign_off.py`:
   - the inbox lists the item;
   - the run detail shows each SA §8.2 section;
   - the decision form follows `form` (a reason field appears when the choice differs from the recommendation);
@@ -143,11 +143,11 @@ Test tasks come first in each phase and must fail before their implementation.
 
 ### Implementation
 
-- [ ] T017 [US2] Implement `src/adlc/inbox/forms.py` (T014) and `src/adlc/inbox/service.py`:
+- [X] T017 [US2] Implement `src/adlc/inbox/forms.py` (T014) and `src/adlc/inbox/service.py`:
   - `InboxService.items(actor)` for the sign-off kind, with the ordering of research R-11;
   - `RunDetailService.detail(run_id, actor)` (research R-04, prior rework comments per R-11).
-- [ ] T018 [US2] Implement `src/adlc/api/routes/inbox.py` and `src/adlc/api/routes/runs.py` (detail, decisions).
-- [ ] T019 [US2] Implement `src/adlc/ui/pages/inbox.py` (auto-refresh every 30 s and on demand) and `src/adlc/ui/pages/run.py`:
+- [X] T018 [US2] Implement `src/adlc/api/routes/inbox.py` and `src/adlc/api/routes/runs.py` (detail, decisions).
+- [X] T019 [US2] Implement `src/adlc/ui/pages/inbox.py` (auto-refresh every 30 s and on demand) and `src/adlc/ui/pages/run.py`:
   - every section of SA §8.2, rendered as plain text and tables;
   - the decision form from `form`;
   - version carried on every action.

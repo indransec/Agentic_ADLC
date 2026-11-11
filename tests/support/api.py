@@ -13,6 +13,7 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from opentelemetry.sdk.trace.export import SpanExporter
 
 from adlc.api.app import create_app
 from adlc.identity.catalogue import load_role_ids
@@ -71,7 +72,7 @@ class Api:
 
 
 @contextmanager
-def api_for(h: Harness, tmp_path: Path) -> Iterator[Api]:
+def api_for(h: Harness, tmp_path: Path, span_exporter: SpanExporter | None = None) -> Iterator[Api]:
     accounts = write_accounts(tmp_path / "accounts.yaml")
     settings = settings_for(
         h.db,
@@ -82,7 +83,7 @@ def api_for(h: Harness, tmp_path: Path) -> Iterator[Api]:
         file_store_dir=tmp_path / "files",
         db_name=h.db.name,  # the harness's per-test database
     )
-    app = create_app(settings)
+    app = create_app(settings, span_exporter)
     app.state.services.clock = h.clock  # one clock for the API and the harness worker
     with TestClient(app, raise_server_exceptions=False) as client:
         yield Api(app, client)

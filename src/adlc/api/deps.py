@@ -61,7 +61,9 @@ class Services:
     def inbox(self) -> "InboxService":
         from adlc.inbox.service import InboxService  # noqa: PLC0415 - avoids an import cycle
 
-        return InboxService(self.runs, self.ledger, self.settings.deadletter_role)
+        return InboxService(
+            self.runs, self.ledger, self.settings.deadletter_role, self.settings.spec_dir
+        )
 
     @cached_property
     def ledger(self) -> LedgerService:
