@@ -40,3 +40,18 @@ def check_model_keys(
                 f"(needed by {', '.join(sorted(users))}); set a provider key or use "
                 "ADLC_REVIEWER_MODE=stub"
             )
+
+
+class MissingKnowledgeToken(Exception):
+    pass
+
+
+def check_knowledge_token(agents: AgentCatalogue, token: str | None) -> None:
+    """008 research R-12: an agent with knowledge tools needs the knowledge server's token."""
+    grounded = sorted(
+        a.id for a in agents.agents.values() if any(t.action == "mcp" for t in a.tools)
+    )
+    if grounded and not token:
+        raise MissingKnowledgeToken(
+            f"agents {', '.join(grounded)} have knowledge tools; set ADLC_KNOWLEDGE_TOKEN"
+        )

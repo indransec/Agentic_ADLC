@@ -31,6 +31,7 @@ from adlc.agents.store import insert_attempt
 from adlc.agents.telemetry import set_attributes
 
 if TYPE_CHECKING:
+    from adlc.agents.knowledge import RetrievalLog
     from adlc.agents.tools import ToolGate
 from adlc.config.settings import AgentLimit, AgentLimitOverride
 from adlc.ledger.profile import version_values
@@ -72,6 +73,7 @@ class RuntimeDeps:
     corrections: int = 2
     clock: Clock = field(default_factory=SystemClock)
     tools: "ToolGate | None" = None  # US4: tool calls are authorized first
+    retrievals: "RetrievalLog | None" = None  # 008: knowledge results, for citation checks
 
 
 @dataclass
@@ -308,14 +310,32 @@ class RuntimeAgentRunner:
                 handler = (
                     None
                     if deps.tools is None or not agent.tools
-                    else deps.tools.handler(context.run_id, usecase_id, context.terminal_id, agent)
+                    else deps.tools.handler(
+                        context.run_id,
+                        usecase_id,
+                        context.terminal_id,
+                        agent,
+                        spec=spec,
+                        attempt=context.attempt,
+                    )
                 )
+                tools = [] if deps.tools is None else deps.tools.describe(agent)
+                roles = {r.role for r in spec_view.human_roles(spec)}
+                log = deps.retrievals
+
+                def retrieved() -> list[Any]:
+                    return [] if log is None else log.for_attempt(context.run_id, context.attempt)
+
                 outcome = run_loop(
                     deps,
                     tier=agent.model_tier,
                     data_class=ceiling,
                     messages=builder_messages(
-                        pack, prompt, spec, [a.id for a in spec_view.artifacts(spec) if required(a)]
+                        pack,
+                        prompt,
+                        spec,
+                        [a.id for a in spec_view.artifacts(spec) if required(a)],
+                        tools,
                     ),
                     ids=CallIds(
                         context.run_id,
@@ -327,7 +347,7 @@ class RuntimeAgentRunner:
                     prompt_hash=prompt.hash,
                     context_hash=pack.hash,
                     limits=limits,
-                    parse=lambda raw: parse_builder(raw, spec, required),
+                    parse=lambda raw: parse_builder(raw, spec, required, roles, retrieved),
                     on_tool=handler,
                 )
             set_attributes(

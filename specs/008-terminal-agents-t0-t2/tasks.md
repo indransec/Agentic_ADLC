@@ -67,7 +67,7 @@ US5 P2), then polish.
 
 ### Tests first
 
-- [ ] T006 [P] Unit tests in `tests/unit/knowledge/test_documents.py` and `test_search.py`:
+- [X] T006 [P] Unit tests in `tests/unit/knowledge/test_documents.py` and `test_search.py`:
   - front matter parsing;
   - section splitting by heading path (`Controls > Human oversight`);
   - `sha256:` content hashes per section;
@@ -76,14 +76,14 @@ US5 P2), then polish.
   - `limit` is capped at 10;
   - snippet of at most 1,000 characters;
   - `read` text capped at 8,000 characters with `cut: true`.
-- [ ] T007 [P] Unit tests in `tests/unit/knowledge/test_scope.py`:
+- [X] T007 [P] Unit tests in `tests/unit/knowledge/test_scope.py`:
   - grounding items, path prefix (`/strategy`) versus collection label (`reference architectures`, case-insensitive);
   - comma-separated lists;
   - a source with no grounding entry has nothing in scope;
   - the data class filter by rank against `max_class`;
   - an unknown `max_class` returns nothing (fails closed).
-- [ ] T007a [P] Unit test in `tests/unit/agents/test_startup.py`: the orchestrator refuses to start when any agent has a knowledge binding and `ADLC_KNOWLEDGE_TOKEN` is not set, and starts when it is set or when no agent has one (research R-12).
-- [ ] T008 [P] Unit tests in `tests/unit/agents/test_tools_context.py` and `test_output_citations.py`:
+- [X] T007a [P] Unit test in `tests/unit/agents/test_startup.py`: the orchestrator refuses to start when any agent has a knowledge binding and `ADLC_KNOWLEDGE_TOKEN` is not set, and starts when it is set or when no agent has one (research R-12).
+- [X] T008 [P] Unit tests in `tests/unit/agents/test_tools_context.py` and `test_output_citations.py`:
   - `Tool.call(arguments, context)` gets run, use case, terminal and pinned spec;
   - `KnowledgeTool` passes only `query`/`limit` or `document`/`section` from the model and adds `scope` and `max_class` from the spec;
   - bindings are built only for sources in both `tool_scopes` and grounding (FR-002);
@@ -92,7 +92,7 @@ US5 P2), then polish.
   - a citation must match a retrieval of the same attempt (FR-016) and its row must exist;
   - unknown keys or a status key fail validation;
   - `addressed_role` must be empty or a terminal human role.
-- [ ] T009 [P] Integration tests in `tests/integration/knowledge/test_server.py`:
+- [X] T009 [P] Integration tests in `tests/integration/knowledge/test_server.py`:
   - the server in-process over `tests/fixtures/knowledge/`, called through the MCP streamable-HTTP client;
   - no token or a wrong token → 401;
   - `search` and `read` per source;
@@ -102,21 +102,21 @@ US5 P2), then polish.
 
 ### Implementation
 
-- [ ] T010 Implement `src/adlc/knowledge/documents.py`, `search.py` and `scope.py` (T006, T007), following research R-03, R-06 and R-07.
-- [ ] T011 Implement `src/adlc/knowledge/server.py` and `__main__.py` (T009), per contracts/knowledge-mcp.md:
+- [X] T010 Implement `src/adlc/knowledge/documents.py`, `search.py` and `scope.py` (T006, T007), following research R-03, R-06 and R-07.
+- [X] T011 Implement `src/adlc/knowledge/server.py` and `__main__.py` (T009), per contracts/knowledge-mcp.md:
   - one `FastMCP` per source folder, mounted at `/mcp/<source>`;
   - stateless, JSON responses;
   - bearer token check;
   - `/health`;
   - the data class ranks from `adlc-specs/shared/data_classes.yaml` under `ADLC_SPEC_DIR`;
   - logs request counts only.
-- [ ] T012 Implement the runtime changes in `src/adlc/agents/` (T008), keeping `FakeTool` and every 006 test passing:
+- [X] T012 Implement the runtime changes in `src/adlc/agents/` (T008), keeping `FakeTool` and every 006 test passing:
   - `tools.py`: `ToolContext` and `call(arguments, context)`; `Tool.describe()`; `KnowledgeTool` using the MCP client with a 10 s timeout. A failure returns "knowledge source unavailable: <source>" with no retry (research R-06a).
   - `context.py`: the tools section and the output instruction.
   - `output.py`: citations and the addressee check.
   - `wiring.py`: knowledge tools built from bindings and settings.
   - `startup.py`: refuse to start when an agent has a knowledge binding and no knowledge token is set (T007a).
-- [ ] T013 Implement `src/adlc/agents/citations.py`:
+- [X] T013 Implement `src/adlc/agents/citations.py`:
   - record every knowledge result in `run.knowledge_retrieval`;
   - record each valid citation in `run.artifact_citation`, with `content_hash` and `knowledge_retrieval_id` copied from the matching retrieval and `version` from the artifact version created by the same attempt;
   - add the `adlc.tool.call` span with run, terminal, tool, source, outcome and result count, and no content (FR-021).

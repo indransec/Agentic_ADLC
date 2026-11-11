@@ -7,11 +7,13 @@ from pathlib import Path
 from sqlalchemy import Engine, text
 
 from adlc.agents.catalogue import AgentCatalogue, load_catalogues
+from adlc.agents.citations import SqlRetrievalLog
 from adlc.agents.cost import CostAlerts
 from adlc.agents.gateway import LiteLLMTransport, ModelGateway, RoutingGateway
+from adlc.agents.knowledge import KnowledgeCaller, McpCaller, knowledge_tools
 from adlc.agents.prompts import SpecTexts, SqlSpecTexts
 from adlc.agents.runner import RuntimeDeps
-from adlc.agents.startup import check_model_keys
+from adlc.agents.startup import check_knowledge_token, check_model_keys
 from adlc.agents.store import SqlCallRecorder
 from adlc.agents.tools import Tool, ToolGate
 from adlc.config.settings import DEFAULT_AGENT_LIMITS, AgentLimit, AgentLimitOverride
@@ -50,11 +52,23 @@ def build_runtime(
     check_keys: bool = True,
     tools: Mapping[str, Tool] | None = None,
     cost_alert_levels: Sequence[Decimal] = (),
+    knowledge_url: str | None = None,
+    knowledge_token: str | None = None,
+    knowledge_caller: KnowledgeCaller | None = None,
 ) -> RuntimeDeps:
+    """``knowledge_caller`` replaces the MCP client (tests); otherwise knowledge tools call
+    ``knowledge_url`` with ``knowledge_token`` (008 research R-02, R-12)."""
     models, registered_agents = load_catalogues(registry, profile)
     agents = agents or registered_agents
     if check_keys:
         check_model_keys(models, agents, keys, reviewer_ids(engine), reviewer_mode)
+        # A test caller stands in for the server and its token.
+        check_knowledge_token(agents, knowledge_token or ("caller" if knowledge_caller else None))
+    retrievals = SqlRetrievalLog(engine, clock)
+    caller = knowledge_caller or (
+        McpCaller(knowledge_url, knowledge_token) if knowledge_url and knowledge_token else None
+    )
+    grounding = {} if caller is None else knowledge_tools(agents, caller, retrievals)
     return RuntimeDeps(
         engine=engine,
         registry=registry,
@@ -75,5 +89,6 @@ def build_runtime(
         overrides=dict(overrides or {}),
         corrections=corrections,
         clock=clock,
-        tools=ToolGate(policy, tools or {}),
+        tools=ToolGate(policy, {**grounding, **(tools or {})}),
+        retrievals=retrievals,
     )

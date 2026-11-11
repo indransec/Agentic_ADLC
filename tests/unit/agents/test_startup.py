@@ -51,3 +51,18 @@ def test_model_terminal_agent_needs_its_tier(registry: InMemorySpecRegistry) -> 
     )
     with pytest.raises(MissingModelKey, match="tier 'coding'.*needed by b"):
         check_model_keys(models, builder, NO_KEYS, [], "stub")
+
+
+def test_knowledge_tools_need_a_token() -> None:
+    """008 T007a: refuse to start when an agent has knowledge tools and no token is set."""
+    from adlc.agents.catalogue import AgentCatalogue, AgentDefinition, ToolBinding
+    from adlc.agents.startup import MissingKnowledgeToken, check_knowledge_token
+
+    grounded = AgentDefinition(
+        "a", "1", "model", "reasoning", ("a", "1"), (ToolBinding("x_search", "mcp:x:read"),)
+    )
+    plain = AgentDefinition("b", "1", "stub", "reasoning", None)
+    with pytest.raises(MissingKnowledgeToken):
+        check_knowledge_token(AgentCatalogue({"a": grounded}), None)
+    check_knowledge_token(AgentCatalogue({"a": grounded}), "k" * 16)
+    check_knowledge_token(AgentCatalogue({"b": plain}), None)

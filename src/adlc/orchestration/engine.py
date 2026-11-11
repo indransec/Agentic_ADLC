@@ -10,7 +10,7 @@
 
 import json
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, field, replace
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
@@ -621,7 +621,19 @@ class PostgresTerminalRun:
             )
             for aid, rows in artifacts.items()
         }
-        versions.record(conn, run.run_id, entry.spec, changes, producer, put_structured)
+        written = versions.record(conn, run.run_id, entry.spec, changes, producer, put_structured)
+        citations = signal.payload.get("citations") or []
+        if citations and signal.actor_type == ActorType.AGENT:
+            latest = {
+                v["artifact_id"]: v["version"]
+                for v in ledger_store.latest_versions(conn, run.run_id)
+            }
+            for c in citations:
+                version = written.get(c["artifact"], latest.get(c["artifact"]))
+                if version is not None:
+                    ledger_store.insert_citation(
+                        conn, run.run_id, int(version), c, self.clock.now()
+                    )
         return replace(run, artifacts={**run.artifacts, **json_safe(artifacts)})
 
     def _write_ledger(
@@ -938,7 +950,10 @@ class PostgresTerminalRun:
 
 def _agent_payload(result: object) -> dict[str, Any]:
     if isinstance(result, Artifacts):
-        return {"result": "artifacts", "artifacts": json_safe(result.artifacts)}
+        payload: dict[str, Any] = {"result": "artifacts", "artifacts": json_safe(result.artifacts)}
+        if result.citations:  # 008: recorded with the versions they support
+            payload["citations"] = [asdict(c) for c in result.citations]
+        return payload
     if isinstance(result, Clarification):
         return {"result": "clarification", "clarification": _clarification_payload(result)}
     if isinstance(result, BudgetExceeded):

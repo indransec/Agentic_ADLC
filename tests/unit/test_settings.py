@@ -327,13 +327,13 @@ def test_knowledge_settings(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> 
 
     monkeypatch.setenv("ADLC_KNOWLEDGE_DIR", str(tmp_path))
     with pytest.raises(ValidationError):
-        KnowledgeSettings()  # no token
+        KnowledgeSettings()  # type: ignore[call-arg]  # no token
     monkeypatch.setenv("ADLC_KNOWLEDGE_TOKEN", "short")
     with pytest.raises(ValidationError):
-        KnowledgeSettings()
+        KnowledgeSettings()  # type: ignore[call-arg]
     monkeypatch.setenv("ADLC_KNOWLEDGE_TOKEN", "k" * 16)
-    settings = KnowledgeSettings()
+    settings = KnowledgeSettings()  # type: ignore[call-arg]
     assert settings.knowledge_dir == tmp_path and settings.knowledge_port == 8020
     monkeypatch.setenv("ADLC_KNOWLEDGE_DIR", str(tmp_path / "missing"))
     with pytest.raises(ValidationError):
-        KnowledgeSettings()
+        KnowledgeSettings()  # type: ignore[call-arg]

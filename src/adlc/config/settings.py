@@ -350,6 +350,11 @@ class KnowledgeSettings(BaseSettings):
         json_schema_extra=_meta("path to the spec folder (data class catalogue)"),
     )
     knowledge_port: int = Field(default=8020, gt=0, lt=65536, json_schema_extra=_meta("port"))
+    knowledge_allowed_hosts: str = Field(
+        default="knowledge:*,127.0.0.1:*,localhost:*",
+        json_schema_extra=_meta("comma-separated Host header patterns the server answers"),
+    )
+    log_level: str = Field(default="INFO", json_schema_extra=_meta("a logging level"))
 
     @field_validator("knowledge_dir")
     @classmethod

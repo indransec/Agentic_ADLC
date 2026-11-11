@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from adlc.orchestration import spec_view
-from adlc.orchestration.interfaces import Artifacts, Clarification, Recommendation
+from adlc.orchestration.interfaces import Artifacts, Citation, Clarification, Recommendation
 
 FENCED = re.compile(r"```(?:json)?\s*(\{.*?\})\s*```", re.DOTALL)
 SCALAR = (str, int, float, bool, type(None))
@@ -120,11 +120,53 @@ def validate_artifacts(
     return problems
 
 
+CITATION_KEYS = {"artifact", "row", "source", "document", "section"}
+
+
+def _citations(
+    value: Any, artifacts: Mapping[str, Any], retrieved: Sequence[Any]
+) -> tuple[tuple[Citation, ...], list[str]]:
+    """Optional citations (008 FR-016): each must name an answered artifact (and an existing row)
+    and match a retrieval of this attempt; the hash and id come from that retrieval."""
+    if not isinstance(value, list):
+        return (), ["citations must be a list"]
+    found: list[Citation] = []
+    problems: list[str] = []
+    by_key = {(r.source, r.document, r.section): r for r in retrieved}
+    for i, item in enumerate(value, start=1):
+        if not isinstance(item, Mapping) or set(item) - CITATION_KEYS:
+            problems.append(f"citation {i} must have only {sorted(CITATION_KEYS)}")
+            continue
+        artifact, row = item.get("artifact"), item.get("row")
+        rows = artifacts.get(artifact) if isinstance(artifact, str) else None
+        if rows is None or not isinstance(artifact, str):
+            problems.append(f"citation {i}: artifact must be one of the artifacts you answered")
+            continue
+        if row is not None and (
+            not isinstance(row, int) or isinstance(row, bool) or not 0 <= row < len(rows)
+        ):
+            problems.append(f"citation {i}: row must be null or an existing row index")
+            continue
+        key = (str(item.get("source")), str(item.get("document")), str(item.get("section") or ""))
+        match = by_key.get(key)
+        if match is None or match.retrieval_id is None:
+            problems.append(
+                f"citation {i}: cite only a source, document and section you retrieved in this "
+                "attempt"
+            )
+            continue
+        found.append(
+            Citation(artifact, row, key[0], key[1], key[2], match.content_hash, match.retrieval_id)
+        )
+    return tuple(found), problems
+
+
 def parse_builder(
     raw: str,
     spec: Mapping[str, Any],
     required: Callable[[spec_view.ArtifactSpec], bool],
     role_ids: Collection[str] | None = None,
+    retrievals: Callable[[], Sequence[Any]] | None = None,
 ) -> Parsed:
     data = parse_json(raw)
     if data is None:
@@ -140,16 +182,25 @@ def parse_builder(
                 tool={"name": tool["name"], "arguments": dict(tool.get("arguments") or {})}
             )
         return Parsed(problems=('tool must be {"name": ..., "arguments": {...}}',))
-    if keys != {"artifacts"}:
+    if keys not in ({"artifacts"}, {"artifacts", "citations"}):
         return Parsed(
             problems=(
-                'the object must have exactly one key: "artifacts", "clarification" or "tool"',
+                'the object must be {"artifacts": ...} (optionally with "citations"), '
+                '{"clarification": ...} or {"tool": ...}',
             )
         )
     problems = validate_artifacts(data["artifacts"], spec, required)
     if problems:
         return Parsed(problems=tuple(problems))
-    return Parsed(Artifacts({k: [dict(r) for r in v] for k, v in data["artifacts"].items()}))
+    cited: tuple[Citation, ...] = ()
+    if "citations" in data:
+        cited, problems = _citations(
+            data["citations"], data["artifacts"], retrievals() if retrievals else []
+        )
+        if problems:
+            return Parsed(problems=tuple(problems))
+    rows = {k: [dict(r) for r in v] for k, v in data["artifacts"].items()}
+    return Parsed(Artifacts(rows, cited))
 
 
 def parse_review(

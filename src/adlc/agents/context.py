@@ -153,13 +153,31 @@ def build_pack(
     return ContextPack(content, structured_hash(content), {p.id: p.hash for p in playbooks})
 
 
-def output_instruction(spec: Mapping[str, Any], required: Sequence[str]) -> str:
+def tools_section(tools: Sequence[Mapping[str, Any]]) -> str:
+    """The agent's tools as the platform describes them (008 research R-05)."""
+    lines = ["Tools you can call (one call per answer; the result comes back as data):"]
+    for tool in tools:
+        args = ", ".join(f"{k}: {v}" for k, v in (tool.get("arguments") or {}).items())
+        lines.append(f"- {tool['name']}: {tool.get('description', '')} Arguments: {args}")
+    return "\n".join(lines)
+
+
+def output_instruction(
+    spec: Mapping[str, Any], required: Sequence[str], tools: Sequence[Mapping[str, Any]] = ()
+) -> str:
     lines = [
         "Required answer: one JSON object, either",
         '{"artifacts": {"<artifact id>": [{"<column>": <value>, ...}, ...], ...}}',
         'or {"clarification": {"questions": [...], "addressed_role": null, "looked_in": [...]}}.',
-        "Artifacts and their exact columns (every row has exactly these keys):",
     ]
+    if tools:
+        lines += [
+            'or {"tool": {"name": "<tool name>", "arguments": {...}}} to call one tool.',
+            'With artifacts you may add "citations": [{"artifact": "<artifact id>", "row": '
+            '<row index or null>, "source": ..., "document": ..., "section": ...}] naming only '
+            "passages you retrieved in this attempt.",
+        ]
+    lines.append("Artifacts and their exact columns (every row has exactly these keys):")
     for a in spec_view.artifacts(spec):
         need = "required" if a.id in required else "optional"
         lines.append(f"- {a.id} ({need}): {', '.join(a.columns)}")
@@ -167,7 +185,11 @@ def output_instruction(spec: Mapping[str, Any], required: Sequence[str]) -> str:
 
 
 def builder_messages(
-    pack: ContextPack, prompt: SpecText, spec: Mapping[str, Any], required: Sequence[str]
+    pack: ContextPack,
+    prompt: SpecText,
+    spec: Mapping[str, Any],
+    required: Sequence[str],
+    tools: Sequence[Mapping[str, Any]] = (),
 ) -> tuple[dict[str, str], ...]:
     c = pack.content
     stable = [data_block("spec", c["spec"])]
@@ -181,7 +203,8 @@ def builder_messages(
         data_block("failed_controls", c["failed_controls"]),
         data_block("previous_artifacts", c["previous_artifacts"]),
     ]
-    user = "\n\n".join([*stable, *volatile, output_instruction(spec, required)])
+    listed = [tools_section(tools)] if tools else []
+    user = "\n\n".join([*stable, *volatile, *listed, output_instruction(spec, required, tools)])
     return (
         {"role": "system", "content": f"{prompt.body.strip()}\n\n{RUNTIME_RULES}"},
         {"role": "user", "content": user},
