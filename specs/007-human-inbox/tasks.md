@@ -79,7 +79,7 @@ Test tasks come first in each phase and must fail before their implementation.
   - the current `Actor` from the session person;
   - the services from `app.state`.
 
-  Make `create_app` build `PostgresTerminalRun` with the real policy engine and stub agent and reviewer, plus `OrchestratorService`, `LedgerService` and `InboxService`. Add the span attributes `account`, `run_id` and `usecase_id`, and never log request bodies.
+  Make `create_app` build `PostgresTerminalRun` with the real policy engine and stub agent and reviewer, plus `OrchestratorService`, `LedgerService` and `InboxService`. Add the span attributes `account`, `run_id` and `usecase_id`, and never log request bodies. Test in `tests/integration/api/test_tracing.py`: a decision's span carries `account`, `run_id` and `usecase_id`, and no attribute or log line holds the request body (FR-023).
 
 **Checkpoint**: the app starts with all services; errors have one shape.
 
@@ -132,7 +132,9 @@ Test tasks come first in each phase and must fail before their implementation.
   - a pass against a rework recommendation without a reason → 422, with one → 200;
   - rework without a comment or root cause → 422, with both → closed and routed;
   - exception creates a pending waiver;
-  - a decision with an old version → 409 `stale`, and nothing is recorded (SC-004).
+  - a decision with an old version → 409 `stale`, and nothing is recorded (SC-004);
+  - a body that names another actor or role (`actor`, `account_name`, `roles`) is refused (422);
+    the decision is always recorded under the signed-in person (FR-002).
 - [ ] T016 [P] [US2] Write failing UI tests in `tests/integration/ui/test_sign_off.py`:
   - the inbox lists the item;
   - the run detail shows each SA §8.2 section;
@@ -165,7 +167,9 @@ Test tasks come first in each phase and must fail before their implementation.
   - attachment: an allowed file → 200, a disallowed type or one over the size limit → 422;
   - download returns the bytes with the headers of research R-06, and only for attachments of that run;
   - history lists the versions;
-  - a person without a sign-off or accountable role → 403.
+  - a person without a sign-off or accountable role → 403;
+  - an edit, upload or attachment with an old `expected_version` → 409 `stale`, and no version is
+    created (FR-011).
 - [ ] T021 [P] [US3] Write failing UI tests in `tests/integration/ui/test_artifacts.py`:
   - the data editor saves a change;
   - read-only for non-editors;
@@ -186,7 +190,8 @@ Test tasks come first in each phase and must fail before their implementation.
 
 - [ ] T024 [P] [US4] Write failing API tests in `tests/integration/api/test_requests.py`:
   - a clarification is listed only for the addressed role, and its answer resumes the same run;
-  - an escalation is listed for accountable roles, and completion leads to sign-off (others → 403);
+  - an escalation is listed for accountable roles, and completion leads to sign-off (others → 403;
+    an old `expected_version` → 409 `stale`);
   - a waiver is listed for approvers other than the proposer, and approval or rejection is recorded with the comment (the proposer → 403);
   - dead letters are listed and requeued only for the CoE role.
 - [ ] T025 [P] [US4] Write failing UI tests in `tests/integration/ui/test_requests.py` for the clarification, escalation, waiver and dead-letter pages.
@@ -217,8 +222,10 @@ Test tasks come first in each phase and must fail before their implementation.
   - artifact cells.
 
   Check that no Markdown or HTML element of the rendered pages carries them (research R-07).
-- [ ] T031 [P] Extend `tests/unit/test_no_hardcoded_values.py` so `src/adlc/inbox/`, `src/adlc/api/` and `src/adlc/ui/` are covered (terminal, role and route destination ids).
-- [ ] T032 [P] Scenario test in `tests/scenario/test_through_the_api.py`: drive the sample lifecycle T0–T8 through the API operations only, with the stub reviewer. Check that the ledger verifies (SC-005, SC-008).
+- [ ] T031 [P] Extend `tests/unit/test_no_hardcoded_values.py` so `src/adlc/inbox/`, `src/adlc/api/` and `src/adlc/ui/` are covered (terminal, role and route destination ids). Add a boundary test (FR-020): modules in `src/adlc/ui/` import only `adlc.ui` and `adlc.config` from the platform, and never SQLAlchemy, psycopg, `adlc.orchestration`, `adlc.ledger`, `adlc.inbox`, `adlc.agents` or `adlc.db`.
+- [ ] T032 [P] Scenario test in `tests/scenario/test_through_the_api.py`: drive the sample lifecycle T0–T8 through the API operations only, with the stub reviewer. Check that:
+  - the ledger verifies (SC-005, SC-008);
+  - for every terminal, the run detail fetched before the decision has every SA §8.2 field (SC-003).
 - [ ] T033 [P] Write `src/adlc/inbox/README.md` and the API section of `src/adlc/api/README.md` (or extend the existing docs): operations, errors, inbox rules and the UI's rendering rules.
 - [ ] T034 Run the 003–007 suites 10 times in a row and record the result.
 - [ ] T035 Run `make check` and fix any failure, including the 80% core coverage gate that now includes `inbox/` and `api/`.
