@@ -111,7 +111,7 @@ then polish.
 ## Phase 4: User Story 2 – Environments from the template's infrastructure (P1)
 
 - [X] T013 [P] [US2] Infra definitions `pilot/template/infra/dev.yaml`, `test.yaml` and `prod-sim.yaml` per data-model.md. Dev and test allow `model_mode: [simulated, real]`; prod-sim allows only simulated.
-- [ ] T014 [P] [US2] Write failing integration tests in `pilot/tests/integration/test_host_environments.py` for a host (`pilot-host --env dev`, in-process app with real worker processes):
+- [X] T014 [P] [US2] Write failing integration tests in `pilot/tests/integration/test_host_environments.py` for a host (`pilot-host --env dev`, in-process app with real worker processes):
   - create for a hash gives running replicas, status with the hash, and a triage answer;
   - create again gives `409`;
   - tear down leaves no worker process;
@@ -119,7 +119,7 @@ then polish.
   - an unknown hash gives `404` and an undeclared setting `422`, with nothing created;
   - every operation is appended to `environments.jsonl`;
   - `GET /infra` returns each environment's infrastructure definition and version (FR-021).
-- [ ] T015 [US2] Implement `pilot/src/pilot_tools/host.py` and `workers.py`: extract to a work folder, start and stop uvicorn worker processes on local ports per the infra definition, health checks, records, and `GET /infra`.
+- [X] T015 [US2] Implement `pilot/src/pilot_tools/host.py` and `workers.py`: extract to a work folder, start and stop uvicorn worker processes on local ports per the infra definition, health checks, records, and `GET /infra`.
 
 ---
 

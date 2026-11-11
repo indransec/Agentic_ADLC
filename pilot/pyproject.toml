@@ -62,3 +62,4 @@ explicit_package_bases = true
 testpaths = ["tests"]
 pythonpath = ["src", "template/agent"]
 addopts = "-ra --cov=pilot_tools --cov=triage_agent --cov-report=term:skip-covered"
+filterwarnings = ["ignore:Using `httpx` with `starlette.testclient` is deprecated"]
