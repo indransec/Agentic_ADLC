@@ -95,6 +95,6 @@ def test_attach_and_download_only(h: Harness, api: Api, editors: list[str]) -> N
     assert "Attached" in [s.value for s in at.success], [e.value for e in at.error]
     at = at.run()
     labels = [d.label for d in at.get("download_button") if isinstance(d, DownloadButton)]
-    assert "Download notes.md" in labels
+    assert labels == ["Download"] and "notes.md" in texts(at)
     assert all(NOTE.decode() not in t for t in texts(at))  # offered for download, never shown
     assert all(NOTE.decode() not in m.value for m in at.markdown)

@@ -54,6 +54,9 @@ ORCHESTRATION = sorted(
         *(ROOT / "src" / "adlc" / "policy").rglob("*.py"),
         *(ROOT / "src" / "adlc" / "ledger").rglob("*.py"),
         *(ROOT / "src" / "adlc" / "agents").rglob("*.py"),
+        *(ROOT / "src" / "adlc" / "inbox").rglob("*.py"),  # 007 T031
+        *(ROOT / "src" / "adlc" / "api").rglob("*.py"),
+        *(ROOT / "src" / "adlc" / "ui").rglob("*.py"),
     ]
 )
 
@@ -72,8 +75,8 @@ def _destination_ids() -> set[str]:
 
 @pytest.mark.parametrize("path", ORCHESTRATION, ids=lambda p: str(p.relative_to(ROOT)))
 def test_orchestration_names_no_route_destination(path: Path) -> None:
-    """003 T072, 004 T050, 005 T033, 006 T037: destinations are handled by kind, never by name
-    (constitution I)."""
+    """003 T072, 004 T050, 005 T033, 006 T037, 007 T031: destinations are handled by kind, never
+    by name (constitution I)."""
     pattern = re.compile(r"\b(" + "|".join(sorted(_destination_ids())) + r")\b")
     hits = [
         f"{path.name}:{number}: {line.strip()}"

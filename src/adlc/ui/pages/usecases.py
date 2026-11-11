@@ -38,6 +38,7 @@ def journey(api: ApiClient, usecase_id: str) -> None:
     st.subheader("Journey")
     field("Name", usecase["name"])
     field("Submitted by", usecase["submitted_by"])
+    field("Description", usecase["intake_text"])
     field("Risk tier", usecase["risk_tier"])
     costs = data["cost"]["terminals"]
     summary = {s["terminal_id"]: s for s in data["summary"]}

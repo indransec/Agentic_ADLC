@@ -27,16 +27,19 @@ def render(api: ApiClient) -> None:
     field("Asked by", found["asked_by"])
     field("Addressed to", found["addressed_role"])
     field("Already looked in", ", ".join(str(x) for x in found.get("looked_in") or []))
-    if found["answered_by"] is not None:
-        field("Answered by", found["answered_by"])
-        for answer in found["answers"] or []:
-            st.text(str(answer))
-        return
+    answered = found["answered_by"] is not None
+    given = list(found["answers"] or []) if answered else []
     answers = []
     for n, question in enumerate(found["questions"]):
         st.caption(f"Question {n + 1}")
         st.text(str(question))
-        answers.append(st.text_area("Answer", key=f"answer:{clarification_id}:{n}"))
+        if answered:
+            st.text(str(given[n]) if n < len(given) else "")
+        else:
+            answers.append(st.text_area("Answer", key=f"answer:{clarification_id}:{n}"))
+    if answered:
+        field("Answered by", found["answered_by"])
+        return
     if st.button("Send answers", key=f"send:{clarification_id}"):
         path = f"/clarifications/{clarification_id}/answers"
         act(lambda: api.post(path, {"answers": answers}), "Answers sent")

@@ -214,7 +214,7 @@ Test tasks come first in each phase and must fail before their implementation.
 
 ## Phase 8: Polish and cross-cutting
 
-- [ ] T030 [P] Rendering-safety test in `tests/integration/ui/test_rendering.py`. Inject `<script>`, HTML and Markdown-link payloads through:
+- [X] T030 [P] Rendering-safety test in `tests/integration/ui/test_rendering.py`. Inject `<script>`, HTML and Markdown-link payloads through:
   - the intake;
   - comments;
   - findings (a scripted reviewer);
@@ -222,11 +222,11 @@ Test tasks come first in each phase and must fail before their implementation.
   - artifact cells.
 
   Check that no Markdown or HTML element of the rendered pages carries them (research R-07).
-- [ ] T031 [P] Extend `tests/unit/test_no_hardcoded_values.py` so `src/adlc/inbox/`, `src/adlc/api/` and `src/adlc/ui/` are covered (terminal, role and route destination ids). Add a boundary test (FR-020): modules in `src/adlc/ui/` import only `adlc.ui` and `adlc.config` from the platform, and never SQLAlchemy, psycopg, `adlc.orchestration`, `adlc.ledger`, `adlc.inbox`, `adlc.agents` or `adlc.db`.
-- [ ] T032 [P] Scenario test in `tests/scenario/test_through_the_api.py`: drive the sample lifecycle T0–T8 through the API operations only, with the stub reviewer. Check that:
+- [X] T031 [P] Extend `tests/unit/test_no_hardcoded_values.py` so `src/adlc/inbox/`, `src/adlc/api/` and `src/adlc/ui/` are covered (terminal, role and route destination ids). Add a boundary test (FR-020): modules in `src/adlc/ui/` import only `adlc.ui` and `adlc.config` from the platform, and never SQLAlchemy, psycopg, `adlc.orchestration`, `adlc.ledger`, `adlc.inbox`, `adlc.agents` or `adlc.db`.
+- [X] T032 [P] Scenario test in `tests/scenario/test_through_the_api.py`: drive the sample lifecycle T0–T8 through the API operations only, with the stub reviewer. Check that:
   - the ledger verifies (SC-005, SC-008);
   - for every terminal, the run detail fetched before the decision has every SA §8.2 field (SC-003).
-- [ ] T033 [P] Write `src/adlc/inbox/README.md` and the API section of `src/adlc/api/README.md` (or extend the existing docs): operations, errors, inbox rules and the UI's rendering rules.
+- [X] T033 [P] Write `src/adlc/inbox/README.md` and the API section of `src/adlc/api/README.md` (or extend the existing docs): operations, errors, inbox rules and the UI's rendering rules.
 - [ ] T034 Run the 003–007 suites 10 times in a row and record the result.
 - [ ] T035 Run `make check` and fix any failure, including the 80% core coverage gate that now includes `inbox/` and `api/`.
 - [ ] T036 Live check (quickstart §2):

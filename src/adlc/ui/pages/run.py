@@ -104,8 +104,9 @@ def artifacts(api: ApiClient, data: dict[str, Any], seen: int) -> None:
                 st.caption(f"More than {MAX_EDIT_ROWS} rows: upload a spreadsheet to change it.")
         for attachment in artifact["attachments"]:
             content = api.get(f"/runs/{run_id}/attachments/{attachment['content_hash']}")
+            st.text(attachment["name"])  # a person's file name: plain text, never a label
             st.download_button(
-                f"Download {attachment['name']}",
+                "Download",
                 data=content,
                 file_name=attachment["name"],
                 mime=FALLBACK_DOWNLOAD,  # never rendered in the browser
