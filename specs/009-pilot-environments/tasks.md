@@ -137,7 +137,7 @@ then polish.
 
 ## Phase 6: User Story 4 – Prod-sim rollout and traffic (P1)
 
-- [ ] T018 [P] [US4] Write failing tests:
+- [X] T018 [P] [US4] Write failing tests:
   - in `pilot/tests/unit/test_split.py`: hash-based assignment gives 15–25% at a 20% share over 500 request ids;
   - in `pilot/tests/integration/test_prodsim.py`:
     - deployments of stable and candidate;
@@ -147,13 +147,13 @@ then polish.
     - an unknown candidate is refused and the split stays;
     - a failing candidate falls back to stable and is counted;
     - split changes are recorded.
-- [ ] T019 [US4] Implement `pilot/src/pilot_tools/split.py` and the prod-sim routes in `host.py` (`/deployments`, `/split`, `/triage`).
-- [ ] T020 [P] [US4] Write failing tests in `pilot/tests/integration/test_traffic.py`:
+- [X] T019 [US4] Implement `pilot/src/pilot_tools/split.py` and the prod-sim routes in `host.py` (`/deployments`, `/split`, `/triage`).
+- [X] T020 [P] [US4] Write failing tests in `pilot/tests/integration/test_traffic.py`:
   - the generator against a host holds the rate within ±10% over a short window (the scaled version of SC-004);
   - pause stops new requests;
   - counts for sent, answered, failed and timed out;
   - routing accuracy and the PII leak rate are computed from the expected answers and planted values.
-- [ ] T021 [US4] Implement `pilot/src/pilot_tools/traffic.py` (`pilot-traffic`) with an open-loop schedule and the control API per contracts/pilot-api.md.
+- [X] T021 [US4] Implement `pilot/src/pilot_tools/traffic.py` (`pilot-traffic`) with an open-loop schedule and the control API per contracts/pilot-api.md.
 
 ---
 

@@ -135,6 +135,7 @@ def create_host(
                 state[key].stop()
 
     app = FastAPI(title=f"pilot-host {environment}", lifespan=lifespan)
+    app.state.pilot = state  # the running packages (tests stop a candidate through it)
 
     def start(package_hash: str, settings: dict[str, str], label: str) -> Running:
         root = work / f"{digest_of(package_hash)[:12]}-{label}-{next(counter)}"

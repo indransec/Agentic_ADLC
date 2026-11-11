@@ -1,16 +1,21 @@
 """A built default package and variant package in a temporary registry, and host factories."""
 
+import contextlib
 import json
+import threading
+import time
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import pytest
+import uvicorn
 from fastapi.testclient import TestClient
 
 from pilot_tools.build import build
 from pilot_tools.host import create_host
+from pilot_tools.workers import free_port
 from tests.conftest import DEFAULT_FILL, TEMPLATE, VARIANT_FILL
 
 
@@ -60,3 +65,22 @@ def host(packages: Packages, tmp_path: Path) -> Iterator[Callable[[str], Host]]:
     yield make
     for client in opened:
         client.__exit__(None, None, None)
+
+
+@contextlib.contextmanager
+def serve(app: Any) -> Iterator[str]:
+    """Serve ``app`` with uvicorn on a free local port; yields its base URL."""
+    port = free_port()
+    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_config=None))
+    thread = threading.Thread(target=server.run, daemon=True)
+    thread.start()
+    deadline = time.monotonic() + 20
+    while not server.started:
+        if time.monotonic() > deadline:
+            raise RuntimeError("server did not start")
+        time.sleep(0.02)
+    try:
+        yield f"http://127.0.0.1:{port}"
+    finally:
+        server.should_exit = True
+        thread.join(timeout=15)
