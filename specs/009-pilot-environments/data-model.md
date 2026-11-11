@@ -69,3 +69,5 @@ reason never repeats planted personal data unless the leak fault is active.
 | `splits.jsonl` | Split change: `{at, mode, share, stable, candidate, outcome}` |
 | `faults.jsonl` | Trigger or revert: `{at, fault, action, parameters, affected: {packages, replicas}, outcome}` |
 | `shadow.jsonl` | A shadow answer: `{at, request_id, candidate_hash, answer}` |
+
+Incident files written by `pilot-incidents` go to the `pilot-data` volume (`/data`).

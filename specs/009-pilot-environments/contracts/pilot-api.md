@@ -8,6 +8,7 @@ platform. No platform service calls them directly.
 | Method and path | Body | Answer |
 | --- | --- | --- |
 | `GET /health` | — | `{status, environment}` |
+| `GET /infra` | — | Every infrastructure definition of the template with its version (reference material for feature 010) |
 | `POST /environment` | `{package_hash, settings?}` (dev and test) | `201 {environment, package_hash, replicas, settings}`; `404` unknown hash; `422` undeclared setting or value; `409` already running |
 | `GET /environment` | — | `{environment, package_hash, replicas: [{id, healthy}], settings, started_at}` or `404` |
 | `DELETE /environment` | — | `204`; nothing of it remains running |

@@ -234,7 +234,9 @@ pilot, try to reach the platform database and API; both fail. The declared path 
 - The traffic generator outpaces the pilot: requests that time out are counted and reported, not
   silently dropped.
 - A fault is triggered twice: the second trigger is refused while the first is active.
-- A model is unavailable: the pilot answers with a clear failure and the failure is counted.
+- The real model is switched on and is unavailable or replies with something that is not one
+  assignment: the pilot answers with the simulated model and the failure is counted. The simulated
+  model cannot be unavailable.
 - An incident with planted personal data arrives while no leak fault is active: the pilot does not
   repeat the personal data in its answer.
 
