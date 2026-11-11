@@ -14,9 +14,11 @@ intake_text: >-
 until: T2
 answers:
   business_owner:
-    - "Claims history is owned by the head of claims operations; we use masked copies only."
+    - "Claims history is owned by the head of claims operations; we use masked copies only (confidential_masked)."
   product_owner:
     - "Handlers approve every customer message; fast-track is only for complete claims under 300 EUR."
+  any:
+    - "Use the Halcyon policies and process documents in the knowledge sources; meet the parameters you are given; payouts and customer messages always need a person's approval."
 approver_fields:
   T0: {risk_tier: medium}
 expected:

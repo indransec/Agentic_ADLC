@@ -115,6 +115,7 @@ def build_pack(
     failed_controls: Sequence[Mapping[str, Any]],
     previous_artifacts: Mapping[str, Any],
     playbooks: Sequence[SpecText],
+    parameters: Mapping[str, Any] | None = None,
 ) -> ContextPack:
     content = {
         "agent": {
@@ -146,6 +147,8 @@ def build_pack(
             {"id": c.get("id"), "reason": c.get("reason")} for c in failed_controls
         ],
         "previous_artifacts": dict(previous_artifacts),
+        # 008: the resolved values the terminal's controls check (e.g. minimum counts)
+        "parameters": dict(parameters or {}),
         "playbooks": [
             {"id": p.id, "version": p.version, "hash": p.hash, "text": p.body} for p in playbooks
         ],
@@ -202,6 +205,7 @@ def builder_messages(
         data_block("clarifications", c["clarifications"]),
         data_block("failed_controls", c["failed_controls"]),
         data_block("previous_artifacts", c["previous_artifacts"]),
+        *([data_block("parameters", c["parameters"])] if c.get("parameters") else []),
     ]
     listed = [tools_section(tools)] if tools else []
     user = "\n\n".join([*stable, *volatile, *listed, output_instruction(spec, required, tools)])

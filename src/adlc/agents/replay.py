@@ -35,6 +35,7 @@ People = Callable[[str], Actor]
 SIGNATURE = 300  # characters of a system prompt that identify its agent
 MAX_ROUNDS = 80
 REPLAY_REASON = "replay: the approver continues to the next terminal"
+ANY_ROLE = "any"  # reference answers used for a role with no prepared answer left
 
 app = typer.Typer(help="Replay the reference use cases through the grounded terminals.")
 
@@ -274,9 +275,12 @@ class Replayer:
             return True
         role, questions = str(open_round[1]), list(open_round[2])
         given = answers.get(role) or []
-        if not given:
+        if given:
+            reply_text = given.pop(0)
+        elif answers.get(ANY_ROLE):
+            reply_text = answers[ANY_ROLE][0]  # the reference's general answer, reused
+        else:
             return False
-        reply_text = given.pop(0)
         self.service.answer_clarification(
             self.people(role), str(open_round[0]), [reply_text] * max(1, len(questions))
         )

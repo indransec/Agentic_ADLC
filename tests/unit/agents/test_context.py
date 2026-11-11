@@ -79,6 +79,7 @@ def test_sections_and_playbook_hashes(t1: Any) -> None:
         "clarifications",
         "failed_controls",
         "previous_artifacts",
+        "parameters",  # 008: resolved values the controls check
         "playbooks",
     ]
     assert "kpis" in [a["id"] for a in pack.content["spec"]["artifacts"]]

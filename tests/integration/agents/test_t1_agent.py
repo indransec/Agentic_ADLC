@@ -93,3 +93,16 @@ def test_rework_comment_reaches_the_next_build(orch_template: PlatformDatabase) 
         h.drain()
         assert h.active(usecase, "T1").run_number == 2
         assert REWORK_COMMENT in rebuild.requests[0]
+
+
+def test_t1_is_told_the_parameters_its_controls_check(orch_template: PlatformDatabase) -> None:
+    """008: the resolved run parameters (e.g. the minimum number of scenarios) are in the request."""
+    first = Capture(T1_DRAFT)
+    with grounded(
+        orch_template, {"t0-intake-agent": [T0_DRAFT], "t1-requirements-agent": [first]}
+    ) as g:
+        to_t1(g)
+    request = first.requests[0]
+    block = request.split('<data source="parameters">\n', 1)[1].split("\n</data>")[0]
+    values = json.loads(block)
+    assert values["test_scenarios_min"] == 30 and values["autonomy_level_max"] == 3  # medium

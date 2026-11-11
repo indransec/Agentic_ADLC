@@ -4,13 +4,13 @@
 # and grounding both name it. T3-T9 stay stubs until features 011 and 012. The reviewer is a model
 # agent.
 catalogue: agents
-version: "2.0.0"
+version: "3.0.0"
 agents:
   - id: t0-intake-agent
-    version: "1.1.0"
+    version: "1.2.0"
     implementation: model
     model_tier: reasoning
-    prompt: {id: t0-intake-agent, version: "1.0.0"}
+    prompt: {id: t0-intake-agent, version: "1.1.0"}
     tools:
       - {tool: confluence_search, permission: "mcp:confluence:read"}
       - {tool: confluence_read, permission: "mcp:confluence:read"}
@@ -19,20 +19,20 @@ agents:
       - {tool: portfolio_search, permission: "mcp:portfolio:read"}
       - {tool: portfolio_read, permission: "mcp:portfolio:read"}
   - id: t1-requirements-agent
-    version: "1.1.0"
+    version: "1.2.0"
     implementation: model
     model_tier: reasoning
-    prompt: {id: t1-requirements-agent, version: "1.0.0"}
+    prompt: {id: t1-requirements-agent, version: "1.1.0"}
     tools:
       - {tool: confluence_search, permission: "mcp:confluence:read"}
       - {tool: confluence_read, permission: "mcp:confluence:read"}
       - {tool: jira_search, permission: "mcp:jira:read"}
       - {tool: jira_read, permission: "mcp:jira:read"}
   - id: t2-architect-agent
-    version: "1.1.0"
+    version: "1.2.0"
     implementation: model
     model_tier: reasoning
-    prompt: {id: t2-architect-agent, version: "1.0.0"}
+    prompt: {id: t2-architect-agent, version: "1.1.0"}
     tools:
       - {tool: confluence_search, permission: "mcp:confluence:read"}
       - {tool: confluence_read, permission: "mcp:confluence:read"}

@@ -5,6 +5,7 @@ context pack, then either runs the stub (terminal agents until feature 008) or t
 loop. Output is validated in both cases, and every attempt is recorded in ``run.agent_attempt``.
 """
 
+import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -55,6 +56,7 @@ from adlc.orchestration.interfaces import (
 from adlc.orchestration.tracing import span
 from adlc.spec_toolkit.registry import SpecRegistry
 
+PARAMETER = re.compile(r"\bparam\.([a-z][a-z0-9_]*)")
 MAX_CALL_TOKENS = 16_000  # per call; the gateway also caps at the model's output limit
 ToolHandler = Callable[[Mapping[str, Any]], str]
 
@@ -290,6 +292,9 @@ class RuntimeAgentRunner:
             failed_controls=context.failed_controls,
             previous_artifacts=context.previous_artifacts,
             playbooks=playbook_texts(deps.texts, spec),
+            parameters={}
+            if agent.implementation == "stub"
+            else self._parameters(spec, context, usecase_id),
         )
         required = self._required(context, usecase_id)
         started = deps.clock.now()
@@ -388,6 +393,24 @@ class RuntimeAgentRunner:
             if problems:
                 return AttemptFailed("; ".join(problems))
         return result
+
+    def _parameters(
+        self, spec: Mapping[str, Any], context: BuildContext, usecase_id: str
+    ) -> dict[str, Any]:
+        """008: the resolved run parameters the terminal's controls use, so the agent can meet
+        them (the same values the controls are checked against)."""
+        names = sorted(
+            {m for c in spec_view.controls(spec) for m in PARAMETER.findall(c.expression)}
+        )
+        found: dict[str, Any] = {}
+        for name in names:
+            result = self.deps.policy.evaluate(
+                f"param.{name}",
+                EvalContext(context.terminal_id, f"parameter:{name}", context.run_id, usecase_id),
+            )
+            if result.value is not None:
+                found[name] = result.value
+        return found
 
     def _required(
         self, context: BuildContext, usecase_id: str

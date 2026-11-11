@@ -16,6 +16,8 @@ answers:
     - "Tickets are internal data owned by the IT operations director; personal data is masked."
   product_owner:
     - "Analysts approve every reply; the assistant never closes tickets."
+  any:
+    - "Use the Halcyon policies and process documents in the knowledge sources; meet the parameters you are given; analysts keep every decision."
 approver_fields:
   T0: {risk_tier: low}
 expected:

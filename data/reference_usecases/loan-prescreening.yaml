@@ -16,6 +16,8 @@ answers:
     - "Credit bureau and income data are restricted and owned by the chief credit risk officer."
   product_owner:
     - "Every flag needs a reason a credit analyst can explain; no automated declines."
+  any:
+    - "Use the Halcyon policies and process documents in the knowledge sources; meet the parameters you are given; every credit decision stays with a credit officer."
 approver_fields:
   T0: {risk_tier: high}
 expected:
