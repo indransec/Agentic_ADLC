@@ -258,3 +258,28 @@ to show the steps actually used.
   - injection and refusal tests.
 - **Scenario:** `adlc-replay --recording` over the three reference use cases (SC-001).
 - **Live:** a `dev` profile replay, recorded in tasks (SC-001, SC-005, SC-006).
+
+## R-15 Decisions from the live replays (2026-11-11)
+
+Four live `dev` replays (GPT-4o mini) showed where the agents needed more from the platform. Each
+fix is generic (no terminal, role or source names) and covered by tests:
+
+- **Parameters block.** A model agent's request includes `parameters`: the resolved run
+  parameters its terminal's controls use (found as `param.<name>` in the control rules and read
+  through the policy engine, the same values the controls check). Agents no longer ask for limits
+  such as the minimum number of scenarios.
+- **Row minimums.** A control of the form `size(<artifact>) >= <number or parameter>` becomes
+  "at least N rows" on that artifact's line of the output instruction.
+- **Bracket repair.** When an answer is not valid JSON, the parser retries once with unmatched
+  closing brackets outside strings removed and missing ones added; the result is still validated
+  in full. A reply that still fails gets a correction naming the parser's error and position.
+- **Replay approvers.** For each role a sign-off still needs, the replay picks an account holding
+  it that has not approved yet (one account may hold several roles). A reference file may give
+  `any` answers, used when the addressed role has no prepared answer left.
+- **Active worker.** `adlc-replay` refuses to start while another orchestrator worker has a fresh
+  heartbeat: that worker would advance the replay's runs with its own models.
+- **Prompts 1.1.0.** Search before drafting, meet the parameters, ask once and only after
+  searching, answer with one JSON object (agents catalogue 3.0.0).
+
+The remaining gap is the dev model's tool use: in run 4 it made no knowledge calls. The user
+accepted recording SC-001 as not met on the dev model (T033).

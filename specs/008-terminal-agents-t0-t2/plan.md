@@ -59,7 +59,8 @@ knowledge set for the demo.
 - **Live:** a `dev` profile replay.
 
 **Target Platform**: Docker Compose. New `knowledge` service (same image, port 8020 internal,
-health check). The orchestrator calls it.
+health check), serving the knowledge set the image includes (`data/knowledge`; a mounted folder
+can replace it through `ADLC_KNOWLEDGE_DIR`). The orchestrator calls it.
 
 **Project Type**: platform package (agents runtime) plus a small service.
 

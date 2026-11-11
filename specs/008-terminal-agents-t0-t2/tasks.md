@@ -55,7 +55,7 @@ US5 P2), then polish.
   - test folders `tests/unit/knowledge/`, `tests/integration/knowledge/`, `tests/fixtures/knowledge/` and `tests/fixtures/replays/`;
   - add `*/adlc/knowledge/*` to `CORE_MODULES` in the `Makefile`.
 - [X] T005 [P] `deploy/compose.yaml`:
-  - `knowledge` service (same image, `adlc-knowledge`, port 8020 internal only, `ADLC_KNOWLEDGE_DIR=/srv/knowledge` mounted read-only from `data/knowledge`, `ADLC_KNOWLEDGE_TOKEN` required, health check `/health`);
+  - `knowledge` service (same image, `adlc-knowledge`, port 8020 internal only, `ADLC_KNOWLEDGE_DIR` pointing at `data/knowledge`, which the image includes (a mounted folder can replace it; see T041), `ADLC_KNOWLEDGE_TOKEN` required, health check `/health`);
   - the orchestrator gets `ADLC_KNOWLEDGE_URL` and `ADLC_KNOWLEDGE_TOKEN` and depends on `knowledge` started;
   - `deploy/README.md` section.
 
@@ -296,7 +296,7 @@ Run `make check` and commit at every checkpoint.
 
 ## Phase 10: Convergence
 
-- [ ] T038 When `ToolGate` cuts a tool's output at its limit, end it with a note ("[output cut at N characters; read a specific section]") in `src/adlc/agents/tools.py`; test in `tests/unit/agents/test_tools_context.py` per FR-014 and the spec edge case on large results (partial)
-- [ ] T039 Record the decisions added after the live replays in `research.md` (new R-15), `contracts/agent-output.md` and `data-model.md`: the parameters block (resolved control parameters), row minimums stated in the request, bracket repair and named JSON errors, the replay's approver choice and `any` answers, and the active-worker refusal of `adlc-replay` (unrequested)
-- [ ] T040 Document in `quickstart.md` and `contracts/replay.md` that `adlc-replay` runs against the environment's database and knowledge server, from inside Compose with the orchestrator worker stopped (`docker compose run --rm --no-deps ... orchestrator adlc-replay ...`) per quickstart §1 (partial)
-- [ ] T041 Align T005's trail and `plan.md` with the built-in knowledge set (the image holds `data/knowledge`; `ADLC_KNOWLEDGE_DIR` points at it, and a mounted folder can replace it) per T005 (contradicts)
+- [X] T038 When `ToolGate` cuts a tool's output at its limit, end it with a note ("[output cut at N characters; read a specific section]") in `src/adlc/agents/tools.py`; test in `tests/unit/agents/test_tools_context.py` per FR-014 and the spec edge case on large results (partial)
+- [X] T039 Record the decisions added after the live replays in `research.md` (new R-15), `contracts/agent-output.md` and `data-model.md`: the parameters block (resolved control parameters), row minimums stated in the request, bracket repair and named JSON errors, the replay's approver choice and `any` answers, and the active-worker refusal of `adlc-replay` (unrequested)
+- [X] T040 Document in `quickstart.md` and `contracts/replay.md` that `adlc-replay` runs against the environment's database and knowledge server, from inside Compose with the orchestrator worker stopped (`docker compose run --rm --no-deps ... orchestrator adlc-replay ...`) per quickstart §1 (partial)
+- [X] T041 Align T005's trail and `plan.md` with the built-in knowledge set (the image holds `data/knowledge`; `ADLC_KNOWLEDGE_DIR` points at it, and a mounted folder can replace it) per T005 (contradicts)

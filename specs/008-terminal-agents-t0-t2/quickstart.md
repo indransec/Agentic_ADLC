@@ -4,8 +4,11 @@
 
 ```bash
 make check                                   # includes the 008 unit, integration and scenario tests
-uv run adlc-replay --recording tests/fixtures/replays
 ```
+
+The scenario suite replays the three reference use cases from `tests/fixtures/replays` with no
+provider. To replay them against the running stack, use the Compose commands in
+`contracts/replay.md` (`--recording /rec`).
 
 **Expect**: each of the three reference use cases reaches T2 sign-off. The report lists every
 mandatory artifact present, all blocking controls passing, the reviewer's recommendation, the
@@ -39,7 +42,8 @@ open http://localhost:8501
 **Live replay:**
 
 ```bash
-uv run adlc-replay --profile dev --baseline <offline report dir>
+# inside Compose, with the orchestrator worker stopped (contracts/replay.md)
+adlc-replay --profile dev --baseline <earlier report dir>
 ```
 
 **Expect** (SC-001, SC-005, SC-006):

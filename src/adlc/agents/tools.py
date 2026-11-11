@@ -32,6 +32,13 @@ class ToolContext:
     step: int
 
 
+def cut(output: str, limit: int = MAX_OUTPUT) -> str:
+    """At most ``limit`` characters; a cut output says so (008 FR-014)."""
+    if len(output) <= limit:
+        return output
+    return output[:limit] + f"\n[output cut at {limit} characters; read a specific section]"
+
+
 class Tool(Protocol):
     def call(self, arguments: Mapping[str, Any], context: ToolContext) -> str: ...
 
@@ -108,7 +115,7 @@ class ToolGate:
             context = ToolContext(run_id, usecase_id, terminal_id, spec or {}, attempt, step)
             output = self.tools[name].call(arguments, context)
             set_attributes(s, {"outcome": "ok"})
-            return ToolOutput(output[:MAX_OUTPUT])
+            return ToolOutput(cut(output))
 
     def describe(self, agent: AgentDefinition) -> list[dict[str, Any]]:
         """The agent's tools as the model is told about them (008 research R-05)."""

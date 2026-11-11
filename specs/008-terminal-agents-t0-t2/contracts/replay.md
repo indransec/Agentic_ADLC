@@ -24,7 +24,22 @@ adlc-replay [--set data/reference_usecases] [--only <id> ...]
 4. When a terminal awaits sign-off, read the report data, then pass it with the approvers its
    sign-off rule needs (typing `approver_fields`), until T2's review is recorded.
 
-The tool runs against the database of the environment (`.env`), like the demo script.
+The tool runs against the database and knowledge server of the environment (`.env`), with its
+own worker. It refuses to start while another orchestrator worker is active (a fresh heartbeat),
+because that worker would advance the replay's runs with its own models. With Compose:
+
+```bash
+docker compose -f deploy/compose.yaml --env-file .env stop orchestrator
+# wait for the heartbeat to age (ADLC_HEARTBEAT_MAX_AGE, 30 s by default), then:
+docker compose -f deploy/compose.yaml --env-file .env run --rm --no-deps \
+  -v "$PWD/tests/fixtures/replays:/rec" -v "$PWD/reports:/out" \
+  orchestrator adlc-replay --recording /rec --out /out/replays
+docker compose -f deploy/compose.yaml --env-file .env start orchestrator
+```
+
+The replay acts as the people of the account file: for each role it needs, an account holding
+it that has not approved the run yet. Its spans go to the same collector as the orchestrator's
+(service `adlc-replay`).
 
 **Exit codes**:
 - `0`: every use case reached T2 sign-off with all mandatory artifacts present and all blocking

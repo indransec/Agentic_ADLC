@@ -249,3 +249,13 @@ def test_row_minimums_come_from_the_controls_and_parameters() -> None:
     )
     assert "acceptance_and_failure (required, at least 30 rows)" in text
     assert "at least" not in output_instruction(spec("T1"), ["acceptance_and_failure"], [], {})
+
+
+def test_long_tool_output_is_cut_with_a_note() -> None:
+    """008 FR-014: output over the limit is cut, and the agent is told so."""
+    from adlc.agents.tools import MAX_OUTPUT, cut
+
+    assert cut("short") == "short"
+    long = cut("x" * (MAX_OUTPUT + 10))
+    assert long.startswith("x" * MAX_OUTPUT) and long.endswith("read a specific section]")
+    assert "x" * (MAX_OUTPUT + 1) not in long

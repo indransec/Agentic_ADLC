@@ -54,6 +54,7 @@ Index: `(run_id, artifact_id, version)`.
 | Nine playbooks (T0–T2) | 1.1.0, `status: active`, real procedures |
 | `adlc-specs/terminals/T0.yaml`, `T1.yaml`, `T2.yaml` | 2.0.0 (a changed value is a major change, rule V-24). The playbook references move to 1.1.0; nothing else changes |
 | Builder output (feature 006) | Optional `citations: [{artifact, row?, source, document, section}]` beside `artifacts` |
+| Context pack (feature 006) | `parameters`: the resolved run parameters the terminal's controls use (research R-15) |
 | Agent attempt (feature 006) | Unchanged columns; retrievals and citations link by run and attempt |
 | Run detail (feature 007) | `citations` per artifact |
 
@@ -83,7 +84,8 @@ Sections are the Markdown headings. A section's id is its heading path (`Scope`,
 | --- | --- |
 | `id`, `name` | e.g. `travel-claims`, "Travel Claims Assistant" |
 | `intake_text` | The business owner's description (at least 200 characters) |
-| `answers` | Prepared clarification answers by addressed role, given in order |
+| `answers` | Prepared clarification answers by addressed role, given in order; `any` holds an answer used when the addressed role has none left |
+| `until` | The terminal whose review ends the replay (it is not passed) |
 | `approver_fields` | Values typed at pass, by terminal (e.g. T0 `risk_tier`) |
 | `expected` | Expected risk tier and the minimum outcome: T2 reached, every mandatory artifact present, every blocking control passing |
 
