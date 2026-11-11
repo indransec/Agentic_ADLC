@@ -85,7 +85,7 @@ Sections are the Markdown headings. A section's id is its heading path (`Scope`,
 | `intake_text` | The business owner's description (at least 200 characters) |
 | `answers` | Prepared clarification answers by addressed role, given in order |
 | `approver_fields` | Values typed at pass, by terminal (e.g. T0 `risk_tier`) |
-| `expected` | Expected risk tier and minimum checks for the report |
+| `expected` | Expected risk tier and the minimum outcome: T2 reached, every mandatory artifact present, every blocking control passing |
 
 ### Recording (`<dir>/<usecase>/<agent>.jsonl`)
 

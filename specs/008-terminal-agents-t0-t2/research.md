@@ -75,8 +75,9 @@ knowledge set uses them.
 - **Citations in the output:** the builder's output gains an optional `citations` list next to
   `artifacts`. Each entry has `artifact`, an optional `row` (index), `source`, `document` and
   `section`.
-- **Validation:** each citation must match a retrieval of the same attempt; if not, output
-  validation fails and the normal corrections apply. Its content hash is taken from the retrieval,
+- **Validation:** each citation must match a retrieval of the same attempt (retrievals from
+  earlier attempts do not count); if not, output validation fails and the normal corrections
+  apply. Its content hash is taken from the retrieval,
   never from the model.
 - **Storage:** citations are stored in `run.artifact_citation`, linked to the artifact version
   they support.
@@ -115,6 +116,13 @@ binding but a format change. It is left for the CoE to decide later.
 
 **Rationale**: the spec assumption (keyword search; vector search only if replays show the need).
 
+## R-06a Knowledge server failures
+
+**Decision**: a connection error, timeout (10 s) or server error on a knowledge call returns a
+tool error to the agent ("knowledge source unavailable: <source>"), with no retry inside the
+attempt. The agent continues without it or asks a clarification; its prompt forbids inventing
+sources. The retrieval log records nothing for a failed call; the span records the failure.
+
 ## R-07 Knowledge documents and the synthetic set
 
 **Decision**:
@@ -138,6 +146,8 @@ binding but a format change. It is left for the CoE to decide later.
   - the approved MCP server and tool list.
 - **Test-only documents:** an injection document and an over-class (confidential) document are
   in the test fixtures, not in the demo set.
+- **Coverage:** every grounding scope item of T0–T2 (path prefix or collection label) has at
+  least one document; a unit test checks this against the registered specs.
 
 ## R-08 Prompts, playbooks and spec versions
 
@@ -148,7 +158,9 @@ binding but a format change. It is left for the CoE to decide later.
   address the role that owns the fact) and the data rule.
 - **Agents catalogue:** goes to 1.1.0. The T0–T2 agents become `implementation: model`, with a
   prompt and knowledge tool bindings (R-03).
-- **Playbooks:** the nine playbooks get real procedures. Changed content needs a new version (the
+- **Playbooks:** the nine playbooks get real procedures, each with at least: purpose; the steps
+  per artifact it covers; the scales or criteria it applies (for example the suitability score
+  scale and the risk tier criteria); and when to ask a clarification. Changed content needs a new version (the
   registry refuses changed content under an existing version), so each moves to 1.1.0 with
   `status: active`.
 - **Terminal specs:** the T0, T1 and T2 specs pin their playbook versions, so they move to 1.1.0,

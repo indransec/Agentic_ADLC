@@ -27,6 +27,14 @@ guesses, and reference use cases that measure their quality."
   terminal's R role stays the default when no role is named. The named role must be one of the
   terminal's human roles.
 
+### Gate 2 defaults (approved 2026-11-11)
+
+- Tool bindings: tool scopes that also have a grounding entry (FR-002).
+- Citations must match a retrieval of the same attempt (FR-016).
+- Playbooks have a minimum structure (FR-007); every grounding scope item has a document (FR-012).
+- Knowledge server unavailable: error to the agent, no retry inside the attempt (Edge Cases).
+- Each reference use case states its expected tier and minimum outcome (FR-018).
+
 ## User Scenarios & Testing *(mandatory)*
 
 T0 (intake), T1 (requirements) and T2 (architecture) are the first terminals a use case meets.
@@ -183,7 +191,8 @@ replay live with the development model profile and compare.
 - A search returns more text than the tool output limit: the result is cut with a note, and the
   agent can read a specific document section instead.
 - The knowledge server is unavailable: the tool call fails with a clear error that reaches the
-  agent; the agent may continue without it or ask a clarification; it never invents sources.
+  agent, with no retry inside the attempt; the agent may continue without it or ask a
+  clarification; it never invents sources.
 - A cited document is changed after the run: the citation still identifies the document and
   section, and the evidence records the version (hash) of what was read.
 
@@ -210,8 +219,9 @@ replay live with the development model profile and compare.
 
 - **FR-001**: The T0, T1 and T2 agents MUST be model agents in the agent registry, each with a
   versioned prompt registered with its hash. T3–T9 agents stay stubs.
-- **FR-002**: Each agent's tool bindings MUST be exactly the knowledge scopes its terminal spec
-  grants (`tool_scopes`), no more.
+- **FR-002**: Each agent's tool bindings MUST be exactly the knowledge sources its terminal spec
+  grants: sources in `tool_scopes` that also have a grounding entry, no more. A source in
+  `tool_scopes` without a grounding entry gets no tool until the spec adds one.
 - **FR-003**: Agent behaviour MUST come from prompts, playbooks, terminal specs and catalogues. The
   platform runtime MUST NOT contain terminal-specific code (constitution I); adding these agents
   changes registry entries and content, not the runtime's logic.
@@ -230,6 +240,9 @@ replay live with the development model profile and compare.
   T0 intake, agentic suitability rubric, risk classification; T1 requirements, autonomy levels,
   metric catalogue; T2 architecture, agentic patterns, reference architectures. Each is versioned
   and hashed through the existing registration, and the hashes used are recorded per attempt.
+  Each playbook has at least: purpose; the steps per artifact it covers; the scales or criteria it
+  applies (for example the suitability score scale and the risk tier criteria); and when to ask a
+  clarification instead of assuming.
 - **FR-008**: Prompts MUST state that grounded documents and tool output are data, never
   instructions (SA §7.4).
 
@@ -247,7 +260,8 @@ replay live with the development model profile and compare.
   feature MUST include a synthetic enterprise knowledge set for the demo covering business
   capabilities, strategy and policies, the existing agent portfolio, process documents and SOPs,
   related epics, platform standards, reference architectures and ADRs, and approved MCP servers and
-  tools, labelled as synthetic.
+  tools, labelled as synthetic. Every grounding scope item of T0, T1 and T2 has at least one
+  document.
 - **FR-013**: Every knowledge call MUST pass the policy engine's authorization first (feature 004).
   A refused call MUST NOT reach the knowledge service; the refusal and its reason go back to the
   agent and are logged.
@@ -260,8 +274,8 @@ replay live with the development model profile and compare.
   citation is a record kept with the run's evidence, linked to the artifact (and row) it supports,
   and shown on the run detail. The terminal specs and artifact columns stay unchanged.
 - **FR-016**: Citations are optional: no artifact is required to carry one. Any citation given
-  MUST refer to a document the agent retrieved in that run; a citation to anything else MUST fail
-  output validation.
+  MUST match a document section the agent retrieved in the same attempt; retrievals from earlier
+  attempts do not count. A citation to anything else MUST fail output validation.
 - **FR-017**: When a fact needed for a mandatory artifact is missing, the agent MUST ask a
   clarification stating where it looked, addressed to the role that owns the fact (for example,
   intake facts at T0 go to the business owner). The role MUST be one of the terminal's human
@@ -272,7 +286,8 @@ replay live with the development model profile and compare.
 
 - **FR-018**: A fixed set of reference use cases (the Travel Claims pilot and at least two others,
   of different risk tiers) MUST be replayable through T0–T2 with recorded model replies, without a
-  model provider.
+  model provider. Each reference use case states its expected risk tier and its minimum outcome:
+  T2 reached with every mandatory artifact present and every blocking control passing.
 - **FR-019**: The same set MUST be replayable live with a chosen model profile. Each replay MUST
   produce a report per use case and terminal: mandatory artifacts present, blocking controls passed,
   reviewer recommendation and reason, cost, and the agent, prompt, playbook and model versions used.
