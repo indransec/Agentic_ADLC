@@ -232,7 +232,7 @@ Test tasks come first in each phase and must fail before their implementation.
   10 runs in a row, 284 passed every run (about 2 min 50 s each), no flakes. `make check`: 1,601
   passed, core coverage 95% (gate 80%), migration check passed.
 - [X] T035 Run `make check` and fix any failure, including the 80% core coverage gate that now includes `inbox/` and `api/`.
-- [ ] T036 Live check (quickstart §2):
+- [X] T036 Live check (quickstart §2):
   - run `make up`;
   - open the UI;
   - submit a use case as the business owner from the account file;
@@ -240,6 +240,12 @@ Test tasks come first in each phase and must fail before their implementation.
   - verify the ledger.
 
   Record the result, including the API spans in Jaeger.
+
+  Result (2026-11-11): walkthrough done by the user on the live stack (`make up`, accounts from
+  the local account file): sign-in, intake, inbox decisions, artifact edit, blocked-run handling
+  and ledger verification all reported good. Jaeger (`/api/v3/traces`, service `adlc-api`): 78
+  spans in the session window, 16 carrying `account` (amara.okafor, tomas.silva), with `run_id`
+  and `usecase_id` on run and use-case operations.
 
 ---
 
