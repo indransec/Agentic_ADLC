@@ -267,3 +267,15 @@ Test tasks come first in each phase and must fail before their implementation.
 4. **Polish**: Phase 8.
 
 Run `make check` and commit at every checkpoint.
+
+---
+
+## Phase 9: Convergence
+
+- [ ] T037 Add `"kind": "not_signed_in"` to every 401 body (the session check in `src/adlc/api/auth.py` and failed sign-in in `src/adlc/api/routes/auth.py`), keeping `detail`; update `tests/integration/test_auth_api.py` and assert the kind in `tests/integration/api/test_usecases.py` per FR-021, research R-05 (partial)
+- [ ] T038 Make attachment and spreadsheet file names safe in `src/adlc/api/routes/artifacts.py`: keep the last path segment, drop control characters, limit to 200 characters, refuse an empty result (422 `invalid`, field `file`); test `../../etc/passwd`-style names in `tests/integration/api/test_artifacts.py` per spec edge case "dangerous name" (partial)
+- [ ] T039 Show every proposal field on the waiver page, including the spec's `requires` values (e.g. risk acceptance, conditions), as plain text in `src/adlc/ui/pages/waiver.py`; extend `tests/integration/ui/test_requests.py` per FR-017 (partial)
+- [ ] T040 Group the inbox by kind and show "controls being re-run" for items with `controls_pending` in `src/adlc/ui/pages/inbox.py`; extend `tests/integration/ui/test_sign_off.py` per contracts/ui.md Inbox (partial)
+- [ ] T041 After a successful submission, open the new use case's journey in `src/adlc/ui/pages/intake.py`; extend `tests/integration/ui/test_intake.py` per contracts/ui.md New use case (partial)
+- [ ] T042 Record that the run detail is `InboxService.detail` (no separate `RunDetailService`) in `src/adlc/inbox/README.md` and the T017 trail per T017 (contradicts)
+- [ ] T043 Correct `GET /inbox` ordering in `specs/007-human-inbox/contracts/api.md` to "soonest due first, then by arrival; no due time last" per FR-006 (contradicts)
