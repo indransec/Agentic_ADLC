@@ -210,6 +210,20 @@ class OrchestratorSettings(RuntimeSettings):
         default=None, json_schema_extra=_meta("path to a readable file (optional)")
     )
 
+    # 008 knowledge MCP server (the agents' grounding)
+    knowledge_url: str = Field(
+        default="http://knowledge:8020",
+        pattern=r"^https?://",
+        json_schema_extra=_meta("http(s) URL of the knowledge MCP server"),
+    )
+    knowledge_token: SecretStr | None = Field(
+        default=None,
+        min_length=16,
+        json_schema_extra=_meta(
+            "at least 16 characters; required when an agent has knowledge tools", secret=True
+        ),
+    )
+
     # 006 agent runtime
     anthropic_api_key: SecretStr | None = Field(
         default=None, json_schema_extra=_meta("provider API key", secret=True)
@@ -317,6 +331,32 @@ def _readable(value: Path) -> Path:
 def env_name(field_name: str) -> str:
     """Environment variable name for a settings field."""
     return f"{ENV_PREFIX}{field_name.upper()}"
+
+
+class KnowledgeSettings(BaseSettings):
+    """Settings for the ``adlc-knowledge`` MCP server process (feature 008, research R-12)."""
+
+    model_config = SettingsConfigDict(env_prefix=ENV_PREFIX, env_ignore_empty=True, extra="ignore")
+
+    knowledge_dir: Path = Field(
+        default=Path("data/knowledge"),
+        json_schema_extra=_meta("path to the knowledge document folder"),
+    )
+    knowledge_token: SecretStr = Field(
+        min_length=16, json_schema_extra=_meta("at least 16 characters", secret=True)
+    )
+    spec_dir: Path = Field(
+        default=Path("adlc-specs"),
+        json_schema_extra=_meta("path to the spec folder (data class catalogue)"),
+    )
+    knowledge_port: int = Field(default=8020, gt=0, lt=65536, json_schema_extra=_meta("port"))
+
+    @field_validator("knowledge_dir")
+    @classmethod
+    def _readable_dir(cls, value: Path) -> Path:
+        if not value.is_dir():
+            raise ValueError(f"{value} is not a readable folder")
+        return value
 
 
 class UiSettings(BaseSettings):

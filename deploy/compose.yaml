@@ -141,6 +141,29 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  # Knowledge MCP server (feature 008): the T0-T2 agents' read-only grounding over a document
+  # folder (the synthetic set baked into the image). Reachable only inside the network.
+  knowledge:
+    image: adlc-api:0.1.0
+    command: ["adlc-knowledge"]
+    environment:
+      ADLC_KNOWLEDGE_DIR: data/knowledge
+      ADLC_KNOWLEDGE_TOKEN: ${ADLC_KNOWLEDGE_TOKEN:?ADLC_KNOWLEDGE_TOKEN is required}
+      ADLC_SPEC_DIR: adlc-specs
+      ADLC_KNOWLEDGE_PORT: "8020"
+      ADLC_LOG_LEVEL: ${ADLC_LOG_LEVEL:-INFO}
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8020/health', timeout=2).status == 200 else 1)"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
   # Lifecycle orchestrator (feature 003): delivers events, advances runs, fires timers.
   orchestrator:
     image: adlc-api:0.1.0
@@ -173,6 +196,9 @@ services:
       ADLC_COST_ALERT_LEVELS: ${ADLC_COST_ALERT_LEVELS:-5,20,50}
       ADLC_AGENT_LIMITS: ${ADLC_AGENT_LIMITS:-}
       ADLC_AGENT_LIMIT_OVERRIDES: ${ADLC_AGENT_LIMIT_OVERRIDES:-}
+      # Knowledge MCP server (feature 008).
+      ADLC_KNOWLEDGE_URL: http://knowledge:8020
+      ADLC_KNOWLEDGE_TOKEN: ${ADLC_KNOWLEDGE_TOKEN:?ADLC_KNOWLEDGE_TOKEN is required}
     volumes:
       - ${ADLC_ACCOUNTS_FILE:?ADLC_ACCOUNTS_FILE is required}:/run/adlc/accounts.yaml:ro
       - adlc-files:/var/lib/adlc/files
@@ -180,6 +206,8 @@ services:
       register:
         condition: service_completed_successfully
       jaeger:
+        condition: service_started
+      knowledge:
         condition: service_started
     healthcheck:
       test: ["CMD", "adlc-orchestrator", "health"]

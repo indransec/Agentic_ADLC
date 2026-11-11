@@ -38,23 +38,23 @@ US5 P2), then polish.
 
 ## Phase 1: Setup
 
-- [ ] T001 Add `mcp==1.30.0` (MIT) to `pyproject.toml` and the lock (`uv add`), and check that FastAPI, Starlette and httpx resolve. Record it in the plan's licence table if anything changes.
-- [ ] T002 [P] Settings in `src/adlc/config/settings.py` and `.env.example`:
+- [X] T001 Add `mcp==1.30.0` (MIT) to `pyproject.toml` and the lock (`uv add`), and check that FastAPI, Starlette and httpx resolve. Record it in the plan's licence table if anything changes.
+- [X] T002 [P] Settings in `src/adlc/config/settings.py` and `.env.example`:
   - `RuntimeSettings`: `knowledge_url` (default `http://knowledge:8020`) and `knowledge_token` (secret, optional, required by the orchestrator when any agent has knowledge bindings);
   - new `KnowledgeSettings`: `knowledge_dir`, `knowledge_token` (required) and `spec_dir`;
   - update `tests/unit/test_env_example.py` and `tests/unit/test_settings.py`.
-- [ ] T003 [P] Migration `db/migrations/versions/0008_terminal_agents.py`:
+- [X] T003 [P] Migration `db/migrations/versions/0008_terminal_agents.py`:
   - `run.knowledge_retrieval` and `run.artifact_citation` exactly as in data-model.md, including "`request` ... at most 500 characters" and "`content_hash` ... `sha256:<hex>`";
   - indexes `(run_id, attempt)` and `(run_id, artifact_id, version)`;
   - grants;
   - the append-only trigger of features 003 and 005;
   - extend the migration and immutability tests.
-- [ ] T004 [P] Package skeleton:
+- [X] T004 [P] Package skeleton:
   - `src/adlc/knowledge/{__init__,__main__,documents,search,scope,server}.py` and `README.md` stub;
   - entry point `adlc-knowledge` and `adlc-replay` in `pyproject.toml`;
   - test folders `tests/unit/knowledge/`, `tests/integration/knowledge/`, `tests/fixtures/knowledge/` and `tests/fixtures/replays/`;
   - add `*/adlc/knowledge/*` to `CORE_MODULES` in the `Makefile`.
-- [ ] T005 [P] `deploy/compose.yaml`:
+- [X] T005 [P] `deploy/compose.yaml`:
   - `knowledge` service (same image, `adlc-knowledge`, port 8020 internal only, `ADLC_KNOWLEDGE_DIR=/srv/knowledge` mounted read-only from `data/knowledge`, `ADLC_KNOWLEDGE_TOKEN` required, health check `/health`);
   - the orchestrator gets `ADLC_KNOWLEDGE_URL` and `ADLC_KNOWLEDGE_TOKEN` and depends on `knowledge` started;
   - `deploy/README.md` section.
