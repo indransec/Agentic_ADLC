@@ -1,10 +1,16 @@
 """T008: tools get the run's context; KnowledgeTool adds scope and class from the pinned spec;
 tools are described to the model (008 research R-02, R-05)."""
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterator, Mapping, Sequence
 from functools import cache
 from pathlib import Path
 from typing import Any
+
+import pytest
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from adlc.agents.catalogue import AgentCatalogue, AgentDefinition, ToolBinding
 from adlc.agents.context import builder_messages, output_instruction
@@ -20,6 +26,17 @@ from adlc.spec_toolkit.loader import load_bundle
 from adlc.spec_toolkit.registry import InMemorySpecRegistry
 
 SPECS = Path(__file__).resolve().parents[3] / "adlc-specs"
+
+
+@pytest.fixture
+def exporter(monkeypatch: pytest.MonkeyPatch) -> Iterator[InMemorySpanExporter]:
+    monkeypatch.delenv("OTEL_SDK_DISABLED", raising=False)
+    memory = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(memory))
+    monkeypatch.setattr(trace, "get_tracer", lambda name: provider.get_tracer(name))
+    yield memory
+    provider.shutdown()
 
 
 @cache
@@ -187,3 +204,39 @@ def tool_section_text(tools: list[dict[str, Any]]) -> str:
 
 def test_builder_messages_take_tools() -> None:
     assert "tools" in builder_messages.__code__.co_varnames
+
+
+def test_tool_span_names_tool_source_outcome_and_count(exporter: Any) -> None:
+    """008 FR-021: the tool span carries the tool, source, outcome and result count, no content."""
+
+    class Allow:
+        def authorize(self, *args: Any) -> bool:
+            return True
+
+    agent = AgentDefinition(
+        "a",
+        "1",
+        "model",
+        "reasoning",
+        ("a", "1"),
+        (ToolBinding("sharepoint_search", "mcp:sharepoint:read"),),
+    )
+    tool = KnowledgeTool("sharepoint", "search", FakeCaller(RESULT), FakeLog())
+    ToolGate(Allow(), {"sharepoint_search": tool}).call(  # type: ignore[arg-type]
+        run_id="UC-0001/T0/run-1",
+        usecase_id="UC-0001",
+        terminal_id="T0",
+        agent=agent,
+        name="sharepoint_search",
+        arguments={"query": "claims data"},
+        spec=spec("T0"),
+    )
+    (found,) = [s for s in exporter.get_finished_spans() if s.name == "adlc.agent.tool"]
+    attrs = dict(found.attributes or {})
+    assert (attrs["tool"], attrs["source"], attrs["results"], attrs["outcome"]) == (
+        "sharepoint_search",
+        "sharepoint",
+        1,
+        "ok",
+    )
+    assert all("claims" not in str(v) for v in attrs.values())

@@ -47,7 +47,8 @@ uv run adlc-replay --profile dev --baseline <offline report dir>
 - each terminal reaches sign-off within 5 minutes;
 - the total cost is under 1 USD.
 
-**Jaeger:** `adlc.tool.call` spans show source, tool and result counts, with no content.
+**Jaeger:** `adlc.agent.tool` and `adlc.agent.retrieval` spans show each knowledge call, with no
+content.
 
 ## 3. Reset after the spec change
 

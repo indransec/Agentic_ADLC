@@ -141,6 +141,9 @@ def uploads(api: ApiClient, run_id: str, aid: str, seen: int) -> None:
 
 
 def sections(data: dict[str, Any]) -> None:
+    st.subheader("Citations")
+    table([{"artifact": a["id"], **c} for a in data["artifacts"] for c in a.get("citations") or []])
+
     st.subheader("Prerequisites")
     table(data["prerequisites"])
 

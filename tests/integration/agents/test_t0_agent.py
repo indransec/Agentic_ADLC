@@ -116,3 +116,44 @@ def test_citation_keeps_the_hash_of_what_was_read(
             "sha256:" + hashlib.sha256(("## Claims data" + section).strip().encode()).hexdigest()
         )
         assert cited[0] == expected  # the text that was read, not the changed file
+
+
+def test_run_detail_and_reviewer_show_the_citations(
+    orch_template: PlatformDatabase, tmp_path: Path
+) -> None:
+    """T030: the run detail (feature 007) lists the citations of each current version."""
+    from tests.support.api import api_for
+
+    with grounded(orch_template, {T0: GROUNDED}) as g:
+        usecase = g.h.submit()
+        run_id = g.h.active(usecase, "T0").run_id
+        with api_for(g.h, tmp_path) as api:
+            shown = api.get("sre", f"/runs/{run_id}").json()
+    by_id = {a["id"]: a for a in shown["artifacts"]}
+    assert by_id["data_access"]["citations"] == [
+        {"row_index": 0, "source": "sharepoint", "document": POLICY, "section": "Claims data"}
+    ]
+    assert by_id["raci"]["citations"] == []
+
+
+def test_the_model_reviewer_receives_the_citations(orch_template: PlatformDatabase) -> None:
+    """T030: citations are evidence the reviewer sees, never the builder's messages."""
+    seen: list[str] = []
+
+    def review(messages: Any) -> str:
+        seen.append("\n".join(m["content"] for m in messages))
+        items = [f"CHK-T0-0{n}" for n in range(1, 7)]
+        return json.dumps(
+            {
+                "scores": dict.fromkeys(items, 3),
+                "findings": [],
+                "recommendation": {"status": "pass", "reason": "complete", "root_cause": None},
+            }
+        )
+
+    replies = {T0: GROUNDED, "common-terminal-reviewer": [review]}
+    with grounded(orch_template, replies, reviewer_mode="model") as g:
+        usecase = g.h.submit()
+        assert g.h.active(usecase, "T0").recommendation["status"] == "pass"
+    assert '<data source="citations">' in seen[0] and POLICY in seen[0]
+    assert "sharepoint_read" not in seen[0]  # not the builder's tool calls

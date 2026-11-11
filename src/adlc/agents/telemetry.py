@@ -35,6 +35,9 @@ ALLOWED = frozenset(
         "corrections",
         "limit_reached",
         "latency_ms",
+        "tool",  # 008: knowledge calls
+        "source",
+        "results",
     }
 )
 

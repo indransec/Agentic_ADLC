@@ -12,6 +12,7 @@ from typing import Any, Protocol
 
 from adlc.agents.catalogue import AgentDefinition
 from adlc.agents.context import data_block
+from adlc.agents.telemetry import set_attributes
 from adlc.orchestration.interfaces import EvalContext, PolicyEngine
 from adlc.orchestration.tracing import span
 
@@ -91,7 +92,10 @@ class ToolGate:
             return ToolRefused(f"tool {name} is not available to {agent.id}")
         evaluation = EvalContext(terminal_id, f"tool:{name}", on_behalf_of or run_id, usecase_id)
         actor = f"agent:{run_id}"
-        with span("agent", "tool", run_id=run_id, usecase_id=usecase_id, terminal_id=terminal_id):
+        with span(
+            "agent", "tool", run_id=run_id, usecase_id=usecase_id, terminal_id=terminal_id
+        ) as s:
+            set_attributes(s, {"tool": name})
             decide = getattr(self.policy, "authorize_decision", None)
             if decide is not None:
                 allowed, reason = decide(actor, binding.action, binding.resource, evaluation)
@@ -99,9 +103,12 @@ class ToolGate:
                 allowed = self.policy.authorize(actor, binding.action, binding.resource, evaluation)
                 reason = "" if allowed else f"not permitted: {binding.permission}"
             if not allowed:
+                set_attributes(s, {"outcome": "refused"})
                 return ToolRefused(str(reason) or f"not permitted: {binding.permission}")
             context = ToolContext(run_id, usecase_id, terminal_id, spec or {}, attempt, step)
-            return ToolOutput(self.tools[name].call(arguments, context)[:MAX_OUTPUT])
+            output = self.tools[name].call(arguments, context)
+            set_attributes(s, {"outcome": "ok"})
+            return ToolOutput(output[:MAX_OUTPUT])
 
     def describe(self, agent: AgentDefinition) -> list[dict[str, Any]]:
         """The agent's tools as the model is told about them (008 research R-05)."""

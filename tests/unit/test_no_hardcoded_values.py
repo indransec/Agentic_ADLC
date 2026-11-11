@@ -1,5 +1,6 @@
 """Constitution I and II: no terminal, event or role values hard-coded in platform code (FR-028)."""
 
+import ast
 import re
 from pathlib import Path
 
@@ -57,6 +58,7 @@ ORCHESTRATION = sorted(
         *(ROOT / "src" / "adlc" / "inbox").rglob("*.py"),  # 007 T031
         *(ROOT / "src" / "adlc" / "api").rglob("*.py"),
         *(ROOT / "src" / "adlc" / "ui").rglob("*.py"),
+        *(ROOT / "src" / "adlc" / "knowledge").rglob("*.py"),  # 008 T031
     ]
 )
 
@@ -129,3 +131,51 @@ def test_only_the_gateway_imports_litellm() -> None:
         if re.search(r"^\s*(import litellm|from litellm)", p.read_text(), re.MULTILINE)
     ]
     assert importers == ["src/adlc/agents/gateway.py"]
+
+
+GROUNDING = sorted(
+    [
+        *(ROOT / "src" / "adlc" / "agents").rglob("*.py"),
+        *(ROOT / "src" / "adlc" / "knowledge").rglob("*.py"),
+    ]
+)
+
+
+def _source_ids() -> set[str]:
+    from ruamel.yaml import YAML
+
+    data = YAML(typ="safe").load((ROOT / "adlc-specs" / "shared" / "mcp_servers.yaml").read_text())
+    return {str(s["id"]) for s in data["mcp_servers"]}
+
+
+def _literals(path: Path) -> list[tuple[int, str]]:
+    """String literals in code, docstrings excluded."""
+    tree = ast.parse(path.read_text())
+    docstrings = {
+        id(node.body[0].value)
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Module | ast.ClassDef | ast.FunctionDef | ast.AsyncFunctionDef)
+        and node.body
+        and isinstance(node.body[0], ast.Expr)
+        and isinstance(node.body[0].value, ast.Constant)
+    }
+    return [
+        (node.lineno, node.value)
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant)
+        and isinstance(node.value, str)
+        and id(node) not in docstrings
+    ]
+
+
+@pytest.mark.parametrize("path", GROUNDING, ids=lambda p: str(p.relative_to(ROOT)))
+def test_grounding_names_no_knowledge_source(path: Path) -> None:
+    """008 T031: knowledge sources come from the catalogue and the specs, never from code: no
+    string literal is a source id or names ``mcp:<source>``."""
+    ids = _source_ids()
+    hits = [
+        f"{path.name}:{line}: {value!r}"
+        for line, value in _literals(path)
+        if value in ids or any(f"mcp:{source}" in value for source in ids)
+    ]
+    assert hits == []

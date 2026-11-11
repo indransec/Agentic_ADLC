@@ -231,8 +231,8 @@ fact (clarification answer 3).
   data class catalogue).
 - **Container:** `knowledge` in Compose, using the same image, port 8020 inside only, with a health
   check. The orchestrator depends on it starting.
-- **Traces:** each knowledge call adds an `adlc.tool.call` span with run, terminal, tool, source,
-  outcome and result count, and never content (FR-021). The server logs request counts only.
+- **Traces:** each knowledge call is traced as `adlc.agent.tool` (run, use case, terminal) with an
+  `adlc.agent.retrieval` span for its records, and never content (FR-021). The server logs request counts only.
 
 ## R-13 Limits for tool use
 

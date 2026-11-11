@@ -112,7 +112,7 @@ the ledger record content (v3).
 | VII Interfaces | The knowledge server is an MCP mock with the real tool shape. Agents use the `Tool` interface | Pass |
 | VIII Open source | `mcp` (MIT), pinned at least two weeks old | Pass |
 | IX Test first | Scope, search, filters and validation rules are written test-first | Pass |
-| X Observable | `adlc.tool.call` spans and retrieval rows; run activity as before | Pass |
+| X Observable | `adlc.agent.tool` spans (tool, source, outcome, result count) and retrieval rows; run activity as before | Pass |
 | XI Secure | Service token, read-only server, fail-closed data classes, data blocks and the injection tests | Pass |
 | XII Simplicity | One server, keyword search, single agents, recordings for tests | Pass |
 | XIII Naming | Tables, tools (`<source>_search`) and files follow Annex A | Pass |

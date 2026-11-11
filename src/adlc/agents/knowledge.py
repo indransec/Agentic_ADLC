@@ -13,8 +13,10 @@ from typing import Any, Protocol
 
 import anyio
 import httpx
+from opentelemetry import trace
 
 from adlc.agents.catalogue import AgentCatalogue
+from adlc.agents.telemetry import set_attributes
 from adlc.agents.tools import Tool, ToolContext
 from adlc.orchestration import spec_view
 
@@ -115,10 +117,14 @@ class KnowledgeTool:
                 {**allowed, "scope": scope, "max_class": max_class(context.spec)},
             )
         except KnowledgeUnavailable:
+            set_attributes(
+                trace.get_current_span(), {"source": self.source, "reason": "unavailable"}
+            )
             return f"knowledge source unavailable: {self.source}"
         if failed:
             return f"{self.name} failed: {payload}"
         found = self._retrievals(allowed, payload)
+        set_attributes(trace.get_current_span(), {"source": self.source, "results": len(found)})
         if found:
             self.log.record(context, found)
         return json.dumps(payload, ensure_ascii=False)

@@ -119,7 +119,7 @@ US5 P2), then polish.
 - [X] T013 Implement `src/adlc/agents/citations.py`:
   - record every knowledge result in `run.knowledge_retrieval`;
   - record each valid citation in `run.artifact_citation`, with `content_hash` and `knowledge_retrieval_id` copied from the matching retrieval and `version` from the artifact version created by the same attempt;
-  - add the `adlc.tool.call` span with run, terminal, tool, source, outcome and result count, and no content (FR-021).
+  - add the tool, source, outcome and result count to the `adlc.agent.tool` span (with run and terminal), and no content (FR-021).
 
 **Checkpoint**: an agent with a knowledge binding can search, read and cite on the harness.
 
@@ -225,13 +225,13 @@ US5 P2), then polish.
 
 ## Phase 9: Polish
 
-- [ ] T030 [P] Citations on the run page:
+- [X] T030 [P] Citations on the run page:
   - `citations` per artifact in `InboxService.detail` (`src/adlc/inbox/service.py`);
   - a Citations section in `src/adlc/ui/pages/run.py` as plain text;
   - the reviewer's input includes the citations;
   - extend the 007 API and UI tests.
-- [ ] T031 [P] Extend the no-hard-coded-values scan to `src/adlc/knowledge/` and the new agent modules (terminal, role and source ids). Add the import boundary: `knowledge/` imports nothing from `orchestration`, `ledger`, `policy`, `agents` or `api`.
-- [ ] T032 [P] READMEs:
+- [X] T031 [P] Extend the no-hard-coded-values scan to `src/adlc/knowledge/` and the new agent modules (terminal, role and source ids). Add the import boundary: `knowledge/` imports nothing from `orchestration`, `ledger`, `policy`, `agents` or `api`.
+- [X] T032 [P] READMEs:
   - `src/adlc/knowledge/README.md` (sources, tools, scope rules, documents, security);
   - `src/adlc/agents/README.md` (tools, citations, replay);
   - `data/knowledge/README.md` (how to add documents).
@@ -243,7 +243,7 @@ US5 P2), then polish.
   - submit a use case and walk T0–T2 in the UI;
   - run `adlc-replay --profile dev` with the offline report as the baseline.
 
-  Record SC-001, SC-005 and SC-006, and the `adlc.tool.call` spans in Jaeger.
+  Record SC-001, SC-005 and SC-006, and the `adlc.agent.tool` spans in Jaeger.
 
 ---
 
