@@ -227,8 +227,11 @@ Test tasks come first in each phase and must fail before their implementation.
   - the ledger verifies (SC-005, SC-008);
   - for every terminal, the run detail fetched before the decision has every SA §8.2 field (SC-003).
 - [X] T033 [P] Write `src/adlc/inbox/README.md` and the API section of `src/adlc/api/README.md` (or extend the existing docs): operations, errors, inbox rules and the UI's rendering rules.
-- [ ] T034 Run the 003–007 suites 10 times in a row and record the result.
-- [ ] T035 Run `make check` and fix any failure, including the 80% core coverage gate that now includes `inbox/` and `api/`.
+- [X] T034 Run the 003–007 suites 10 times in a row and record the result.
+  Result (2026-11-11): integration orchestration, policy, ledger, agents, api, ui and the scenarios,
+  10 runs in a row, 284 passed every run (about 2 min 50 s each), no flakes. `make check`: 1,601
+  passed, core coverage 95% (gate 80%), migration check passed.
+- [X] T035 Run `make check` and fix any failure, including the 80% core coverage gate that now includes `inbox/` and `api/`.
 - [ ] T036 Live check (quickstart §2):
   - run `make up`;
   - open the UI;
