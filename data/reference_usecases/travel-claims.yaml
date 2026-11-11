@@ -10,6 +10,8 @@ intake_text: >-
   consolidated request to the customer for anything missing. Handlers must still approve every
   payout and every message to a customer. Success means triage under three minutes and half the
   re-work.
+# The terminal whose review ends the replay (it is not passed).
+until: T2
 answers:
   business_owner:
     - "Claims history is owned by the head of claims operations; we use masked copies only."

@@ -209,14 +209,14 @@ US5 P2), then polish.
 
 ## Phase 8: User Story 5 – Reference replay and report (P2)
 
-- [ ] T028 [US5] Write failing tests in `tests/unit/agents/test_replay_report.py` and `tests/scenario/test_reference_replay.py`:
+- [X] T028 [US5] Write failing tests in `tests/unit/agents/test_replay_report.py` and `tests/scenario/test_reference_replay.py`:
   - the report fields of data-model.md;
   - the baseline marks a changed recommendation;
   - exit codes 0/1/2;
   - `adlc-replay --recording tests/fixtures/replays` over the three reference use cases reaches T2 sign-off, with every mandatory artifact present and every blocking control passing (SC-001);
   - the recordings start as hand-written scripted replies for the three use cases (T033 replaces them with live recordings);
   - a clarification addressed to a role without a prepared answer stops that use case as "unanswered clarification" and exits 1.
-- [ ] T029 [US5] Implement `src/adlc/agents/replay.py` (`adlc-replay`) per contracts/replay.md:
+- [X] T029 [US5] Implement `src/adlc/agents/replay.py` (`adlc-replay`) per contracts/replay.md:
   - drive submission, draining, answers and the needed approvers;
   - live, record and recording modes;
   - JSON and Markdown reports under `reports/replays/<timestamp>/` (git-ignored).

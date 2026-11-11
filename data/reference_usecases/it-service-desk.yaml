@@ -9,6 +9,8 @@ intake_text: >-
   ticket and drafts the first reply for the analyst to send. Analysts keep the final decision, and
   security tickets must never be closed automatically. Success means fewer than 10% reassignments
   and first assignment within 15 minutes.
+# The terminal whose review ends the replay (it is not passed).
+until: T2
 answers:
   business_owner:
     - "Tickets are internal data owned by the IT operations director; personal data is masked."

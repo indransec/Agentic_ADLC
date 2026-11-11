@@ -9,6 +9,8 @@ intake_text: >-
   decline an application; every credit decision stays with a credit officer and every decline must
   be explainable to the applicant. The data includes credit bureau reports and income details.
   Success means pre-screening under 8 minutes with no increase in adverse decisions.
+# The terminal whose review ends the replay (it is not passed).
+until: T2
 answers:
   business_owner:
     - "Credit bureau and income data are restricted and owned by the chief credit risk officer."
