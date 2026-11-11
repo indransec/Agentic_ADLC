@@ -95,10 +95,40 @@ class RuntimeSettings(DatabaseSettings):
         default=DEFAULT_ATTACHMENT_TYPES, json_schema_extra=_meta("comma-separated media types")
     )
 
+    # Shared by the API and the orchestrator (moved from OrchestratorSettings by feature 007).
+    # Optional for the API and the account CLI (no role: nobody sees dead letters); the
+    # orchestrator requires it (redeclared below).
+    deadletter_role: str | None = Field(
+        default=None, json_schema_extra=_meta("a role id from the role catalogue")
+    )
+    synthetic_dir: Path | None = Field(
+        default=Path("data/synthetic"),
+        json_schema_extra=_meta("path to the synthetic data folder, or off"),
+    )
+    spec_dir: Path = Field(
+        default=Path("adlc-specs"),
+        json_schema_extra=_meta("path to the spec folder (prompts, playbooks, checklists)"),
+    )
+
     @field_validator("role_catalogue")
     @classmethod
     def _readable_catalogue(cls, value: Path) -> Path:
         return _readable(value)
+
+    @field_validator("synthetic_dir", mode="before")
+    @classmethod
+    def _off_disables(cls, value: object) -> object:
+        return None if isinstance(value, str) and value.strip().lower() == "off" else value
+
+    @field_validator("deadletter_role")
+    @classmethod
+    def _known_role(cls, value: str | None, info: ValidationInfo) -> str | None:
+        catalogue = info.data.get("role_catalogue")
+        if value is None:
+            return None
+        if isinstance(catalogue, Path) and value not in load_role_ids(catalogue):
+            raise ValueError("not a role in the role catalogue")
+        return value
 
     @field_validator("attachment_max", mode="before")
     @classmethod
@@ -164,6 +194,8 @@ DEFAULT_AGENT_LIMITS: dict[str, AgentLimit] = {
 class OrchestratorSettings(RuntimeSettings):
     """Settings for the ``adlc-orchestrator`` process (003 research R-11)."""
 
+    deadletter_role: str = Field(json_schema_extra=_meta("a role id from the role catalogue"))
+
     time_scale: float = Field(
         default=1.0, gt=0, json_schema_extra=_meta("number greater than zero")
     )
@@ -174,20 +206,11 @@ class OrchestratorSettings(RuntimeSettings):
     heartbeat_max_age: Duration = Field(
         default=timedelta(seconds=30), json_schema_extra=_meta(DURATION_FORM)
     )
-    deadletter_role: str = Field(json_schema_extra=_meta("a role id from the role catalogue"))
-    synthetic_dir: Path | None = Field(
-        default=Path("data/synthetic"),
-        json_schema_extra=_meta("path to the synthetic data folder, or off"),
-    )
     accounts_file: Path | None = Field(
         default=None, json_schema_extra=_meta("path to a readable file (optional)")
     )
 
     # 006 agent runtime
-    spec_dir: Path = Field(
-        default=Path("adlc-specs"),
-        json_schema_extra=_meta("path to the spec folder (prompts, playbooks, checklists)"),
-    )
     anthropic_api_key: SecretStr | None = Field(
         default=None, json_schema_extra=_meta("provider API key", secret=True)
     )
@@ -269,23 +292,10 @@ class OrchestratorSettings(RuntimeSettings):
             return tuple(sorted(levels))
         return value
 
-    @field_validator("synthetic_dir", mode="before")
-    @classmethod
-    def _off_disables(cls, value: object) -> object:
-        return None if isinstance(value, str) and value.strip().lower() == "off" else value
-
     @field_validator("accounts_file")
     @classmethod
     def _readable_optional(cls, value: Path | None) -> Path | None:
         return None if value is None else _readable(value)
-
-    @field_validator("deadletter_role")
-    @classmethod
-    def _known_role(cls, value: str, info: ValidationInfo) -> str:
-        catalogue = info.data.get("role_catalogue")
-        if isinstance(catalogue, Path) and value not in load_role_ids(catalogue):
-            raise ValueError("not a role in the role catalogue")
-        return value
 
 
 def _fits_lease(info: ValidationInfo, timeouts: list[float]) -> None:
@@ -307,3 +317,16 @@ def _readable(value: Path) -> Path:
 def env_name(field_name: str) -> str:
     """Environment variable name for a settings field."""
     return f"{ENV_PREFIX}{field_name.upper()}"
+
+
+class UiSettings(BaseSettings):
+    """Settings for the web application process (feature 007). It reaches the platform only
+    through the API, so it needs no database or secret settings."""
+
+    model_config = SettingsConfigDict(env_prefix=ENV_PREFIX, env_ignore_empty=True, extra="ignore")
+
+    api_url: str = Field(
+        default="http://api:8000",
+        pattern=r"^https?://",
+        json_schema_extra=_meta("http(s) URL of the platform API"),
+    )

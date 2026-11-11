@@ -73,7 +73,7 @@ def test_refusals_are_identical(client: TestClient) -> None:
     for response in (unknown, wrong, placeholder):
         assert response.status_code == 401
         assert response.content == unknown.content
-    assert unknown.json() == {"detail": "invalid credentials"}
+    assert unknown.json() == {"kind": "not_signed_in", "detail": "invalid credentials"}
 
 
 @pytest.mark.parametrize("header", [None, "Bearer garbage", "Basic abc", "Bearer "])
@@ -81,7 +81,7 @@ def test_me_requires_valid_session(client: TestClient, header: str | None) -> No
     headers = {"Authorization": header} if header is not None else {}
     response = client.get("/auth/me", headers=headers)
     assert response.status_code == 401
-    assert response.json() == {"detail": "not authenticated"}
+    assert response.json() == {"kind": "not_signed_in", "detail": "not authenticated"}
 
 
 def test_sign_out_revokes(client: TestClient) -> None:

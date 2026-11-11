@@ -60,6 +60,7 @@ def settings_for(db: PlatformDatabase, accounts_file: Path, **overrides: object)
         "accounts_file": accounts_file,
         "role_catalogue": REPO_ROOT / "adlc-specs" / "shared" / "roles.yaml",
         "db_connect_timeout": "5s",
+        "deadletter_role": "adlc_coe",  # 007: the API serves dead letters to this role
     }
     values.update(overrides)
     return Settings.model_validate(values)

@@ -14,6 +14,7 @@ from uuid import UUID
 from sqlalchemy import Connection
 
 from adlc.identity.protocol import Person
+from adlc.inbox import rules
 from adlc.orchestration import ids, routing, spec_view, store
 from adlc.orchestration.engine import PostgresTerminalRun, StaleRun, UnknownRun
 from adlc.orchestration.states import (
@@ -40,6 +41,9 @@ __all__ = [
 ]
 
 SUBMIT_REASON = "pinned at submit"
+
+
+SUBMITTED_EVENT = "usecase.submitted"
 
 
 class NotAuthorised(Exception):
@@ -102,6 +106,9 @@ class OrchestratorService:
         self._human(actor)
         if not name.strip() or len(name) > 200:
             raise InvalidDecision("name must be 1 to 200 characters")
+        allowed = self.submitter_roles()
+        if allowed and not actor.roles & allowed:
+            raise NotAuthorised(f"submitting a use case needs one of {sorted(allowed)}")
         with self.runs.engine.begin() as conn:
             versions = store.active_spec_versions(conn)
             if not versions:
@@ -113,7 +120,7 @@ class OrchestratorService:
             store.insert_event(
                 conn,
                 event_id=ids.uuid7(),
-                event_type="usecase.submitted",
+                event_type=SUBMITTED_EVENT,
                 usecase_id=usecase,
                 correlation_id=ids.correlation_id(usecase),
                 causation_run_id=None,
@@ -121,6 +128,16 @@ class OrchestratorService:
                 now=self._now,
             )
         return usecase
+
+    def submitter_roles(self) -> frozenset[str]:
+        """007: the accountable roles of the terminals a submission opens (SA 8.1: the business
+        owner submits), read from the registered specs."""
+        roles: set[str] = set()
+        for ref in self.runs.registry.terminals_opened_by(SUBMITTED_EVENT):
+            entry = self.runs.registry.entry(ref.terminal_id, ref.version)
+            if entry is not None:
+                roles |= spec_view.accountable_roles(entry.spec)
+        return frozenset(roles)
 
     def get_usecase(self, usecase_id: str) -> UseCaseRow | None:
         with self.runs.engine.connect() as conn:
@@ -326,9 +343,7 @@ class OrchestratorService:
                 raise InvalidTransition(f"unknown waiver {waiver_id}")
             run = self._run(conn, str(waiver["run_id"]))
             spec = self.runs.entry(run.terminal_id, run.spec_version).spec
-            approvers = spec_view.outcome_set_by(spec, "exception") or spec_view.accountable_roles(
-                spec
-            )
+            approvers = rules.waiver_approvers(spec)
             if not actor.roles & approvers:
                 raise NotAuthorised(f"waiver approval needs one of {sorted(approvers)}")
             if actor.account_name == waiver["proposed_by"]:
@@ -356,7 +371,7 @@ class OrchestratorService:
                 raise InvalidTransition(f"unknown clarification {clarification_id}")
             if round_["answered_by"] is not None:
                 raise AlreadyAnswered(clarification_id)
-            if round_["addressed_role"] not in actor.roles:
+            if not rules.can_answer(actor, round_["addressed_role"]):
                 raise NotAuthorised(f"only {round_['addressed_role']} may answer")
             store.insert_answer(conn, clarification_id, actor.account_name, answers, self._now)
             return self.runs.apply_in(
@@ -371,15 +386,20 @@ class OrchestratorService:
             )
 
     def complete_escalation(
-        self, actor: Actor, run_id: str, artifacts: Mapping[str, Any]
+        self,
+        actor: Actor,
+        run_id: str,
+        artifacts: Mapping[str, Any],
+        expected_version: int | None = None,
     ) -> RunRow:
         self._human(actor)
         with self.runs.engine.begin() as conn:
             run = self._run(conn, run_id)
             spec = self.runs.entry(run.terminal_id, run.spec_version).spec
-            accountable = spec_view.accountable_roles(spec)
-            if not actor.roles & accountable:
-                raise NotAuthorised(f"escalation completion needs one of {sorted(accountable)}")
+            if not rules.can_complete_escalation(actor, spec):
+                raise NotAuthorised(
+                    f"escalation completion needs one of {sorted(rules.accountable(spec))}"
+                )
             merged = {**run.artifacts, **dict(artifacts)}
             return self.runs.apply_in(
                 conn,
@@ -390,6 +410,7 @@ class OrchestratorService:
                     actor.account_name,
                     {"artifacts": merged},
                 ),
+                expected_version=expected_version,
             )
 
     # -------------------------------------------------------------- operational events

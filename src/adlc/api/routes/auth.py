@@ -52,7 +52,9 @@ def sign_in(
     try:
         grant = provider.sign_in(body.account_name, body.password)
     except InvalidCredentials:
-        return JSONResponse({"detail": "invalid credentials"}, status_code=401)
+        return JSONResponse(
+            {"kind": "not_signed_in", "detail": "invalid credentials"}, status_code=401
+        )
     return SignInResponse(
         token=grant.token, expires_at=grant.expires_at, person=PersonOut.of(grant.person)
     )

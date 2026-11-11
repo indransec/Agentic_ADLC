@@ -133,8 +133,9 @@ def test_no_outcome_without_a_human(ctx: TransitionContext, sequence: list[Signa
 # budget overrun), never by asking for escalation; humans can never cause it.
 RULE_TRIGGERS = {
     ActorType.ORCHESTRATOR: {"timer", "clarification_sla", "retry_limit", "rework_limit"},
-    ActorType.AGENT: {"clarification_limit", "budget"},
-    ActorType.REVIEWER: {"clarification_limit"},
+    # 006: failed attempts use the retry counter; outages and unfit reviews escalate.
+    ActorType.AGENT: {"clarification_limit", "budget", "retry_limit", "model_unavailable"},
+    ActorType.REVIEWER: {"clarification_limit", "reviewer_failed", "model_unavailable"},
 }
 
 
