@@ -248,11 +248,11 @@ replay live with the development model profile and compare.
 
 **Knowledge**
 
-- **FR-009**: A read-only knowledge service MUST serve the knowledge sources named in the MCP
+- **FR-009**: A read-only knowledge MCP server MUST serve the knowledge sources named in the MCP
   catalogue that T0–T2 use (enterprise wiki, document library, agent portfolio, backlog,
   architecture repository, approved MCP and tool registry) with search and read operations, under
   the same tool names and scopes as the real servers (SA §13, constitution VII).
-- **FR-010**: The knowledge service MUST return only documents within the calling terminal's
+- **FR-010**: The knowledge MCP server MUST return only documents within the calling terminal's
   grounding scope and at or below the terminal's maximum data class.
 - **FR-011**: Every result MUST carry a citation: source, document, section, and the version
   (hash) of the text returned.
@@ -263,7 +263,7 @@ replay live with the development model profile and compare.
   tools, labelled as synthetic. Every grounding scope item of T0, T1 and T2 has at least one
   document.
 - **FR-013**: Every knowledge call MUST pass the policy engine's authorization first (feature 004).
-  A refused call MUST NOT reach the knowledge service; the refusal and its reason go back to the
+  A refused call MUST NOT reach the knowledge MCP server; the refusal and its reason go back to the
   agent and are logged.
 - **FR-014**: Knowledge output MUST reach the model only as labelled data blocks, and MUST be cut
   at the configured tool output limit with a note.
@@ -297,7 +297,8 @@ replay live with the development model profile and compare.
 **Observability and records**
 
 - **FR-021**: Every knowledge call MUST be traced with the run, the terminal and the source, and
-  recorded with the run's activity, without document content in traces.
+  recorded as retrieval records linked to the run and attempt, without document content in
+  traces.
 
 ### Key Entities
 
@@ -320,11 +321,13 @@ replay live with the development model profile and compare.
 
 - **SC-001**: Each reference use case reaches T2 sign-off through T0, T1 and T2 with every
   mandatory artifact present and every blocking control passing, with recorded replies (100%) and
-  live with the development model profile (at least 2 of 3 use cases on the first attempt).
+  live with the development model profile (at least 2 of 3 use cases on the first attempt, meaning
+  the first build attempt of each terminal passes every blocking control with no retry and no
+  rework).
 - **SC-002**: 100% of cited sources in T0–T2 artifacts come from documents retrieved in the same
   run and within the terminal's grounding scope.
 - **SC-003**: 100% of knowledge requests outside a terminal's tool scopes are refused and logged;
-  none reaches the knowledge service.
+  none reaches the knowledge MCP server.
 - **SC-004**: Planted instructions in knowledge documents change no artifact status, tool call or
   outcome in 100% of the injection tests.
 - **SC-005**: An approver opening a T0, T1 or T2 run sees a complete draft and the reviewer's
@@ -337,7 +340,7 @@ replay live with the development model profile and compare.
 
 - Single agent per terminal, no subagents (SA §7.1 MVP; build plan "simplify if late"). The
   subagents listed in the terminal specs describe responsibilities the single agent covers.
-- The knowledge service is a mock of the enterprise sources over a local folder; connecting real
+- The knowledge MCP server is a mock of the enterprise sources over a local folder; connecting real
   Confluence, SharePoint or Jira later is a configuration change (SA §13). Search is keyword-based;
   vector search is added only if the reference replays show it is needed.
 - The portfolio duplicate check (T0 control on similarity) keeps reading feature 004's evidence
