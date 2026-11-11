@@ -52,7 +52,8 @@ def test_an_account_with_several_roles_does_not_block_two_approvers(
     picks another holder of the second role (seen in a live account file)."""
     from adlc.orchestration.service import Actor
 
-    shared = Actor("shared-person", frozenset({"business_owner", "product_owner"}))
+    # a directory name (the T0 prerequisite) that also holds a second role
+    shared = Actor("business_owner-person", frozenset({"business_owner", "product_owner"}))
 
     def people(role: str) -> list[Actor]:
         return [shared, person(role)] if role in shared.roles else [person(role)]
