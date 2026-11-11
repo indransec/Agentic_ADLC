@@ -14,6 +14,7 @@ from uuid import UUID
 from sqlalchemy import Connection
 
 from adlc.identity.protocol import Person
+from adlc.inbox import rules
 from adlc.orchestration import ids, routing, spec_view, store
 from adlc.orchestration.engine import PostgresTerminalRun, StaleRun, UnknownRun
 from adlc.orchestration.states import (
@@ -326,9 +327,7 @@ class OrchestratorService:
                 raise InvalidTransition(f"unknown waiver {waiver_id}")
             run = self._run(conn, str(waiver["run_id"]))
             spec = self.runs.entry(run.terminal_id, run.spec_version).spec
-            approvers = spec_view.outcome_set_by(spec, "exception") or spec_view.accountable_roles(
-                spec
-            )
+            approvers = rules.waiver_approvers(spec)
             if not actor.roles & approvers:
                 raise NotAuthorised(f"waiver approval needs one of {sorted(approvers)}")
             if actor.account_name == waiver["proposed_by"]:
@@ -356,7 +355,7 @@ class OrchestratorService:
                 raise InvalidTransition(f"unknown clarification {clarification_id}")
             if round_["answered_by"] is not None:
                 raise AlreadyAnswered(clarification_id)
-            if round_["addressed_role"] not in actor.roles:
+            if not rules.can_answer(actor, round_["addressed_role"]):
                 raise NotAuthorised(f"only {round_['addressed_role']} may answer")
             store.insert_answer(conn, clarification_id, actor.account_name, answers, self._now)
             return self.runs.apply_in(
@@ -371,15 +370,20 @@ class OrchestratorService:
             )
 
     def complete_escalation(
-        self, actor: Actor, run_id: str, artifacts: Mapping[str, Any]
+        self,
+        actor: Actor,
+        run_id: str,
+        artifacts: Mapping[str, Any],
+        expected_version: int | None = None,
     ) -> RunRow:
         self._human(actor)
         with self.runs.engine.begin() as conn:
             run = self._run(conn, run_id)
             spec = self.runs.entry(run.terminal_id, run.spec_version).spec
-            accountable = spec_view.accountable_roles(spec)
-            if not actor.roles & accountable:
-                raise NotAuthorised(f"escalation completion needs one of {sorted(accountable)}")
+            if not rules.can_complete_escalation(actor, spec):
+                raise NotAuthorised(
+                    f"escalation completion needs one of {sorted(rules.accountable(spec))}"
+                )
             merged = {**run.artifacts, **dict(artifacts)}
             return self.runs.apply_in(
                 conn,
@@ -390,6 +394,7 @@ class OrchestratorService:
                     actor.account_name,
                     {"artifacts": merged},
                 ),
+                expected_version=expected_version,
             )
 
     # -------------------------------------------------------------- operational events

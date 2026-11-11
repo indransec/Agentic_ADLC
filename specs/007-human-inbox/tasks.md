@@ -57,7 +57,7 @@ Test tasks come first in each phase and must fail before their implementation.
 
 ### Tests first
 
-- [ ] T005 [P] Write failing unit tests in `tests/unit/api/test_errors.py` for the error mapping (research R-05):
+- [X] T005 [P] Write failing unit tests in `tests/unit/api/test_errors.py` for the error mapping (research R-05):
   - `NotAuthorised` → 403 `not_allowed`;
   - unknown run, use case, waiver, clarification or file → 404 `not_found`;
   - `StaleRun` → 409 `stale`;
@@ -65,7 +65,7 @@ Test tasks come first in each phase and must fail before their implementation.
   - `InvalidDecision`, `InvalidUpload`, `AttachmentRefused`, `UnknownArtifact` and validation errors → 422 `invalid` (with `field` where known).
 
   The body is always `{"kind", "detail"}` and never a stack trace.
-- [ ] T006 [P] Write failing unit tests in `tests/unit/inbox/test_rules.py` for the shared rules `can_sign_off`, `can_answer`, `can_complete_escalation`, `can_decide_waiver`, `can_edit` and `is_coe`:
+- [X] T006 [P] Write failing unit tests in `tests/unit/inbox/test_rules.py` for the shared rules `can_sign_off`, `can_answer`, `can_complete_escalation`, `can_decide_waiver`, `can_edit` and `is_coe`:
   - still-needed roles, including required conditional roles;
   - "already approved" excluded;
   - the proposer cannot approve a waiver;
@@ -73,8 +73,8 @@ Test tasks come first in each phase and must fail before their implementation.
 
 ### Implementation
 
-- [ ] T007 Implement `src/adlc/inbox/rules.py` (T006). Make `OrchestratorService.decide_waiver`, `answer_clarification` and `complete_escalation`, and `LedgerService._editable`, use these rules so the inbox and the operations never disagree. The 003 and 005 suites stay green.
-- [ ] T008 Add optional `expected_version` to `OrchestratorService.complete_escalation` and to `LedgerService.edit_artifact`, `upload_spreadsheet` and `attach_file`. A mismatch raises `StaleRun`. Tests go in the existing suites.
+- [X] T007 Implement `src/adlc/inbox/rules.py` (T006). Make `OrchestratorService.decide_waiver`, `answer_clarification` and `complete_escalation`, and `LedgerService._editable`, use these rules so the inbox and the operations never disagree. The 003 and 005 suites stay green.
+- [X] T008 Add optional `expected_version` to `OrchestratorService.complete_escalation` and to `LedgerService.edit_artifact`, `upload_spreadsheet` and `attach_file`. A mismatch raises `StaleRun`. Tests go in the existing suites.
 - [ ] T009 Implement `src/adlc/api/errors.py` (T005, exception handlers registered in `create_app`) and `src/adlc/api/deps.py`:
   - the current `Actor` from the session person;
   - the services from `app.state`.

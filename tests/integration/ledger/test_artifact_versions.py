@@ -255,3 +255,17 @@ def test_a_lost_re_check_is_picked_up_again(h: Harness, ledger: LedgerService) -
         r=t1,
     )
     assert ("controls", "awaiting_sign_off") in [tuple(x) for x in steps][-2:]
+
+
+def test_edits_with_an_old_version_are_refused(h: Harness, ledger: LedgerService) -> None:
+    """007 T008: edits, uploads and attachments carry the run version they were made on."""
+    usecase, t1 = walk_to(h, "T1")
+    old = h.run(t1).version
+    rows = _kpis(h, t1)
+    rows[0]["target"] = 5
+    ledger.edit_artifact(PO, t1, "kpis", rows, expected_version=old)
+    with pytest.raises(StaleRun):
+        ledger.edit_artifact(PO, t1, "kpis", rows + rows[:1], expected_version=old)
+    with pytest.raises(StaleRun):
+        ledger.attach_file(PO, t1, "kpis", b"note", "n.md", "text/markdown", expected_version=old)
+    assert len(ledger.artifact_history(t1, "kpis")) == 2

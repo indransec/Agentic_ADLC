@@ -4,6 +4,7 @@ from datetime import timedelta
 
 import pytest
 
+from adlc.orchestration.engine import StaleRun
 from adlc.orchestration.interfaces import BudgetExceeded
 from adlc.orchestration.service import InvalidDecision, NotAuthorised
 from adlc.orchestration.stubs import StubAgent, StubPolicy
@@ -97,3 +98,16 @@ def test_escalation_destination_is_recorded(orch_template: PlatformDatabase) -> 
         assert run.escalation_destination == "release_board"
         h.service.complete_escalation(person("release_manager"), run_id, {})
         assert h.run(run_id).state == "awaiting_sign_off"
+
+
+def test_completion_with_an_old_version_is_refused(h: Harness) -> None:
+    """007 T008: escalation completion carries the run version it was made on."""
+    usecase, _ = walk_to(h, "T1")
+    h.clock.advance(timedelta(days=11))
+    h.drain()
+    run = h.active(usecase, "T1")
+    with pytest.raises(StaleRun):
+        h.service.complete_escalation(PO, run.run_id, {}, expected_version=run.version - 1)
+    assert h.run(run.run_id).state == "escalated"
+    h.service.complete_escalation(PO, run.run_id, {}, expected_version=run.version)
+    assert h.run(run.run_id).state == "awaiting_sign_off"

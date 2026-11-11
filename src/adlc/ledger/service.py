@@ -11,6 +11,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
+from adlc.inbox import rules
 from adlc.ledger import artifacts as versions
 from adlc.ledger import store as ledger_store
 from adlc.ledger import views
@@ -19,7 +20,7 @@ from adlc.ledger.storage import FileRef, LedgerContentStore
 from adlc.ledger.verify import Report, Verifier
 from adlc.orchestration import spec_view
 from adlc.orchestration import store as run_store
-from adlc.orchestration.engine import PostgresTerminalRun, UnknownRun
+from adlc.orchestration.engine import PostgresTerminalRun, StaleRun, UnknownRun
 from adlc.orchestration.service import Actor, NotAuthorised
 from adlc.orchestration.states import (
     ActorType,
@@ -53,9 +54,17 @@ class LedgerService:
     # -------------------------------------------------------------- edits
 
     def edit_artifact(
-        self, actor: Actor, run_id: str, artifact_id: str, rows: Any, uploads: Sequence[Upload] = ()
+        self,
+        actor: Actor,
+        run_id: str,
+        artifact_id: str,
+        rows: Any,
+        uploads: Sequence[Upload] = (),
+        expected_version: int | None = None,
     ) -> RunRow:
         run, _ = self._editable(actor, run_id, artifact_id)
+        if expected_version is not None and run.version != expected_version:
+            raise StaleRun(f"{run_id} is at version {run.version}, not {expected_version}")
         with self.runs.engine.connect() as conn:
             current = {v["artifact_id"]: v for v in ledger_store.latest_versions(conn, run_id)}
         previous = current.get(artifact_id)
@@ -89,11 +98,17 @@ class LedgerService:
         return edited  # at sign-off the worker re-runs the controls next (controls_pending)
 
     def upload_spreadsheet(
-        self, actor: Actor, run_id: str, artifact_id: str, data: bytes, file_name: str
+        self,
+        actor: Actor,
+        run_id: str,
+        artifact_id: str,
+        data: bytes,
+        file_name: str,
+        expected_version: int | None = None,
     ) -> RunRow:
         rows = read_rows(data, artifact_id)  # InvalidUpload when it does not fit
         return self.edit_artifact(
-            actor, run_id, artifact_id, rows, (Upload(data, file_name, XLSX),)
+            actor, run_id, artifact_id, rows, (Upload(data, file_name, XLSX),), expected_version
         )
 
     def attach_file(
@@ -104,12 +119,18 @@ class LedgerService:
         data: bytes,
         file_name: str,
         media_type: str,
+        expected_version: int | None = None,
     ) -> RunRow:
         with self.runs.engine.connect() as conn:
             current = versions.current_content(conn, run_id, self.content.get_structured)
         rows = current.get(artifact_id, [])
         return self.edit_artifact(
-            actor, run_id, artifact_id, rows, (Upload(data, file_name, media_type),)
+            actor,
+            run_id,
+            artifact_id,
+            rows,
+            (Upload(data, file_name, media_type),),
+            expected_version,
         )
 
     def artifact_history(self, run_id: str, artifact_id: str) -> list[dict[str, Any]]:
@@ -152,7 +173,7 @@ class LedgerService:
             )
         if artifact_id not in {a.id for a in spec_view.artifacts(spec)}:
             raise UnknownArtifact(f"{artifact_id} is not an artifact of {run.terminal_id}")
-        allowed = ctx.rule_roles | ctx.required_plus_roles | spec_view.accountable_roles(spec)
+        allowed = rules.editor_roles(ctx, spec)
         if not actor.roles & allowed:
             raise NotAuthorised(f"editing needs one of {sorted(allowed)}")
         return run, spec

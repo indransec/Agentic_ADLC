@@ -4,6 +4,8 @@ from fastapi import FastAPI
 from opentelemetry.sdk.trace.export import SpanExporter
 
 from adlc.api.auth import install_auth
+from adlc.api.deps import Services
+from adlc.api.errors import install_errors
 from adlc.api.routes import auth, health
 from adlc.config.settings import Settings
 from adlc.db.engine import app_engine
@@ -29,6 +31,8 @@ def create_app(settings: Settings, span_exporter: SpanExporter | None = None) ->
     app.state.settings = settings
     app.state.engine = app_engine(settings)
     install_auth(app, provider)
+    install_errors(app)
+    app.state.services = Services(settings, app.state.engine)  # built on first use
     app.include_router(health.router)
     app.include_router(auth.router)
     setup_tracing(app, settings, span_exporter)
