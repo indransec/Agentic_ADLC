@@ -85,6 +85,10 @@ services:
       ADLC_OTLP_ENDPOINT: http://jaeger:4318
       ADLC_LOG_LEVEL: ${ADLC_LOG_LEVEL:-INFO}
       ADLC_FILE_STORE_DIR: /var/lib/adlc/files
+      # Shared with the orchestrator (feature 007: the API runs the human operations).
+      ADLC_DEADLETTER_ROLE: ${ADLC_DEADLETTER_ROLE:?ADLC_DEADLETTER_ROLE is required}
+      ADLC_SYNTHETIC_DIR: ${ADLC_SYNTHETIC_DIR:-data/synthetic}
+      ADLC_SPEC_DIR: adlc-specs
     volumes:
       - ${ADLC_ACCOUNTS_FILE:?ADLC_ACCOUNTS_FILE is required}:/run/adlc/accounts.yaml:ro
       - adlc-files:/var/lib/adlc/files
@@ -101,6 +105,36 @@ services:
         - python
         - -c
         - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2).status == 200 else 1)"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  # Web application (feature 007): a client of the API only; no database settings.
+  ui:
+    image: adlc-api:0.1.0
+    command:
+      - streamlit
+      - run
+      - src/adlc/ui/app.py
+      - --server.port=8501
+      - --server.address=0.0.0.0
+      - --server.headless=true
+      - --browser.gatherUsageStats=false
+    environment:
+      ADLC_API_URL: http://api:8000
+    ports:
+      - "${ADLC_UI_PORT:-8501}:8501"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=2).status == 200 else 1)"
       interval: 5s
       timeout: 3s
       retries: 20

@@ -38,14 +38,14 @@ Test tasks come first in each phase and must fail before their implementation.
 
 ## Phase 1: Setup
 
-- [ ] T001 Add `streamlit==1.66.1` and `python-multipart` to the dependencies, move `httpx` from the dev dependencies to the main ones in `pyproject.toml`, refresh `uv.lock`, and record the licences in the plan.
-- [ ] T002 Move `deadletter_role`, `synthetic_dir` and `spec_dir` from `OrchestratorSettings` to `RuntimeSettings` in `src/adlc/config/settings.py`, keeping the environment names. Add `UiSettings` with `api_url` (`ADLC_API_URL`, default `http://api:8000`). Tests in `tests/unit/test_settings.py`. Update `.env.example` (`ADLC_API_URL`, `ADLC_UI_PORT=8501`).
-- [ ] T003 [P] Skeleton:
+- [X] T001 Add `streamlit==1.66.1` and `python-multipart` to the dependencies, move `httpx` from the dev dependencies to the main ones in `pyproject.toml`, refresh `uv.lock`, and record the licences in the plan.
+- [X] T002 Move `deadletter_role`, `synthetic_dir` and `spec_dir` from `OrchestratorSettings` to `RuntimeSettings` in `src/adlc/config/settings.py`, keeping the environment names. Add `UiSettings` with `api_url` (`ADLC_API_URL`, default `http://api:8000`). Tests in `tests/unit/test_settings.py`. Update `.env.example` (`ADLC_API_URL`, `ADLC_UI_PORT=8501`).
+- [X] T003 [P] Skeleton:
   - `src/adlc/inbox/__init__.py` and a stub `README.md`;
   - `src/adlc/ui/__init__.py` and `pages/`;
   - `tests/unit/inbox/`, `tests/unit/api/`, `tests/integration/api/` and `tests/integration/ui/`;
   - add `*/adlc/inbox/*` and `*/adlc/api/*` to `CORE_MODULES` in the `Makefile`.
-- [ ] T004 [P] Compose:
+- [X] T004 [P] Compose:
   - a `ui` service (same image, `streamlit run src/adlc/ui/app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true --browser.gatherUsageStats false`, `ADLC_API_URL=http://api:8000`, port `${ADLC_UI_PORT:-8501}:8501`, healthcheck on `/_stcore/health`, depends on a healthy `api`);
   - the `api` service gets `ADLC_DEADLETTER_ROLE`, `ADLC_SYNTHETIC_DIR` and `ADLC_SPEC_DIR`.
 

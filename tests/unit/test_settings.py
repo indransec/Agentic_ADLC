@@ -33,6 +33,7 @@ def valid_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[str, str]
         "ADLC_DB_APP_PASSWORD": APP_PW,
         "ADLC_SESSION_SECRET": SESSION,
         "ADLC_ACCOUNTS_FILE": str(accounts),
+        "ADLC_DEADLETTER_ROLE": "adlc_coe",  # 007: shared by the API and the orchestrator
     }
     for key, value in env.items():
         monkeypatch.setenv(key, value)
@@ -306,3 +307,15 @@ def test_agent_runtime_invalid_values(
 ) -> None:
     monkeypatch.setenv(name, value)
     assert name in _orchestrator_error()
+
+
+def test_ui_settings_need_only_the_api_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    """007: the web application reaches the platform only through the API."""
+    from adlc.config.settings import UiSettings
+
+    assert UiSettings().api_url == "http://api:8000"
+    monkeypatch.setenv("ADLC_API_URL", "http://localhost:8010")
+    assert UiSettings().api_url == "http://localhost:8010"
+    monkeypatch.setenv("ADLC_API_URL", "ftp://nope")
+    with pytest.raises(ValidationError):
+        UiSettings()

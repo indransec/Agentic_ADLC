@@ -72,7 +72,7 @@ under 2 minutes (SC-007).
 | --- | --- | --- |
 | streamlit 1.66.1 | Web application (build plan stack) | Apache-2.0 |
 | httpx (now runtime) | The UI's API client | BSD-3-Clause |
-| python-multipart | Multipart uploads in FastAPI | Apache-2.0 |
+| python-multipart 0.0.32 | Multipart uploads in FastAPI (0.0.33 was under two weeks old) | Apache-2.0 |
 
 ## Constitution Check
 

@@ -8,6 +8,7 @@ dependencies = [
     "alembic>=1.20.1",
     "cel-python>=0.5.0",
     "fastapi>=0.162.2",
+    "httpx>=0.28.1",
     "itsdangerous>=2.2.0",
     "jsonschema>=4.26.0",
     "litellm==1.106.5",
@@ -20,8 +21,10 @@ dependencies = [
     "psycopg[binary]>=3.3.8",
     "pydantic>=2.14.3",
     "pydantic-settings>=2.16.2",
+    "python-multipart==0.0.32",
     "ruamel-yaml>=0.19.1",
     "sqlalchemy>=2.1.8",
+    "streamlit==1.66.1",
     "typer>=0.28.0",
     "uvicorn>=0.54.0",
 ]
@@ -86,7 +89,6 @@ filterwarnings = ["ignore:Using `httpx` with `starlette.testclient` is deprecate
 
 [dependency-groups]
 dev = [
-    "httpx>=0.28.1",
     "hypothesis>=6.170",
     "mypy>=2.4.1",
     "pytest>=9.2.0",
