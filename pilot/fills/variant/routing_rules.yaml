@@ -1,0 +1,15 @@
+security_keywords: [breach, data loss, ransomware, phishing, malware, leaked, compromised, suspicious login]
+category_keywords:
+  access: [password, login, locked out, access, permission, mfa, account]
+  hardware: [laptop, printer, monitor, keyboard, battery, screen, dock, phone]
+  software: [error, crash, install, update, application, report, mailbox, meeting]
+  network: [vpn, wi-fi, wifi, network, internet, dns, latency, connection]
+category_teams:
+  access: identity-access
+  hardware: end-user-computing
+  software: app-support-erp
+  network: network-ops
+  security: security-ops
+priority_rules:
+  urgency: {high: P2, medium: P3, low: P4}
+  p1_keywords: [outage, all users, everyone, production down, cannot work]

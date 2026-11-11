@@ -77,10 +77,10 @@ test:
 # The pilot (feature 009) is its own uv project: lint, types and tests, with an 80% coverage gate.
 pilot-check:
 	@echo "==> pilot-check"
-	cd pilot && $(UV) ruff check . && $(UV) ruff format --check .
-	cd pilot && $(UV) mypy
-	cd pilot && $(UV) pytest
-	cd pilot && $(UV) coverage report --skip-covered --fail-under=80
+	cd pilot && env -u VIRTUAL_ENV $(UV) ruff check . && env -u VIRTUAL_ENV $(UV) ruff format --check .
+	cd pilot && env -u VIRTUAL_ENV $(UV) mypy
+	cd pilot && env -u VIRTUAL_ENV $(UV) pytest
+	cd pilot && env -u VIRTUAL_ENV $(UV) coverage report --skip-covered --fail-under=80
 
 spec-validate:
 	@echo "==> spec-validate"

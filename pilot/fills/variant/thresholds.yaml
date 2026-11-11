@@ -1,0 +1,2 @@
+min_confidence_for_auto: 0.5
+review_on_multi_service: true

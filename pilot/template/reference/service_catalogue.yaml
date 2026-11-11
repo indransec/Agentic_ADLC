@@ -1,0 +1,22 @@
+# Mocked service catalogue (synthetic): each service with its owner team and category.
+services:
+  - {id: sso, name: Single Sign-On, owner: identity-access, category: access}
+  - {id: active-directory, name: Active Directory, owner: identity-access, category: access}
+  - {id: mfa, name: Multi-Factor Authentication, owner: identity-access, category: access}
+  - {id: laptops, name: Corporate Laptops, owner: end-user-computing, category: hardware}
+  - {id: printers, name: Office Printers, owner: end-user-computing, category: hardware}
+  - {id: monitors, name: Desk Monitors and Docks, owner: end-user-computing, category: hardware}
+  - {id: mobile-devices, name: Mobile Devices, owner: end-user-computing, category: hardware}
+  - {id: vpn, name: Remote Access VPN, owner: network-ops, category: network}
+  - {id: wifi, name: Office Wi-Fi, owner: network-ops, category: network}
+  - {id: dns, name: Internal DNS, owner: network-ops, category: network}
+  - {id: erp-finance, name: ERP Finance, owner: app-support-erp, category: software}
+  - {id: hr-portal, name: HR Portal, owner: app-support-erp, category: software}
+  - {id: payroll, name: Payroll, owner: app-support-erp, category: software}
+  - {id: email, name: Corporate E-mail, owner: app-support-collab, category: software}
+  - {id: chat, name: Team Chat, owner: app-support-collab, category: software}
+  - {id: video-meetings, name: Video Meetings, owner: app-support-collab, category: software}
+  - {id: document-store, name: Document Store, owner: app-support-collab, category: software}
+  - {id: data-warehouse, name: Data Warehouse, owner: database-ops, category: software}
+  - {id: reporting, name: Reporting Platform, owner: database-ops, category: software}
+  - {id: crm-db, name: CRM Database, owner: database-ops, category: software}

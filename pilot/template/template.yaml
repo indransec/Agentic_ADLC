@@ -1,0 +1,16 @@
+# Golden template of the pilot (feature 009): the Incident Triage Assistant.
+# T3 fills configuration only (spec clarification); the agent code, the reference data of the
+# mocked tools and the infrastructure definitions are fixed here and go into every package.
+id: incident-triage
+version: "1.0.0"
+categories: [access, hardware, software, network, security]
+tools: [service_catalogue, team_directory]
+fill_points:
+  instructions: {file: instructions.md, kind: text, min_length: 1, max_length: 20000}
+  routing_rules: {file: routing_rules.yaml, kind: routing_rules}
+  tool_bindings: {file: tool_bindings.yaml, kind: tool_bindings}
+  thresholds: {file: thresholds.yaml, kind: thresholds}
+  settings: {file: settings.yaml, kind: settings}
+settings:
+  token_budget: {min: 100, max: 8000}
+  model_mode: [simulated, real]

@@ -1,0 +1,3 @@
+token_budget: 1500
+model_mode: simulated
+model_name: gpt-4o-mini

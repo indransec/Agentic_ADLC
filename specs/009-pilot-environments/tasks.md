@@ -57,7 +57,7 @@ then polish.
 
 ### Tests first
 
-- [ ] T005 [P] Unit tests in `pilot/tests/unit/test_fill.py`:
+- [X] T005 [P] Unit tests in `pilot/tests/unit/test_fill.py`:
   - a valid default fill passes;
   - each rule fails with the part named:
     - instructions "1–20,000 characters";
@@ -67,7 +67,7 @@ then polish.
     - thresholds "numbers in 0–1";
     - `token_budget` "100–8,000";
     - `model_mode` from the infra definition's allowed list.
-- [ ] T006 [P] Unit tests in `pilot/tests/unit/test_triage.py` for the simulated model:
+- [X] T006 [P] Unit tests in `pilot/tests/unit/test_triage.py` for the simulated model:
   - a security signal goes to the security team at P1;
   - a catalogue service goes to its owner team;
   - category keywords give the category's team;
@@ -81,8 +81,8 @@ then polish.
 
 ### Implementation
 
-- [ ] T007 Reference data `pilot/template/reference/service_catalogue.yaml` (about 20 services, each with owner team and category) and `team_directory.yaml` (about 8 teams, with the first-line and security teams marked); `pilot/template/template.yaml` (id `incident-triage`, version, fill points and schemas).
-- [ ] T008 The agent in `pilot/template/agent/triage_agent/`:
+- [X] T007 Reference data `pilot/template/reference/service_catalogue.yaml` (about 20 services, each with owner team and category) and `team_directory.yaml` (about 8 teams, with the first-line and security teams marked); `pilot/template/template.yaml` (id `incident-triage`, version, fill points and schemas).
+- [X] T008 The agent in `pilot/template/agent/triage_agent/`:
   - app factory (`POST /triage`, `GET /health` with the package hash and model);
   - the mocked tools;
   - the simulated and degraded models;
@@ -90,7 +90,7 @@ then polish.
   - the PII pattern check;
   - metrics, including basic pattern-based RAI counters: a fixed toxic-term list on output and known jailbreak phrases on input, labelled as basic;
   - spans `triage.request`, `triage.tool` and `triage.model` with the request id and package hash, and no incident text.
-- [ ] T009 The default fill `pilot/fills/default/` (instructions, routing rules, tool bindings, thresholds, settings) and a variant fill `pilot/fills/variant/` (one changed routing rule, for canary demos).
+- [X] T009 The default fill `pilot/fills/default/` (instructions, routing rules, tool bindings, thresholds, settings) and a variant fill `pilot/fills/variant/` (one changed routing rule, for canary demos).
 
 **Checkpoint**: the agent triages incidents in-process with the default fill.
 
