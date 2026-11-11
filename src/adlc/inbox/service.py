@@ -133,6 +133,7 @@ class InboxService:
             self._clarification_items(conn, actor)
             + self._escalation_items(conn, actor)
             + self._waiver_items(conn, actor)
+            + self._blocked_items(conn, actor)
             + self._dead_letter_items(conn, actor)
         )
 
@@ -215,6 +216,54 @@ class InboxService:
             )
         return items
 
+    def _blocked_items(self, conn: Connection, actor: Actor) -> list[dict[str, Any]]:
+        """Runs held by an unmet prerequisite, for the accountable owner (change request
+        2026-11-11): they can supply the evidence or terminate the run."""
+        items = []
+        for run in self._waiting(conn, RunState.BLOCKED.value):
+            spec = self.runs.entry(run.terminal_id, run.spec_version).spec
+            roles = sorted(actor.roles & rules.accountable(spec))
+            if not roles:
+                continue
+            items.append(
+                _item(
+                    "blocked",
+                    run.run_id,
+                    run,
+                    roles[0],
+                    f"Blocked {run.terminal_id} run {run.run_number}",
+                    self._entered(conn, run.run_id, RunState.BLOCKED.value),
+                )
+            )
+        return items
+
+    def _prerequisites(
+        self, conn: Connection, run_id: str, spec: Mapping[str, Any]
+    ) -> list[dict[str, Any]]:
+        """Each declared prerequisite with its latest result and reason from the policy decision
+        log (feature 004); nothing is re-evaluated here."""
+        declared = spec_view.prerequisite_entries(spec)
+        latest: dict[str, Mapping[str, Any]] = {}
+        rows = conn.execute(
+            text(
+                "SELECT check_id, passed, reason, synthetic FROM run.policy_decision "
+                "WHERE run_id = :r AND check_id = ANY(:ids) "
+                "ORDER BY decided_at, policy_decision_id"
+            ),
+            {"r": run_id, "ids": [p["id"] for p in declared]},
+        ).mappings()
+        for row in rows:
+            latest[str(row["check_id"])] = dict(row)
+        return [
+            {
+                **p,
+                "passed": latest[p["id"]]["passed"] if p["id"] in latest else None,
+                "reason": latest[p["id"]]["reason"] if p["id"] in latest else None,
+                "synthetic": latest[p["id"]]["synthetic"] if p["id"] in latest else None,
+            }
+            for p in declared
+        ]
+
     def _dead_letter_items(self, conn: Connection, actor: Actor) -> list[dict[str, Any]]:
         if not rules.is_coe(actor, self.deadletter_role):
             return []
@@ -290,6 +339,7 @@ class InboxService:
             sign_offs = run_store.sign_offs(conn, run_id)
             clarifications = run_store.clarifications(conn, run_id)
             prior = self._prior_rework(conn, run)
+            prerequisites = self._prerequisites(conn, run_id, spec)
             pins = run_store.pins(conn, run.usecase_id)
             versions = {v["artifact_id"]: v for v in ledger_store.latest_versions(conn, run_id)}
             attachments = {
@@ -321,6 +371,7 @@ class InboxService:
                 }
                 for a in spec_view.artifacts(spec)
             ],
+            "prerequisites": prerequisites,
             "control_results": list(run.control_results),
             "recommendation": recommendation or None,
             "prior_rework": prior,

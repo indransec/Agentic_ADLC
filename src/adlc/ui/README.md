@@ -19,7 +19,7 @@ the person may not take is a convenience; the API enforces every rule.
 | Inbox | Items waiting for the person, refreshed every 30 s and on demand; opens each on its page. |
 | New use case | The intake form. |
 | Use cases | "Only mine" or all, the journey (runs with times and cost), ledger verification. |
-| Run | Every SA §8.2 section, the artifact editor (up to 1,000 rows; above that read-only with upload offered), spreadsheet upload, attachments, downloads, history, evidence and the decision form. |
+| Run | Every SA §8.2 section and the prerequisites (a blocked run says so and why), the artifact editor (up to 1,000 rows; above that read-only with upload offered), spreadsheet upload, attachments, downloads, history, evidence and the decision form. |
 | Clarification, Escalation, Waiver | The forms for each request. |
 | Dead letters | List and re-queue (the API allows the CoE role only). |
 

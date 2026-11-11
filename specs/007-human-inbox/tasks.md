@@ -279,3 +279,12 @@ Run `make check` and commit at every checkpoint.
 - [X] T041 After a successful submission, open the new use case's journey in `src/adlc/ui/pages/intake.py`; extend `tests/integration/ui/test_intake.py` per contracts/ui.md New use case (partial)
 - [X] T042 Record that the run detail is `InboxService.detail` (no separate `RunDetailService`) in `src/adlc/inbox/README.md` and the T017 trail per T017 (contradicts)
 - [X] T043 Correct `GET /inbox` ordering in `specs/007-human-inbox/contracts/api.md` to "soonest due first, then by arrival; no due time last" per FR-006 (contradicts)
+
+---
+
+## Phase 10: Change request 2026-11-11 – blocked runs
+
+- [X] T044 [P] Write failing API tests in `tests/integration/api/test_blocked.py`: a run blocked by a prerequisite is listed (kind `blocked`) for the terminal's accountable roles only; the run detail lists each prerequisite with description, result and reason; terminating the blocked run removes the item (spec FR-006, FR-008 change request)
+- [X] T045 [P] Write failing UI tests in `tests/integration/ui/test_blocked.py`: the inbox shows a "Blocked runs" group; opening it shows the prerequisites table with the unmet one and its description, and the terminate form
+- [X] T046 Implement the `blocked` inbox kind in `src/adlc/inbox/service.py` and `prerequisites` in the run detail (spec entries from a new `spec_view.prerequisite_entries`, results from feature 004's decision log), without re-evaluating anything
+- [X] T047 Show the prerequisites section and a "blocked" note on `src/adlc/ui/pages/run.py`, and the "Blocked runs" group in `src/adlc/ui/pages/inbox.py`; update the READMEs

@@ -16,6 +16,7 @@ KIND_TITLES = {
     "clarification": "Clarifications",
     "escalation": "Escalations",
     "waiver": "Waivers",
+    "blocked": "Blocked runs",
     "dead_letter": "Dead letters",
 }
 

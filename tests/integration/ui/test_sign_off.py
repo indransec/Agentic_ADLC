@@ -10,6 +10,7 @@ from tests.support.ui import frame, go, open_item, open_ui, sign_in, texts
 
 SECTIONS = [
     "Artifacts",
+    "Prerequisites",
     "Control results",
     "Reviewer recommendation",
     "Prior rework comments",

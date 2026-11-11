@@ -24,6 +24,14 @@ operations."
   person. Actions stay limited by role. This matches feature 005's views; restriction by data
   class comes later.
 
+### Change request 2026-11-11 (live walkthrough)
+
+- Q: A submitted use case was blocked by T0's prerequisite (intake under 200 characters), and
+  nothing told the business owner why or where to act. Should blocked runs be surfaced? → A: Yes.
+  A blocked run appears in the inbox of its terminal's accountable roles, and the run detail
+  shows each prerequisite with its result and reason, so the owner can supply the evidence or
+  terminate the run.
+
 ## User Scenarios & Testing *(mandatory)*
 
 Agents build, humans decide (constitution III). Until now people could act on the platform only
@@ -281,6 +289,7 @@ records checked.
   - clarifications addressed to a role they hold;
   - escalated runs where they hold the accountable role;
   - pending waivers they may decide (an approver role, not the proposer);
+  - blocked runs where they hold the accountable role (change request 2026-11-11);
   - for the CoE role, dead-lettered events.
 
   Each item shows the use case, terminal, what is asked, when it arrived and its due time.
@@ -300,7 +309,9 @@ records checked.
   - clarification history;
   - approvals given so far;
   - the timer state;
-  - the run version, and whether controls are being re-run.
+  - the run version, and whether controls are being re-run;
+  - the prerequisites, each with its description, result and reason, so a blocked run shows why
+    it is blocked (change request 2026-11-11).
 - **FR-009**: The decision form MUST offer only the outcomes the terminal allows for people. Its
   required fields MUST come from the pinned spec:
   - comment and root cause for rework, root causes from the catalogue limited to the spec's;

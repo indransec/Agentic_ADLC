@@ -58,6 +58,11 @@ def header(data: dict[str, Any]) -> None:
     field("Version", run["version"])
     timer = data["timer"]
     field("Due", f"{timer['due_at']}{' (overdue)' if timer['overdue'] else ''}")
+    if run["state"] == "blocked":
+        st.warning(
+            "Blocked by an unmet prerequisite (see Prerequisites). Supply the evidence, or "
+            "terminate the run below."
+        )
 
 
 def act(call: Callable[[], Any], done: str) -> None:
@@ -136,6 +141,9 @@ def uploads(api: ApiClient, run_id: str, aid: str, seen: int) -> None:
 
 
 def sections(data: dict[str, Any]) -> None:
+    st.subheader("Prerequisites")
+    table(data["prerequisites"])
+
     st.subheader("Control results")
     table(data["control_results"])
 

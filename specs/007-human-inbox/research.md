@@ -52,6 +52,7 @@ inbox table.
 | clarification | Unanswered rounds whose `addressed_role` the person holds |
 | escalation | Runs in `escalated` whose terminal's accountable roles the person holds |
 | waiver | Runs with a pending waiver whose approver roles the person holds, where the person is not the proposer. The approvers are the spec's `exception` set-by roles, else the accountable roles (the 003 rule). |
+| blocked | Runs in `blocked` whose terminal's accountable roles the person holds (change request 2026-11-11) |
 | dead letter | Dead-lettered events, for the CoE role only |
 
 Each item has kind, use case, terminal, run, role, title, arrival time and due time.

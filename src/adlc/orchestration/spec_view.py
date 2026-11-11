@@ -64,6 +64,19 @@ def prerequisites(spec: Spec) -> tuple[Check, ...]:
     )
 
 
+def prerequisite_entries(spec: Spec) -> tuple[dict[str, Any], ...]:
+    """007: each prerequisite as declared (id, description, evidence reference, on_missing)."""
+    return tuple(
+        {
+            "id": str(p["id"]),
+            "description": str(p.get("description", "")),
+            "evidence_ref": str(p.get("evidence_ref", "")),
+            "on_missing": str(p.get("on_missing", "block")),
+        }
+        for p in _list(_section(spec, "prerequisites"))
+    )
+
+
 def controls(spec: Spec) -> tuple[Check, ...]:
     return tuple(
         Check(str(c["id"]), str(c.get("rule", "")), c.get("severity", "blocking") == "blocking")

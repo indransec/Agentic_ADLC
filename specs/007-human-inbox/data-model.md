@@ -9,7 +9,7 @@ No new tables. The inbox and the run detail are read from the existing tables of
 
 | Field | Rule |
 | --- | --- |
-| `kind` | `sign_off`, `clarification`, `escalation`, `waiver` or `dead_letter` |
+| `kind` | `sign_off`, `clarification`, `escalation`, `waiver`, `blocked` or `dead_letter` |
 | `id` | Run id, clarification id, waiver id or event id |
 | `usecase_id`, `terminal_id`, `run_id` | From the run, or null for a dead letter |
 | `role` | The person's role that makes the item theirs |

@@ -25,12 +25,15 @@ no due time come last.
 | `clarification` | Unanswered rounds addressed to a role the person holds. |
 | `escalation` | Escalated runs whose terminal's accountable role the person holds. |
 | `waiver` | Pending waivers the person may approve and did not propose. |
+| `blocked` | Runs held by an unmet prerequisite, for the terminal's accountable roles. They can supply the evidence or terminate the run. |
 | `dead_letter` | Dead-lettered events, for the CoE role (`ADLC_DEADLETTER_ROLE`) only. |
 
 ## Run detail
 
 The run detail is `InboxService.detail`; there is no separate `RunDetailService` (task T017 named
 one, but the detail shares the inbox's queries and rules, so it stays in one service). It returns every SA §8.2 item: the run (state, version, `controls_pending`),
+the prerequisites (each declared one with its latest result, reason and synthetic marker from the
+feature 004 decision log, so a blocked run shows why; nothing is re-evaluated),
 artifacts with columns, rows, current version and attachments, control results, the reviewer's
 recommendation with the checklist item text and scores, prior rework comments (this terminal's
 earlier runs in the use case that closed as rework, newest first), clarifications, approvals that

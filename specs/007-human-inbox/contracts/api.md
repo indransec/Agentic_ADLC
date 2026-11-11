@@ -17,7 +17,7 @@ the statuses of research R-05.
 
 | Method and path | Answer |
 | --- | --- |
-| `GET /inbox` | `[{kind: sign_off\|clarification\|escalation\|waiver\|dead_letter, id, usecase_id, terminal_id, run_id, role, title, arrived_at, due_at, controls_pending}]`, soonest due first, then by arrival; items with no due time last |
+| `GET /inbox` | `[{kind: sign_off\|clarification\|escalation\|waiver\|blocked\|dead_letter, id, usecase_id, terminal_id, run_id, role, title, arrived_at, due_at, controls_pending}]`, soonest due first, then by arrival; items with no due time last |
 
 ## Runs
 
