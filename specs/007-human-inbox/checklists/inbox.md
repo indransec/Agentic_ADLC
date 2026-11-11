@@ -20,49 +20,49 @@
 
 ## Access and Authorization
 
-- [ ] CHK001 Is it unambiguous that every new operation needs a session, and are the only public paths (health, sign-in) named? [Clarity, Spec §FR-001]
-- [ ] CHK002 Is it specified that role checks stay in the services and that the UI's hiding of actions is convenience, not enforcement? [Consistency, Spec §FR-003, contracts/ui.md]
-- [ ] CHK003 Is the definition of "my use cases" (submitted, or holding a role in one of its terminals) consistent between the spec and the API contract? [Consistency, Spec §FR-005, contracts/api.md]
-- [ ] CHK004 Is the rule that any signed-in person may read any use case recorded with its limitation (synthetic data now, data-class restriction later)? [Assumption, Spec Clarifications]
+- [X] CHK001 Is it unambiguous that every new operation needs a session, and are the only public paths (health, sign-in) named? [Clarity, Spec §FR-001]
+- [X] CHK002 Is it specified that role checks stay in the services and that the UI's hiding of actions is convenience, not enforcement? [Consistency, Spec §FR-003, contracts/ui.md]
+- [X] CHK003 Is the definition of "my use cases" (submitted, or holding a role in one of its terminals) consistent between the spec and the API contract? [Consistency, Spec §FR-005, contracts/api.md]
+- [X] CHK004 Is the rule that any signed-in person may read any use case recorded with its limitation (synthetic data now, data-class restriction later)? [Assumption, Spec Clarifications]
 
 ## Inbox
 
-- [ ] CHK005 Is each inbox kind defined by an exact rule (roles, states, exclusions such as "already approved" or "proposer")? [Completeness, Spec §FR-006, research R-03]
-- [ ] CHK006 Is it specified that the inbox and the operations use the same role rules, so an item never appears that the action would refuse? [Consistency, research R-03]
-- [ ] CHK007 Are required conditional approvers (`plus`) and runs with controls being re-run covered in the inbox rules? [Edge Case, Spec Edge Cases]
-- [ ] CHK008 Is "reflects a change within one refresh / at least every 30 s" measurable, and is the arrival and due time of each kind defined? [Measurability, Spec §FR-007, data-model]
+- [X] CHK005 Is each inbox kind defined by an exact rule (roles, states, exclusions such as "already approved" or "proposer")? [Completeness, Spec §FR-006, research R-03]
+- [X] CHK006 Is it specified that the inbox and the operations use the same role rules, so an item never appears that the action would refuse? [Consistency, research R-03]
+- [X] CHK007 Are required conditional approvers (`plus`) and runs with controls being re-run covered in the inbox rules? [Edge Case, Spec Edge Cases]
+- [X] CHK008 Is "reflects a change within one refresh / at least every 30 s" measurable, and is the arrival and due time of each kind defined? [Measurability, Spec §FR-007, data-model]
 
 ## Run Detail and Decisions
 
-- [ ] CHK009 Does the run detail requirement list every SA §8.2 item, plus approvals, version and the re-check state? [Completeness, Spec §FR-008]
-- [ ] CHK010 Is the source of "prior rework comments" defined (which runs, which comments)? [Clarity, research R-04]
-- [ ] CHK011 Are the decision form's outcomes, required fields, root causes and typed values all derived from the pinned spec, with no terminal-specific logic? [Consistency, Spec §FR-009, §FR-022]
-- [ ] CHK012 Is the "reason when differing from the reviewer" rule consistent with feature 003's existing check? [Consistency, Spec §FR-010]
-- [ ] CHK013 Is optimistic concurrency required for every state-changing action (decision, edit, upload, attach, escalation completion), with the stale answer defined? [Coverage, Spec §FR-011, research R-05]
+- [X] CHK009 Does the run detail requirement list every SA §8.2 item, plus approvals, version and the re-check state? [Completeness, Spec §FR-008]
+- [X] CHK010 Is the source of "prior rework comments" defined (which runs, which comments)? [Clarity, research R-04]
+- [X] CHK011 Are the decision form's outcomes, required fields, root causes and typed values all derived from the pinned spec, with no terminal-specific logic? [Consistency, Spec §FR-009, §FR-022]
+- [X] CHK012 Is the "reason when differing from the reviewer" rule consistent with feature 003's existing check? [Consistency, Spec §FR-010]
+- [X] CHK013 Is optimistic concurrency required for every state-changing action (decision, edit, upload, attach, escalation completion), with the stale answer defined? [Coverage, Spec §FR-011, research R-05]
 
 ## Artifacts and Files
 
-- [ ] CHK014 Are the editing permissions (sign-off or accountable roles, states allowed) consistent with feature 005's edit rules? [Consistency, Spec §FR-012]
-- [ ] CHK015 Are the download headers listed completely (type, disposition, nosniff, CSP sandbox, no-store), and limited to attachments of the run named in the path? [Completeness, Spec §FR-013, research R-06]
-- [ ] CHK016 Is behaviour defined for large tables (paging) and for unchanged saves (no version)? [Edge Case, Spec US3, Edge Cases]
+- [X] CHK014 Are the editing permissions (sign-off or accountable roles, states allowed) consistent with feature 005's edit rules? [Consistency, Spec §FR-012]
+- [X] CHK015 Are the download headers listed completely (type, disposition, nosniff, CSP sandbox, no-store), and limited to attachments of the run named in the path? [Completeness, Spec §FR-013, research R-06]
+- [X] CHK016 Is behaviour defined for large tables (paging) and for unchanged saves (no version)? [Edge Case, Spec US3, Edge Cases]
 
 ## Clarifications, Escalations, Waivers, Dead Letters
 
-- [ ] CHK017 Are the authorization rules for each form stated (addressed role, accountable role, approver role and not proposer, CoE role)? [Completeness, Spec §FR-015 to §FR-018]
-- [ ] CHK018 Is it specified what the escalation form submits (merged artifacts) and that the run then needs normal sign-off? [Clarity, Spec §FR-016]
+- [X] CHK017 Are the authorization rules for each form stated (addressed role, accountable role, approver role and not proposer, CoE role)? [Completeness, Spec §FR-015 to §FR-018]
+- [X] CHK018 Is it specified what the escalation form submits (merged artifacts) and that the run then needs normal sign-off? [Clarity, Spec §FR-016]
 
 ## Boundary, Errors and Safety
 
-- [ ] CHK019 Is "the UI never reads the data store" testable, and is it stated how tests drive the UI through the real API? [Measurability, Spec §FR-020, research R-08]
-- [ ] CHK020 Are error kinds and HTTP statuses defined for every service exception the operations can raise? [Completeness, Spec §FR-021, research R-05]
-- [ ] CHK021 Is plain-text rendering of agent and person text required for every free-text field, with a test approach for injection payloads? [Coverage, Spec §FR-013, research R-07]
-- [ ] CHK022 Is it specified that request bodies (which may hold artifact content) are not logged? [Gap, research R-10]
+- [X] CHK019 Is "the UI never reads the data store" testable, and is it stated how tests drive the UI through the real API? [Measurability, Spec §FR-020, research R-08]
+- [X] CHK020 Are error kinds and HTTP statuses defined for every service exception the operations can raise? [Completeness, Spec §FR-021, research R-05]
+- [X] CHK021 Is plain-text rendering of agent and person text required for every free-text field, with a test approach for injection payloads? [Coverage, Spec §FR-013, research R-07]
+- [X] CHK022 Is it specified that request bodies (which may hold artifact content) are not logged? [Gap, research R-10]
 
 ## Observability and Compatibility
 
-- [ ] CHK023 Is the trace content per operation defined (account, run, use case), without bodies? [Clarity, Spec §FR-023, research R-10]
-- [ ] CHK024 Are the setting moves (`deadletter_role`, `synthetic_dir`, `spec_dir` to the runtime settings) and the additive service changes shown to keep the orchestrator and the 003–006 suites unchanged? [Consistency, data-model, Spec SC-008]
-- [ ] CHK025 Is SC-008's "full lifecycle driven through the operations alone" backed by a defined scenario? [Measurability, Spec §SC-008, quickstart]
+- [X] CHK023 Is the trace content per operation defined (account, run, use case), without bodies? [Clarity, Spec §FR-023, research R-10]
+- [X] CHK024 Are the setting moves (`deadletter_role`, `synthetic_dir`, `spec_dir` to the runtime settings) and the additive service changes shown to keep the orchestrator and the 003–006 suites unchanged? [Consistency, data-model, Spec SC-008]
+- [X] CHK025 Is SC-008's "full lifecycle driven through the operations alone" backed by a defined scenario? [Measurability, Spec §SC-008, quickstart]
 
 ## Notes
 
