@@ -6,7 +6,7 @@ from adlc.orchestration.interfaces import Recommendation
 from tests.support.api import Api
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness
-from tests.support.ui import open_item, open_ui, sign_in, texts
+from tests.support.ui import frame, go, open_item, open_ui, sign_in, texts
 
 SECTIONS = [
     "Artifacts",
@@ -79,3 +79,20 @@ def test_plain_text_for_agent_text(h: Harness, api: Api) -> None:
     at = open_run(sign_in(open_ui(api), "product_owner"), run)
     assert payload in texts(at)
     assert all(payload not in m.value for m in at.markdown)
+
+
+def test_inbox_groups_by_kind_and_marks_controls_being_rerun(h: Harness, api: Api) -> None:
+    _, run = walk_to(h, "T1")
+    shown = api.get("product_owner", f"/runs/{run}").json()
+    rows = next(a for a in shown["artifacts"] if a["id"] == "kpis")["rows"]
+    rows[0]["target"] = 42
+    edited = api.put(
+        "product_owner",
+        f"/runs/{run}/artifacts/kpis",
+        json={"rows": rows, "expected_version": shown["run"]["version"]},
+    )
+    assert edited.status_code == 200  # the worker has not re-run the controls yet
+    at = go(sign_in(open_ui(api), "business_owner"), "Inbox")
+    assert not at.exception, at.exception
+    assert [s.value for s in at.subheader] == ["Sign-offs"]
+    assert "controls being re-run" in list(frame(at, "note")["note"])

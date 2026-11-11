@@ -29,6 +29,11 @@ def render(api: ApiClient) -> None:
         "expiry",
     ):
         field(name.replace("_", " ").capitalize(), waiver.get(name))
+    # The other values the spec requires for an exception (for example a risk acceptance or
+    # conditions), as the proposer typed them.
+    for name, value in sorted((waiver.get("requires") or {}).items()):
+        if waiver.get(name) is None and name not in ("waiver_id", "status", "proposed_by"):
+            field(str(name).replace("_", " ").capitalize(), value)
     choice = st.radio("Decision", ["approve", "reject"], key=f"waiver:{waiver_id}", horizontal=True)
     comment = st.text_area("Comment", key=f"waiver_comment:{waiver_id}")
     if st.button("Record waiver decision", key=f"waiver_send:{waiver_id}"):

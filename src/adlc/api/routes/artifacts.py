@@ -33,6 +33,19 @@ class Edit(BaseModel):
 VersionField = Annotated[int, Form(ge=0)]
 
 
+MAX_NAME = 200
+
+
+def safe_name(raw: str | None, fallback: str) -> str:
+    """A person's file name, made safe to record and offer (spec edge case "dangerous name"):
+    the last path segment, without control characters, at most ``MAX_NAME`` characters."""
+    name = (raw or fallback).replace("\\", "/").rsplit("/", 1)[-1]
+    name = "".join(ch for ch in name if ch.isprintable()).strip()
+    if name in ("", ".", ".."):
+        raise Invalid("the file name is empty or not allowed", field="file")
+    return name[:MAX_NAME]
+
+
 def _read(upload: UploadFile, limit: int) -> bytes:
     """At most ``limit`` bytes; a larger file is refused before it is read in full."""
     data = upload.file.read(limit + 1)
@@ -64,7 +77,12 @@ def spreadsheet(
     traced(run_id=run_id)
     data = _read(file, services.settings.attachment_max)
     run = services.ledger.upload_spreadsheet(
-        actor, run_id, artifact_id, data, file.filename or "upload.xlsx", expected_version
+        actor,
+        run_id,
+        artifact_id,
+        data,
+        safe_name(file.filename, "upload.xlsx"),
+        expected_version,
     )
     return {"run": run_summary(run)}
 
@@ -85,7 +103,7 @@ def attach(
         run_id,
         artifact_id,
         data,
-        file.filename or "attachment",
+        safe_name(file.filename, "attachment"),
         file.content_type or FALLBACK_TYPE,
         expected_version,
     )

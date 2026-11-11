@@ -13,7 +13,7 @@ from fastapi.responses import JSONResponse
 from adlc.identity.protocol import IdentityProvider, NotAuthenticated, Person
 
 PUBLIC_PATHS = frozenset({"/health", "/auth/sign-in"})
-NOT_AUTHENTICATED = {"detail": "not authenticated"}
+NOT_AUTHENTICATED = {"kind": "not_signed_in", "detail": "not authenticated"}  # 007 FR-021
 
 
 def bearer_token(request: Request) -> str | None:

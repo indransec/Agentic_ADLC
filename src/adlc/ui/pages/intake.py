@@ -3,7 +3,7 @@
 import streamlit as st
 
 from adlc.ui.client import ApiClient, ApiError
-from adlc.ui.render import error
+from adlc.ui.render import error, navigate
 
 
 def render(api: ApiClient) -> None:
@@ -23,6 +23,4 @@ def render(api: ApiClient) -> None:
         except ApiError as exc:
             error(exc)
             return
-        st.session_state["usecase_id"] = answer["usecase_id"]
-        st.success("Submitted")
-        st.text(answer["usecase_id"])
+        navigate("Use cases", usecase_id=answer["usecase_id"], submitted=answer["usecase_id"])

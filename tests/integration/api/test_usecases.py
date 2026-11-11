@@ -68,4 +68,4 @@ def test_my_use_cases(h: Harness, api: Api) -> None:
 def test_no_session_no_access(api: Api, method: str, path: str) -> None:
     """SC-006: only health and sign-in answer without a session."""
     answer = getattr(api.client, method)(path)
-    assert answer.status_code == 401
+    assert answer.status_code == 401 and answer.json()["kind"] == "not_signed_in"

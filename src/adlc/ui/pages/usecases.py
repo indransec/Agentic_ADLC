@@ -8,6 +8,10 @@ from adlc.ui.render import field, navigate, table
 
 def render(api: ApiClient) -> None:
     st.header("Use cases")
+    if submitted := st.session_state.pop("submitted", None):
+        st.session_state.pop("journey_usecase", None)  # show the new use case's journey
+        st.success("Submitted")
+        st.text(submitted)
     mine = st.toggle("Only mine", value=True, key="mine")
     found = api.get("/usecases", mine=str(mine).lower())
     ids = [u["usecase_id"] for u in found]

@@ -193,3 +193,34 @@ def test_old_versions_change_nothing(h: Harness, api: Api) -> None:
     assert [c.status_code for c in calls] == [409, 409, 409]
     assert {c.json()["kind"] for c in calls} == {"stale"}
     assert versions(h, run) == before
+
+
+@pytest.mark.parametrize(
+    ("raw", "kept"),
+    [
+        ("../../etc/passwd.md", "passwd.md"),
+        ("C:\\Users\\me\\notes.md", "notes.md"),
+    ],
+)
+def test_file_names_are_made_safe(h: Harness, api: Api, raw: str, kept: str) -> None:
+    _, run = walk_to(h, "T1")
+    answer = api.post(
+        "product_owner",
+        f"/runs/{run}/artifacts/{ARTIFACT}/attachments",
+        files={"file": (raw, NOTE, "text/markdown")},
+        data={"expected_version": str(state(api, run)["run"]["version"])},
+    )
+    assert answer.status_code == 200, answer.text
+    artifact = next(a for a in state(api, run)["artifacts"] if a["id"] == ARTIFACT)
+    assert [a["name"] for a in artifact["attachments"]] == [kept]
+
+
+def test_empty_file_names_are_refused(h: Harness, api: Api) -> None:
+    _, run = walk_to(h, "T1")
+    refused = api.post(
+        "product_owner",
+        f"/runs/{run}/artifacts/{ARTIFACT}/attachments",
+        files={"file": ("../..", NOTE, "text/markdown")},
+        data={"expected_version": str(state(api, run)["run"]["version"])},
+    )
+    assert refused.status_code == 422 and refused.json()["field"] == "file"

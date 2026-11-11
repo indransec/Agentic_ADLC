@@ -29,7 +29,8 @@ no due time come last.
 
 ## Run detail
 
-`InboxService.detail` returns every SA §8.2 item: the run (state, version, `controls_pending`),
+The run detail is `InboxService.detail`; there is no separate `RunDetailService` (task T017 named
+one, but the detail shares the inbox's queries and rules, so it stays in one service). It returns every SA §8.2 item: the run (state, version, `controls_pending`),
 artifacts with columns, rows, current version and attachments, control results, the reviewer's
 recommendation with the checklist item text and scores, prior rework comments (this terminal's
 earlier runs in the use case that closed as rework, newest first), clarifications, approvals that

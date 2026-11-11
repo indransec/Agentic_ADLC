@@ -11,6 +11,13 @@ from adlc.ui.client import ApiClient
 from adlc.ui.render import navigate, table
 
 REFRESH_SECONDS = 30
+KIND_TITLES = {
+    "sign_off": "Sign-offs",
+    "clarification": "Clarifications",
+    "escalation": "Escalations",
+    "waiver": "Waivers",
+    "dead_letter": "Dead letters",
+}
 
 
 def render(api: ApiClient) -> None:
@@ -22,20 +29,25 @@ def render(api: ApiClient) -> None:
 @st.fragment(run_every=REFRESH_SECONDS)
 def items(api: ApiClient) -> None:
     found = api.get("/inbox")
-    table(
-        [
-            {
-                "kind": i["kind"].replace("_", " "),
-                "title": i["title"],
-                "use case": i["usecase_id"],
-                "terminal": i["terminal_id"],
-                "as role": i["role"],
-                "arrived": i["arrived_at"],
-                "due": i["due_at"],
-            }
-            for i in found
-        ]
-    )
+    if not found:
+        st.caption("Nothing is waiting for you.")
+    for kind in dict.fromkeys(i["kind"] for i in found):  # kinds in order of their first item
+        st.subheader(KIND_TITLES.get(kind, kind.replace("_", " ").capitalize()))
+        table(
+            [
+                {
+                    "title": i["title"],
+                    "use case": i["usecase_id"],
+                    "terminal": i["terminal_id"],
+                    "as role": i["role"],
+                    "arrived": i["arrived_at"],
+                    "due": i["due_at"],
+                    "note": "controls being re-run" if i["controls_pending"] else "",
+                }
+                for i in found
+                if i["kind"] == kind
+            ]
+        )
     if not found:
         return
     labels = {f"{i['kind'].replace('_', ' ')}: {i['title']} ({i['id']})": i for i in found}

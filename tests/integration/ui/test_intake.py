@@ -19,9 +19,10 @@ def test_sign_in_submit_and_follow(h: Harness, api: Api) -> None:
     at = at.run()
     assert not at.exception, at.exception
     assert [s.value for s in at.success] == ["Submitted"]
+    assert at.session_state["page"] == "Use cases"  # the journey opens after submitting
     usecase = at.session_state["usecase_id"]
     h.drain()
-    at = go(at, "Use cases")
+    at = at.run()  # refresh the journey once the worker has opened T0
     runs = frame(at, "terminal")
     assert list(runs["terminal"]) == ["T0"] and list(runs["state"]) == ["awaiting_sign_off"]
     assert at.selectbox(key="journey_usecase").value == usecase

@@ -66,6 +66,7 @@ def test_decide_a_waiver(h: Harness, api: Api) -> None:
                 "waiver_owner": "product_owner-person",
                 "expiry": "2099-01-01",
                 "compensating_control": "weekly manual review",
+                "risk_acceptance": "accepted for the pilot only",
             },
         },
     )
@@ -75,6 +76,7 @@ def test_decide_a_waiver(h: Harness, api: Api) -> None:
     at = open_item(sign_in(open_ui(api), "product_owner"), waiver)
     assert not at.exception, at.exception
     assert "weekly manual review" in texts(at)
+    assert "accepted for the pilot only" in texts(at)  # every proposal field (FR-017)
     at.text_area(key=f"waiver_comment:{waiver}").input("control is credible")
     at.button(key=f"waiver_send:{waiver}").click()
     at = at.run()
