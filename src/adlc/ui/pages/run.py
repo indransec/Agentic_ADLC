@@ -26,19 +26,27 @@ def render(api: ApiClient) -> None:
     if not run_id:
         st.caption("Open a run from the inbox or a use case.")
         return
-    st.session_state["run_id"] = run_id
-    if note := st.session_state.pop(STALE_NOTE, None):
-        st.warning(note)
-    data = api.get(f"/runs/{run_id}")
-    # The version the person saw is the one shown on the previous render: a click re-runs the
-    # page and fetches again, and acting on that fresh version would hide a concurrent change.
-    seen_key = f"seen:{run_id}"
-    seen = int(st.session_state.get(seen_key, data["run"]["version"]))
-    st.session_state[seen_key] = data["run"]["version"]
+    data, seen = load(api, run_id)
     header(data)
     artifacts(api, data, seen)
     sections(data)
     decision_form(api, data, seen)
+
+
+def load(api: ApiClient, run_id: str) -> tuple[dict[str, Any], int]:
+    """The run detail and the version the person saw (FR-011).
+
+    The version the person saw is the one shown on the previous render: a click re-runs the page
+    and fetches again, and acting on that fresh version would hide a concurrent change.
+    """
+    st.session_state["run_id"] = run_id
+    if note := st.session_state.pop(STALE_NOTE, None):
+        st.warning(note)
+    data = api.get(f"/runs/{run_id}")
+    seen_key = f"seen:{run_id}"
+    seen = int(st.session_state.get(seen_key, data["run"]["version"]))
+    st.session_state[seen_key] = data["run"]["version"]
+    return data, seen
 
 
 def header(data: dict[str, Any]) -> None:

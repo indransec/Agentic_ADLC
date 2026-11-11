@@ -68,6 +68,8 @@ def build_form(
         "can_terminate": bool(actor.roles & terminate_roles)
         and run.state in (RunState.AWAITING_SIGN_OFF, RunState.ESCALATED, RunState.BLOCKED),
         "can_edit": rules.can_edit(actor, str(run.state), ctx, spec),
+        "can_complete_escalation": run.state == RunState.ESCALATED
+        and rules.can_complete_escalation(actor, spec),
         "controls_pending": run.controls_pending,
         "waiver_pending": ctx.pending_waiver,
     }

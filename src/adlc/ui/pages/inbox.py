@@ -3,6 +3,8 @@
 Refreshes itself every 30 seconds and on demand (research R-09).
 """
 
+from typing import Any
+
 import streamlit as st
 
 from adlc.ui.client import ApiClient
@@ -34,9 +36,23 @@ def items(api: ApiClient) -> None:
             for i in found
         ]
     )
-    runs = [i["run_id"] for i in found if i.get("run_id")]
-    if not runs:
+    if not found:
         return
-    pick = st.selectbox("Open", runs, key="inbox_pick")
-    if st.button("Open run", key="inbox_open"):
-        navigate("Run", run_id=pick)
+    labels = {f"{i['kind'].replace('_', ' ')}: {i['title']} ({i['id']})": i for i in found}
+    pick = st.selectbox("Open", list(labels), key="inbox_pick")
+    if st.button("Open", key="inbox_open"):
+        open_item(labels[pick])
+
+
+def open_item(item: dict[str, Any]) -> None:
+    kind = item["kind"]
+    if kind == "clarification":
+        navigate("Clarification", run_id=item["run_id"], clarification_id=item["id"])
+    elif kind == "waiver":
+        navigate("Waiver", run_id=item["run_id"], waiver_id=item["id"])
+    elif kind == "escalation":
+        navigate("Escalation", run_id=item["run_id"])
+    elif kind == "dead_letter":
+        navigate("Dead letters")
+    else:
+        navigate("Run", run_id=item["run_id"])

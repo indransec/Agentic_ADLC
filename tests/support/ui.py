@@ -40,3 +40,14 @@ def frame(at: AppTest, column: str) -> Any:
         if column in element.value.columns:
             return element.value
     raise AssertionError(f"no table with column {column!r}")
+
+
+def open_item(at: AppTest, item_id: str) -> AppTest:
+    """Open the inbox item whose id is ``item_id``."""
+    at = go(at, "Inbox")
+    assert not at.exception, at.exception
+    pick = at.selectbox(key="inbox_pick")
+    label = next(o for o in pick.options if o.endswith(f"({item_id})"))
+    pick.set_value(label)
+    at.button(key="inbox_open").click()
+    return at.run()

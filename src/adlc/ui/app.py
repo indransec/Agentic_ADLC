@@ -7,7 +7,16 @@ import streamlit as st
 
 from adlc.config.settings import UiSettings
 from adlc.ui.client import ApiClient, ApiError
-from adlc.ui.pages import inbox, intake, run, usecases
+from adlc.ui.pages import (
+    clarification,
+    dead_letters,
+    escalation,
+    inbox,
+    intake,
+    run,
+    usecases,
+    waiver,
+)
 from adlc.ui.render import error
 
 PAGES = {
@@ -15,6 +24,10 @@ PAGES = {
     "New use case": intake.render,
     "Use cases": usecases.render,
     "Run": run.render,
+    "Clarification": clarification.render,
+    "Escalation": escalation.render,
+    "Waiver": waiver.render,
+    "Dead letters": dead_letters.render,
 }
 
 

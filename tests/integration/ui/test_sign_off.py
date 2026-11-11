@@ -6,7 +6,7 @@ from adlc.orchestration.interfaces import Recommendation
 from tests.support.api import Api
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness
-from tests.support.ui import go, open_ui, sign_in, texts
+from tests.support.ui import open_item, open_ui, sign_in, texts
 
 SECTIONS = [
     "Artifacts",
@@ -23,11 +23,7 @@ SECTIONS = [
 
 
 def open_run(at: AppTest, run_id: str) -> AppTest:
-    at = go(at, "Inbox")
-    assert not at.exception, at.exception
-    at.selectbox(key="inbox_pick").set_value(run_id)
-    at.button(key="inbox_open").click()
-    return at.run()
+    return open_item(at, run_id)
 
 
 def test_inbox_detail_and_pass(h: Harness, api: Api) -> None:

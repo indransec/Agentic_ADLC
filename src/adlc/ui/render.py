@@ -39,10 +39,11 @@ def table(rows: Sequence[Mapping[str, Any]], key: str | None = None) -> None:
         st.caption("(none)")
 
 
-def navigate(page: str, *, run_id: str | None = None) -> None:
+def navigate(page: str, *, run_id: str | None = None, **state: Any) -> None:
     """Go to another page on the next run (the page selector cannot change once drawn)."""
     if run_id is not None:
         st.session_state["run_id"] = run_id
+    st.session_state.update(state)
     st.session_state["goto"] = page
     st.rerun(scope="app")
 

@@ -128,8 +128,121 @@ class InboxService:
         )
 
     def request_items(self, conn: Connection, actor: Actor) -> list[dict[str, Any]]:
-        """Clarifications, escalations, waivers and dead letters (US4)."""
-        return []
+        """Clarifications, escalations, waivers and dead letters (US4; research R-03)."""
+        return (
+            self._clarification_items(conn, actor)
+            + self._escalation_items(conn, actor)
+            + self._waiver_items(conn, actor)
+            + self._dead_letter_items(conn, actor)
+        )
+
+    def _clarification_items(self, conn: Connection, actor: Actor) -> list[dict[str, Any]]:
+        rows = conn.execute(
+            text(
+                "SELECT c.clarification_id, c.run_id, c.addressed_role, c.asked_at "
+                "FROM run.clarification_round c LEFT JOIN run.clarification_answer a "
+                "USING (clarification_id) WHERE a.clarification_id IS NULL ORDER BY c.asked_at"
+            )
+        ).mappings()
+        items = []
+        for row in rows:
+            if not rules.can_answer(actor, row["addressed_role"]):
+                continue
+            run = run_store.load_run(conn, str(row["run_id"]))
+            if run is None:
+                continue
+            items.append(
+                _item(
+                    "clarification",
+                    str(row["clarification_id"]),
+                    run,
+                    row["addressed_role"],
+                    f"Answer questions on {run.terminal_id} run {run.run_number}",
+                    row["asked_at"],
+                )
+            )
+        return items
+
+    def _escalation_items(self, conn: Connection, actor: Actor) -> list[dict[str, Any]]:
+        items = []
+        for run in self._waiting(conn, RunState.ESCALATED.value):
+            spec = self.runs.entry(run.terminal_id, run.spec_version).spec
+            roles = sorted(actor.roles & rules.accountable(spec))
+            if not roles:
+                continue
+            items.append(
+                _item(
+                    "escalation",
+                    run.run_id,
+                    run,
+                    roles[0],
+                    f"Complete escalated {run.terminal_id} run {run.run_number}",
+                    self._entered(conn, run.run_id, RunState.ESCALATED.value),
+                )
+            )
+        return items
+
+    def _waiver_items(self, conn: Connection, actor: Actor) -> list[dict[str, Any]]:
+        ids = conn.execute(
+            text(
+                "SELECT w.waiver_id FROM run.waiver w JOIN run.terminal_run r "
+                "ON r.pending_waiver_id = w.waiver_id WHERE w.status = 'proposed' "
+                "ORDER BY w.proposed_at"
+            )
+        ).scalars()
+        items = []
+        for waiver_id in ids:
+            waiver = run_store.load_waiver(conn, str(waiver_id))
+            run = run_store.load_run(conn, str(waiver["run_id"])) if waiver else None
+            if waiver is None or run is None:
+                continue
+            spec = self.runs.entry(run.terminal_id, run.spec_version).spec
+            if not rules.can_decide_waiver(actor, spec, str(waiver["proposed_by"])):
+                continue
+            role = sorted(actor.roles & rules.waiver_approvers(spec))[0]
+            proposed = conn.execute(
+                text("SELECT proposed_at FROM run.waiver WHERE waiver_id = :w"), {"w": waiver_id}
+            ).scalar()
+            items.append(
+                _item(
+                    "waiver",
+                    str(waiver_id),
+                    run,
+                    role,
+                    f"Decide waiver {waiver_id} on {run.terminal_id}",
+                    proposed,
+                )
+            )
+        return items
+
+    def _dead_letter_items(self, conn: Connection, actor: Actor) -> list[dict[str, Any]]:
+        if not rules.is_coe(actor, self.deadletter_role):
+            return []
+        return [
+            {
+                "kind": "dead_letter",
+                "id": str(row["event_id"]),
+                "usecase_id": row["usecase_id"],
+                "terminal_id": None,
+                "run_id": None,
+                "role": self.deadletter_role,
+                "title": f"Dead-lettered event {row['event_type']}",
+                "arrived_at": row["dead_lettered_at"],
+                "due_at": None,
+                "controls_pending": False,
+            }
+            for row in run_store.dead_letters(conn)
+        ]
+
+    # -------------------------------------------------------------- lookups for the routes
+
+    def clarification_exists(self, clarification_id: str) -> bool:
+        with self.runs.engine.connect() as conn:
+            return run_store.load_clarification(conn, clarification_id) is not None
+
+    def waiver_exists(self, waiver_id: str) -> bool:
+        with self.runs.engine.connect() as conn:
+            return run_store.load_waiver(conn, waiver_id) is not None
 
     def _waiting(self, conn: Connection, state: str) -> list[RunRow]:
         ids = conn.execute(
@@ -152,18 +265,14 @@ class InboxService:
             if role is None:
                 continue
             items.append(
-                {
-                    "kind": "sign_off",
-                    "id": run.run_id,
-                    "usecase_id": run.usecase_id,
-                    "terminal_id": run.terminal_id,
-                    "run_id": run.run_id,
-                    "role": role,
-                    "title": f"Sign off {run.terminal_id} run {run.run_number}",
-                    "arrived_at": self._entered(conn, run.run_id, RunState.AWAITING_SIGN_OFF.value),
-                    "due_at": run.due_at,
-                    "controls_pending": run.controls_pending,
-                }
+                _item(
+                    "sign_off",
+                    run.run_id,
+                    run,
+                    role,
+                    f"Sign off {run.terminal_id} run {run.run_number}",
+                    self._entered(conn, run.run_id, RunState.AWAITING_SIGN_OFF.value),
+                )
             )
         return items
 
@@ -301,6 +410,23 @@ class InboxService:
         return tuple(
             str(i["id"]) for i in (catalogue.content if catalogue else {}).get("root_causes", [])
         )
+
+
+def _item(
+    kind: str, item_id: str, run: RunRow, role: str, title: str, arrived_at: Any
+) -> dict[str, Any]:
+    return {
+        "kind": kind,
+        "id": item_id,
+        "usecase_id": run.usecase_id,
+        "terminal_id": run.terminal_id,
+        "run_id": run.run_id,
+        "role": role,
+        "title": title,
+        "arrived_at": arrived_at,
+        "due_at": run.due_at,
+        "controls_pending": run.controls_pending,
+    }
 
 
 def _version(row: Mapping[str, Any] | None) -> dict[str, Any] | None:

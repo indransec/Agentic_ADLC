@@ -188,18 +188,18 @@ Test tasks come first in each phase and must fail before their implementation.
 
 ### Tests first
 
-- [ ] T024 [P] [US4] Write failing API tests in `tests/integration/api/test_requests.py`:
+- [X] T024 [P] [US4] Write failing API tests in `tests/integration/api/test_requests.py`:
   - a clarification is listed only for the addressed role, and its answer resumes the same run;
   - an escalation is listed for accountable roles, and completion leads to sign-off (others → 403;
     an old `expected_version` → 409 `stale`);
   - a waiver is listed for approvers other than the proposer, and approval or rejection is recorded with the comment (the proposer → 403);
   - dead letters are listed and requeued only for the CoE role.
-- [ ] T025 [P] [US4] Write failing UI tests in `tests/integration/ui/test_requests.py` for the clarification, escalation, waiver and dead-letter pages.
+- [X] T025 [P] [US4] Write failing UI tests in `tests/integration/ui/test_requests.py` for the clarification, escalation, waiver and dead-letter pages.
 
 ### Implementation
 
-- [ ] T026 [US4] Extend `InboxService.items` with the clarification, escalation, waiver and dead-letter kinds. Implement `src/adlc/api/routes/clarifications.py`, `waivers.py` and `dead_letters.py`, and the escalation completion route in `runs.py`.
-- [ ] T027 [US4] Implement `src/adlc/ui/pages/clarification.py`, `escalation.py`, `waiver.py` and `dead_letters.py`.
+- [X] T026 [US4] Extend `InboxService.items` with the clarification, escalation, waiver and dead-letter kinds. Implement the clarification, waiver and dead-letter routes (in one module, `src/adlc/api/routes/requests.py`) and the escalation completion route in `runs.py`.
+- [X] T027 [US4] Implement `src/adlc/ui/pages/clarification.py`, `escalation.py`, `waiver.py` and `dead_letters.py`.
 
 ---
 
