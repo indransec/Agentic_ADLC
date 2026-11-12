@@ -13,9 +13,14 @@
 ## 2. Live (dev model)
 
 ```bash
-make up
+make up && docker compose -f deploy/compose.yaml --env-file .env stop orchestrator   # replays run alone
+# fully live (dev model):
 docker compose -f deploy/compose.yaml --env-file .env run --rm -T orchestrator \
-  adlc-replay --profile dev --usecase it-service-desk     # T0..T5 with the dev model
+  adlc-replay --profile dev --only it-service-desk --out /tmp/replay
+# earlier terminals from their recordings, the acting terminals live:
+docker compose -f deploy/compose.yaml --env-file .env run --rm -T \
+  -v "$PWD/tests/fixtures/replays:/replays:ro" orchestrator \
+  adlc-replay --profile dev --recording /replays --live-rest --only it-service-desk --out /tmp/replay
 ```
 
 Check: T3's candidate hash equals CI's and dev runs it (SC-002); T3–T5 control decisions on

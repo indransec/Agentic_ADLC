@@ -122,3 +122,11 @@ polish.
 
 Foundation (predicate, evidence, import) → T3 → T4 → T5 → scopes → replay → polish. Run
 `make check` and commit at every checkpoint.
+
+---
+
+## Phase 9: Convergence
+
+- [X] T028 Align `data-model.md` with the released versions: playbooks 1.1.0 (t4-evaluation 1.2.0), T3 and T4 4.0.0, T5 3.0.0, agents catalogue 6.0.0, predicates 1.1.0, evidence sources 2.0.0, red-team suite 1.1.0 (partial: versions moved with the live fixes)
+- [X] T029 Fix `quickstart.md` §2: `adlc-replay --only it-service-desk` (no `--usecase` flag) and the mixed mode `--recording <dir> --profile dev --live-rest`, run in the orchestrator container with the recordings mounted (partial)
+- [X] T030 Add the harness's `by_edge_case` and the signed-record rule to `contracts/evidence-sources.md` (partial)
