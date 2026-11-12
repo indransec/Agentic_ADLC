@@ -14,6 +14,7 @@ x-db-settings: &db-settings
 
 services:
   postgres:
+    networks: [platform]
     image: postgres:16.15
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
@@ -35,6 +36,7 @@ services:
     restart: unless-stopped
 
   jaeger:
+    networks: [platform, pilot]
     image: jaegertracing/jaeger:2.22.0
     ports:
       - "${ADLC_JAEGER_UI_PORT:-16686}:16686"
@@ -46,6 +48,7 @@ services:
     restart: unless-stopped
 
   migrate:
+    networks: [platform]
     image: adlc-api:0.1.0
     build:
       context: ..
@@ -62,6 +65,7 @@ services:
   # Registers adlc-specs from the image into the registry after migrating (spec 002 FR-023a).
   # Validation runs without the git baseline here; L5 against the registry still applies.
   register:
+    networks: [platform]
     image: adlc-api:0.1.0
     command: ["adlc-spec", "register", "adlc-specs"]
     environment:
@@ -73,6 +77,7 @@ services:
     restart: "no"
 
   api:
+    networks: [platform]
     image: adlc-api:0.1.0
     environment:
       <<: *db-settings
@@ -113,6 +118,7 @@ services:
 
   # Web application (feature 007): a client of the API only; no database settings.
   ui:
+    networks: [platform]
     image: adlc-api:0.1.0
     command:
       - streamlit
@@ -144,6 +150,7 @@ services:
   # Knowledge MCP server (feature 008): the T0-T2 agents' read-only grounding over a document
   # folder (the synthetic set baked into the image). Reachable only inside the network.
   knowledge:
+    networks: [platform]
     image: adlc-api:0.1.0
     command: ["adlc-knowledge"]
     environment:
@@ -166,6 +173,7 @@ services:
 
   # Lifecycle orchestrator (feature 003): delivers events, advances runs, fires timers.
   orchestrator:
+    networks: [platform]
     image: adlc-api:0.1.0
     command: ["adlc-orchestrator", "run"]
     environment:
@@ -217,6 +225,142 @@ services:
       start_period: 15s
     restart: unless-stopped
 
+  # Pilot environments (feature 009): the Incident Triage Assistant on its own network. The
+  # platform reaches them only through feature 010's MCP servers; no ports, no Docker socket.
+  pilot-dev:
+    image: adlc-pilot:0.1.0
+    build:
+      context: ..
+      dockerfile: deploy/pilot.Dockerfile
+    networks: [pilot]
+    command: ["pilot-host", "--env", "dev"]
+    environment:
+      PILOT_TEMPLATE: /pilot/template
+      PILOT_REGISTRY: /packages
+      PILOT_RECORDS: /records
+      PILOT_WORK: /tmp/pilot-work
+      PILOT_OTLP_ENDPOINT: http://jaeger:4318
+      PILOT_MODEL_URL: ${PILOT_MODEL_URL:-https://api.openai.com/v1}
+      PILOT_MODEL_NAME: ${PILOT_MODEL_NAME:-gpt-4o-mini}
+      PILOT_MODEL_API_KEY: ${PILOT_MODEL_API_KEY:-}
+    volumes:
+      - pilot-packages:/packages
+      - pilot-records:/records
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=2).status == 200 else 1)"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  pilot-test:
+    image: adlc-pilot:0.1.0
+    networks: [pilot]
+    command: ["pilot-host", "--env", "test"]
+    environment:
+      PILOT_TEMPLATE: /pilot/template
+      PILOT_REGISTRY: /packages
+      PILOT_RECORDS: /records
+      PILOT_WORK: /tmp/pilot-work
+      PILOT_OTLP_ENDPOINT: http://jaeger:4318
+      PILOT_MODEL_URL: ${PILOT_MODEL_URL:-https://api.openai.com/v1}
+      PILOT_MODEL_NAME: ${PILOT_MODEL_NAME:-gpt-4o-mini}
+      PILOT_MODEL_API_KEY: ${PILOT_MODEL_API_KEY:-}
+    volumes:
+      - pilot-packages:/packages
+      - pilot-records:/records
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=2).status == 200 else 1)"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  pilot-prodsim:
+    image: adlc-pilot:0.1.0
+    networks: [pilot]
+    command: ["pilot-host", "--env", "prod-sim"]
+    environment:
+      PILOT_TEMPLATE: /pilot/template
+      PILOT_REGISTRY: /packages
+      PILOT_RECORDS: /records
+      PILOT_WORK: /tmp/pilot-work
+      PILOT_OTLP_ENDPOINT: http://jaeger:4318
+    volumes:
+      - pilot-packages:/packages
+      - pilot-records:/records
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8100/health', timeout=2).status == 200 else 1)"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  pilot-traffic:
+    image: adlc-pilot:0.1.0
+    networks: [pilot]
+    command: ["pilot-traffic"]
+    environment:
+      PILOT_TEMPLATE: /pilot/template
+      PILOT_TRAFFIC_TARGET: http://pilot-prodsim:8100
+      PILOT_TRAFFIC_RATE: ${PILOT_TRAFFIC_RATE:-1}
+      PILOT_TRAFFIC_SEED: ${PILOT_TRAFFIC_SEED:-2026}
+      PILOT_TRAFFIC_PII_SHARE: ${PILOT_TRAFFIC_PII_SHARE:-0.1}
+    volumes:
+      - pilot-data:/data
+    depends_on:
+      pilot-prodsim:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8200/health', timeout=2).status == 200 else 1)"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
+  # Operator commands: docker compose run --rm pilot-tools pilot-build --fill fills/default
+  pilot-tools:
+    image: adlc-pilot:0.1.0
+    networks: [pilot]
+    profiles: [tools]
+    working_dir: /pilot
+    environment:
+      PILOT_TEMPLATE: /pilot/template
+      PILOT_REGISTRY: /packages
+      PILOT_TRAFFIC_URL: http://pilot-traffic:8200
+    volumes:
+      - pilot-packages:/packages
+      - pilot-data:/data
+
 volumes:
   adlc-pgdata:
   adlc-files:
+  pilot-packages:
+  pilot-records:
+  pilot-data:
+
+networks:
+  platform:
+    name: adlc-platform
+  pilot:
+    name: adlc-pilot

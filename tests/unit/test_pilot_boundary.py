@@ -11,7 +11,9 @@ from ruamel.yaml import YAML
 ROOT = Path(__file__).resolve().parents[2]
 COMPOSE = ROOT / "deploy" / "compose.yaml"
 PLATFORM_CODE = sorted((ROOT / "src" / "adlc").rglob("*.py"))
-PILOT_CODE = sorted((ROOT / "pilot").rglob("*.py"))
+PILOT_CODE = sorted(
+    p for folder in ("src", "template", "tests") for p in (ROOT / "pilot" / folder).rglob("*.py")
+)
 PILOT_MODULES = ("pilot_tools", "triage_agent")
 SHARED = {"jaeger"}  # the shared trace collector joins both networks (research R-09)
 
@@ -67,3 +69,15 @@ def test_pilot_publishes_no_ports_and_nothing_mounts_the_docker_socket() -> None
             assert not service.get("ports"), name
         for volume in service.get("volumes") or []:
             assert "docker.sock" not in str(volume), name
+
+
+def test_pilot_reads_only_its_own_settings() -> None:
+    """009 A3: the pilot reads only PILOT_* variables (and process basics), never ADLC_* ones."""
+    import re
+
+    pattern = re.compile(r"environ(?:\.get)?\(\s*[\"']([A-Z_]+)[\"']|environ\[\s*[\"']([A-Z_]+)")
+    read: set[str] = set()
+    for path in PILOT_CODE:
+        for found in pattern.findall(path.read_text()):
+            read |= {name for name in found if name}
+    assert read and all(name.startswith("PILOT_") for name in read), sorted(read)

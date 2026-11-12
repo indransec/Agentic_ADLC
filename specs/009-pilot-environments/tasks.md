@@ -170,7 +170,7 @@ then polish.
 
 ## Phase 8: User Story 6 – Isolation (P2)
 
-- [ ] T024 [US6] Compose changes in `deploy/compose.yaml`:
+- [X] T024 [US6] Compose changes in `deploy/compose.yaml`:
   - a `platform` network for every platform service;
   - a `pilot` network for `pilot-dev`, `pilot-test`, `pilot-prodsim`, `pilot-traffic` and `pilot-tools` (profile `tools`);
   - `jaeger` on both;
@@ -180,7 +180,7 @@ then polish.
   - health checks.
 
   Add `deploy/pilot.Dockerfile` (image `adlc-pilot:0.1.0`, non-root user) and a `deploy/README.md` section. The T004 tests must pass.
-- [ ] T025 [US6] `pilot/src/pilot_tools/cli.py`: `pilot-env`, `pilot-split`, `pilot-fault` and `pilot-traffic-ctl` per contracts/pilot-api.md. A live isolation check script `deploy/pilot-isolation-check.sh` tries connections in both directions and reports pass or fail (SC-007).
+- [X] T025 [US6] `pilot/src/pilot_tools/cli.py`: `pilot-env`, `pilot-split`, `pilot-fault` and `pilot-traffic-ctl` per contracts/pilot-api.md. A live isolation check script `deploy/pilot-isolation-check.sh` tries connections in both directions and reports pass or fail (SC-007).
 
 ---
 

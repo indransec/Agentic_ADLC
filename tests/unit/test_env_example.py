@@ -41,7 +41,21 @@ def test_keys_match_settings() -> None:
         | set(KnowledgeSettings.model_fields)
     )
     expected = {env_name(name) for name in fields} | COMPOSE_ONLY
-    assert set(_entries()) == expected
+    platform = {k for k in _entries() if not k.startswith(PILOT_PREFIX)}
+    assert platform == expected
+
+
+PILOT_PREFIX = "PILOT_"  # 009: the pilot's own settings, read only by the pilot
+
+
+def test_pilot_settings_are_separate_and_keyless() -> None:
+    """009 A3: pilot settings carry their own prefix, read nothing of the platform's, and the
+    model key is empty by default."""
+    entries = _entries()
+    pilot = {k: v for k, v in entries.items() if k.startswith(PILOT_PREFIX)}
+    assert {"PILOT_MODEL_URL", "PILOT_MODEL_NAME", "PILOT_MODEL_API_KEY"} <= set(pilot)
+    assert pilot["PILOT_MODEL_API_KEY"] == ""
+    assert not any(k.startswith("ADLC_") for k in pilot)
 
 
 def test_secrets_are_placeholders() -> None:

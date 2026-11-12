@@ -33,3 +33,23 @@ is part of the image. It is reachable only inside the Compose network.
 - Health: `GET /health` inside the network.
 - To use your own documents, mount a folder and point `ADLC_KNOWLEDGE_DIR` at it (format in
   `data/knowledge/README.md`).
+
+## Pilot environments (feature 009)
+
+The pilot, an Incident Triage Assistant, runs on its own network (`adlc-pilot`) in the
+`adlc-pilot:0.1.0` image: `pilot-dev`, `pilot-test` and `pilot-prodsim` (environment hosts) and
+`pilot-traffic`. It publishes no ports and mounts no Docker socket. Only Jaeger, and later feature
+010's MCP servers, join both networks.
+
+```bash
+P="docker compose -f deploy/compose.yaml --env-file .env run --rm pilot-tools"
+$P pilot-build --fill fills/default            # prints the package hash
+$P pilot-env pilot-dev create --package <hash>
+$P pilot-split full --stable <hash>            # prod-sim; canary: --candidate <hash> --share 0.2
+$P pilot-traffic-ctl rate 5 && $P pilot-traffic-ctl start
+$P pilot-fault model_swap trigger              # and revert; pii_leak likewise
+deploy/pilot-isolation-check.sh                # both directions closed (SC-007)
+```
+
+Pilot settings use the `PILOT_` prefix (see `.env.example`); `PILOT_MODEL_API_KEY` is only for the
+optional real model in dev and test, and is empty by default.
