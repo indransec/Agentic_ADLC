@@ -54,7 +54,7 @@ def handlers(pilot: Pilot, repos: GitRepos, data: Path, records: Records) -> dic
             "POST", pilot.urls.lab, "/build", json={"files": files}, timeout_s=85
         )
         checks = list(result.get("checks") or [])
-        # 011 (contracts/ci-report.md): the whole report, which T3's controls read as evidence
+        # 011 (contracts/ci-report.md): the whole report, which the build controls read as evidence
         report = ("tests", "scans", "sbom", "observability")
         answer: dict[str, Any] = {"commit": commit, "checks": checks}
         answer.update({k: result[k] for k in report if k in result})

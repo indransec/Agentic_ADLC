@@ -1,1 +1,1 @@
-- {file: shared/agents.yaml, op: append, path: /agents/3/tools, value: {tool: frob, permission: "frobnicate:kb"}}
+- {file: shared/agents.yaml, op: append, path: /agents/6/tools, value: {tool: frob, permission: "frobnicate:kb"}}

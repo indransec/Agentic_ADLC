@@ -1,10 +1,14 @@
 ---
 id: PB-T3-03
-version: "1.0.0"
+version: "1.1.0"
 title: Prompt versioning
-owner_role: adlc_coe
-status: stub
+owner_role: engineering_lead
+status: active
 ---
 # Prompt versioning
 
-Stub for terminal T3. The procedure content is written with the T3 agent (feature 011); until then the terminal spec references this file by id and version.
+- Every instructions text the agent uses is stored in the prompt registry (`prompt_registry_write`)
+  and named in the build manifest by its sha256; the same text always has the same sha256.
+- A change to the instructions is a new version: write it, record its sha256, and list the change
+  in the change log with the requirement it serves.
+- The package hash covers the instructions too, so a changed prompt is always a new candidate.

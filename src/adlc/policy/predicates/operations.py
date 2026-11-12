@@ -11,7 +11,7 @@ from adlc.policy.predicates.context import PredicateError, current, fail, name_o
 from adlc.policy.predicates.evaluation import OPERATORS, _disagree
 from adlc.policy.values import as_number, is_empty, is_open_row, is_truthy, text, to_py
 
-HASH_FIELDS = ("sha256", "deployed_hash", "hash")
+HASH_FIELDS = ("sha256", "deployed_hash", "package_hash", "hash")  # 011: CI reports package_hash
 GOOD = ("pass", "success")
 BAD = ("fail", "failed", "breach")
 

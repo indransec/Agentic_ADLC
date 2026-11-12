@@ -30,15 +30,15 @@ def test_stub_mode_needs_no_keys(registry: InMemorySpecRegistry) -> None:
 
 
 def test_model_builders_need_a_key(registry: InMemorySpecRegistry) -> None:
-    """008: the registered T0-T2 agents are model agents, so even stub-reviewer mode needs a key."""
+    """008: registered terminal agents are model agents; even stub-reviewer mode needs a key."""
     models, agents = load_catalogues(registry, "dev")
-    with pytest.raises(MissingModelKey, match="t0-intake-agent"):
+    with pytest.raises(MissingModelKey, match=r"needed by t\d-"):
         check_model_keys(models, agents, NO_KEYS, [REVIEWER], "stub")
 
 
 def test_model_reviewer_needs_a_key(registry: InMemorySpecRegistry) -> None:
     models, agents = load_catalogues(registry, "dev")
-    with pytest.raises(MissingModelKey, match="profile 'dev', tier 'reasoning'"):
+    with pytest.raises(MissingModelKey, match="profile 'dev', tier '(coding|reasoning)'"):
         check_model_keys(models, agents, NO_KEYS, [REVIEWER], "model")
     check_model_keys(models, agents, {**NO_KEYS, "openai": "k"}, [REVIEWER], "model")
     default, _ = load_catalogues(registry, "default")

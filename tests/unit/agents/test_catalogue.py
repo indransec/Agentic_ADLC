@@ -95,7 +95,7 @@ def test_agents(registry: InMemorySpecRegistry) -> None:
     assert (reviewer.implementation, reviewer.model_tier) == ("model", "reasoning")
     assert reviewer.prompt == ("common-terminal-reviewer", "1.0.0")
     assert agents.agent("t3-builder-agent").model_tier == "coding"
-    assert agents.agent("t3-builder-agent").prompt is None
+    assert agents.agent("t3-builder-agent").prompt == ("t3-builder-agent", "1.0.0")  # 011
     with pytest.raises(UnknownAgent):
         agents.agent("t42-agent")
     tooled = AgentCatalogue.from_content(

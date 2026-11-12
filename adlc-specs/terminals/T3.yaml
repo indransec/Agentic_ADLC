@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T3
     name: Build & Integration
-    version: "2.0.0"
+    version: "3.0.0"
     schema_version: "1.1.0"
     purpose: Can we construct the agent reproducibly?
     owner_role: adlc_coe
@@ -62,9 +62,9 @@ terminal:
     status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
   playbooks:
     procedures:
-      - {id: PB-T3-01, ref: playbooks/t3-build.md, version: "1.0.0"}
-      - {id: PB-T3-02, ref: playbooks/golden-template.md, version: "1.0.0"}
-      - {id: PB-T3-03, ref: playbooks/prompt-versioning.md, version: "1.0.0"}
+      - {id: PB-T3-01, ref: playbooks/t3-build.md, version: "1.1.0"}
+      - {id: PB-T3-02, ref: playbooks/golden-template.md, version: "1.1.0"}
+      - {id: PB-T3-03, ref: playbooks/prompt-versioning.md, version: "1.1.0"}
     grounding:
       - {mcp: git, scope: "component catalogue, prior agents"}
       - {mcp: confluence, scope: /engineering-standards}
@@ -103,6 +103,23 @@ terminal:
         rule: sbom.generated && sbom.licences_approved
         description: sbom generated and licences approved
         severity: advisory
+      # 011 (research R-07): values copied from CI equal what CI recorded
+      - id: CTL-T3-09
+        rule: rows_match(T3.test_results, "suite", ci.tests)
+        description: test results equal the recorded CI result
+        severity: blocking
+      - id: CTL-T3-10
+        rule: rows_match(T3.security_build_checks, "scan", ci.scans)
+        description: scan counts equal the recorded CI result
+        severity: blocking
+      - id: CTL-T3-11
+        rule: rows_match(T3.observability_check, "signal", ci.observability)
+        description: observed signals equal the recorded CI result
+        severity: blocking
+      - id: CTL-T3-12
+        rule: hash_matches(T3.candidate_package, ci)
+        description: candidate package hash == the hash CI built
+        severity: blocking
     checklist:
       ref: checklists/t3.yaml
       version: "1.0.0"
