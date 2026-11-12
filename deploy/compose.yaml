@@ -320,7 +320,7 @@ services:
       PILOT_TRAFFIC_TARGET: http://pilot-prodsim:8100
       PILOT_TRAFFIC_RATE: ${PILOT_TRAFFIC_RATE:-1}
       PILOT_TRAFFIC_SEED: ${PILOT_TRAFFIC_SEED:-2026}
-      PILOT_TRAFFIC_PII_SHARE: ${PILOT_TRAFFIC_PII_SHARE:-0.1}
+      PILOT_TRAFFIC_PII_SHARE: ${PILOT_TRAFFIC_PII_SHARE:-0.25}
     volumes:
       - pilot-data:/data
     depends_on:

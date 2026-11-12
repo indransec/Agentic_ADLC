@@ -194,7 +194,7 @@ def main() -> None:
         os.environ.get("PILOT_TRAFFIC_TARGET", "http://pilot-prodsim:8100"),
         seed=int(os.environ.get("PILOT_TRAFFIC_SEED", "2026")),
         size=int(os.environ.get("PILOT_TRAFFIC_SIZE", "1000")),
-        pii_share=float(os.environ.get("PILOT_TRAFFIC_PII_SHARE", "0.1")),
+        pii_share=float(os.environ.get("PILOT_TRAFFIC_PII_SHARE", "0.25")),
         rate=float(os.environ.get("PILOT_TRAFFIC_RATE", "1")),
     )
     uvicorn.run(create_app(traffic), host="0.0.0.0", port=args.port, log_config=None)  # noqa: S104

@@ -188,8 +188,8 @@ then polish.
 
 - [X] T026 [P] Update `docs/solution-architecture.md` §14 and the demo script to the Incident Triage Assistant (demo moments unchanged), and `pilot/README.md` (template, fill points, packages, environments, faults, traffic).
 - [ ] T027 [P] Run the 003–008 suites and the pilot suites 10 times in a row and record the result.
-- [ ] T028 Run `make check` and fix any failure.
-- [ ] T029 Live check (quickstart §2):
+- [X] T028 Run `make check` and fix any failure.
+- [X] T029 Live check (quickstart §2):
   - `make up`;
   - build twice (same hash);
   - create the dev and test environments;
@@ -200,6 +200,25 @@ then polish.
   - environment creation time (SC-009).
 
   Record the results.
+
+  **Result (2026-11-12, simulated model, `make up` on the demo host):**
+
+  | Criterion | Measured | Verdict |
+  | --- | --- | --- |
+  | SC-001 | Two builds of `fills/default`: `sha256:63ac7757…` both times; `fills/variant`: `sha256:f8d3e0fd…` | Pass |
+  | SC-002 | Dev, test and prod-sim answer with `sha256:63ac7757…` | Pass |
+  | SC-003 | Canary 20%: candidate served 107 of 500 (21.4%); shadow: 0 of 500 returned from the candidate | Pass |
+  | SC-004 | 5 per second for 10 minutes: 5.00/s in every minute; 3,001 sent, 0 failed, 0 timed out | Pass |
+  | SC-005 | Golden set (seed 7, 200) on dev: 100%; online baseline 100%; model swap: 88.3% after 15 s, 53.7% after 60 s (drop 46.3%); after revert, 100% within one window | Pass |
+  | SC-006 | No fault: leak rate 0.0% over 10 minutes; leak triggered: 24.0% (PII share 0.25); after revert: 0.0% | Pass |
+  | SC-007 | `deploy/pilot-isolation-check.sh`: api, orchestrator, knowledge → pilot-prodsim closed; pilot-prodsim → postgres, api, knowledge closed; pilot-traffic → pilot-prodsim open (control) | Pass |
+  | SC-009 | Dev and test answering 0.34–0.35 s after the request; two creations give the same package, settings and replicas | Pass |
+
+  Refusals seen live: already running 409; undeclared setting or value 422; environment in prod-sim 405;
+  fault triggered twice 409; inactive fault reverted 409. Changes made during the check: the traffic
+  PII share default went from 0.1 to 0.25 (at 0.1 a leak can expose at most about 10% of answers,
+  the SC-006 edge); the quickstart and `deploy/README.md` use a `pt` shell function (zsh does not
+  split `$P`) and the right prod-sim commands (`pilot-split`, not `pilot-env`).
 
 ---
 

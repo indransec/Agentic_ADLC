@@ -42,12 +42,12 @@ The pilot, an Incident Triage Assistant, runs on its own network (`adlc-pilot`) 
 010's MCP servers, join both networks.
 
 ```bash
-P="docker compose -f deploy/compose.yaml --env-file .env run --rm pilot-tools"
-$P pilot-build --fill fills/default            # prints the package hash
-$P pilot-env pilot-dev create --package <hash>
-$P pilot-split full --stable <hash>            # prod-sim; canary: --candidate <hash> --share 0.2
-$P pilot-traffic-ctl rate 5 && $P pilot-traffic-ctl start
-$P pilot-fault model_swap trigger              # and revert; pii_leak likewise
+pt() { docker compose -f deploy/compose.yaml --env-file .env run --rm pilot-tools "$@"; }   # bash or zsh
+pt pilot-build --fill fills/default            # prints the package hash
+pt pilot-env pilot-dev create --package <hash>
+pt pilot-split full --stable <hash>            # prod-sim; canary: --candidate <hash> --share 0.2
+pt pilot-traffic-ctl rate 5 && pt pilot-traffic-ctl start
+pt pilot-fault model_swap trigger              # and revert; pii_leak likewise
 deploy/pilot-isolation-check.sh                # both directions closed (SC-007)
 ```
 
