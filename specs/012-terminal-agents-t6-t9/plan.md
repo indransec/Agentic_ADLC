@@ -29,7 +29,7 @@ integration (T6–T9 with scripted replies through the runtime and the bridge ov
 monitor evaluator raising drift on the model swap; change approval API; proposed-event
 confirmation); scenario (reference through T9). CI runs `make check`.
 
-**Settings**: `ADLC_MONITOR_INTERVAL` (default 1 min, scaled by `ADLC_TIME_SCALE`).
+**Settings**: `ADLC_MONITOR_INTERVAL` (default 1 min, real time: the time scale shrinks days to seconds and would make it a busy loop).
 
 **Constraints**: no terminal, monitor or role names in code; agents never sign; events raised by
 monitors or confirmed by people only.

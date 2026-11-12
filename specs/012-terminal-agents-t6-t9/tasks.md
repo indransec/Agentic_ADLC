@@ -14,8 +14,8 @@ unfinished task.
 
 ## Phase 1: Setup
 
-- [ ] T001 Settings `ADLC_MONITOR_INTERVAL` (default `1m`, scaled by `ADLC_TIME_SCALE`) in `src/adlc/config/settings.py` and `.env.example`; tier step default `standard` 14 (`DEFAULT_AGENT_LIMITS`); tests updated.
-- [ ] T002 [P] Migration `db/migrations/versions/0010_observability_evidence.py`: `tools.tool_result.kind` adds `observability`; grants unchanged; `observability_metrics` becomes an evidence tool (kind `observability`) in `src/adlc/tools/catalogue.py` (`EVIDENCE_KINDS`) with the catalogue contract test updated.
+- [X] T001 Settings `ADLC_MONITOR_INTERVAL` (default `1min`, real time, not scaled) in `src/adlc/config/settings.py` and `.env.example`; tier step default `standard` 14 (`DEFAULT_AGENT_LIMITS`); tests updated.
+- [X] T002 [P] Migration `db/migrations/versions/0010_observability_evidence.py`: `tools.tool_result.kind` adds `observability`; grants unchanged; `observability_metrics` becomes an evidence tool (kind `observability`) in `src/adlc/tools/catalogue.py` (`EVIDENCE_KINDS`) with the catalogue contract test updated.
 
 ---
 

@@ -187,6 +187,7 @@ services:
       ADLC_POLL_INTERVAL: ${ADLC_POLL_INTERVAL:-1s}
       ADLC_LEASE: ${ADLC_LEASE:-5min}
       ADLC_HEARTBEAT_MAX_AGE: ${ADLC_HEARTBEAT_MAX_AGE:-30s}
+      ADLC_MONITOR_INTERVAL: ${ADLC_MONITOR_INTERVAL:-1min}
       ADLC_DEADLETTER_ROLE: ${ADLC_DEADLETTER_ROLE:?ADLC_DEADLETTER_ROLE is required}
       ADLC_SYNTHETIC_DIR: ${ADLC_SYNTHETIC_DIR:-data/synthetic}
       # The enterprise directory for in_directory checks (feature 004), read-only.
