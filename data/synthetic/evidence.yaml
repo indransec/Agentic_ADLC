@@ -22,6 +22,28 @@ dataset:
 ci:
   status: green
   run_id: ci-1
+  package_hash: 
+    sha256:5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a
+  tests:
+    unit:
+      total_count: 120
+      passed_count: 120
+      failed_count: 0
+      coverage_pct: 92
+  scans:
+    sast:
+      critical_count: 0
+      high_count: 0
+      medium_count: 1
+    secret_scan:
+      critical_count: 0
+      high_count: 0
+      medium_count: 0
+  observability:
+    p95_latency:
+      emitting: true
+    error_rate:
+      emitting: true
 sbom:
   generated: true
   licences_approved: true
