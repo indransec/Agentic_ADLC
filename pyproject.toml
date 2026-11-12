@@ -38,6 +38,9 @@ adlc-orchestrator = "adlc.orchestration.__main__:main"
 adlc-ledger = "adlc.ledger.cli:app"
 adlc-knowledge = "adlc.knowledge.__main__:main"
 adlc-replay = "adlc.agents.replay:app"
+adlc-tools = "adlc.tools.enterprise.__main__:main"
+adlc-pilot-bridge = "adlc.tools.bridge.__main__:main"
+adlc-tools-probe = "adlc.tools.probe:app"
 
 [build-system]
 requires = ["hatchling"]

@@ -3,9 +3,11 @@
 from pathlib import Path
 
 from adlc.config.settings import (
+    BridgeSettings,
     KnowledgeSettings,
     OrchestratorSettings,
     Settings,
+    ToolsSettings,
     UiSettings,
     env_name,
 )
@@ -39,6 +41,8 @@ def test_keys_match_settings() -> None:
         | set(OrchestratorSettings.model_fields)
         | set(UiSettings.model_fields)
         | set(KnowledgeSettings.model_fields)
+        | set(ToolsSettings.model_fields)
+        | set(BridgeSettings.model_fields)
     )
     expected = {env_name(name) for name in fields} | COMPOSE_ONLY
     platform = {k for k in _entries() if not k.startswith(PILOT_PREFIX)}

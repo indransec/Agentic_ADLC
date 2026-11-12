@@ -224,6 +224,28 @@ class OrchestratorSettings(RuntimeSettings):
         ),
     )
 
+    # 010 MCP tool servers (T3-T9 tools) and the pilot evidence through the bridge
+    tools_url: str = Field(
+        default="http://tools:8030",
+        pattern=r"^https?://",
+        json_schema_extra=_meta("http(s) URL of the tools MCP server"),
+    )
+    pilot_bridge_url: str = Field(
+        default="http://pilot-bridge:8040",
+        pattern=r"^https?://",
+        json_schema_extra=_meta("http(s) URL of the pilot bridge MCP server"),
+    )
+    tools_token_key: SecretStr | None = Field(
+        default=None,
+        min_length=32,
+        json_schema_extra=_meta(
+            "at least 32 characters; required for tools and pilot evidence", secret=True
+        ),
+    )
+    tools_timeout_s: float = Field(
+        default=120.0, gt=0, le=600, json_schema_extra=_meta("seconds, greater than 0, at most 600")
+    )
+
     # 006 agent runtime
     anthropic_api_key: SecretStr | None = Field(
         default=None, json_schema_extra=_meta("provider API key", secret=True)
@@ -362,6 +384,86 @@ class KnowledgeSettings(BaseSettings):
         if not value.is_dir():
             raise ValueError(f"{value} is not a readable folder")
         return value
+
+
+def _allowed_hosts(default: str) -> Any:
+    return Field(
+        default=default,
+        json_schema_extra=_meta("comma-separated Host header patterns the server answers"),
+    )
+
+
+class ToolsSettings(DatabaseSettings):
+    """Settings for the ``adlc-tools`` MCP server (feature 010, research R-01): the eval store and
+    the enterprise mocks, on the platform network with the app database role."""
+
+    db_app_password: SecretStr = Field(
+        min_length=16, json_schema_extra=_meta("at least 16 characters", secret=True)
+    )
+    tools_token_key: SecretStr = Field(
+        min_length=32, json_schema_extra=_meta("at least 32 characters", secret=True)
+    )
+    tools_port: int = Field(default=8030, gt=0, lt=65536, json_schema_extra=_meta("port"))
+    tools_allowed_hosts: str = _allowed_hosts("tools:*,127.0.0.1:*,localhost:*")
+    spec_dir: Path = Field(
+        default=Path("adlc-specs"), json_schema_extra=_meta("path to the spec folder")
+    )
+    controls_file: Path = Field(
+        default=Path("data/controls/controls.yaml"),
+        json_schema_extra=_meta("path to the control library file"),
+    )
+    log_level: str = Field(default="INFO", json_schema_extra=_meta("a logging level"))
+
+
+class BridgeSettings(BaseSettings):
+    """Settings for the ``adlc-pilot-bridge`` MCP server (feature 010, research R-01): the only
+    service on both networks. It holds no database, model or knowledge settings by design."""
+
+    model_config = SettingsConfigDict(env_prefix=ENV_PREFIX, env_ignore_empty=True, extra="ignore")
+
+    tools_token_key: SecretStr = Field(
+        min_length=32, json_schema_extra=_meta("at least 32 characters", secret=True)
+    )
+    bridge_port: int = Field(default=8040, gt=0, lt=65536, json_schema_extra=_meta("port"))
+    bridge_allowed_hosts: str = _allowed_hosts("pilot-bridge:*,127.0.0.1:*,localhost:*")
+    bridge_data_dir: Path = Field(
+        default=Path("/var/lib/adlc/bridge"),
+        json_schema_extra=_meta("path to the bridge data folder (Git, records)"),
+    )
+    bridge_pilot_dev_url: str = Field(
+        default="http://pilot-dev:8100", pattern=r"^https?://", json_schema_extra=_meta("URL")
+    )
+    bridge_pilot_test_url: str = Field(
+        default="http://pilot-test:8100", pattern=r"^https?://", json_schema_extra=_meta("URL")
+    )
+    bridge_pilot_prodsim_url: str = Field(
+        default="http://pilot-prodsim:8100", pattern=r"^https?://", json_schema_extra=_meta("URL")
+    )
+    bridge_pilot_lab_url: str = Field(
+        default="http://pilot-lab:8300", pattern=r"^https?://", json_schema_extra=_meta("URL")
+    )
+    bridge_pilot_traffic_url: str = Field(
+        default="http://pilot-traffic:8200", pattern=r"^https?://", json_schema_extra=_meta("URL")
+    )
+    bridge_jaeger_url: str = Field(
+        default="http://jaeger:16686", pattern=r"^https?://", json_schema_extra=_meta("URL")
+    )
+    bridge_pilot_service: str = Field(
+        default="pilot-triage-prod-sim",
+        min_length=1,
+        json_schema_extra=_meta("the pilot's service name in traces"),
+    )
+    bridge_monitor_interval_s: float = Field(
+        default=30.0, gt=0, le=600, json_schema_extra=_meta("seconds")
+    )
+    spec_dir: Path = Field(
+        default=Path("adlc-specs"), json_schema_extra=_meta("path to the spec folder")
+    )
+    redteam_suite: Path = Field(
+        default=Path("data/redteam/suite.yaml"),
+        json_schema_extra=_meta("path to the red-team suite file"),
+    )
+    log_level: str = Field(default="INFO", json_schema_extra=_meta("a logging level"))
 
 
 class UiSettings(BaseSettings):

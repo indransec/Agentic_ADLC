@@ -36,17 +36,17 @@ then polish.
 
 ## Phase 1: Setup
 
-- [ ] T001 Settings in `src/adlc/config/settings.py` (and their validation messages):
+- [X] T001 Settings in `src/adlc/config/settings.py` (and their validation messages):
   - shared: `ADLC_TOOLS_TOKEN_KEY` (secret, at least 32 characters);
   - platform side: `ADLC_TOOLS_URL`, `ADLC_PILOT_BRIDGE_URL`, `ADLC_TOOLS_TIMEOUT_S` (default 30);
   - `ToolsSettings` (database settings, `ADLC_TOOLS_PORT` 8030, allowed hosts);
   - `BridgeSettings` (`ADLC_BRIDGE_PORT` 8040, `ADLC_BRIDGE_DATA_DIR`, `ADLC_BRIDGE_PILOT_DEV_URL`, `_TEST_URL`, `_PRODSIM_URL`, `_LAB_URL`, `_TRAFFIC_URL`, `ADLC_BRIDGE_JAEGER_URL`, `ADLC_BRIDGE_MONITOR_INTERVAL_S` 30, allowed hosts) with **no** database or model fields.
 
   Add the keys to `.env.example` (key `REPLACE_ME`) and keep `tests/unit/test_env_example.py` passing.
-- [ ] T002 [P] Package skeleton `src/adlc/tools/{__init__,token,mcp_app,registry}.py`, `bridge/`, `enterprise/`; entry points `adlc-tools`, `adlc-pilot-bridge`, `adlc-tools-probe` in `pyproject.toml`; `src/adlc/tools/README.md` stub.
-- [ ] T003 [P] Migration `db/migrations/versions/0009_mcp_tools.py`: schema `tools`; tables `tool_call`, `tool_result`, `enterprise_record` exactly as data-model.md (unique `system, record_id, version`); SELECT and INSERT only for the app role; downgrade drops the schema. Migration test in `tests/integration/db/` (upgrade, downgrade, an UPDATE and a DELETE refused for the app role).
-- [ ] T004 [P] `deploy/api.Dockerfile`: install the `git` Debian package (no recommends); `git --version` in the image smoke test.
-- [ ] T005 [P] Boundary tests written first:
+- [X] T002 [P] Package skeleton `src/adlc/tools/{__init__,token,mcp_app,registry}.py`, `bridge/`, `enterprise/`; entry points `adlc-tools`, `adlc-pilot-bridge`, `adlc-tools-probe` in `pyproject.toml`; `src/adlc/tools/README.md` stub.
+- [X] T003 [P] Migration `db/migrations/versions/0009_mcp_tools.py`: schema `tools`; tables `tool_call`, `tool_result`, `enterprise_record` exactly as data-model.md (unique `system, record_id, version`); SELECT and INSERT only for the app role; downgrade drops the schema. Migration test in `tests/integration/db/` (upgrade, downgrade, an UPDATE and a DELETE refused for the app role).
+- [X] T004 [P] `deploy/api.Dockerfile`: install the `git` Debian package (no recommends); `git --version` in the image smoke test.
+- [X] T005 [P] Boundary tests written first:
   - `tests/unit/tools/test_boundary.py`: the import rules above;
   - `tests/unit/test_pilot_boundary.py` updated: only `pilot-bridge` and `jaeger` on both networks; `tools` on `platform` only; `pilot-lab` on `pilot` only; no published ports; no Docker socket; the `pilot-bridge` service has no `ADLC_DB_*`, model key or knowledge token variables.
 
