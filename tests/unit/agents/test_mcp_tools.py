@@ -82,8 +82,9 @@ class FakeRecords:
 
     def result(
         self, call_id: int, context: ToolContext, kind: str, package: str | None, result: Any
-    ) -> None:
+    ) -> str:
         self.results.append({"call": call_id, "kind": kind, "package": package, "result": result})
+        return f"RES-{len(self.results)}"
 
 
 def tool(

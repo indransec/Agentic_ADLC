@@ -3,146 +3,33 @@ regression and golden datasets on the candidate in test, copies the harness's ca
 imports the per-case table and records the regression pack; a weaker candidate fails a threshold
 and is reworked to T3 by root cause."""
 
-import json
-from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
 from sqlalchemy import text
 
-from tests.support.acting import acting, tool
-from tests.support.fake_pilot import TEAMS, FakePilot
+from tests.support.acting import acting
+from tests.support.acting_scripts import REQS, Evaluation
+from tests.support.fake_pilot import FakePilot
 from tests.support.orchestration import Harness, person
 from tests.support.pg import PlatformDatabase
 
 AGENT = "t4-evaluation-agent"
 CANDIDATE = "sha256:" + "5a" * 32  # the synthetic T3 candidate package
-REQS = {team: f"FR-0{i}" for i, team in enumerate(TEAMS, start=1)}
-
-
-def outputs(messages: Sequence[Mapping[str, str]], name: str) -> list[dict[str, Any]]:
-    marker = f'<data source="tool:{name}">'
-    found = []
-    for message in messages:
-        content = message["content"]
-        if message["role"] == "user" and marker in content:
-            found.append(
-                json.loads(content[content.index(marker) + len(marker) : content.rindex("</data>")])
-            )
-    return found
-
-
-class Evaluation:
-    """Scripted T4 answers; keeps the harness results so a retry (a new conversation) can answer
-    from them as an agent would from its notes."""
-
-    def __init__(self) -> None:
-        self.runs: list[dict[str, Any]] = []
-
-    def answer(self, messages: Sequence[Mapping[str, str]]) -> str:
-        self.runs = outputs(messages, "harness_run") or self.runs
-        regression = next(r for r in self.runs if r["dataset"]["id"] == "regression")
-        golden = next(r for r in self.runs if r["dataset"]["id"] == "golden")
-        metrics = golden["catalogue"]
-        artifacts = {
-            "golden_dataset_register": [
-                {
-                    "dataset_id": r["dataset"]["id"],
-                    "version": r["dataset"]["version"],
-                    "size_count": r["dataset"]["size"],
-                    "synthetic_pct": 100,
-                    "real_pct": 0,
-                    "approver": None,
-                }
-                for r in self.runs
-            ],
-            "test_case_results": {
-                "import": {
-                    "result": regression["result_id"],
-                    "req_id_by": {"field": "team", "map": REQS, "default": "FR-01"},
-                }
-            },
-            "quality_vs_threshold": [
-                {
-                    "metric": "task_success_rate",
-                    "threshold": 0.9,
-                    "actual": metrics["task_success_rate"],
-                    "result": "pass" if metrics["task_success_rate"] >= 0.9 else "fail",
-                }
-            ],
-            "rai_vs_threshold": [
-                {
-                    "metric": "toxicity_rate",
-                    "slice": "all",
-                    "threshold": 0.01,
-                    "actual": metrics["toxicity_rate"],
-                    "result": "pass",
-                }
-            ],
-            "cost_latency": [
-                {
-                    "measure": "cost_per_task_usd",
-                    "budget": 0.04,
-                    "actual": metrics["cost_per_task_usd"],
-                    "result": "pass",
-                },
-                {
-                    "measure": "p95_latency_ms",
-                    "budget": 2000,
-                    "actual": metrics["p95_latency_ms"],
-                    "result": "pass",
-                },
-            ],
-            "failure_mode_results": [
-                {
-                    "scenario_id": "F-1",
-                    "scenario": "unknown service",
-                    "observed": "first line with review",
-                    "safe_fail": True,
-                }
-            ],
-            "defect_log": [
-                {
-                    "defect_id": "none",
-                    "severity": "none",
-                    "root_cause_terminal": None,
-                    "status": "closed",
-                }
-            ],
-            "judge_calibration": [
-                {"judge": j, **v} for j, v in golden["calibration"].items() if j != "labels"
-            ],
-            "regression_pack": [
-                {
-                    "pack_id": regression["dataset"]["id"],
-                    "version": regression["dataset"]["version"],
-                    "case_count": regression["dataset"]["size"],
-                }
-            ],
-        }
-        for row in artifacts["judge_calibration"]:
-            row.pop("labels", None)
-        return json.dumps({"artifacts": artifacts})
-
-
-def script(evaluation: Evaluation, retries: int = 0) -> list[Any]:
-    first = [
-        tool("pilot_env_create"),
-        tool("dataset_registry_list"),
-        tool("harness_run", {"dataset_id": "regression"}),
-        tool("harness_run", {"dataset_id": "golden"}),
-        evaluation.answer,
-    ]
-    return first + [evaluation.answer] * retries
 
 
 def to_t4(h: Harness) -> tuple[str, Any]:
-    for row in h.agent.base["T1"]["eval_thresholds"][
-        :1
-    ]:  # thresholds named as in the metric catalogue
-        row.update({"metric": "task_success_rate", "operator": ">=", "threshold": 0.9})
-    h.agent.base["T1"]["eval_thresholds"] = h.agent.base["T1"]["eval_thresholds"][:1]
-    h.agent.base["T1"]["rai_thresholds"] = [
+    t1: dict[str, Any] = h.agent.base["T1"]  # type: ignore[assignment]
+    # thresholds named as in the metric catalogue
+    t1["eval_thresholds"] = [
+        {
+            "metric": "task_success_rate",
+            "operator": ">=",
+            "threshold": 0.9,
+            "dataset_scope": "golden",
+        }
+    ]
+    t1["rai_thresholds"] = [
         {"metric": "toxicity_rate", "operator": "<=", "threshold": 0.01, "slice": "all"}
     ]
     usecase = h.submit()
@@ -173,7 +60,7 @@ def test_t4_evaluates_the_candidate_from_harness_evidence(
     orch_template: PlatformDatabase, tmp_path: Path
 ) -> None:
     evaluation = Evaluation()
-    with acting(orch_template, {AGENT: script(evaluation)}, (AGENT,), tmp_path, pilot()) as a:
+    with acting(orch_template, {AGENT: evaluation.script()}, (AGENT,), tmp_path, pilot()) as a:
         usecase, run = to_t4(a.h)
         assert run.state == "awaiting_sign_off", [c for c in run.control_results if not c["passed"]]
         assert a.pilot.hosts["test"].running["package_hash"] == CANDIDATE  # type: ignore[index]
@@ -203,7 +90,7 @@ def test_a_weaker_candidate_fails_a_threshold_and_is_reworked_to_t3(
     fake = pilot()
     fake.hosts["test"].mode = "degraded"
     with acting(
-        orch_template, {AGENT: script(evaluation, retries=3)}, (AGENT,), tmp_path, fake
+        orch_template, {AGENT: evaluation.script(retries=3)}, (AGENT,), tmp_path, fake
     ) as a:
         usecase, run = to_t4(a.h)
         a.h.drain()

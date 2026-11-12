@@ -3,9 +3,6 @@ and the personal-data scan on the candidate; T5's controls read those results; t
 it cannot test ends as an exception only after a person accepts the waiver; the attestation is the
 people's sign-off, never the agent's."""
 
-import copy
-import json
-from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
@@ -13,14 +10,13 @@ from sqlalchemy import text
 
 from adlc.orchestration.interfaces import EvalContext
 from adlc.policy.evidence import SqlEvidenceProvider
-from adlc.policy.synthetic import load_synthetic_artifacts
 from adlc.spec_toolkit.registry import SqlSpecRegistry
-from tests.support.acting import acting, tool
+from tests.support.acting import acting
+from tests.support.acting_scripts import Assurance
 from tests.support.fake_pilot import FakePilot
-from tests.support.orchestration import SYNTHETIC, Harness, person
+from tests.support.orchestration import Harness, person
 from tests.support.pg import PlatformDatabase
 
-SYN = load_synthetic_artifacts(SYNTHETIC)
 AGENT = "t5-assurance-agent"
 CANDIDATE = "sha256:" + "5a" * 32
 WAIVER = {
@@ -28,91 +24,6 @@ WAIVER = {
     "expiry": "2099-12-31",
     "compensating_control": "kill switch checked at release (T7)",
 }
-
-
-def outputs(messages: Sequence[Mapping[str, str]], name: str) -> dict[str, Any]:
-    marker = f'<data source="tool:{name}">'
-    for message in reversed(messages):
-        content = message["content"]
-        if message["role"] == "user" and marker in content:
-            found: dict[str, Any] = json.loads(
-                content[content.index(marker) + len(marker) : content.rindex("</data>")]
-            )
-            return found
-    return {}
-
-
-class Assurance:
-    def __init__(self) -> None:
-        self.redteam: dict[str, Any] = {}
-        self.scan: dict[str, Any] = {}
-
-    def answer(self, messages: Sequence[Mapping[str, str]]) -> str:
-        self.redteam = outputs(messages, "redteam_harness_run") or self.redteam
-        self.scan = outputs(messages, "dlp_scanner_run") or self.scan
-        rows = copy.deepcopy(SYN["T5"])
-        rows.pop("assurance_attestation")  # people sign it
-        rows["threat_model_results"] = [
-            {
-                "threat_id": f"TH-{c}",
-                "threat": c,
-                "test": f"{self.redteam['suite']} {self.redteam['suite_version']}",
-                "result": "mitigated" if v["rate"] == 0 else "open",
-                "residual_risk": "low",
-            }
-            for c, v in self.redteam["by_category"].items()
-        ]
-        rows["security_control_evidence"] = [
-            {
-                "control_id": "SEC-01",
-                "implemented": True,
-                "evidence_link": self.redteam["result_id"],
-            }
-        ]
-        rows["resilience_verification"] = [
-            {
-                "scenario": "safe_fail",
-                "expected_fallback": "first line with review",
-                "observed": "first line with review",
-                "result": "pass",
-            },
-            {
-                "scenario": "kill_switch",
-                "expected_fallback": "stop",
-                "observed": "not run in test",
-                "result": "fail",
-            },
-        ]
-        rows["residual_risk_register"].append(
-            {
-                "risk_id": "R-KS",
-                "risk": "kill switch untested before release",
-                "rating": "medium",
-                "risk_owner": "risk_owner",
-                "decision": "exception",
-                "review_date": "2027-03-31",
-            }
-        )
-        return json.dumps({"artifacts": rows})
-
-
-def script(assurance: Assurance, retries: int) -> list[Any]:
-    first = [
-        tool("pilot_env_create"),
-        tool("redteam_harness_run"),
-        tool("dlp_scanner_run", {"dataset_id": "pii"}),
-        tool("control_library_read", {"topic": "security"}),
-        tool("iam_read"),
-        tool(
-            "grc_write",
-            {
-                "title": "Assurance",
-                "report": "Red team clean; personal-data scan clean; kill switch untested in test.",
-            },
-        ),
-        assurance.answer,
-    ]
-    return first + [assurance.answer] * retries
 
 
 def to_t5(h: Harness) -> tuple[str, Any]:
@@ -136,9 +47,7 @@ def test_t5_assures_from_results_and_the_gap_needs_a_waiver(
         "settings": {},
     }
     assurance = Assurance()
-    with acting(
-        orch_template, {AGENT: script(assurance, retries=3)}, (AGENT,), tmp_path, fake
-    ) as a:
+    with acting(orch_template, {AGENT: assurance.script(retries=3)}, (AGENT,), tmp_path, fake) as a:
         usecase, run = to_t5(a.h)
         a.h.drain()
         run = a.h.run(run.run_id)

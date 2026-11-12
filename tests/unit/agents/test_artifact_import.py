@@ -1,9 +1,12 @@
 """011 T005 (research R-08, contracts/artifact-import.md): a per-case table imported from a
 recorded result; the agent's mapping sets req_id; anything else is an invalid output."""
 
+from collections.abc import Mapping
+from typing import Any
+
 from adlc.agents.imports import CASE_COLUMNS, ImportSource, expand
 
-CASES = [
+CASES: list[Mapping[str, Any]] = [
     {
         "case_id": "INC-7-1",
         "expected": {"team": "a", "category": "network"},
@@ -72,7 +75,7 @@ def test_invalid_imports() -> None:
         ({"import": "RES-9"}, CASE_COLUMNS, "import must be an object"),
     ]
     for value, columns, fragment in cases:
-        rows, provenance, problems = expand("t", columns, value, resolve)
+        rows, provenance, problems = expand("t", columns, value, resolve)  # type: ignore[arg-type]
         assert rows == [] and provenance is None and fragment in problems[0], problems
 
 

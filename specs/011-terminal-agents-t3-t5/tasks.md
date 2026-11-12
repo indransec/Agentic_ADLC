@@ -89,8 +89,11 @@ polish.
 ## Phase 8: Polish
 
 - [X] T024 [P] Documents: `src/adlc/agents/README.md` (acting agents, imports), SA §7.1 and §7.2 notes, build plan row 011, `adlc-specs/CONVERSION.md` (3.0.0 changes), demo script steps 4–6.
-- [ ] T025 Run the new 011 tests 3 times in a row and record the result.
-- [ ] T026 Run `make check` and fix any failure (SC-008).
+- [X] T025 Run the new 011 tests 3 times in a row and record the result.
+  **Result (2026-11-12):** 3 of 3 rounds green, 31 tests each (about 25 s per round).
+- [X] T026 Run `make check` and fix any failure (SC-008).
+  **Result (2026-11-12):** 2,207 platform tests (core coverage 95%) and 65 pilot tests (93%) pass;
+  lint, types and spec validation clean.
 - [ ] T027 Live: `adlc-replay --profile dev --usecase it-service-desk` through T5 on the running stack; record SC-002, SC-003 and SC-007 (cost and tool calls per terminal), and any quality findings.
 
 ---

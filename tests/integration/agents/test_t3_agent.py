@@ -2,61 +2,20 @@
 on its branch, opens a pull request, runs CI until green, provisions dev with CI's hash and returns
 its artifacts; its controls read the recorded CI result, and a copied value that differs fails."""
 
-import copy
-import json
 from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
 from sqlalchemy import text
 
-from adlc.policy.synthetic import load_synthetic_artifacts
 from tests.support.acting import acting, tool
-from tests.support.orchestration import SYNTHETIC, Harness
+from tests.support.acting_scripts import FILL, create_dev, output_of, t3_artifacts, t3_build
+from tests.support.orchestration import Harness
 from tests.support.pg import PlatformDatabase
 
-SYN = load_synthetic_artifacts(SYNTHETIC)
 AGENT = "t3-builder-agent"
-FILL = {
-    "instructions.md": "Assign each incident to its resolver team; never close incidents.",
-    "routing_rules.yaml": "a: 2",
-}
-
-
-def output_of(messages: Sequence[Mapping[str, str]], name: str) -> dict[str, Any]:
-    """The latest output of tool ``name`` in the conversation."""
-    marker = f'<data source="tool:{name}">'
-    for message in reversed(messages):
-        content = message["content"]
-        if message["role"] == "user" and marker in content:
-            body = content[content.index(marker) + len(marker) : content.rindex("</data>")]
-            found: dict[str, Any] = json.loads(body)
-            return found
-    raise AssertionError(f"no {name} output in the conversation")
-
-
-def create_dev(messages: Sequence[Mapping[str, str]]) -> str:
-    return tool("pilot_env_create", {"package_hash": output_of(messages, "ci_run")["package_hash"]})
-
-
-def artifacts(coverage: float | None = None) -> Any:
-    def answer(messages: Sequence[Mapping[str, str]]) -> str:
-        ci = output_of(messages, "ci_run")
-        rows = copy.deepcopy(SYN["T3"])
-        rows["test_results"] = [{"suite": s, **v} for s, v in ci["tests"].items()]
-        if coverage is not None:
-            rows["test_results"][0]["coverage_pct"] = coverage
-        rows["security_build_checks"] = [
-            {"scan": s, "tool": "bandit" if s == "sast" else "pattern-scan", **v, "status": "pass"}
-            for s, v in ci["scans"].items()
-        ]
-        rows["observability_check"] = ci["observability"]
-        rows["candidate_package"] = [
-            {"package_uri": f"pilot-registry://{ci['package_hash']}", "sha256": ci["package_hash"]}
-        ]
-        return json.dumps({"artifacts": rows})
-
-    return answer
+BUILD = t3_build()[:-1]  # every step before the final answer
+artifacts = t3_artifacts
 
 
 def to_t3(h: Harness) -> tuple[str, Any]:
@@ -78,16 +37,6 @@ def decisions(h: Harness, run_id: str) -> dict[str, tuple[bool, bool]]:
     return {str(c): (bool(p), bool(s)) for c, p, s in rows}
 
 
-BUILD = [
-    tool("git_list"),
-    tool("git_write", {"files": FILL, "message": "Adapt the example fill to FR-01..FR-03"}),
-    tool("git_open_pull_request", {"title": "Use-case fill"}),
-    tool("ci_run"),
-    create_dev,
-    tool("pilot_env_status", {"environment": "dev"}),
-]
-
-
 def test_t3_builds_the_candidate_from_real_ci_evidence(
     orch_template: PlatformDatabase, tmp_path: Path
 ) -> None:
@@ -97,10 +46,8 @@ def test_t3_builds_the_candidate_from_real_ci_evidence(
         built = a.pilot.builds[-1]
         assert built["instructions.md"] == FILL["instructions.md"]  # the agent's adapted fill
         candidate = run.artifacts["candidate_package"][0]["sha256"]
-        assert (
-            candidate in a.pilot.packages
-            and a.pilot.hosts["dev"].running["package_hash"] == candidate
-        )  # type: ignore[index]
+        dev = a.pilot.hosts["dev"].running or {}
+        assert candidate in a.pilot.packages and dev["package_hash"] == candidate
         found = decisions(a.h, run.run_id)
         for check in (
             "CTL-T3-01",
@@ -149,7 +96,7 @@ def test_a_red_ci_is_fixed_in_a_second_round(
             },
         )
 
-    script = [
+    script: list[Any] = [
         tool("git_list"),
         tool("git_write", {"files": leaky, "message": "first"}),
         tool("ci_run"),
