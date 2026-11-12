@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T3
     name: Build & Integration
-    version: "3.0.0"
+    version: "4.0.0"
     schema_version: "1.1.0"
     purpose: Can we construct the agent reproducibly?
     owner_role: adlc_coe
@@ -119,6 +119,11 @@ terminal:
       - id: CTL-T3-12
         rule: hash_matches(T3.candidate_package, ci)
         description: candidate package hash == the hash CI built
+        severity: blocking
+      # 011 (live finding): FR-004 - the dev environment runs the package CI built
+      - id: CTL-T3-13
+        rule: hash_matches(env.dev, T3.candidate_package)
+        description: the dev environment runs T3.candidate_package.sha256
         severity: blocking
     checklist:
       ref: checklists/t3.yaml

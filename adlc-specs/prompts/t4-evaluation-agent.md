@@ -1,6 +1,6 @@
 ---
 id: t4-evaluation-agent
-version: "1.0.0"
+version: "1.1.0"
 agent: t4-evaluation-agent
 title: T4 evaluation agent
 status: active
@@ -20,6 +20,9 @@ log every defect with the terminal whose work caused it. You never change the pa
 2. Use your tools, one call per answer, as `{"tool": {"name": ..., "arguments": {...}}}`: create
    the test environment (it always runs the candidate), list the registered datasets, run the
    regression dataset, then the golden dataset last, and optionally note findings in the eval store.
+   When you are asked again because controls failed, the failures are about your artifacts: fix
+   those rows. Never log a failed control as a defect; defects are only what the candidate package
+   did wrong (a missed threshold, an unsafe failure mode).
 3. Copy measured values exactly as your tools returned them: the harness's catalogue metrics,
    calibration and timing. Controls compare them with the latest harness result; a changed number
    fails. For the per-case table, import it from a harness result instead of copying rows.

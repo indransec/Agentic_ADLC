@@ -13,7 +13,7 @@ from adlc.policy.evidence import SqlEvidenceProvider
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 from tests.support.acting import acting
 from tests.support.acting_scripts import Assurance
-from tests.support.fake_pilot import FakePilot
+from tests.support.fake_pilot import FakePilot, with_candidate
 from tests.support.orchestration import Harness, person
 from tests.support.pg import PlatformDatabase
 
@@ -37,15 +37,7 @@ def to_t5(h: Harness) -> tuple[str, Any]:
 def test_t5_assures_from_results_and_the_gap_needs_a_waiver(
     orch_template: PlatformDatabase, tmp_path: Path
 ) -> None:
-    fake = FakePilot()
-    fake.packages[CANDIDATE] = {"package_hash": CANDIDATE, "template_id": "fake", "files": {}}
-    # T4 (a stub here) leaves the candidate running in test, as the real T4 agent does
-    fake.hosts["test"].running = {
-        "environment": "test",
-        "package_hash": CANDIDATE,
-        "replicas": [{"id": "test-1", "healthy": True}],
-        "settings": {},
-    }
+    fake = with_candidate(FakePilot(), "test")  # T3 and T4 (stubs) left it running
     assurance = Assurance()
     with acting(orch_template, {AGENT: assurance.script(retries=3)}, (AGENT,), tmp_path, fake) as a:
         usecase, run = to_t5(a.h)

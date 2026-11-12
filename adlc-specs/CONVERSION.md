@@ -586,3 +586,6 @@ Notes:
   checked after the evaluation, not before the run opens.
 - `assurance_attestation` (format `signed_record`) is never written by an agent; it is built from
   the run's sign-offs.
+- From the live replay (011): T3 4.0.0 adds CTL-T3-13 (`hash_matches(env.dev, T3.candidate_package)`,
+  FR-004: dev runs CI's package); T4 4.0.0 references playbook t4-evaluation 1.2.0 (failure modes from
+  the harness's edge-case results; every requirement traced; failed controls are not defects).

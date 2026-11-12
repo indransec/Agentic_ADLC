@@ -682,7 +682,7 @@ def evidence() -> dict[str, Any]:
     return {
         "directory": ["business_owner-person"],
         "env": {
-            "dev": {"provisioned": True},
+            "dev": {"provisioned": True, "deployed_hash": HASH},
             "test": {"provisioned": True, "deployed_hash": HASH},
             "prod": {"provisioned": True, "deployed_hash": HASH},
         },

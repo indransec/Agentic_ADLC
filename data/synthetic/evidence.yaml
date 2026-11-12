@@ -4,6 +4,8 @@ directory:
 env:
   dev:
     provisioned: true
+    deployed_hash: 
+      sha256:5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a
   test:
     provisioned: true
     deployed_hash: 

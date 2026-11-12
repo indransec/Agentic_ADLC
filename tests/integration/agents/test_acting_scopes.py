@@ -8,7 +8,7 @@ from pathlib import Path
 from sqlalchemy import text
 
 from tests.support.acting import acting, tool
-from tests.support.fake_pilot import FakePilot
+from tests.support.fake_pilot import FakePilot, with_candidate
 from tests.support.orchestration import Harness
 from tests.support.pg import PlatformDatabase
 
@@ -60,7 +60,7 @@ def test_t3_cannot_choose_its_environment(orch_template: PlatformDatabase, tmp_p
 
 
 def test_t4_cannot_use_t3_tools(orch_template: PlatformDatabase, tmp_path: Path) -> None:
-    fake = FakePilot()
+    fake = with_candidate(FakePilot())
     replies = {
         T4: [
             tool("git_write", {"files": {"instructions.md": "x"}, "message": "m"}),
@@ -72,7 +72,9 @@ def test_t4_cannot_use_t3_tools(orch_template: PlatformDatabase, tmp_path: Path)
     with acting(orch_template, replies, (T4,), tmp_path, fake) as a:
         run_id = to(a.h, "T4")
         recorded = calls(a.h, run_id)
-        assert fake.builds == [] and not any(host.calls for host in fake.hosts.values())
+        assert fake.builds == [] and not any(
+            host.calls for host in fake.hosts.values()
+        )  # nothing new
         assert (
             a.h.run(run_id).state == "awaiting_clarification"
         )  # the agent asked; it decided nothing

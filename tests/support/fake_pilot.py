@@ -433,3 +433,24 @@ def urls(base: str) -> PilotUrls:
     return PilotUrls(
         f"{base}/dev", f"{base}/test", f"{base}/prodsim", f"{base}/lab", f"{base}/traffic"
     )
+
+
+SYNTHETIC_CANDIDATE = "sha256:" + "5a" * 32  # the synthetic T3 candidate package
+
+
+def with_candidate(pilot: FakePilot, *environments: str) -> FakePilot:
+    """011: a fake pilot where a stub T3 has left the synthetic candidate built and running (in
+    dev, and in test when named), as the real T3 agent does."""
+    pilot.packages[SYNTHETIC_CANDIDATE] = {
+        "package_hash": SYNTHETIC_CANDIDATE,
+        "template_id": "fake",
+        "files": {},
+    }
+    for environment in ("dev", *environments):
+        pilot.hosts[environment].running = {
+            "environment": environment,
+            "package_hash": SYNTHETIC_CANDIDATE,
+            "replicas": [{"id": f"{environment}-1", "healthy": True}],
+            "settings": {},
+        }
+    return pilot

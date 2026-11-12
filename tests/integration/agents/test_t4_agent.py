@@ -10,7 +10,7 @@ from sqlalchemy import text
 
 from tests.support.acting import acting
 from tests.support.acting_scripts import REQS, Evaluation
-from tests.support.fake_pilot import FakePilot
+from tests.support.fake_pilot import FakePilot, with_candidate
 from tests.support.orchestration import Harness, person
 from tests.support.pg import PlatformDatabase
 
@@ -51,9 +51,7 @@ def decisions(h: Harness, run_id: str) -> dict[str, tuple[bool, bool]]:
 
 
 def pilot() -> FakePilot:
-    fake = FakePilot()
-    fake.packages[CANDIDATE] = {"package_hash": CANDIDATE, "template_id": "fake", "files": {}}
-    return fake
+    return with_candidate(FakePilot())
 
 
 def test_t4_evaluates_the_candidate_from_harness_evidence(

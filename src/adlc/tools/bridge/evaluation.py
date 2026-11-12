@@ -161,6 +161,15 @@ def score(
                 "result": "pass" if not wrong else "fail",
             }
         )
+    edges: dict[str, list[int]] = {}
+    for item in answered:  # 011: observed behaviour per edge case (failure-mode evidence)
+        edge = str(item.row.get("edge_case") or "none")
+        right = all(
+            (item.answer or {}).get(f) == (item.row.get("expected") or {}).get(f) for f in fields
+        )
+        edges.setdefault(edge, [0, 0])
+        edges[edge][0] += right
+        edges[edge][1] += 1
     slices: dict[str, Any] = {}
     for spec in meta.get("slices") or []:
         name, field, value = str(spec["name"]), str(spec["field"]), spec["value"]
@@ -173,6 +182,7 @@ def score(
         "accuracy": round(all_right / total, 4) if total else None,
         "field_accuracy": {f: round(n / total, 4) for f, n in by_field.items()} if total else {},
         f"accuracy_by_{fields[0]}": {k: round(v[0] / v[1], 4) for k, v in sorted(by_value.items())},
+        "by_edge_case": {k: {"cases": v[1], "correct": v[0]} for k, v in sorted(edges.items())},
         **slices,
     }
     return metrics, rows
