@@ -50,7 +50,7 @@ polish.
 - [ ] T009 [P] [US1] Pilot tests `pilot/tests/integration/test_lab.py`: the layout carries the example fill; the CI report has tests (counts, coverage), sast and secret_scan counts, sbom (components, licences approved) and observability, per contracts/ci-report.md; a planted secret in a fill fails `secret_scan`; `green` only when every check passed.
 - [ ] T010 [US1] `pilot/src/pilot_tools/ci_checks.py` and `lab.py`: the CI checks of research R-04; `GET /layout` returns `example` files.
 - [ ] T011 [US1] Bridge: the repository's `main` starts with the example fill (`src/adlc/tools/bridge/git_repo.py`); `ci_run` passes the full report through; fake pilot updated; tests.
-- [ ] T012 [US1] Spec content: prompt `t3-builder-agent.md` 1.0.0; playbooks `t3-build.md`, `golden-template.md`, `prompt-versioning.md` real content; agents catalogue T3 entry (model, tools: `git_list`, `git_read`, `git_write`, `git_open_pull_request`, `ci_run`, `artifact_store_read`, `artifact_store_write`, `prompt_registry_write`, `pilot_env_create`, `pilot_env_status`, `pilot_env_infra`); T3 spec 3.0.0 with the R-07 controls; registration tests.
+- [ ] T012 [US1] Spec content: prompt `t3-builder-agent.md` 1.0.0; playbooks `t3-build.md`, `golden-template.md`, `prompt-versioning.md` real content; agents catalogue T3 entry (model, tools: `git_list`, `git_read`, `git_write`, `git_open_pull_request`, `ci_run`, `artifact_store_read`, `artifact_store_write`, `prompt_registry_write`, `pilot_env_create`, `pilot_env_status`, `pilot_env_infra`); T3 spec 3.0.0 with the R-07 controls (including `observability_check` against `ci.observability`); registration tests.
 - [ ] T013 [US1] Integration `tests/integration/agents/test_t3_agent.py`: scripted T3 run through the runtime and bridge: branch, PR, CI, dev environment, artifacts valid, candidate hash = CI hash, `ci`/`sbom` decisions not synthetic; a red CI corrected in a second attempt; a copied coverage that differs from CI fails `rows_match`.
 
 ---
@@ -59,21 +59,21 @@ polish.
 
 - [ ] T014 [P] [US2] Tests `tests/unit/tools/test_evaluation.py` (extend): catalogue metrics, calibration on the labelled slice, case rows for import.
 - [ ] T015 [US2] `src/adlc/tools/bridge/evaluation.py`: catalogue metrics, calibration, case rows (research R-06); `pilot/datasets.yaml` `labelled_slice`; lab returns it; fake pilot updated.
-- [ ] T016 [US2] Spec content: prompt `t4-evaluation-agent.md`; playbooks `t4-evaluation.md`, `golden-dataset.md`, `judge-calibration.md`; agents catalogue T4 entry (`pilot_env_create`, `pilot_env_status`, `dataset_registry_list`, `harness_run`, `artifact_store_read`, `eval_store_write`); T4 spec 3.0.0 with the R-07 controls.
-- [ ] T017 [US2] Integration `tests/integration/agents/test_t4_agent.py`: a candidate meeting the thresholds passes the controls with `harness` decisions not synthetic and `test_case_results` imported; a weaker candidate fails a threshold control, logs a defect with root cause T3's terminal, and the reviewer's rework routes to T3; regression pack recorded.
+- [ ] T016 [US2] Spec content: prompt `t4-evaluation-agent.md`; playbooks `t4-evaluation.md`, `golden-dataset.md`, `judge-calibration.md`; agents catalogue T4 entry (`pilot_env_create`, `pilot_env_status`, `dataset_registry_list`, `harness_run`, `artifact_store_read`, `eval_store_write`); T4 spec 3.0.0 with the R-07 controls, including `rows_match(T4.cost_latency, "measure", harness.metrics)`.
+- [ ] T017 [US2] Integration `tests/integration/agents/test_t4_agent.py`: a candidate meeting the thresholds passes the controls with `harness` decisions not synthetic and `test_case_results` imported; a weaker candidate fails a threshold control, logs a defect whose root cause is `implementation`, and the reviewer's rework routes (by the T4 outcome model) to T3; regression pack recorded.
 
 ---
 
 ## Phase 5: User Story 3 – T5 assures and accepts gaps only by waiver (P1)
 
 - [ ] T018 [US3] Spec content: prompt `t5-assurance-agent.md`; playbooks `t5-assurance.md`, `llm-red-team.md`, `privacy-impact-assessment.md`, `regulatory-mapping.md`; agents catalogue T5 entry (`pilot_env_create`, `pilot_env_status`, `redteam_harness_run`, `dlp_scanner_run`, `control_library_read`, `iam_read`, `grc_write`); T5 spec 3.0.0 with the R-07 control.
-- [ ] T019 [US3] Integration `tests/integration/agents/test_t5_agent.py`: `redteam` and `dlp` decisions read the run's results (not synthetic); the attestation row is not agent-written; a gap (a failing control the agent cannot close) → the reviewer recommends exception with waiver fields → the run closes as exception only after the waiver approver accepts.
+- [ ] T019 [US3] Integration `tests/integration/agents/test_t5_agent.py`: `redteam` and `dlp` decisions read the run's results (not synthetic); the attestation row is not agent-written; the kill-switch scenario reported as not run in test → its control fails → the reviewer recommends exception with waiver fields (compensating control: the kill-switch check at release) → the run closes as exception only after the waiver approver accepts.
 
 ---
 
 ## Phase 6: User Story 4 – Agents act only through their terminal's tools (P1)
 
-- [ ] T020 [US4] Integration `tests/integration/agents/test_acting_scopes.py`: scripted replies asking T3 for `cd_deploy` and for the test environment, T4 for `git_write`, T5 for `traffic_manager_set`: refused, recorded, nothing reached the fake pilot; tool output with injected instructions does not change statuses or permissions.
+- [ ] T020 [US4] Integration `tests/integration/agents/test_acting_scopes.py`: scripted replies asking T3 for `cd_deploy` and for the test environment, T4 for `git_write`, T5 for `traffic_manager_set`: refused, each with a `tools.tool_call` row and reason, nothing reached the fake pilot; tool output with injected instructions does not change statuses or permissions.
 - [ ] T021 [US4] The knowledge-token start-up check and the runtime with the 4.0.0 agents catalogue: T3–T5 tools need the tools token key, not the knowledge token; a missing key is a configuration error naming the setting.
 
 ---
