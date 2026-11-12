@@ -23,6 +23,7 @@ uv run adlc-tools-probe --list  # every registered server answers on its host
 
 ```bash
 P() { uv run adlc-tools-probe --usecase UC-DEMO --terminal "$@"; }
+pt() { docker compose -f deploy/compose.yaml --env-file .env run --rm pilot-tools "$@"; }   # pilot commands
 P T3 git_write --files fills/default --message "fill"          # writes the default fill
 P T3 ci_run                                                   # checks pass, prints sha256:<hex> (= pilot-build)
 P T3 pilot_env_create --package sha256:<hex>                  # dev running that hash

@@ -212,8 +212,8 @@ with their ids, and check the records are in the platform and visible to a perso
 - Arguments an agent should not choose (run, use case, scope, authorised hash, data ceiling) are
   ignored if the model sends them; the platform sets them from the run and the pinned spec.
 - A run token is expired, for another run, or for another scope: refused.
-- Two runs of the same use case write the same branch: the second write is refused or rebased,
-  never silently lost.
+- A write based on an outdated branch head (another write landed since the agent read it) is
+  refused with "branch moved; read again", never silently lost. Each run writes its own branch.
 - Tool output contains instructions ("ignore your rules"): it is passed to the agent as labelled
   data, never acted on by the server or platform.
 - Telemetry would include incident text or personal data: it is masked before it leaves the
@@ -253,7 +253,8 @@ with their ids, and check the records are in the platform and visible to a perso
 - **FR-008**: The pilot environment server MUST expose create, status and tear down for dev
   (scope `dev`) and test (scope `test`) by package hash and declared settings, by calling the
   pilot hosts' operations, and the infrastructure definitions as readable resources (scope
-  `read`).
+  `read`). The test environment MUST run only the use case's candidate package (T3's
+  `candidate_package`); dev runs the package hash T3 names.
 - **FR-009**: The evidence sources `env.dev`, `env.test` and `template.version` MUST be read from
   the pilot through this server when it is available, so T3's prerequisites use real evidence;
   synthetic evidence remains the fallback and is labelled synthetic.

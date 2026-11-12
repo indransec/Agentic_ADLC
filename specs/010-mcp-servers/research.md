@@ -47,7 +47,7 @@ Values that bind the call are claims in the token's `bound` object, set by the p
 | Bound value | Source | Used by |
 | --- | --- | --- |
 | `branch` | `uc/<usecase_id>/<run_id>` | `git` writes, `ci_run` |
-| `authorised_hash` | T6 `deployment_package.sha256` (ledger, emitted on pass) | `cd_deploy` |
+| `authorised_hash` | The one T6 `deployment_package` row (emitted on pass) whose `sha256` equals T3's `candidate_package.sha256`; none or more than one matching row means no authorised hash, and deploy is refused | `cd_deploy` |
 | `candidate_hash` | T3 `candidate_package.sha256` | `pilot_env_create` in test (T4, T5), `harness_run`, `redteam_harness_run`, `dlp_scanner_run` |
 | `environment` | The scope: `dev` or `test` | `pilot_env_*` |
 
