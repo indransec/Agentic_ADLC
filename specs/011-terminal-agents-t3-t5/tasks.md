@@ -88,7 +88,7 @@ polish.
 
 ## Phase 8: Polish
 
-- [ ] T024 [P] Documents: `src/adlc/agents/README.md` (acting agents, imports), SA §7.1 and §7.2 notes, build plan row 011, `adlc-specs/CONVERSION.md` (3.0.0 changes), demo script steps 4–6.
+- [X] T024 [P] Documents: `src/adlc/agents/README.md` (acting agents, imports), SA §7.1 and §7.2 notes, build plan row 011, `adlc-specs/CONVERSION.md` (3.0.0 changes), demo script steps 4–6.
 - [ ] T025 Run the new 011 tests 3 times in a row and record the result.
 - [ ] T026 Run `make check` and fix any failure (SC-008).
 - [ ] T027 Live: `adlc-replay --profile dev --usecase it-service-desk` through T5 on the running stack; record SC-002, SC-003 and SC-007 (cost and tool calls per terminal), and any quality findings.
