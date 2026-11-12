@@ -1,0 +1,14 @@
+# Licence allowlist for the SBOM check of the pilot's CI (feature 011, research R-04). A runtime
+# distribution is approved when its licence (expression, classifier or text) contains one of these
+# names, case-insensitive. The pilot's own project is listed under `own` and needs no licence.
+version: "1.0.0"
+approved:
+  - MIT
+  - Apache
+  - BSD
+  - PSF
+  - Python Software Foundation
+  - Mozilla Public License 2.0
+  - MPL-2.0
+  - ISC
+own: [adlc-pilot]

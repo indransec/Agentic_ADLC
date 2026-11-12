@@ -246,7 +246,7 @@ def test_agent_runtime_defaults(orchestrator_env: None) -> None:
     assert (s.model_profile, s.reviewer_mode, s.agent_corrections) == ("default", "stub", 2)
     assert s.anthropic_api_key is None and s.openai_api_key is None and s.gemini_api_key is None
     assert s.agent_limits["reasoning"].model_dump() == {
-        "steps": 8,
+        "steps": 14,
         "tokens": 400_000,
         "timeout_s": 240.0,
     }
@@ -271,7 +271,7 @@ def test_agent_runtime_from_environment(
     monkeypatch.setenv("ADLC_COST_ALERT_LEVELS", "1.5, 10")
     s = OrchestratorSettings()  # type: ignore[call-arg]
     assert s.agent_limits["standard"].steps == 3
-    assert s.agent_limits["reasoning"].steps == 8  # untouched tiers keep their defaults
+    assert s.agent_limits["reasoning"].steps == 14  # untouched tiers keep their defaults
     assert (
         s.agent_limit_overrides["T3"].timeout_s == 200
         and s.agent_limit_overrides["T3"].steps is None
