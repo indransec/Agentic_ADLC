@@ -18,6 +18,11 @@ from adlc.tools.bridge.pilot import PilotUrls
 
 TEAMS = ("service-desk", "identity-access", "network-ops", "security-ops")
 LAYOUT = ("instructions.md", "routing_rules.yaml", "settings.yaml")
+EXAMPLE = {
+    "instructions.md": "Route incidents.",
+    "routing_rules.yaml": "a: 1",
+    "settings.yaml": "model_mode: simulated",
+}
 EMAIL = re.compile(r"[\w.+-]+@example\.com")
 SLICES = [{"name": "p1", "field": "priority", "value": "P1"}]
 
@@ -300,6 +305,7 @@ class FakePilot:
         def get_layout() -> dict[str, Any]:
             return {
                 "files": list(LAYOUT),
+                "example": dict(EXAMPLE),
                 "template_id": "incident-triage",
                 "template_version": "1.0.0",
             }
@@ -317,9 +323,45 @@ class FakePilot:
             digest = self.add_package(files)
             checks = [
                 {"name": n, "passed": True, "detail": ""}
-                for n in ("validate", "build", "reproducible", "smoke")
+                for n in (
+                    "validate",
+                    "build",
+                    "reproducible",
+                    "smoke",
+                    "tests",
+                    "sast",
+                    "secret_scan",
+                    "sbom",
+                    "observability",
+                )
             ]
-            return {"checks": checks, "package_hash": digest}
+            secret = "api_key" in files.get("instructions.md", "")
+            if secret:
+                checks[6]["passed"] = False
+            report = {
+                "tests": {
+                    "package": {
+                        "total_count": 25,
+                        "passed_count": 25,
+                        "failed_count": 0,
+                        "coverage_pct": 86.2,
+                    }
+                },
+                "scans": {
+                    "sast": {"critical_count": 0, "high_count": 0, "medium_count": 0},
+                    "secret_scan": {
+                        "critical_count": 0,
+                        "high_count": int(secret),
+                        "medium_count": 0,
+                    },
+                },
+                "sbom": {"generated": True, "licences_approved": True, "components": []},
+                "observability": [
+                    {"signal": "traces", "emitting": True, "sample_trace_id": "INC-1-1"},
+                    {"signal": "rai_metrics", "emitting": True, "sample_trace_id": "INC-1-1"},
+                ],
+            }
+            return {"checks": checks, **report, **({} if secret else {"package_hash": digest})}
 
         @r.get("/packages/{digest}")
         def manifest(digest: str) -> dict[str, Any]:

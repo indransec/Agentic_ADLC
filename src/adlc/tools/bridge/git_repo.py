@@ -31,10 +31,17 @@ GIT = shutil.which("git") or "/usr/bin/git"
 
 
 class GitRepos:
-    def __init__(self, root: Path, layout: Callable[[], list[str]], records: Records) -> None:
+    def __init__(
+        self,
+        root: Path,
+        layout: Callable[[], list[str]],
+        records: Records,
+        example: Callable[[], dict[str, str]] | None = None,
+    ) -> None:
         self.root = root
         self.layout = layout
         self.records = records
+        self.example = example or dict
         self.lock = threading.Lock()
 
     # -------------------------------------------------------------- git plumbing
@@ -76,9 +83,11 @@ class GitRepos:
                     env={**os.environ, "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull},
                     timeout=30,
                 )
-                files = {name: "" for name in self.layout()}
+                # 011: main starts with the template's example fill (empty files if none)
+                example = self.example()
+                files = {name: example.get(name, "") for name in self.layout()}
                 tree = self._tree(repo, None, files)
-                commit = self._commit(repo, tree, None, "Fill layout of the golden template")
+                commit = self._commit(repo, tree, None, "Example fill of the golden template")
                 self._git(repo, "update-ref", f"refs/heads/{MAIN}", commit, "")
         return repo
 

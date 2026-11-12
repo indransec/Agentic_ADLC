@@ -4,6 +4,7 @@ request and runs CI; the package hash is the pilot's own; the manifest and texts
 import json
 
 from adlc.agents.tools import ToolOutput
+from tests.support.fake_pilot import EXAMPLE
 
 from .conftest import Tools
 
@@ -36,7 +37,7 @@ def test_fill_to_package(tools: Tools) -> None:
     assert ci["commit"] == wrote["commit"] and all(c["passed"] for c in ci["checks"])  # type: ignore[attr-defined]
     package = str(ci["package_hash"])
     # the pilot built exactly the files on the branch, the same hash as its own build
-    assert tools.pilot.builds[-1] == {**files, "settings.yaml": ""}
+    assert tools.pilot.builds[-1] == {**EXAMPLE, **files}  # main started with the example fill
     assert package in tools.pilot.packages
     assert output(t3("artifact_store_read", {"package_hash": package}))["package_hash"] == package
     note = output(t3("artifact_store_write", {"name": "notes", "text": "Built from PR-1"}))
@@ -49,7 +50,9 @@ def test_fill_to_package(tools: Tools) -> None:
 
 def test_ci_failure_names_the_part_and_gives_no_hash(tools: Tools) -> None:
     t3 = tools.gate("T3", "git_write", "ci_run")
-    output(t3("git_write", {"files": {"instructions.md": "only this"}, "message": "m"}))
+    output(
+        t3("git_write", {"files": {"routing_rules.yaml": ""}, "message": "m"})
+    )  # empty a fill part
     ci = output(t3("ci_run"))
     assert "package_hash" not in ci
     assert ci["checks"] == [

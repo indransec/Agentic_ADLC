@@ -39,14 +39,20 @@ def all_handlers(
     pilot: Pilot, settings: BridgeSettings, records: Records, monitors: Monitors | None = None
 ) -> dict[str, Handler]:
     data = Path(settings.bridge_data_dir)
-    layout_cache: list[str] = []
+    cache: dict[str, Any] = {}
+
+    def described() -> dict[str, Any]:
+        if not cache:
+            cache.update(pilot.request("GET", pilot.urls.lab, "/layout"))
+        return cache
 
     def layout() -> list[str]:
-        if not layout_cache:
-            layout_cache.extend(pilot.request("GET", pilot.urls.lab, "/layout")["files"])
-        return list(layout_cache)
+        return list(described()["files"])
 
-    repos = GitRepos(data / "git", layout, records)
+    def example() -> dict[str, str]:
+        return dict(described().get("example") or {})
+
+    repos = GitRepos(data / "git", layout, records, example)
     return {
         **environments.handlers(pilot),
         **git_repo.handlers(repos),
