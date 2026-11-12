@@ -15,7 +15,7 @@ from adlc.agents.catalogue import AgentDefinition, ToolBinding
 from adlc.agents.mcp_tools import BoundValues, McpTool
 from adlc.agents.tool_records import SqlToolRecords
 from adlc.agents.tools import ToolGate, ToolOutput, ToolRefused
-from adlc.config.settings import BridgeSettings
+from adlc.config.settings import BridgeSettings, ToolsSettings
 from adlc.orchestration.interfaces import EvalContext
 from adlc.policy import authorization
 from adlc.policy.evidence import Answer, Evidence
@@ -23,6 +23,7 @@ from adlc.policy.values import NOT_AVAILABLE
 from adlc.tools.bridge.app import build_bridge
 from adlc.tools.catalogue import CATALOGUE
 from adlc.tools.client import McpClient
+from adlc.tools.enterprise.app import build_tools
 from adlc.tools.registry import Registry
 from tests.support.fake_pilot import FakePilot, urls
 from tests.support.pg import REPO_ROOT
@@ -68,6 +69,7 @@ class Tools:
     engine: Engine
     evidence: FakeEvidence
     bridge_dir: Path
+    tools_url: str = ""
 
     def gate(self, terminal: str, *tools: str) -> Callable[..., ToolOutput | ToolRefused]:
         spec = pinned(terminal)
@@ -87,7 +89,7 @@ class Tools:
             f"{terminal.lower()}-agent", "1.0.0", "model", "coding", None, tuple(bindings)
         )
         registry = Registry.load(SPECS)
-        client = McpClient({"bridge": self.bridge_url, "tools": self.bridge_url}, 30)
+        client = McpClient({"bridge": self.bridge_url, "tools": self.tools_url}, 30)
         bound = BoundValues(self.evidence, registry.bound_values)
         records = SqlToolRecords(self.engine, _Clock())
         gate = ToolGate(
@@ -171,7 +173,25 @@ def tools(app_engine: Engine, tmp_path: Path) -> Iterator[Tools]:
     pilot = FakePilot()
     with serve(pilot.app()) as pilot_url:
         settings = bridge_settings(pilot_url, tmp_path / "bridge")
-        with serve(build_bridge(settings)) as bridge_url:
+        enterprise = ToolsSettings(
+            env="dev",
+            db_host="unused",
+            db_app_password=SecretStr("unused-password-0001"),
+            tools_token_key=SecretStr(KEY),
+            tools_allowed_hosts=",".join(ALLOWED),
+            spec_dir=SPECS,
+            controls_file=REPO_ROOT / "data" / "controls" / "controls.yaml",
+        )
+        with (
+            serve(build_bridge(settings)) as bridge_url,
+            serve(build_tools(enterprise, app_engine)) as tools_url,
+        ):
             yield Tools(
-                pilot, pilot_url, bridge_url, app_engine, FakeEvidence(), tmp_path / "bridge"
+                pilot,
+                pilot_url,
+                bridge_url,
+                app_engine,
+                FakeEvidence(),
+                tmp_path / "bridge",
+                tools_url,
             )

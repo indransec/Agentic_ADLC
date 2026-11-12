@@ -231,6 +231,35 @@ services:
       start_period: 15s
     restart: unless-stopped
 
+  # Tools MCP server (feature 010): the eval store and the enterprise mocks (ITSM, CMDB, agent
+  # registry, IAM, GRC, control library). Platform network only; app database role; no ports.
+  tools:
+    networks: [platform]
+    image: adlc-api:0.1.0
+    command: ["adlc-tools"]
+    environment:
+      <<: *db-settings
+      ADLC_DB_APP_PASSWORD: ${ADLC_DB_APP_PASSWORD:?ADLC_DB_APP_PASSWORD is required}
+      ADLC_TOOLS_TOKEN_KEY: ${ADLC_TOOLS_TOKEN_KEY:?ADLC_TOOLS_TOKEN_KEY is required}
+      ADLC_TOOLS_PORT: "8030"
+      ADLC_SPEC_DIR: adlc-specs
+      ADLC_CONTROLS_FILE: data/controls/controls.yaml
+      ADLC_LOG_LEVEL: ${ADLC_LOG_LEVEL:-INFO}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8030/health', timeout=2).status == 200 else 1)"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
   # Pilot bridge (feature 010): the pilot-facing MCP servers. The only service on both networks;
   # it holds no database, model, knowledge or session settings (research R-01). No ports.
   pilot-bridge:

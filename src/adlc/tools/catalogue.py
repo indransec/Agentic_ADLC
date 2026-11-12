@@ -12,8 +12,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-# A tool whose scope is the bound environment (``pilot_env`` create and delete: dev for T3, test
-# for T4 and T5), decided by the terminal's binding, never by the model.
+# A tool whose scope is the bound environment (``pilot_env`` create and delete: the one
+# environment scope the terminal's spec grants), never chosen by the model.
 ENVIRONMENT_SCOPE = "{environment}"
 
 
@@ -243,7 +243,7 @@ TOOLS: tuple[ToolSpec, ...] = (
         "cd",
         "deploy",
         "deploy",
-        "Deploy the package authorised at T6 to prod-sim as the candidate.",
+        "Deploy the package authorised for release to prod-sim as the candidate.",
         bound=("authorised_hash",),
         evidence="deploy",
         limit_s=120,

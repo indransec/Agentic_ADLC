@@ -1,8 +1,9 @@
 """``pilot_env``: the pilot's dev and test environments and the template's infrastructure
 definitions (feature 010 US1, FR-008; research R-03).
 
-The environment is the one bound to the call (dev for T3, test for T4 and T5), never chosen by the
-model. In test the package is the use case's candidate, also bound; in dev T3 names the hash it
+The environment is the one bound to the call (the environment scope the terminal's spec grants),
+never chosen by the model. In test the package is the use case's candidate, also bound; in dev the
+building terminal names the hash it
 built.
 """
 

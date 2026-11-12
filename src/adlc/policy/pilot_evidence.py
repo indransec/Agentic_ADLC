@@ -1,8 +1,8 @@
 """Evidence from the pilot through the bridge (feature 010, research R-12, FR-009).
 
 ``env.dev``, ``env.test`` and ``env.prod`` and ``template.version`` come from the pilot's own
-operations when the bridge answers, so T3's prerequisites (dev provisioned, template pinned) and
-T7's controls (deployed hash) read real evidence. The platform reads with a service token
+operations when the bridge answers, so prerequisites (dev provisioned, template pinned) and
+controls (deployed hash) read real evidence. The platform reads with a service token
 (``run_id: platform``, read scopes only). When the bridge is not configured or does not answer,
 this provider answers "not available" and the composite provider falls back to synthetic
 evidence, labelled synthetic.

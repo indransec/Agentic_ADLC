@@ -160,9 +160,9 @@ then polish.
 
 **Independent Test**: create a change and an incident, register an agent, revoke scopes, file a report; read them back.
 
-- [ ] T035 [P] [US6] Integration tests `tests/integration/tools/test_enterprise.py` (testcontainers Postgres, the `tools` app through the MCP client): ids `CHG-<n>`, `INC-<n>`, …; use case, run and terminal from the token; versions on update (`cmdb_write`, `agent_registry_write`); `iam_revoke` then `iam_read` shows it; `eval_store_read` returns the use case's harness, red-team and scan results only; `eval_store_write` notes labelled agent-authored; `control_library_read` by id and topic; a token for another use case sees nothing of this one.
-- [ ] T036 [US6] `src/adlc/tools/enterprise/records.py`, `servers.py`, `data/controls/controls.yaml` (security, privacy and RAI controls named in the T5 checklist) and `src/adlc/tools/enterprise/__main__.py` (`adlc-tools`).
-- [ ] T037 [US6] Compose service `tools` (platform image, platform network, database settings, health check, no ports); remove the remaining boundary `xfail`s.
+- [X] T035 [P] [US6] Integration tests `tests/integration/tools/test_enterprise.py` (testcontainers Postgres, the `tools` app through the MCP client): ids `CHG-<n>`, `INC-<n>`, …; use case, run and terminal from the token; versions on update (`cmdb_write`, `agent_registry_write`); `iam_revoke` then `iam_read` shows it; `eval_store_read` returns the use case's harness, red-team and scan results only; `eval_store_write` notes labelled agent-authored; `control_library_read` by id and topic; a token for another use case sees nothing of this one.
+- [X] T036 [US6] `src/adlc/tools/enterprise/records.py`, `servers.py`, `data/controls/controls.yaml` (security, privacy and RAI controls named in the T5 checklist) and `src/adlc/tools/enterprise/__main__.py` (`adlc-tools`).
+- [X] T037 [US6] Compose service `tools` (platform image, platform network, database settings, health check, no ports); remove the remaining boundary `xfail`s.
 
 **Checkpoint**: US6 passes alone.
 

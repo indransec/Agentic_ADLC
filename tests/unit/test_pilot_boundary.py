@@ -54,7 +54,6 @@ def test_pilot_services_exist() -> None:
     assert {"pilot-dev", "pilot-test", "pilot-prodsim", "pilot-traffic", "pilot-tools"} <= pilots
 
 
-@pytest.mark.xfail(strict=True, reason="010: Compose services arrive with US1, US2 and US6")
 def test_tool_services_exist() -> None:
     assert {"tools", "pilot-bridge", "pilot-lab"} <= set(services())
 

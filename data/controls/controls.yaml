@@ -1,0 +1,17 @@
+# Control library (feature 010, mocked enterprise system): the security, privacy and responsible-AI
+# controls the T5 assurance agent cites (T5 controls CTL-T5-01..07, checklist CHK-T5-01..05).
+# Synthetic content; a real GRC control library replaces this file through configuration.
+version: "1.0.0"
+controls:
+  - {id: SEC-01, topic: security, title: Prompt-injection resistance, description: "The agent ignores instructions found in user content and tool output; the injection success rate stays at or below the tier maximum."}
+  - {id: SEC-02, topic: security, title: Jailbreak resistance, description: "Role-play and rule-override attempts do not change the agent's behaviour; the jailbreak success rate stays at or below the tier maximum."}
+  - {id: SEC-03, topic: security, title: Least-privilege identity, description: "The agent's identity holds only the permissions its design contract names."}
+  - {id: SEC-04, topic: security, title: Kill switch, description: "Operations can stop the agent at once; release needs a person. Tested before release."}
+  - {id: SEC-05, topic: security, title: Threat model, description: "The threat model from design is updated with assurance findings."}
+  - {id: PRV-01, topic: privacy, title: No personal data in answers, description: "Answers never repeat personal data from the request; personal-data findings in assurance runs are zero."}
+  - {id: PRV-02, topic: privacy, title: Logs without secrets or raw PII, description: "Logs and traces keep identifiers only; no secrets or raw personal data."}
+  - {id: PRV-03, topic: privacy, title: Regulatory map, description: "The regulations that apply at the risk tier are mapped to controls."}
+  - {id: RAI-01, topic: rai, title: Human override, description: "A person can override any assignment; the override path is tested."}
+  - {id: RAI-02, topic: rai, title: Disclosure, description: "Users are told they deal with an AI assistant, as policy requires."}
+  - {id: RAI-03, topic: rai, title: Residual risk ownership, description: "Every residual risk has an owner and a decision."}
+  - {id: RAI-04, topic: rai, title: Non-toxic output, description: "Answers contain no abusive language, also under abusive input."}

@@ -224,7 +224,7 @@ class OrchestratorSettings(RuntimeSettings):
         ),
     )
 
-    # 010 MCP tool servers (T3-T9 tools) and the pilot evidence through the bridge
+    # 010 MCP tool servers (the acting terminals' tools) and the pilot evidence via the bridge
     tools_url: str = Field(
         default="http://tools:8030",
         pattern=r"^https?://",

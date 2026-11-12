@@ -156,7 +156,7 @@ def mcp_scopes(spec: Mapping[str, Any]) -> list[str]:
 
 def scope_for(spec: ToolSpec, terminal_spec: Mapping[str, Any]) -> str | None:
     """The scope a call uses: the catalogued one, or for an environment tool the one environment
-    the terminal's spec grants (dev for T3, test for T4 and T5); none or both give no scope."""
+    the terminal's spec grants; none or both give no scope."""
     if spec.scope != ENVIRONMENT_SCOPE:
         return spec.scope
     granted = set(mcp_scopes(terminal_spec))

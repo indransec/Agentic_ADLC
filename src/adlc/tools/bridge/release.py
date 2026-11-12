@@ -1,7 +1,7 @@
 """``cd``, ``traffic_manager`` and ``kill_switch`` (feature 010 US4; FR-017, FR-018; research
 R-10). They wrap prod-sim's own operations (feature 009): no Docker SDK, no Traefik.
 
-- ``cd_deploy`` deploys only the hash authorised at T6 (bound by the platform, checked again
+- ``cd_deploy`` deploys only the authorised hash (bound by the platform, checked again
   here), as the candidate.
 - ``traffic_manager_set``: shadow and canary route to the candidate as prod-sim does; ``full``
   promotes the deployed candidate to stable (prod-sim's ``full`` sends everything to stable),
