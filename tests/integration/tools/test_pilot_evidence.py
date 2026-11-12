@@ -2,6 +2,8 @@
 read the pilot through the bridge, so their decisions are not synthetic; without the bridge they
 fall back to synthetic evidence, labelled synthetic. T7's deployed hash reads prod-sim."""
 
+from pathlib import Path
+
 from adlc.orchestration.interfaces import EvalContext
 from adlc.policy.engine import CelPolicyEngine
 from adlc.policy.evidence import (
@@ -12,10 +14,11 @@ from adlc.policy.evidence import (
 from adlc.policy.pilot_evidence import PilotEvidence
 from adlc.policy.predicates import load_all
 from adlc.policy.store import MemorySink
+from adlc.tools.bridge.app import build_bridge
 from adlc.tools.client import McpClient
-from tests.support.tools import KEY
+from tests.support.tools import KEY, serve
 
-from .conftest import Tools
+from .conftest import Tools, bridge_settings
 
 SYNTHETIC = InMemoryEvidenceProvider(
     {"env": {"dev": {"provisioned": True}}, "template": {"version": "golden-template-1.4.2"}},
@@ -56,3 +59,17 @@ def test_without_the_bridge_synthetic_evidence_is_used_and_labelled(tools: Tools
     for policy in (engine(None), engine("http://127.0.0.1:1")):  # not configured, not answering
         provisioned = policy.evaluate("is_provisioned(env.dev)", CTX)
         assert provisioned.passed and provisioned.synthetic
+
+
+def test_a_host_that_does_not_answer_fails_closed(tools: Tools, tmp_path: Path) -> None:
+    """010 T043: the bridge answers but the dev host does not: env.dev is not provisioned, so the
+    prerequisite fails instead of falling back to synthetic evidence; the template version, which
+    the dev host serves, is not guessed (it falls back, labelled synthetic)."""
+    settings = bridge_settings(tools.pilot_url, tmp_path / "bridge2")
+    broken = settings.model_copy(update={"bridge_pilot_dev_url": "http://127.0.0.1:1"})
+    with serve(build_bridge(broken)) as bridge_url:
+        policy = engine(bridge_url)
+        provisioned = policy.evaluate("is_provisioned(env.dev)", CTX)
+        assert not provisioned.passed and not provisioned.synthetic
+        assert policy.evaluate("is_provisioned(env.test)", CTX).passed
+        assert policy.evaluate("is_pinned(template.version)", CTX).synthetic

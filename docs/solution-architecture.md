@@ -451,9 +451,9 @@ The MVP runs as containers on one host, defined in a single versioned Compose fi
 
 | Container group | Services | Notes |
 | --- | --- | --- |
-| Platform services | Web app (FastAPI + React), orchestrator and router, policy engine, agent workers, model gateway, MCP servers (real and mocked) | Stateless; state lives in PostgreSQL and the object store |
+| Platform services | Web app (FastAPI + React), orchestrator and router, policy engine, agent workers, model gateway, MCP servers (real and mocked): `knowledge` (008), `tools` (eval store and enterprise mocks, 010) and `pilot-bridge` (pilot-facing servers, 010; the only service on both networks) | Stateless; state lives in PostgreSQL and the object store (the bridge keeps Git repositories and its records on a volume) |
 | Data | PostgreSQL (spec, run, ledger, events schemas), MinIO object store, Langfuse tracing | Nightly backup of PostgreSQL and object store |
-| Pilot environments | Pilot dev, pilot test, prod-sim with traffic splitter, traffic generator, fault injector | Separate container network; reached by agents only through MCP servers |
+| Pilot environments | Pilot dev, pilot test, prod-sim with traffic splitter, traffic generator, fault injector, `pilot-lab` (builds and datasets, 010) | Separate container network; reached by agents only through the pilot bridge's MCP servers |
 
 **Platform environments:** `dev` (engineers, mocks everywhere) and `demo` (stable, used for the MVP demo). Spec releases target both registries; platform releases are image tags promoted from dev to demo.
 

@@ -38,7 +38,7 @@ then polish.
 
 - [X] T001 Settings in `src/adlc/config/settings.py` (and their validation messages):
   - shared: `ADLC_TOOLS_TOKEN_KEY` (secret, at least 32 characters);
-  - platform side: `ADLC_TOOLS_URL`, `ADLC_PILOT_BRIDGE_URL`, `ADLC_TOOLS_TIMEOUT_S` (default 30);
+  - platform side: `ADLC_TOOLS_URL`, `ADLC_PILOT_BRIDGE_URL`, `ADLC_TOOLS_TIMEOUT_S` (default 120, above CI's 90 s limit);
   - `ToolsSettings` (database settings, `ADLC_TOOLS_PORT` 8030, allowed hosts);
   - `BridgeSettings` (`ADLC_BRIDGE_PORT` 8040, `ADLC_BRIDGE_DATA_DIR`, `ADLC_BRIDGE_PILOT_DEV_URL`, `_TEST_URL`, `_PRODSIM_URL`, `_LAB_URL`, `_TRAFFIC_URL`, `ADLC_BRIDGE_JAEGER_URL`, `ADLC_BRIDGE_MONITOR_INTERVAL_S` 30, allowed hosts) with **no** database or model fields.
 
@@ -222,3 +222,12 @@ then polish.
 5. **Polish**: Phase 9.
 
 Run `make check` and commit at every checkpoint.
+
+---
+
+## Phase 10: Convergence
+
+- [X] T043 When the bridge answers but a pilot host does not, report that environment as `{provisioned: false}` instead of making all of `env` unavailable, so prerequisites that read it fail closed rather than fall back to synthetic evidence, in `src/adlc/policy/pilot_evidence.py`, with a test, per spec Edge Cases (a host is down) and FR-009 (partial)
+- [X] T044 Count only knowledge-host bindings in the knowledge-token start-up check (`src/adlc/agents/startup.py`), using the MCP registry's `host`, so tools on the tools and bridge hosts do not demand the knowledge token, with a test, per plan R-14 (contradicts)
+- [X] T045 Align T001's documented default of `ADLC_TOOLS_TIMEOUT_S` with the code (120 s, above CI's 90 s limit) in `specs/010-mcp-servers/tasks.md` and `plan.md` (partial)
+- [X] T046 List the `tools`, `pilot-bridge` and `pilot-lab` services in SA §15's container groups (`docs/solution-architecture.md`), per T039 (missing)

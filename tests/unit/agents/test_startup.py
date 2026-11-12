@@ -78,3 +78,19 @@ def test_knowledge_tools_need_a_token() -> None:
         check_knowledge_token(AgentCatalogue({"a": grounded}), None)
     check_knowledge_token(AgentCatalogue({"a": grounded}), "k" * 16)
     check_knowledge_token(AgentCatalogue({"b": plain}), None)
+
+
+def test_tools_on_the_tool_hosts_do_not_need_the_knowledge_token() -> None:
+    """010 T044: only bindings to knowledge-host servers need the knowledge token."""
+    from adlc.agents.catalogue import AgentCatalogue, AgentDefinition, ToolBinding
+    from adlc.agents.startup import MissingKnowledgeToken, check_knowledge_token
+
+    acting = AgentDefinition(
+        "t3", "1.0.0", "model", "coding", None, (ToolBinding("ci_run", "mcp:ci:run"),)
+    )
+    check_knowledge_token(AgentCatalogue({"a": acting}), None, ["confluence", "jira"])
+    grounded = AgentDefinition(
+        "t1", "1.0.0", "model", "reasoning", None, (ToolBinding("jira_search", "mcp:jira:read"),)
+    )
+    with pytest.raises(MissingKnowledgeToken):
+        check_knowledge_token(AgentCatalogue({"a": grounded}), None, ["confluence", "jira"])

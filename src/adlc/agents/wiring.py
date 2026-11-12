@@ -73,7 +73,19 @@ def build_runtime(
     if check_keys:
         check_model_keys(models, agents, keys, reviewer_ids(engine), reviewer_mode)
         # A test caller stands in for the server and its token.
-        check_knowledge_token(agents, knowledge_token or ("caller" if knowledge_caller else None))
+        servers_entry = registry.catalogue("mcp_servers")
+        knowledge = (
+            None
+            if servers_entry is None
+            else [
+                sid
+                for sid, server in Registry.from_content(servers_entry.content).servers.items()
+                if server.host == "knowledge"
+            ]
+        )
+        check_knowledge_token(
+            agents, knowledge_token or ("caller" if knowledge_caller else None), knowledge
+        )
     retrievals = SqlRetrievalLog(engine, clock)
     caller = knowledge_caller or (
         McpCaller(knowledge_url, knowledge_token) if knowledge_url and knowledge_token else None

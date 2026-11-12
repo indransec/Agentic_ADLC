@@ -25,6 +25,10 @@ SERVICE_SCOPES = ("mcp:pilot_env:read", "mcp:cd:read", "mcp:observability:read")
 SOURCES = ("env", "template")
 
 
+class PilotRefused(Exception):
+    """The bridge answered, with a tool error (e.g. a pilot host did not answer it)."""
+
+
 class PilotEvidence:
     def __init__(
         self, client: McpClient, key: str, *, now: Callable[[], float] = time.time
@@ -45,11 +49,14 @@ class PilotEvidence:
         )
         failed, text = self.client(HOST, server, tool, arguments, token)
         if failed:
-            raise ToolUnavailable(text)
+            raise PilotRefused(text)
         return json.loads(text)
 
     def _environment(self, name: str, versions: dict[str, str]) -> dict[str, Any]:
-        status = self._call("pilot_env", "status", {"environment": name})
+        try:
+            status = self._call("pilot_env", "status", {"environment": name})
+        except PilotRefused:  # the bridge answered; the host did not: fail closed (010 T043)
+            return {"provisioned": False, "running": False, "healthy": False, "deployed_hash": None}
         running = bool(status.get("running"))
         replicas = status.get("replicas") or []
         return {
@@ -65,7 +72,7 @@ class PilotEvidence:
         stable); ``None`` when prod-sim cannot be read (``env.prod`` is then not available)."""
         try:
             split = self._call("cd", "status", {})
-        except (ToolUnavailable, ValueError):
+        except (ToolUnavailable, PilotRefused, ValueError):
             return None
         stable = split.get("stable")
         return str(stable) if stable else None
@@ -74,13 +81,18 @@ class PilotEvidence:
         if source not in SOURCES:
             return NOT_AVAILABLE
         try:
-            infra = self._call("pilot_env", "infra", {})
+            try:
+                infra = self._call("pilot_env", "infra", {})
+            except PilotRefused:
+                infra = None
             if source == "template":
+                if infra is None:  # never guess a pinned version
+                    return NOT_AVAILABLE
                 version = f"{infra.get('template_id')}@{infra.get('template_version')}"
                 return Evidence({"version": version, "id": infra.get("template_id")}, "pilot")
             versions = {
                 str(d.get("environment")): str(d.get("version"))
-                for d in infra.get("definitions") or []
+                for d in (infra or {}).get("definitions") or []
             }
             found: dict[str, Any] = {
                 "dev": self._environment("dev", versions),
