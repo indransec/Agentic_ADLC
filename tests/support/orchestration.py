@@ -207,6 +207,7 @@ def harness(
     model_agents: tuple[str, ...] = (),
     tools_client: Any = None,
     tools_token_key: str | None = None,
+    pilot_evidence: Any = None,
 ) -> Iterator[Harness]:
     with fresh_database(db) as fresh:
         app = create_engine(fresh.app_url)
@@ -218,7 +219,7 @@ def harness(
             agent.base = load_synthetic_artifacts(synthetic_dir)
         reviewer = reviewer or StubReviewer()
         engine_policy: PolicyEngine = policy or build_policy_engine(
-            app, registry, clock, synthetic_dir=synthetic_dir
+            app, registry, clock, synthetic_dir=synthetic_dir, pilot=pilot_evidence
         )
         # 006: stub terminal agents run through the runtime (FR-024); tests script models with
         # a FakeGateway and switch agents to implementation: model with ``agents``. Since 008 the

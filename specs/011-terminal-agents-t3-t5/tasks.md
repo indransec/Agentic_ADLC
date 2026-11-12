@@ -80,8 +80,9 @@ polish.
 
 ## Phase 7: User Story 5 – Reference use cases through T5 (P2)
 
-- [ ] T022 [US5] `data/reference_usecases/it-service-desk.yaml` `until: T5` with T3–T5 answers and approver fields; recorded replies `tests/fixtures/replays/it-service-desk/t3-builder-agent.jsonl`, `t4-evaluation-agent.jsonl`, `t5-assurance-agent.jsonl` (hand-written, tool calls included).
-- [ ] T023 [US5] `adlc-replay` runs the acting terminals offline with the bridge over the fake pilot and live with the running stack; the report adds tool calls and controls per terminal; test `tests/integration/agents/test_replay_t3_t5.py` (offline, SC-001).
+- [X] T022 [US5] `data/reference_usecases/it-service-desk.yaml` `until: T5` with T3–T5 answers and approver fields; recorded replies `tests/fixtures/replays/it-service-desk/t3-builder-agent.jsonl`, `t4-evaluation-agent.jsonl`, `t5-assurance-agent.jsonl` (hand-written, tool calls included).
+  *Done as:* T3–T5 replies are scripted (`tests/support/acting_scripts.py`), not JSON Lines recordings: they copy hashes and result ids produced during the run, which a static recording cannot hold. The 008 T1 recording now uses metric-catalogue threshold names. Live recordings (T027) are valid against the running stack only.
+- [X] T023 [US5] `adlc-replay` runs the acting terminals offline with the bridge over the fake pilot and live with the running stack; the report adds tool calls and controls per terminal; test `tests/integration/agents/test_replay_t3_t5.py` (offline, SC-001).
 
 ---
 

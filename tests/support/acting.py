@@ -13,15 +13,18 @@ from typing import Any
 from pydantic import SecretStr
 
 from adlc.agents.catalogue import load_catalogues
+from adlc.agents.knowledge import McpCaller
 from adlc.agents.replay import AgentReplies, Planned, replay_gateway
 from adlc.agents.store import SqlCallRecorder
 from adlc.config.settings import BridgeSettings, ToolsSettings
+from adlc.policy.pilot_evidence import PilotEvidence
 from adlc.spec_toolkit.registry import InMemorySpecRegistry
 from adlc.tools.bridge.app import build_bridge
 from adlc.tools.client import McpClient
 from adlc.tools.enterprise.app import build_tools
 from tests.support.fake_pilot import FakePilot, urls
-from tests.support.grounded import BUNDLE, prompt_bodies
+from tests.support.grounded import BUNDLE, KNOWLEDGE, prompt_bodies
+from tests.support.knowledge import TOKEN, knowledge_server
 from tests.support.orchestration import Harness, harness
 from tests.support.pg import REPO_ROOT, PlatformDatabase
 from tests.support.tools import ALLOWED, KEY, serve
@@ -62,7 +65,9 @@ def acting(
     agents: tuple[str, ...],
     work: Path,
     pilot: FakePilot | None = None,
+    knowledge: bool = False,
 ) -> Iterator[Acting]:
+    """``knowledge`` also serves the knowledge MCP server for grounded agents (T0-T2)."""
     pilot = pilot or FakePilot()
     scripted = AgentReplies(prompt_bodies(), replies)
     models = load_catalogues(InMemorySpecRegistry.from_bundle(BUNDLE), "default")[0]
@@ -92,8 +97,19 @@ def acting(
         )
         bridge_url = stack.enter_context(serve(build_bridge(bridge)))
         client = McpClient({"bridge": bridge_url}, 60)
+        caller = None
+        if knowledge:
+            caller = McpCaller(stack.enter_context(knowledge_server(KNOWLEDGE)), TOKEN)
         h = stack.enter_context(
-            harness(db, gateway=late, model_agents=agents, tools_client=client, tools_token_key=KEY)
+            harness(
+                db,
+                gateway=late,
+                model_agents=agents,
+                tools_client=client,
+                tools_token_key=KEY,
+                knowledge_caller=caller,
+                pilot_evidence=PilotEvidence(McpClient({"bridge": bridge_url}, 30), KEY),
+            )
         )
         tools = ToolsSettings(
             env="dev",

@@ -44,8 +44,10 @@ from adlc.orchestration.stubs import StubAgent, StubReviewer
 from adlc.orchestration.worker import build_orchestrator
 from adlc.policy.directory import AccountFileDirectory
 from adlc.policy.factory import build_policy_engine
+from adlc.policy.pilot_evidence import PilotEvidence
 from adlc.policy.synthetic import load_synthetic_artifacts
 from adlc.spec_toolkit.registry import SqlSpecRegistry
+from adlc.tools.client import McpClient
 
 SERVICE_NAME = "adlc-replay"
 
@@ -101,6 +103,7 @@ def run_cli(
         raise _fail(f"no reference use cases in {reference_set}")
     registry = SqlSpecRegistry(engine)
     clock = SystemClock()
+    key = None if settings.tools_token_key is None else settings.tools_token_key.get_secret_value()
     policy = build_policy_engine(
         engine,
         registry,
@@ -109,6 +112,10 @@ def run_cli(
         directory=AccountFileDirectory(
             settings.accounts_file, settings.role_catalogue, settings.env
         ),
+        # 011: the acting terminals' evidence (env, template) from the pilot through the bridge
+        pilot=None
+        if key is None
+        else PilotEvidence(McpClient({"bridge": settings.pilot_bridge_url}, 30), key),
     )
     chosen = profile or settings.model_profile
     models, agents = load_catalogues(registry, chosen)
@@ -144,6 +151,9 @@ def run_cli(
         check_keys=recording is None,
         knowledge_url=settings.knowledge_url,
         knowledge_token=None if token is None else token.get_secret_value(),
+        tool_urls={"tools": settings.tools_url, "bridge": settings.pilot_bridge_url},
+        tools_token_key=key,
+        tools_timeout_s=settings.tools_timeout_s,
     )
     orchestrator = build_orchestrator(
         engine,

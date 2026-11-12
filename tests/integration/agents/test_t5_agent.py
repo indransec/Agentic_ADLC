@@ -128,6 +128,13 @@ def test_t5_assures_from_results_and_the_gap_needs_a_waiver(
 ) -> None:
     fake = FakePilot()
     fake.packages[CANDIDATE] = {"package_hash": CANDIDATE, "template_id": "fake", "files": {}}
+    # T4 (a stub here) leaves the candidate running in test, as the real T4 agent does
+    fake.hosts["test"].running = {
+        "environment": "test",
+        "package_hash": CANDIDATE,
+        "replicas": [{"id": "test-1", "healthy": True}],
+        "settings": {},
+    }
     assurance = Assurance()
     with acting(
         orch_template, {AGENT: script(assurance, retries=3)}, (AGENT,), tmp_path, fake

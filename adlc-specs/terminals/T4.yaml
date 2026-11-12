@@ -28,11 +28,6 @@ terminal:
       condition: evidence_exists(T1.rai_thresholds)
       description: exists
       on_missing: block
-    - id: PRE-T4-04
-      evidence_ref: env.test
-      condition: hash_matches(env.test, T3.candidate_package)
-      description: deployed_hash == T3.candidate_package.sha256
-      on_missing: block
     - id: PRE-T4-05
       evidence_ref: dataset.golden
       condition: approved_by(dataset.golden, "data_owner")
@@ -125,6 +120,12 @@ terminal:
       - id: CTL-T4-14
         rule: rows_match(T4.judge_calibration, "judge", harness.calibration)
         description: judge calibration equals the recorded harness result
+        severity: blocking
+      # 011: moved from prerequisite PRE-T4-04 - T4 provisions test with the candidate itself, so
+      # "what was evaluated is the candidate" is checked after the work
+      - id: CTL-T4-15
+        rule: hash_matches(env.test, T3.candidate_package)
+        description: the test environment ran T3.candidate_package.sha256
         severity: blocking
     checklist:
       ref: checklists/t4.yaml
