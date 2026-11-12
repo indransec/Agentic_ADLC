@@ -187,7 +187,10 @@ then polish.
 ## Phase 9: Polish
 
 - [X] T026 [P] Update `docs/solution-architecture.md` §14 and the demo script to the Incident Triage Assistant (demo moments unchanged), and `pilot/README.md` (template, fill points, packages, environments, faults, traffic).
-- [ ] T027 [P] Run the 003–008 suites and the pilot suites 10 times in a row and record the result.
+- [X] T027 [P] Run the 003–008 suites and the pilot suites 10 times in a row and record the result.
+  **Result (2026-11-12):** 10 of 10 rounds green, no flaky test. Each round: the whole platform suite
+  (001–008 plus 009's boundary tests) 1,946 passed in 4–6.5 minutes, and the pilot suite 52 passed
+  in 36–44 seconds. SC-008 holds.
 - [X] T028 Run `make check` and fix any failure.
 - [X] T029 Live check (quickstart §2):
   - `make up`;
