@@ -1,0 +1,7 @@
+# Infrastructure definition: pilot test (evaluation and assurance). Fixed in the template.
+environment: test
+version: "1.0.0"
+replicas: 1
+request_timeout_s: 10
+model_modes: [simulated, real]
+overridable: {model_mode: [simulated, real]}

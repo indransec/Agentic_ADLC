@@ -1,0 +1,10 @@
+# Mocked team directory (synthetic): the teams the assistant may assign incidents to.
+teams:
+  - {id: service-desk, name: Service Desk, handles: "first-line triage, unknown or unclear requests", first_line: true}
+  - {id: identity-access, name: Identity and Access, handles: "accounts, passwords, MFA, permissions"}
+  - {id: end-user-computing, name: End-User Computing, handles: "laptops, desktops, printers, peripherals"}
+  - {id: network-ops, name: Network Operations, handles: "VPN, Wi-Fi, LAN, DNS, internet access"}
+  - {id: app-support-erp, name: ERP Application Support, handles: "finance and HR applications"}
+  - {id: app-support-collab, name: Collaboration Application Support, handles: "e-mail, chat, video meetings, documents"}
+  - {id: database-ops, name: Database Operations, handles: "databases and reporting platforms"}
+  - {id: security-ops, name: Security Operations, handles: "suspected breaches, malware, phishing, data loss", security: true}

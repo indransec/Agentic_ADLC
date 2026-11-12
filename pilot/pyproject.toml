@@ -1,0 +1,65 @@
+[project]
+name = "adlc-pilot"
+version = "0.1.0"
+description = "Pilot use case for the Agentic ADLC platform: the Incident Triage Assistant, its golden template, environments, synthetic data, traffic and faults (feature 009)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.162.2",
+    "uvicorn>=0.54.0",
+    "httpx>=0.28.1",
+    "pydantic>=2.14.3",
+    "ruamel-yaml>=0.19.1",
+    "opentelemetry-api>=1.45.2",
+    "opentelemetry-sdk>=1.45.2",
+    "opentelemetry-exporter-otlp-proto-http>=1.45.2",
+    "faker==40.43.0",
+]
+
+[project.scripts]
+pilot-build = "pilot_tools.build:main"
+pilot-host = "pilot_tools.host:main"
+pilot-traffic = "pilot_tools.traffic:main"
+pilot-incidents = "pilot_tools.incidents:main"
+pilot-env = "pilot_tools.cli:env_main"
+pilot-split = "pilot_tools.cli:split_main"
+pilot-fault = "pilot_tools.cli:fault_main"
+pilot-traffic-ctl = "pilot_tools.cli:traffic_main"
+
+[dependency-groups]
+dev = [
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.4",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pilot_tools", "template/agent/triage_agent"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "template/agent", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "N", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S603", "S607"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+files = ["src", "template/agent", "tests"]
+mypy_path = ["src", "template/agent"]
+explicit_package_bases = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "template/agent"]
+addopts = "-ra --cov=pilot_tools --cov=triage_agent --cov-report=term:skip-covered"
+filterwarnings = ["ignore:Using `httpx` with `starlette.testclient` is deprecated"]
