@@ -1,0 +1,105 @@
+# Tasks: Terminal Agents T3–T5
+
+**Input**: Design documents from `specs/011-terminal-agents-t3-t5/`
+
+**Prerequisites**: plan.md, spec.md, research.md, data-model.md, contracts/, quickstart.md
+
+**Tests**: required. Test-first for `rows_match`, the evidence mapping, the table import, the
+harness catalogue metrics and calibration, and the CI report.
+
+**Organization**: setup and foundation, then one phase per user story (US1–US4 P1, US5 P2), then
+polish.
+
+## Conventions used by every task
+
+- No terminal ids, agent ids or use-case values in platform code; they live in specs, catalogues,
+  prompts, playbooks and data files.
+- Agent behaviour is tested with scripted replies (feature 006 `FakeGateway`) through the real
+  runtime, tool gate, run tokens and the bridge over the fake pilot (feature 010 test support).
+- Spec and catalogue changes follow V-24 (a changed value is a major version).
+
+---
+
+## Phase 1: Setup
+
+- [ ] T001 Pilot dependencies `coverage` 7.x and `bandit` 1.8.x in `pilot/pyproject.toml` (lock), `pilot/licences.yaml` (licence allowlist), and the image builds.
+- [ ] T002 [P] Tier step defaults: `coding` 16, `reasoning` 14 in `src/adlc/config/settings.py` (`DEFAULT_AGENT_LIMITS`), timeouts still within the lease; tests updated.
+
+---
+
+## Phase 2: Foundational (blocks every story)
+
+### Tests first
+
+- [ ] T003 [P] `tests/unit/policy/test_rows_match.py`: keys matched; numbers within 0.001; text equal; a recorded key with a different value fails naming the row; rows without a recorded key are skipped; a scalar recorded value compares the named measured column; an empty table or missing evidence fails closed.
+- [ ] T004 [P] `tests/integration/policy/test_tool_evidence.py`: `ci`, `sbom`, `harness`, `redteam`, `dlp` built from `tools.tool_result` per contracts/evidence-sources.md (latest of the run for `ci`, latest for the candidate otherwise); none recorded → not available → synthetic fallback labelled.
+- [ ] T005 [P] `tests/unit/agents/test_artifact_import.py`: import expansion per contracts/artifact-import.md; `req_id_by` mapping and default; provenance recorded; foreign result, wrong kind, missing mapping → invalid output.
+
+### Implementation
+
+- [ ] T006 `rows_match` in `src/adlc/policy/predicates/evaluation.py` and `adlc-specs/shared/predicates.yaml`.
+- [ ] T007 Evidence sources in `src/adlc/policy/evidence.py` (reading `tools.tool_result`) and `adlc-specs/shared/evidence_sources.yaml` (`harness`; `ci` fields `package_hash`, `tests`, `scans`); the red-team suite's `evidence_metric` per category in `data/redteam/suite.yaml`.
+- [ ] T008 Table import in the agent output handling (`src/adlc/agents/output.py` or a new `imports.py`): expansion, provenance in the artifact version content, invalid-output errors; evidence tools return `result_id` (`src/adlc/agents/mcp_tools.py`, `tools.tool_result` id as `RES-<n>`).
+
+**Checkpoint**: predicate, evidence and import tested; `make check` green.
+
+---
+
+## Phase 3: User Story 1 – T3 builds a candidate package (P1)
+
+- [ ] T009 [P] [US1] Pilot tests `pilot/tests/integration/test_lab.py`: the layout carries the example fill; the CI report has tests (counts, coverage), sast and secret_scan counts, sbom (components, licences approved) and observability, per contracts/ci-report.md; a planted secret in a fill fails `secret_scan`; `green` only when every check passed.
+- [ ] T010 [US1] `pilot/src/pilot_tools/ci_checks.py` and `lab.py`: the CI checks of research R-04; `GET /layout` returns `example` files.
+- [ ] T011 [US1] Bridge: the repository's `main` starts with the example fill (`src/adlc/tools/bridge/git_repo.py`); `ci_run` passes the full report through; fake pilot updated; tests.
+- [ ] T012 [US1] Spec content: prompt `t3-builder-agent.md` 1.0.0; playbooks `t3-build.md`, `golden-template.md`, `prompt-versioning.md` real content; agents catalogue T3 entry (model, tools: `git_list`, `git_read`, `git_write`, `git_open_pull_request`, `ci_run`, `artifact_store_read`, `artifact_store_write`, `prompt_registry_write`, `pilot_env_create`, `pilot_env_status`, `pilot_env_infra`); T3 spec 3.0.0 with the R-07 controls; registration tests.
+- [ ] T013 [US1] Integration `tests/integration/agents/test_t3_agent.py`: scripted T3 run through the runtime and bridge: branch, PR, CI, dev environment, artifacts valid, candidate hash = CI hash, `ci`/`sbom` decisions not synthetic; a red CI corrected in a second attempt; a copied coverage that differs from CI fails `rows_match`.
+
+---
+
+## Phase 4: User Story 2 – T4 evaluates against the T1 thresholds (P1)
+
+- [ ] T014 [P] [US2] Tests `tests/unit/tools/test_evaluation.py` (extend): catalogue metrics, calibration on the labelled slice, case rows for import.
+- [ ] T015 [US2] `src/adlc/tools/bridge/evaluation.py`: catalogue metrics, calibration, case rows (research R-06); `pilot/datasets.yaml` `labelled_slice`; lab returns it; fake pilot updated.
+- [ ] T016 [US2] Spec content: prompt `t4-evaluation-agent.md`; playbooks `t4-evaluation.md`, `golden-dataset.md`, `judge-calibration.md`; agents catalogue T4 entry (`pilot_env_create`, `pilot_env_status`, `dataset_registry_list`, `harness_run`, `artifact_store_read`, `eval_store_write`); T4 spec 3.0.0 with the R-07 controls.
+- [ ] T017 [US2] Integration `tests/integration/agents/test_t4_agent.py`: a candidate meeting the thresholds passes the controls with `harness` decisions not synthetic and `test_case_results` imported; a weaker candidate fails a threshold control, logs a defect with root cause T3's terminal, and the reviewer's rework routes to T3; regression pack recorded.
+
+---
+
+## Phase 5: User Story 3 – T5 assures and accepts gaps only by waiver (P1)
+
+- [ ] T018 [US3] Spec content: prompt `t5-assurance-agent.md`; playbooks `t5-assurance.md`, `llm-red-team.md`, `privacy-impact-assessment.md`, `regulatory-mapping.md`; agents catalogue T5 entry (`pilot_env_create`, `pilot_env_status`, `redteam_harness_run`, `dlp_scanner_run`, `control_library_read`, `iam_read`, `grc_write`); T5 spec 3.0.0 with the R-07 control.
+- [ ] T019 [US3] Integration `tests/integration/agents/test_t5_agent.py`: `redteam` and `dlp` decisions read the run's results (not synthetic); the attestation row is not agent-written; a gap (a failing control the agent cannot close) → the reviewer recommends exception with waiver fields → the run closes as exception only after the waiver approver accepts.
+
+---
+
+## Phase 6: User Story 4 – Agents act only through their terminal's tools (P1)
+
+- [ ] T020 [US4] Integration `tests/integration/agents/test_acting_scopes.py`: scripted replies asking T3 for `cd_deploy` and for the test environment, T4 for `git_write`, T5 for `traffic_manager_set`: refused, recorded, nothing reached the fake pilot; tool output with injected instructions does not change statuses or permissions.
+- [ ] T021 [US4] The knowledge-token start-up check and the runtime with the 4.0.0 agents catalogue: T3–T5 tools need the tools token key, not the knowledge token; a missing key is a configuration error naming the setting.
+
+---
+
+## Phase 7: User Story 5 – Reference use cases through T5 (P2)
+
+- [ ] T022 [US5] `data/reference_usecases/it-service-desk.yaml` `until: T5` with T3–T5 answers and approver fields; recorded replies `tests/fixtures/replays/it-service-desk/t3-builder-agent.jsonl`, `t4-evaluation-agent.jsonl`, `t5-assurance-agent.jsonl` (hand-written, tool calls included).
+- [ ] T023 [US5] `adlc-replay` runs the acting terminals offline with the bridge over the fake pilot and live with the running stack; the report adds tool calls and controls per terminal; test `tests/integration/agents/test_replay_t3_t5.py` (offline, SC-001).
+
+---
+
+## Phase 8: Polish
+
+- [ ] T024 [P] Documents: `src/adlc/agents/README.md` (acting agents, imports), SA §7.1 and §7.2 notes, build plan row 011, `adlc-specs/CONVERSION.md` (3.0.0 changes), demo script steps 4–6.
+- [ ] T025 Run the new 011 tests 3 times in a row and record the result.
+- [ ] T026 Run `make check` and fix any failure (SC-008).
+- [ ] T027 Live: `adlc-replay --profile dev --usecase it-service-desk` through T5 on the running stack; record SC-002, SC-003 and SC-007 (cost and tool calls per terminal), and any quality findings.
+
+---
+
+## Dependencies and execution order
+
+- Phase 1, then Phase 2, then US1 (T3 produces the candidate), then US2 (needs a candidate), then
+  US3; US4 alongside US1–US3; US5 after US3; Polish last.
+
+## Implementation strategy
+
+Foundation (predicate, evidence, import) → T3 → T4 → T5 → scopes → replay → polish. Run
+`make check` and commit at every checkpoint.
