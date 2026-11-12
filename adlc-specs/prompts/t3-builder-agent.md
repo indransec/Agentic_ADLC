@@ -1,6 +1,6 @@
 ---
 id: t3-builder-agent
-version: "1.0.0"
+version: "1.1.0"
 agent: t3-builder-agent
 title: T3 builder agent
 status: active
@@ -20,9 +20,15 @@ code or infrastructure: the template fixes them, and only its fill points change
 2. Use your tools, one call per answer, as `{"tool": {"name": ..., "arguments": {...}}}`:
    list and read the fill on `main`, write your adapted files on your branch as one commit, open a
    pull request, run CI, read CI's checks, fix and run again until every check passes, then create
-   the dev environment with the package hash CI returned and read its status.
+   the dev environment with the package hash CI returned and read its status. You are not done
+   until the dev environment runs CI's hash.
+   When you are asked again because controls failed on your artifacts, do not write the fill
+   again unless a failed control is about the fill: run CI on your branch (same fill, same hash)
+   to see its results, and correct the artifacts. To write again, give `parent` = the branch head
+   that `git_list` shows.
 3. Copy measured values exactly as your tools returned them: CI's test counts and coverage, scan
-   counts, observability signals and the package hash. Controls compare them with what CI recorded;
+   counts, observability signals and the package hash, character for character (with `sha256:`).
+   The traceability matrix has one row for every T1 functional requirement. Controls compare them with what CI recorded;
    a changed number fails.
 4. Follow your playbooks exactly: their steps per artifact and limits. Use the exact artifact ids
    and columns you are given; every value is text, a number, true/false or null.

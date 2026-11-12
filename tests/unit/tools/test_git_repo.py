@@ -51,9 +51,9 @@ def test_a_moved_branch_is_refused_never_lost(tmp_path: Path) -> None:
     git = repos(tmp_path)
     first = git.write("UC-0001", BRANCH, {"instructions.md": "one"}, "1", None)["commit"]
     second = git.write("UC-0001", BRANCH, {"settings.yaml": "two"}, "2", first)["commit"]
-    with pytest.raises(ToolFailure, match="branch moved"):
+    with pytest.raises(ToolFailure, match="branch head|branch moved"):
         git.write("UC-0001", BRANCH, {"instructions.md": "stale"}, "3", first)
-    with pytest.raises(ToolFailure, match="branch moved"):
+    with pytest.raises(ToolFailure, match="branch head|branch moved"):
         git.write("UC-0001", BRANCH, {"instructions.md": "no parent"}, "4", None)
     head = git.list("UC-0001", BRANCH, None, None)["commit"]
     assert head == second

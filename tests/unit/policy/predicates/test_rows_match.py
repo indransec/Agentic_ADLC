@@ -121,3 +121,15 @@ def test_missing_evidence_fails_closed(check: Check) -> None:
         {"T3": {"test_results": [{"suite": "package"}]}},
     )
     assert not result.passed
+
+
+def test_hash_prefix_is_notation(check: Check) -> None:
+    """011 (live finding): an agent that drops `sha256:` still names the same package."""
+    digest = "ab" * 32
+    sources = {
+        "T3": {"candidate_package": [{"sha256": digest}]},
+        "ci": {"package_hash": f"sha256:{digest}"},
+    }
+    passes(check("hash_matches(T3.candidate_package, ci)", sources))
+    sources["T3"] = {"candidate_package": [{"sha256": "cd" * 32}]}
+    fails(check("hash_matches(T3.candidate_package, ci)", sources), "does not match")

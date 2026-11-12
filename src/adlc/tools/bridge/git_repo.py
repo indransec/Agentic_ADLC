@@ -167,7 +167,9 @@ class GitRepos:
             head = self._head(repo, branch)
             base = head or self._head(repo, MAIN)
             if head is not None and parent != head:
-                raise ToolFailure("refused: branch moved; read again (parent is not the head)")
+                raise ToolFailure(
+                    f"refused: parent must be the branch head {head} (read it with git_list)"
+                )
             if head is None and parent is not None and parent != base:
                 raise ToolFailure("refused: branch moved; read again (parent is not the head)")
             tree = self._tree(repo, base, files)

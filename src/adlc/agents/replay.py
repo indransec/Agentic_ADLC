@@ -496,15 +496,28 @@ def main(
     recording: Annotated[Path | None, typer.Option("--recording")] = None,
     baseline: Annotated[Path | None, typer.Option("--baseline")] = None,
     out: Annotated[Path, typer.Option("--out")] = Path("reports/replays"),
+    live_rest: Annotated[bool, typer.Option("--live-rest")] = False,
 ) -> None:
     """Replay the reference use cases and write report.json and report.md."""
     from adlc.agents.replay_cli import run_cli  # noqa: PLC0415 - heavy imports only when run
 
-    if (profile is None) == (recording is None) or (record is not None and profile is None):
-        print("adlc-replay: give --profile (optionally --record) or --recording", file=sys.stderr)
+    mixed = live_rest and recording is not None and profile is not None
+    if not mixed and (
+        (profile is None) == (recording is None) or (record is not None and profile is None)
+    ):
+        print(
+            "adlc-replay: give --profile (optionally --record), --recording, or "
+            "--recording with --profile --live-rest",
+            file=sys.stderr,
+        )
         raise typer.Exit(2)
     report = run_cli(
-        reference_set, list(only or []), profile=profile, record=record, recording=recording
+        reference_set,
+        list(only or []),
+        profile=profile,
+        record=record,
+        recording=recording,
+        live_rest=mixed,
     )
     folder = write_report(report, out, baseline)
     print(f"adlc-replay: report written to {folder}")

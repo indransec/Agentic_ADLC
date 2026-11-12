@@ -5,7 +5,7 @@
 # agent. 4.0.0 (011): T3-T5 are model agents acting through the feature 010 tools their
 # terminal's tool scopes allow.
 catalogue: agents
-version: "4.0.0"
+version: "5.0.0"
 agents:
   - id: t0-intake-agent
     version: "1.2.0"
@@ -42,10 +42,10 @@ agents:
       - {tool: mcp_registry_search, permission: "mcp:mcp_registry:read"}
       - {tool: mcp_registry_read, permission: "mcp:mcp_registry:read"}
   - id: t3-builder-agent
-    version: "2.0.0"
+    version: "2.1.0"
     implementation: model
     model_tier: coding
-    prompt: {id: t3-builder-agent, version: "1.0.0"}
+    prompt: {id: t3-builder-agent, version: "1.1.0"}
     tools:
       - {tool: git_list, permission: "mcp:git:read"}
       - {tool: git_read, permission: "mcp:git:read"}
