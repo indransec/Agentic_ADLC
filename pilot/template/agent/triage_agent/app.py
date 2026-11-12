@@ -47,7 +47,9 @@ def create_app(root: Path, package_hash: str | None = None) -> FastAPI:
             os.environ.get("PILOT_MODEL_API_KEY", ""),
             list(template_spec(template)["categories"]),
         )
+    price = float(os.environ.get("PILOT_MODEL_PRICE_PER_1K_TOKENS") or 0)
     state: dict[str, Any] = {"model": mode_name, "degraded_share": 0.5, "leak": False}
+    cost = {"total": 0.0}  # only the real model costs anything (FR-005)
     counts: Counter[str] = Counter()
     latency_ms: list[float] = []
     app = FastAPI(title="Incident Triage Assistant", version=str(package))
@@ -94,6 +96,8 @@ def create_app(root: Path, package_hash: str | None = None) -> FastAPI:
         counts["toxic_outputs"] += toxic_count(answer.reason)
         counts["pii_outputs"] += bool(find_pii(answer.reason))
         counts["tokens"] += answer.tokens
+        if answer.model == "real":
+            cost["total"] += answer.tokens * price / 1000
         latency_ms.append((time.perf_counter() - started) * 1000)
         return {**answer.model_dump(), "package_hash": package}
 
@@ -103,6 +107,7 @@ def create_app(root: Path, package_hash: str | None = None) -> FastAPI:
         return {
             "package_hash": package,
             "counts": dict(counts),
+            "cost": round(cost["total"], 6),
             "real_fallbacks": 0 if real is None else real.fallbacks,
             "latency_p95_ms": recent[int(len(recent) * 0.95)] if recent else None,
         }

@@ -12,6 +12,7 @@ import time
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import httpx
 
@@ -38,12 +39,30 @@ class Worker:
         return f"http://127.0.0.1:{self.port}"
 
     def healthy(self) -> bool:
+        return self.health() is not None
+
+    def health(self) -> dict[str, Any] | None:
+        """The worker's own report (package, model in use, leak), or None when it is down."""
         if self.process.poll() is not None:
-            return False
+            return None
         try:
-            return httpx.get(f"{self.url}/health", timeout=2).status_code == 200
+            reply = httpx.get(f"{self.url}/health", timeout=2)
         except httpx.HTTPError:
-            return False
+            return None
+        if reply.status_code != 200:
+            return None
+        report: dict[str, Any] = reply.json()
+        return report
+
+    def metrics(self) -> dict[str, Any] | None:
+        try:
+            reply = httpx.get(f"{self.url}/metrics", timeout=5)
+        except httpx.HTTPError:
+            return None
+        if reply.status_code != 200:
+            return None
+        report: dict[str, Any] = reply.json()
+        return report
 
     def stop(self) -> None:
         if self.process.poll() is None:

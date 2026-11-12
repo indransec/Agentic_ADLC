@@ -31,6 +31,8 @@ def test_model_swap_lowers_accuracy_and_revert_restores_it(
         )
         assert swapped.status_code == 200
         assert h.client.post("/faults/model_swap", json={"action": "trigger"}).status_code == 409
+        replicas = h.client.get("/split").json()["deployments"]["stable"]["replicas"]
+        assert {r["model"] for r in replicas} == {"degraded"}  # T031: the swap is visible
         during = Traffic(url, seed=21, size=300, rate=40.0, window_s=30)
         degraded = run(during, 2.0)["routing_accuracy"]
         during.stop()

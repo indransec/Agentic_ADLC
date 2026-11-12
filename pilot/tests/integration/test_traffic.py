@@ -3,8 +3,11 @@ personal-data leaks against the expected answers (US4; FR-014, FR-016, SC-004)."
 
 import time
 from collections.abc import Callable
+from typing import Any
 
-from pilot_tools.traffic import Traffic
+from fastapi import FastAPI
+
+from pilot_tools.traffic import INCIDENT_FIELDS, Traffic
 from tests.integration.conftest import Host, Packages, serve
 
 
@@ -45,3 +48,22 @@ def test_leaks_and_timeouts_are_counted(host: Callable[[str], Host], packages: P
     slow.stop()
     counts = slow.metrics()
     assert counts["sent"] > 0 and counts["failed"] + counts["timed_out"] == counts["sent"]
+
+
+def test_the_system_under_test_gets_the_incident_only() -> None:
+    """T034: expected answers and labels stay with the generator, for scoring only."""
+    seen: list[dict[str, Any]] = []
+    app = FastAPI()
+
+    @app.post("/triage")
+    def triage(body: dict[str, Any]) -> dict[str, Any]:
+        seen.append(body)
+        return {"team": "service-desk", "reason": "", "package_hash": "sha256:x"}
+
+    with serve(app) as url:
+        traffic = Traffic(url, seed=4, size=20, pii_share=0.5, rate=20.0)
+        traffic.start()
+        time.sleep(1.0)
+        traffic.stop()
+    assert seen and all(set(body) <= set(INCIDENT_FIELDS) for body in seen)
+    assert not any({"expected", "planted_pii", "edge_case", "synthetic"} & set(b) for b in seen)

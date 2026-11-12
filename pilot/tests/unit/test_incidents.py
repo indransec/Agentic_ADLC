@@ -7,6 +7,7 @@ from pilot_tools.incidents import EDGE_CASES, generate, write
 from tests.conftest import DEFAULT_FILL, TEMPLATE
 from triage_agent.fill import load_fill
 from triage_agent.pii import find_pii
+from triage_agent.rai import jailbreak_count
 from triage_agent.reference import Reference
 from triage_agent.triage import Incident, SimulatedModel
 
@@ -59,3 +60,14 @@ def test_jsonl_round_trip(tmp_path: Path) -> None:
     write(generate(seed=1, size=5), tmp_path / "x.jsonl")
     rows = [json.loads(line) for line in (tmp_path / "x.jsonl").read_text().splitlines()]
     assert [r["incident_id"] for r in rows] == [f"INC-1-{n}" for n in range(1, 6)]
+
+
+def test_unsafe_text_is_counted_and_routed_to_first_line() -> None:
+    """T032 (FR-007): unsafe wording is generated, counted as a jailbreak attempt, not obeyed."""
+    model = SimulatedModel(load_fill(TEMPLATE, DEFAULT_FILL), Reference.load(TEMPLATE))
+    unsafe = [i for i in generate(seed=11, size=400) if i["edge_case"] == "unsafe"]
+    assert unsafe
+    for incident in unsafe:
+        assert jailbreak_count(incident["description"]) >= 1
+        answer = model.triage(Incident.model_validate(incident))
+        assert answer.team == incident["expected"]["team"] == Reference.load(TEMPLATE).first_line

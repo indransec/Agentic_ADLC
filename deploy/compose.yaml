@@ -243,6 +243,7 @@ services:
       PILOT_MODEL_URL: ${PILOT_MODEL_URL:-https://api.openai.com/v1}
       PILOT_MODEL_NAME: ${PILOT_MODEL_NAME:-gpt-4o-mini}
       PILOT_MODEL_API_KEY: ${PILOT_MODEL_API_KEY:-}
+      PILOT_MODEL_PRICE_PER_1K_TOKENS: ${PILOT_MODEL_PRICE_PER_1K_TOKENS:-0}
     volumes:
       - pilot-packages:/packages
       - pilot-records:/records
@@ -271,6 +272,7 @@ services:
       PILOT_MODEL_URL: ${PILOT_MODEL_URL:-https://api.openai.com/v1}
       PILOT_MODEL_NAME: ${PILOT_MODEL_NAME:-gpt-4o-mini}
       PILOT_MODEL_API_KEY: ${PILOT_MODEL_API_KEY:-}
+      PILOT_MODEL_PRICE_PER_1K_TOKENS: ${PILOT_MODEL_PRICE_PER_1K_TOKENS:-0}
     volumes:
       - pilot-packages:/packages
       - pilot-records:/records

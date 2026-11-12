@@ -10,14 +10,15 @@ platform. No platform service calls them directly.
 | `GET /health` | — | `{status, environment}` |
 | `GET /infra` | — | Every infrastructure definition of the template with its version (reference material for feature 010) |
 | `POST /environment` | `{package_hash, settings?}` (dev and test) | `201 {environment, package_hash, replicas, settings}`; `404` unknown hash; `422` undeclared setting or value; `409` already running |
-| `GET /environment` | — | `{environment, package_hash, replicas: [{id, healthy}], settings, started_at}` or `404` |
+| `GET /environment` | — | `{environment, package_hash, replicas: [{id, healthy, model, leak}], settings, started_at}` or `404`; recorded |
 | `DELETE /environment` | — | `204`; nothing of it remains running |
 | `POST /deployments` | `{package_hash, role: stable or candidate}` (prod-sim) | `201`; `404` unknown hash |
 | `PUT /split` | `{mode: shadow, canary or full, share?}` (prod-sim) | `200 {mode, share, stable, candidate}`; `404` if the candidate is missing; `422` bad mode or share |
-| `GET /split` | — | Current split and the last changes |
+| `GET /split` | — | Current split, `deployments` (per role: hash and replicas with model and leak) and the last changes |
 | `POST /triage` | An incident (data-model.md) | The triage answer, with `package_hash` |
 | `POST /faults/{fault}` | `{action: trigger or revert, parameters?}`; `fault` is `model_swap` or `pii_leak` | `200` record; `409` when already active, or reverting an inactive fault |
 | `GET /faults` | — | Active faults and the last records |
+| `GET /metrics` | — | `{environment, counts, packages: [{role, package_hash, replicas, unreachable, counts (requests, team:<id>, tokens, toxic_outputs, pii_outputs, jailbreak_attempts), cost, real_fallbacks, latency_p95_ms_worst_replica}]}` |
 
 Every create, tear down, split change and fault is appended to the records (data-model.md).
 

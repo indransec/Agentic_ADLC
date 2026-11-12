@@ -251,3 +251,13 @@ then polish.
 4. **Isolation and polish**: Phases 8–9.
 
 Run `make check` and commit at every checkpoint.
+
+---
+
+## Phase 10: Convergence
+
+- [X] T030 Aggregate the workers' metrics in the host's `GET /metrics` per package (latency p95, tokens, a cost figure: 0 for the simulated and degraded models, tokens × `PILOT_MODEL_PRICE_PER_1K_TOKENS` for the real model, team counts, toxic outputs, personal-data outputs, jailbreak attempts) in `pilot/src/pilot_tools/host.py` and `pilot/template/agent/triage_agent/app.py`, with tests, so these metrics are reachable beyond the worker processes per FR-005 (partial)
+- [X] T031 Report the model in use (and whether the leak is active) per replica in the host's environment and deployment status (`status_of` in `pilot/src/pilot_tools/host.py`, read from each worker's `/health`), with a test that the model swap changes it, per FR-006 (partial)
+- [X] T032 Add an unsafe-text edge case (jailbreak or abusive wording, routed to first line with review) to `pilot/src/pilot_tools/incidents.py`, with a test that the agent's jailbreak count rises on it, per FR-007 (partial)
+- [X] T033 Record the status operation in `environments.jsonl` (`GET /environment`, outcome ok or not running) in `pilot/src/pilot_tools/host.py`, with a test, per FR-019 and data-model.md records (partial)
+- [X] T034 Send only the incident fields to prod-sim from the traffic generator (drop `expected`, `planted_pii`, `edge_case`, `synthetic`) in `pilot/src/pilot_tools/traffic.py`, keeping them only for scoring, with a test, per FR-016 and SC-005 (contradicts: the system under test receives the expected answer)

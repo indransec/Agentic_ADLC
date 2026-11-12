@@ -23,6 +23,8 @@ from pilot_tools.incidents import generate
 from triage_agent.pii import find_pii
 
 WINDOW_S = 60.0
+# What the system under test receives: the incident only, never its expected answer or labels.
+INCIDENT_FIELDS = ("incident_id", "title", "description", "reporter", "affected_service", "urgency")
 MAX_IN_FLIGHT = 64
 
 
@@ -89,7 +91,8 @@ class Traffic:
                 continue
             incident = self.incidents[self.next_index % len(self.incidents)]
             self.next_index += 1
-            request = {**incident, "incident_id": f"{incident['incident_id']}-r{self.next_index}"}
+            request = {k: incident[k] for k in INCIDENT_FIELDS if k in incident}
+            request["incident_id"] = f"{incident['incident_id']}-r{self.next_index}"
             with self.lock:
                 self.counts["sent"] += 1
                 self.sent_at.append(time.monotonic())

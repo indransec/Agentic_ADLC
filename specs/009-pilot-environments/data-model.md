@@ -51,7 +51,7 @@ splitter: {modes: [shadow, canary, full], default_share: 0.2}   # prod-sim only
 | `reporter` | `{name, department, persona}` |
 | `affected_service` | A catalogue service id or an unknown name |
 | `urgency` | `low`, `medium`, `high` |
-| `edge_case` | `none`, `unknown_service`, `multi_service`, `security`, `missing_details`, `duplicate`, `out_of_scope` |
+| `edge_case` | `none`, `unknown_service`, `multi_service`, `security`, `missing_details`, `duplicate`, `out_of_scope`, `unsafe` (jailbreak or abusive wording; T032) |
 | `expected` | `{team, category, priority}` with priority `P1`–`P4` |
 | `synthetic` | Always `true` |
 | `planted_pii` | `[]`, or the planted e-mail and phone |
@@ -65,7 +65,7 @@ reason never repeats planted personal data unless the leak fault is active.
 
 | File | One line per |
 | --- | --- |
-| `environments.jsonl` | Create, status and tear down: `{at, environment, operation, package_hash, settings, outcome, reason?}` |
+| `environments.jsonl` | Create, status and tear down: `{at, environment, operation, package_hash, settings, outcome, reason?}`; status outcome `ok` (with `healthy`) or `not running` |
 | `splits.jsonl` | Split change: `{at, mode, share, stable, candidate, outcome}` |
 | `faults.jsonl` | Trigger or revert: `{at, fault, action, parameters, affected: {packages, replicas}, outcome}` |
 | `shadow.jsonl` | A shadow answer: `{at, request_id, candidate_hash, answer}` |

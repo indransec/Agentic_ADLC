@@ -158,10 +158,16 @@ def create_host(
             if value not in allowed[key]:
                 raise HTTPException(422, f"{key}={value} is not allowed; allowed {allowed[key]}")
 
+    def replica(worker: Worker) -> dict[str, Any]:
+        report = worker.health()
+        if report is None:
+            return {"id": worker.id, "healthy": False, "model": None, "leak": None}
+        return {"id": worker.id, "healthy": True, "model": report["model"], "leak": report["leak"]}
+
     def status_of(running: Running) -> dict[str, Any]:
         return {
             "package_hash": running.package_hash,
-            "replicas": [{"id": w.id, "healthy": w.healthy()} for w in running.workers],
+            "replicas": [replica(w) for w in running.workers],
             "settings": running.settings,
             "started_at": running.started_at,
         }
@@ -221,8 +227,25 @@ def create_host(
     def environment_status() -> dict[str, Any]:
         running: Running | None = state["env"]
         if running is None:
+            records.add(
+                "environments",
+                environment=environment,
+                operation="status",
+                package_hash=None,
+                outcome="not running",
+            )
             raise HTTPException(404, f"no environment is running in {environment}")
-        return {"environment": environment, **status_of(running)}
+        status = {"environment": environment, **status_of(running)}
+        records.add(
+            "environments",
+            environment=environment,
+            operation="status",
+            package_hash=running.package_hash,
+            settings=running.settings,
+            outcome="ok",
+            healthy=all(r["healthy"] for r in status["replicas"]),
+        )
+        return status
 
     @app.delete("/environment", status_code=204)
     def delete() -> Response:
@@ -308,7 +331,12 @@ def create_host(
 
     @app.get("/split")
     def get_split() -> dict[str, Any]:
-        return {**split_view(), "changes": records.last("splits")}
+        deployments = {
+            role: status_of(state[role])
+            for role in ("stable", "candidate")
+            if state[role] is not None
+        }
+        return {**split_view(), "deployments": deployments, "changes": records.last("splits")}
 
     def ask(running: Running, incident: dict[str, Any]) -> dict[str, Any]:
         reply = httpx.post(
@@ -426,9 +454,37 @@ def create_host(
     def list_faults() -> dict[str, Any]:
         return {"active": state["faults"], "records": records.last("faults")}
 
+    def collect(role: str, running: Running) -> dict[str, Any]:
+        """The replicas' own metrics, summed per package (FR-005)."""
+        totals: Counter[str] = Counter()
+        cost, fallbacks, unreachable = 0.0, 0, 0
+        p95: list[float] = []
+        for worker in running.workers:
+            report = worker.metrics()
+            if report is None:
+                unreachable += 1
+                continue
+            totals.update(report["counts"])
+            cost += float(report.get("cost", 0.0))
+            fallbacks += int(report.get("real_fallbacks", 0))
+            if report.get("latency_p95_ms") is not None:
+                p95.append(float(report["latency_p95_ms"]))
+        return {
+            "role": role,
+            "package_hash": running.package_hash,
+            "replicas": len(running.workers),
+            "unreachable": unreachable,
+            "counts": dict(totals),
+            "cost": round(cost, 6),
+            "real_fallbacks": fallbacks,
+            "latency_p95_ms_worst_replica": max(p95) if p95 else None,
+        }
+
     @app.get("/metrics")
     def metrics() -> dict[str, Any]:
-        return {"environment": environment, "counts": dict(counts)}
+        roles = ("env",) if environment != PROD_SIM else ("stable", "candidate")
+        packages = [collect(role, state[role]) for role in roles if state[role] is not None]
+        return {"environment": environment, "counts": dict(counts), "packages": packages}
 
     return app
 
