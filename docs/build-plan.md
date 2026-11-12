@@ -121,7 +121,7 @@ Every platform component is open source and, except the database, the proxy and 
 
 - **UI change from the solution architecture:** Streamlit replaces React for the MVP to keep the stack Python-only and save build time; the approval and query APIs stay the same, so a React UI can replace it later. Section 17 of the architecture needs this update.
 - **Langfuse self-hosting** (v3) brings ClickHouse and Redis; if that is too heavy for the demo host, start with OpenTelemetry to Jaeger and token counts in `run_activity`.
-- **Pilot agent** (Travel Claims Assistant) is built on the same stack (LangGraph agent, MCP tools), so the platform team owns one toolset.
+- **Pilot agent** (Incident Triage Assistant; changed from Travel Claims by feature 009) is a separate project (`pilot/`) with MCP tools reached through the platform's MCP servers, so the platform treats it as any team's agent.
 
 ## 5. Repository layout
 
@@ -146,7 +146,7 @@ agentic-adlc/
 │   ├── api/                      # FastAPI: intake, approvals, query
 │   └── ui/                       # Streamlit: inbox, journey, run detail, activity, KPIs
 ├── mcp_servers/                  # knowledge, git_ci, eval, redteam, deploy, telemetry, itsm_mock
-├── pilot/                        # Travel Claims golden template, synthetic data, traffic, faults
+├── pilot/                        # Incident Triage golden template, synthetic data, traffic, faults
 ├── db/migrations/                # Alembic
 ├── tests/                        # unit, integration, scenario (D-1 … D-9)
 ├── deploy/compose.yaml           # demo host
@@ -167,7 +167,7 @@ Fourteen Spec Kit features, ordered so that the generic lifecycle engine works e
 | 006 | `006-agent-runtime` | Context builder, LiteLLM gateway with model catalogue and budgets, structured output and schema validator, reviewer agent, clarification requests, OpenTelemetry tracing; **stub terminal agents** | 003–005 | 7 | Langfuse (use Jaeger) |
 | 007 | `007-human-inbox` | FastAPI intake / approval / clarification / waiver APIs; Streamlit intake form and inbox with sign-off, artifact table editing, escalation completion | 003, 005 | 8 | Artifact editing as comments only |
 | 008 | `008-terminal-agents-t0-t2` | Real T0, T1, T2 agents, prompts, playbooks; knowledge MCP (local document folder first) | 006, 007 | 7, 13 | Single agent per terminal, no subagents |
-| 009 | `009-pilot-environments` | Travel Claims golden template, synthetic claims, pilot dev / test / prod-sim containers, Locust traffic, fault injector | 001 | 14 | One injected fault (model swap) |
+| 009 | `009-pilot-environments` | Incident Triage golden template, synthetic incidents, pilot dev / test / prod-sim environments, traffic generator, fault injector | 001 | 14 | One injected fault (model swap) |
 | 010 | `010-mcp-servers` | Git and CI, eval (DeepEval), red-team (garak / PyRIT), deploy and traffic (Docker SDK + Traefik), telemetry, ITSM mock | 006, 009 | 13 | Red-team as a fixed prompt suite |
 | 011 | `011-terminal-agents-t3-t5` | T3 builder (fills the golden template), T4 evaluation with regression pack, T5 assurance with waiver path | 008, 010 | 7 | T5 mostly checklist-driven |
 | 012 | `012-terminal-agents-t6-t9` | T6 readiness (mostly deterministic), T7 deployment, T8 operations with 2–3 monitors, T9 change classification, re-entry and retirement checklist | 011 | 7 | T6 / T7 deterministic with thin agent; one T8 monitor |

@@ -186,7 +186,7 @@ then polish.
 
 ## Phase 9: Polish
 
-- [ ] T026 [P] Update `docs/solution-architecture.md` §14 and the demo script to the Incident Triage Assistant (demo moments unchanged), and `pilot/README.md` (template, fill points, packages, environments, faults, traffic).
+- [X] T026 [P] Update `docs/solution-architecture.md` §14 and the demo script to the Incident Triage Assistant (demo moments unchanged), and `pilot/README.md` (template, fill points, packages, environments, faults, traffic).
 - [ ] T027 [P] Run the 003–008 suites and the pilot suites 10 times in a row and record the result.
 - [ ] T028 Run `make check` and fix any failure.
 - [ ] T029 Live check (quickstart §2):

@@ -11,7 +11,7 @@ This document defines the solution architecture of the Agentic ADLC Platform: th
 **In scope (MVP)**
 
 - Lifecycle platform: spec layer, orchestration, lifecycle agents, policy enforcement, evidence ledger, human approval and lifecycle dashboard.
-- One pilot use case (Travel Claims Assistant, synthetic data) with one agent, two at most, taken from T0 to T9.
+- One pilot use case (Incident Triage Assistant, synthetic data) with one agent, two at most, taken from T0 to T9.
 - Simulated deployment (T7) and simulated operations (T8) for the pilot.
 
 **Recorded as target state, not built in MVP:** multiple concurrent use cases and teams, real enterprise integrations (ITSM, CMDB, production CI/CD), subagent-level permissions, portfolio analytics, spec signing, automated spec simulation.
@@ -426,22 +426,22 @@ All external systems are reached through MCP servers (for agents) or adapters (f
 
 ## 14. Pilot use case execution environment
 
-The pilot, the Travel Claims Assistant, is the agent the platform builds, tests, deploys and operates. It runs in its own environments, separate from the platform, so the platform treats it exactly as it would any team's agent.
+The pilot, the Incident Triage Assistant (changed from the Travel Claims Assistant by feature 009), is the agent the platform builds, tests, deploys and operates. It runs in its own environments, separate from the platform, so the platform treats it exactly as it would any team's agent.
 
 | Environment | Purpose | Used by | Data |
 | --- | --- | --- | --- |
 | Pilot dev | Build and unit test the pilot agent | T3 builder agent | Synthetic |
 | Pilot test | Evaluation and assurance against the immutable candidate | T4, T5 agents | Synthetic golden set, planted test PII |
-| Pilot prod-sim | Simulated production: shadow / canary / full rollout as container replicas behind a traffic splitter | T7, T8 agents | Synthetic live traffic |
+| Pilot prod-sim | Simulated production: shadow / canary / full rollout as replicas behind a traffic splitter (worker processes in the MVP; see feature 009) | T7, T8 agents | Synthetic live traffic |
 
 **Supporting services (MVP)**
 
-- **Synthetic data generator:** produces claims (trip delay, baggage) with personas and edge cases from the T1 scenarios; used for the T4 golden set and T8 traffic.
-- **Traffic generator:** sends a steady stream of synthetic claims to prod-sim so T8 monitors have data.
-- **Fault injector:** triggers scripted events for the demo, e.g. a model version swap that lowers the online eval score (drift → T9 → re-entry at T2), or a planted PII leak (safety event → T5).
+- **Synthetic data generator:** produces incidents (access, hardware, software, network, security) with reporters, edge cases and expected answers; used for the T4 golden set and T8 traffic.
+- **Traffic generator:** sends a steady stream of synthetic incidents to prod-sim and measures online routing accuracy, so T8 monitors have data.
+- **Fault injector:** triggers scripted events for the demo, e.g. a model version swap that lowers the online routing accuracy (drift → T9 → re-entry at T2), or a planted PII leak (safety event → T5).
 - **Simulated ITSM:** records change requests and incidents in the platform database through the ITSM adapter.
 
-**Pilot agent shape:** one agent (claims triage and response), optionally a second (document check). It uses 2–3 mocked tools (policy lookup, claim status, baggage tracker), emits traces and RAI metrics, and enforces its token budget, as required by its own T2 design contract.
+**Pilot agent shape:** one agent that reads a raised incident and assigns it to the team that should handle it (category, priority, team and a reason); it never closes incidents. It uses 2 mocked tools (service catalogue, team directory), emits traces and RAI metrics, and enforces its token budget, as required by its own T2 design contract. A golden template holds the agent code and per-environment infrastructure definitions; T3 fills configuration only, and environments are created from the template for a package hash (feature 009).
 
 ## 15. Deployment and infrastructure
 
@@ -584,9 +584,9 @@ Editable source: page 5 of `adlc-solution-architecture.drawio`.
 
 | Step | Terminal | What happens | Proves |
 | --- | --- | --- | --- |
-| 1 | T0 | Business owner submits the Travel Claims use case; agent builds the intake card; owner passes it; risk tier set | D-1 |
+| 1 | T0 | Business owner submits the Incident Triage use case; agent builds the intake card; owner passes it; risk tier set | D-1 |
 | 2 | T1 | Agent proposes requirements and profile; owner rejects with comment (KPI baseline missing); agent reworks; pass | D-1, D-2 |
-| 3 | T2 | Agent asks one clarification (claim data retention period); owner answers; same run resumes; design contract passes | D-1, D-9 |
+| 3 | T2 | Agent asks one clarification (incident data retention period); owner answers; same run resumes; design contract passes | D-1, D-9 |
 | 4 | T3 | Builder agent produces the pilot agent and candidate package hash | D-1, D-6 |
 | 5 | T4 | Evaluation finds a tool-timeout defect; rework routed to T3 (root cause: implementation); T3 run 2; T4 pass | D-3 |
 | 6 | T5 | A log-masking gap is accepted as an exception with waiver | D-5 |
