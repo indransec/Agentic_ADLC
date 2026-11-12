@@ -12,7 +12,7 @@ from adlc.policy.predicates import check_catalogue, load_all
 def test_exact_binding(registry: Any) -> None:
     catalogue = registry.catalogue("predicates").content
     library = load_all()
-    assert len(library) == 60
+    assert len(library) == 62
     assert check_catalogue(catalogue, library) == []
 
 

@@ -60,7 +60,8 @@ def test_harness_refuses_when_test_does_not_run_the_candidate(tools: Tools) -> N
 def test_redteam_and_scan_with_and_without_the_leak(tools: Tools) -> None:
     candidate, t5 = candidate_in_test(tools, "T5", "redteam_harness_run", "dlp_scanner_run")
     clean = output(t5("redteam_harness_run"))
-    assert clean["suite_version"] == "1.0.0"
+    assert clean["suite_version"] == "1.1.0"
+    assert clean["by_category"]["prompt_injection"]["evidence_metric"] == "injection_success_rate"
     assert set(clean["by_category"]) == {
         "prompt_injection",
         "jailbreak",

@@ -18,6 +18,7 @@ from adlc.orchestration import store as run_store
 from adlc.orchestration.interfaces import Clock, EvalContext
 from adlc.orchestration.store import RunRow
 from adlc.policy import store as policy_store
+from adlc.policy import tool_evidence
 from adlc.policy.directory import Directory, UnavailableDirectory
 from adlc.policy.values import NOT_AVAILABLE, _NotAvailable
 from adlc.spec_toolkit.registry import SpecRegistry
@@ -138,6 +139,15 @@ class SqlEvidenceProvider:
         usecase_id = str(ctx.usecase_id)
         if TERMINAL.match(source):
             return self._terminal(conn, usecase_id, source, ctx, depth=0)
+        if source in tool_evidence.SOURCES:  # 011: recorded tool results
+            value = tool_evidence.read(
+                conn,
+                source,
+                usecase_id,
+                ctx.run_id,
+                lambda: self._candidate(conn, usecase_id, ctx),
+            )
+            return NOT_AVAILABLE if value is None else value
         run = run_store.load_run(conn, ctx.run_id) if ctx.run_id else None
         usecase = run_store.load_usecase(conn, usecase_id)
         if usecase is None:
@@ -181,6 +191,22 @@ class SqlEvidenceProvider:
             value = tiering.get(tier) if isinstance(tiering, Mapping) else None
             return dict(value) if isinstance(value, Mapping) else {}
         return NOT_AVAILABLE
+
+    def _candidate(self, conn: Connection, usecase_id: str, ctx: EvalContext) -> str | None:
+        """The candidate package: the artifact the MCP registry's ``bound_values.candidate_hash``
+        names (011), from the use case's records; one distinct hash or none."""
+        entry = self.registry.catalogue("mcp_servers")
+        ref = str(
+            ((entry.content if entry else {}).get("bound_values") or {}).get("candidate_hash") or ""
+        )
+        terminal, _, artifact = ref.partition(".")
+        if not terminal or not artifact:
+            return None
+        record = self._terminal(conn, usecase_id, terminal, ctx, depth=0)
+        if not isinstance(record, Mapping):
+            return None
+        found = set(tool_evidence.hashes(record.get(artifact)))
+        return found.pop() if len(found) == 1 else None
 
     def _spec(self, run: RunRow) -> Mapping[str, Any]:
         entry = self.registry.entry(run.terminal_id, run.spec_version)

@@ -953,6 +953,8 @@ def _agent_payload(result: object) -> dict[str, Any]:
         payload: dict[str, Any] = {"result": "artifacts", "artifacts": json_safe(result.artifacts)}
         if result.citations:  # 008: recorded with the versions they support
             payload["citations"] = [asdict(c) for c in result.citations]
+        if result.imports:  # 011: provenance of imported tables, kept in the run activity
+            payload["imports"] = [dict(i) for i in result.imports]
         return payload
     if isinstance(result, Clarification):
         return {"result": "clarification", "clarification": _clarification_payload(result)}
@@ -1007,6 +1009,7 @@ def _reason(signal: Signal) -> str | None:
 
 def _detail(signal: Signal) -> dict[str, Any]:
     keep = (
+        "imports",
         "decision",
         "role",
         "root_cause",

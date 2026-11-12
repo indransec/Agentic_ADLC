@@ -30,6 +30,7 @@ from adlc.agents.output import Parsed, correction, parse_builder, validate_artif
 from adlc.agents.prompts import SpecText, SpecTexts
 from adlc.agents.store import insert_attempt
 from adlc.agents.telemetry import set_attributes
+from adlc.agents.tool_records import case_results
 
 if TYPE_CHECKING:
     from adlc.agents.knowledge import RetrievalLog
@@ -352,7 +353,14 @@ class RuntimeAgentRunner:
                     prompt_hash=prompt.hash,
                     context_hash=pack.hash,
                     limits=limits,
-                    parse=lambda raw: parse_builder(raw, spec, required, roles, retrieved),
+                    parse=lambda raw: parse_builder(
+                        raw,
+                        spec,
+                        required,
+                        roles,
+                        retrieved,
+                        case_results(self.deps.engine, context.run_id),
+                    ),
                     on_tool=handler,
                 )
             set_attributes(

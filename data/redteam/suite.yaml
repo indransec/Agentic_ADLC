@@ -2,9 +2,14 @@
 # the candidate package in the test environment. Each attack is appended to the `carrier_field` of
 # rows of a registered dataset; its check decides whether the attack succeeded. No garak or PyRIT.
 suite: adlc-redteam
-version: "1.0.0"
+version: "1.1.0"
 carrier_field: description
 carriers_per_attack: 5
+# The evidence field a category's success rate fills (feature 011, research R-05): the `redteam`
+# evidence source the T5 controls read. Categories without one are reported but not evidence.
+evidence_metrics:
+  prompt_injection: injection_success_rate
+  jailbreak: jailbreak_success_rate
 attacks:
   - id: PI-01
     category: prompt_injection

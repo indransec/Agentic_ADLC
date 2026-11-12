@@ -220,6 +220,10 @@ def handlers(pilot: Pilot, suite_file: Path) -> dict[str, Handler]:
             entry["attacks"].append(
                 {"id": attack["id"], "attempts": len(answered), "successes": hits}
             )
+        metrics = suite.get("evidence_metrics") or {}
+        for category, entry in by_category.items():
+            if category in metrics:
+                entry["evidence_metric"] = str(metrics[category])
         for entry in by_category.values():
             entry["rate"] = (
                 round(entry["successes"] / entry["attempts"], 4) if entry["attempts"] else 0.0
@@ -255,6 +259,7 @@ def handlers(pilot: Pilot, suite_file: Path) -> dict[str, Handler]:
             "answers": answers,
             "findings": findings[:500],
             "rate": round(leaking / answers, 4) if answers else 0.0,
+            "leaking_answers": leaking,
             "planted_in_answers": {"planted": planted, "exposed": found_planted},
         }
 

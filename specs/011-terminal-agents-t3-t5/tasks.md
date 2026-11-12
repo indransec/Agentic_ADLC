@@ -31,15 +31,15 @@ polish.
 
 ### Tests first
 
-- [ ] T003 [P] `tests/unit/policy/test_rows_match.py`: keys matched; numbers within 0.001; text equal; a recorded key with a different value fails naming the row; rows without a recorded key are skipped; a scalar recorded value compares the named measured column; an empty table or missing evidence fails closed.
-- [ ] T004 [P] `tests/integration/policy/test_tool_evidence.py`: `ci`, `sbom`, `harness`, `redteam`, `dlp` built from `tools.tool_result` per contracts/evidence-sources.md (latest of the run for `ci`, latest for the candidate otherwise); none recorded → not available → synthetic fallback labelled.
-- [ ] T005 [P] `tests/unit/agents/test_artifact_import.py`: import expansion per contracts/artifact-import.md; `req_id_by` mapping and default; provenance recorded; foreign result, wrong kind, missing mapping → invalid output.
+- [X] T003 [P] `tests/unit/policy/test_rows_match.py`: keys matched; numbers within 0.001; text equal; a recorded key with a different value fails naming the row; rows without a recorded key are skipped; a scalar recorded value compares the named measured column; an empty table or missing evidence fails closed.
+- [X] T004 [P] `tests/integration/policy/test_tool_evidence.py`: `ci`, `sbom`, `harness`, `redteam`, `dlp` built from `tools.tool_result` per contracts/evidence-sources.md (latest of the run for `ci`, latest for the candidate otherwise); none recorded → not available → synthetic fallback labelled.
+- [X] T005 [P] `tests/unit/agents/test_artifact_import.py`: import expansion per contracts/artifact-import.md; `req_id_by` mapping and default; provenance recorded; foreign result, wrong kind, missing mapping → invalid output.
 
 ### Implementation
 
-- [ ] T006 `rows_match` in `src/adlc/policy/predicates/evaluation.py` and `adlc-specs/shared/predicates.yaml`.
-- [ ] T007 Evidence sources in `src/adlc/policy/evidence.py` (reading `tools.tool_result`) and `adlc-specs/shared/evidence_sources.yaml` (`harness`; `ci` fields `package_hash`, `tests`, `scans`); the red-team suite's `evidence_metric` per category in `data/redteam/suite.yaml`.
-- [ ] T008 Table import in the agent output handling (`src/adlc/agents/output.py` or a new `imports.py`): expansion, provenance in the artifact version content, invalid-output errors; evidence tools return `result_id` (`src/adlc/agents/mcp_tools.py`, `tools.tool_result` id as `RES-<n>`).
+- [X] T006 `rows_match` in `src/adlc/policy/predicates/evaluation.py` and `adlc-specs/shared/predicates.yaml`.
+- [X] T007 Evidence sources in `src/adlc/policy/evidence.py` (reading `tools.tool_result`) and `adlc-specs/shared/evidence_sources.yaml` (`harness`; `ci` fields `package_hash`, `tests`, `scans`); the red-team suite's `evidence_metric` per category in `data/redteam/suite.yaml`.
+- [X] T008 Table import in the agent output handling (`src/adlc/agents/output.py` or a new `imports.py`): expansion, provenance in the artifact version content, invalid-output errors; evidence tools return `result_id` (`src/adlc/agents/mcp_tools.py`, `tools.tool_result` id as `RES-<n>`).
 
 **Checkpoint**: predicate, evidence and import tested; `make check` green.
 

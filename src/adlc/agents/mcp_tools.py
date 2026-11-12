@@ -58,7 +58,7 @@ class ToolRecords(Protocol):
 
     def result(
         self, call_id: int, context: ToolContext, kind: str, package: str | None, result: Any
-    ) -> None: ...
+    ) -> str: ...
 
 
 # ------------------------------------------------------------------ bound values
@@ -243,7 +243,9 @@ class McpTool:
         if self.spec.evidence is not None:
             result = _json(text)
             package = _package(result)
-            self.records.result(call_id, context, self.spec.evidence, package, result)
+            result_id = self.records.result(call_id, context, self.spec.evidence, package, result)
+            if isinstance(result, dict):  # 011: the agent can cite or import this result
+                return json.dumps({"result_id": result_id, **result}, ensure_ascii=False)
         return text
 
 

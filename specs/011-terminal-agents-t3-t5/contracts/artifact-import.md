@@ -12,6 +12,6 @@ In its final answer, instead of rows for a table artifact, an agent may give:
 - Rows become `{case_id, req_id, expected, actual, score, result}`: `expected`/`actual` are the
   scored fields joined (`team=a; priority=P3`), `score` is the share of scored fields right,
   `result` is `pass` or `fail`; `req_id` comes from `req_id_by` on the row's expected `field`.
-- The artifact version records `imported_from` (result id, its sha256, kind) and the mapping.
+- The build step's run activity records the import (artifact, result id, its sha256, kind, the mapping, row count); the artifact version has only the declared columns.
 - Any other shape, an unknown or foreign result, or a table without case columns is an invalid
   output, returned to the agent for correction (feature 006).

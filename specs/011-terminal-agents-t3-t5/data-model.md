@@ -19,8 +19,9 @@ See contracts/evidence-sources.md.
 
 ## Artifact import provenance
 
-An imported table's artifact version records, in its content, `imported_from: {result_id,
-result_sha256, kind}` and the agent's `req_id_by` mapping (contracts/artifact-import.md).
+An imported table's provenance (`artifact`, `result_id`, `kind`, `sha256`, `req_id_by`, `rows`)
+is kept in the build step's run activity (`run.run_activity.detail.imports`); the artifact
+version itself has only the declared columns (contracts/artifact-import.md).
 
 ## Pilot data
 
