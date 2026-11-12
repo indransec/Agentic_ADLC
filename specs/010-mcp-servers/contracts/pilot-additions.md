@@ -10,7 +10,7 @@ Pilot-side operations the bridge calls. Pilot network only (009 contracts/pilot-
 | `POST /build` | `{files: {path: text}}` (the fill layout) | `{checks: [{name: validate, build, reproducible, smoke; passed; detail}], package_hash?}`; a failed `validate` names the fill part |
 | `GET /packages/{hash}` | — | manifest, or `404` |
 | `GET /datasets` | — | `[{id, version, seed, size, pii_share, sha256, scored_fields, slices}]` from `pilot/datasets.yaml` |
-| `GET /datasets/{id}` | — | `{dataset, rows}`; rows are incidents with `expected` and `planted_pii`; `404` if unknown |
+| `GET /datasets/{id}` | — | `{dataset, rows}`; each row is an incident plus the labels `expected`, `planted_pii`, `edge_case` and `synthetic`, which the harness keeps for scoring and never sends; `404` if unknown |
 
 ## Prod-sim host additions
 

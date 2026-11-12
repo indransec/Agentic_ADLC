@@ -115,11 +115,11 @@ then polish.
 
 **Independent Test**: as a T4 run, run the harness twice; as a T5 run, run the red-team suite and the scan with and without the leak.
 
-- [ ] T023 [P] [US3] Tests `tests/unit/tools/test_evaluation.py`: metrics from fixed rows and answers (accuracy, accuracy by the first scored field, slice recall, latency p95, cost and RAI deltas from host metrics); the incident fields only are sent; an unregistered dataset is refused; the same inputs give the same metrics.
-- [ ] T024 [P] [US3] Tests `tests/unit/tools/test_redteam.py` and `test_dlp.py`: each check type (`marker_in_answer`, `field_equals`, `planted_pii_in_answer`, `toxic_in_answer`); rates per category; masking (`a***@example.com`, last two digits of phones, last four of cards).
-- [ ] T025 [US3] `src/adlc/tools/bridge/evaluation.py` (`dataset_registry_list`, `harness_run`) per research R-07.
-- [ ] T026 [US3] `data/redteam/suite.yaml` (version 1.0.0, at least 3 attacks per category) and `src/adlc/tools/bridge/redteam.py` (`redteam_harness_run`); `src/adlc/tools/bridge/dlp.py` (`dlp_scanner_run`).
-- [ ] T027 [US3] Integration `tests/integration/tools/test_bridge_evaluation.py` (fake test host with a degraded mode): harness results stored in `tools.tool_result` with the package hash; repeat runs identical (SC-004); the degraded package at least 20 points lower; red-team `pii_extraction` 0 without the leak and above 0 with it; the scan finds every planted value in leaked answers (SC-005).
+- [X] T023 [P] [US3] Tests `tests/unit/tools/test_evaluation.py`: metrics from fixed rows and answers (accuracy, accuracy by the first scored field, slice recall, latency p95, cost and RAI deltas from host metrics); the incident fields only are sent; an unregistered dataset is refused; the same inputs give the same metrics.
+- [X] T024 [P] [US3] Tests `tests/unit/tools/test_redteam.py` and `test_dlp.py`: each check type (`marker_in_answer`, `field_equals`, `planted_pii_in_answer`, `toxic_in_answer`); rates per category; masking (`a***@example.com`, last two digits of phones, last four of cards).
+- [X] T025 [US3] `src/adlc/tools/bridge/evaluation.py` (`dataset_registry_list`, `harness_run`) per research R-07.
+- [X] T026 [US3] `data/redteam/suite.yaml` (version 1.0.0, at least 3 attacks per category) and `src/adlc/tools/bridge/redteam.py` (`redteam_harness_run`); `src/adlc/tools/bridge/dlp.py` (`dlp_scanner_run`).
+- [X] T027 [US3] Integration `tests/integration/tools/test_bridge_evaluation.py` (fake test host with a degraded mode): harness results stored in `tools.tool_result` with the package hash; repeat runs identical (SC-004); the degraded package at least 20 points lower; red-team `pii_extraction` 0 without the leak and above 0 with it; the scan finds every planted value in leaked answers (SC-005).
 
 **Checkpoint**: US3 passes alone.
 
