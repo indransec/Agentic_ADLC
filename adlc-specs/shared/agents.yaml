@@ -58,7 +58,18 @@ agents:
       - {tool: pilot_env_create, permission: "mcp:pilot_env:dev"}
       - {tool: pilot_env_status, permission: "mcp:pilot_env:read"}
       - {tool: pilot_env_infra, permission: "mcp:pilot_env:read"}
-  - {id: t4-evaluation-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
+  - id: t4-evaluation-agent
+    version: "2.0.0"
+    implementation: model
+    model_tier: reasoning
+    prompt: {id: t4-evaluation-agent, version: "1.0.0"}
+    tools:
+      - {tool: pilot_env_create, permission: "mcp:pilot_env:test"}
+      - {tool: pilot_env_status, permission: "mcp:pilot_env:read"}
+      - {tool: dataset_registry_list, permission: "mcp:dataset_registry:read"}
+      - {tool: harness_run, permission: "mcp:harness:run"}
+      - {tool: artifact_store_read, permission: "mcp:artifact_store:read"}
+      - {tool: eval_store_write, permission: "mcp:eval_store:write"}
   - {id: t5-assurance-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
   - {id: t6-readiness-agent, version: "1.0.0", implementation: stub, model_tier: standard, tools: []}
   - {id: t7-deployment-agent, version: "1.0.0", implementation: stub, model_tier: standard, tools: []}

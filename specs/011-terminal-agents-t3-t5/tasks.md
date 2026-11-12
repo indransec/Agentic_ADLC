@@ -57,10 +57,10 @@ polish.
 
 ## Phase 4: User Story 2 – T4 evaluates against the T1 thresholds (P1)
 
-- [ ] T014 [P] [US2] Tests `tests/unit/tools/test_evaluation.py` (extend): catalogue metrics, calibration on the labelled slice, case rows for import.
-- [ ] T015 [US2] `src/adlc/tools/bridge/evaluation.py`: catalogue metrics, calibration, case rows (research R-06); `pilot/datasets.yaml` `labelled_slice`; lab returns it; fake pilot updated.
-- [ ] T016 [US2] Spec content: prompt `t4-evaluation-agent.md`; playbooks `t4-evaluation.md`, `golden-dataset.md`, `judge-calibration.md`; agents catalogue T4 entry (`pilot_env_create`, `pilot_env_status`, `dataset_registry_list`, `harness_run`, `artifact_store_read`, `eval_store_write`); T4 spec 3.0.0 with the R-07 controls, including `rows_match(T4.cost_latency, "measure", harness.metrics)`.
-- [ ] T017 [US2] Integration `tests/integration/agents/test_t4_agent.py`: a candidate meeting the thresholds passes the controls with `harness` decisions not synthetic and `test_case_results` imported; a weaker candidate fails a threshold control, logs a defect whose root cause is `implementation`, and the reviewer's rework routes (by the T4 outcome model) to T3; regression pack recorded.
+- [X] T014 [P] [US2] Tests `tests/unit/tools/test_evaluation.py` (extend): catalogue metrics, calibration on the labelled slice, case rows for import.
+- [X] T015 [US2] `src/adlc/tools/bridge/evaluation.py`: catalogue metrics, calibration, case rows (research R-06); `pilot/datasets.yaml` `labelled_slice`; lab returns it; fake pilot updated.
+- [X] T016 [US2] Spec content: prompt `t4-evaluation-agent.md`; playbooks `t4-evaluation.md`, `golden-dataset.md`, `judge-calibration.md`; agents catalogue T4 entry (`pilot_env_create`, `pilot_env_status`, `dataset_registry_list`, `harness_run`, `artifact_store_read`, `eval_store_write`); T4 spec 3.0.0 with the R-07 controls, including `rows_match(T4.cost_latency, "measure", harness.metrics)`.
+- [X] T017 [US2] Integration `tests/integration/agents/test_t4_agent.py`: a candidate meeting the thresholds passes the controls with `harness` decisions not synthetic and `test_case_results` imported; a weaker candidate fails a threshold control, logs a defect whose root cause is `implementation`, and the reviewer's rework routes (by the T4 outcome model) to T3; regression pack recorded.
 
 ---
 

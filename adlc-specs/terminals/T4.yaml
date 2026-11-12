@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T4
     name: Evaluation
-    version: "2.0.0"
+    version: "3.0.0"
     schema_version: "1.1.0"
     purpose: Does the agent behave as designed?
     owner_role: adlc_coe
@@ -61,9 +61,9 @@ terminal:
     status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
   playbooks:
     procedures:
-      - {id: PB-T4-01, ref: playbooks/t4-evaluation.md, version: "1.0.0"}
-      - {id: PB-T4-02, ref: playbooks/golden-dataset.md, version: "1.0.0"}
-      - {id: PB-T4-03, ref: playbooks/judge-calibration.md, version: "1.0.0"}
+      - {id: PB-T4-01, ref: playbooks/t4-evaluation.md, version: "1.1.0"}
+      - {id: PB-T4-02, ref: playbooks/golden-dataset.md, version: "1.1.0"}
+      - {id: PB-T4-03, ref: playbooks/judge-calibration.md, version: "1.1.0"}
     grounding:
       - {mcp: dataset_registry, scope: approved datasets}
       - {mcp: eval_store, scope: prior eval runs for this use case}
@@ -108,6 +108,23 @@ terminal:
       - id: CTL-T4-10
         rule: column_min(T4.judge_calibration, "sample_size_count") >= param.human_label_cases_min
         description: "human-labelled calibration slice meets the tier minimum (TDS tiering human_label_slice, now a guardrail)"
+        severity: blocking
+      # 011 (research R-07): values copied from the harness equal its latest result
+      - id: CTL-T4-11
+        rule: rows_match_value(T4.quality_vs_threshold, "metric", "actual", harness.metrics)
+        description: quality actuals equal the recorded harness result
+        severity: blocking
+      - id: CTL-T4-12
+        rule: rows_match_value(T4.rai_vs_threshold, "metric", "actual", harness.metrics)
+        description: RAI actuals equal the recorded harness result
+        severity: blocking
+      - id: CTL-T4-13
+        rule: rows_match_value(T4.cost_latency, "measure", "actual", harness.metrics)
+        description: cost and latency equal the recorded harness result
+        severity: blocking
+      - id: CTL-T4-14
+        rule: rows_match(T4.judge_calibration, "judge", harness.calibration)
+        description: judge calibration equals the recorded harness result
         severity: blocking
     checklist:
       ref: checklists/t4.yaml

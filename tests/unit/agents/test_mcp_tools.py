@@ -1,6 +1,7 @@
 """T008: the platform side of the 010 tools: only the model's declared arguments pass, bound values
 come from the run and real evidence, the token carries them, and every call is recorded."""
 
+import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -204,3 +205,17 @@ def test_errors_unavailable_and_gate_refusals_are_recorded() -> None:
 def test_describe_shows_only_model_arguments() -> None:
     t, _, _ = tool("harness_run")
     assert t.describe()["arguments"] == {"dataset_id": "a dataset id from the registry"}
+
+
+def test_long_lists_are_stored_not_shown() -> None:
+    """011: the agent sees the size of a long list; the full result is recorded."""
+    cases = [{"case_id": f"C-{n}"} for n in range(50)]
+    answer = json.dumps(
+        {"package_hash": CANDIDATE, "catalogue": {"task_success_rate": 1.0}, "cases": cases}
+    )
+    evidence = FakeEvidence({"T3": {"candidate_package": {"sha256": CANDIDATE}}})
+    t, _, records = tool("harness_run", evidence, FakeClient((False, answer)))
+    seen = json.loads(t.call({"dataset_id": "golden"}, context("T4", ("mcp:harness:run",))))
+    assert seen["cases"] == {"count": 50, "stored": "import or cite it by result_id"}
+    assert seen["catalogue"] == {"task_success_rate": 1.0}
+    assert len(records.results[0]["result"]["cases"]) == 50

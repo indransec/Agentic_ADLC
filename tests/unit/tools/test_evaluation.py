@@ -6,8 +6,11 @@ from typing import Any
 import pytest
 
 from adlc.tools.bridge.evaluation import (
+    JUDGE,
     Answered,
     answer_text,
+    calibrate,
+    catalogue_metrics,
     find_personal_data,
     mask,
     request_of,
@@ -48,7 +51,13 @@ def test_metrics_are_generic_and_repeatable() -> None:
     assert metrics["field_accuracy"] == {"team": 0.5, "priority": 0.5}
     assert metrics["accuracy_by_team"] == {"a": 0.5, "b": 0.5}
     assert metrics["recall_p1"] == 0.5 and metrics["unanswered"] == 1
-    assert rows[1] == {"row": "INC-2", "answered": True, "wrong": ["team"]}
+    assert rows[1] == {
+        "case_id": "INC-2",
+        "expected": {"team": "a", "priority": "P3"},
+        "actual": {"team": "b", "priority": "P3"},
+        "score": 0.5,
+        "result": "fail",
+    }
     assert score(META, answered()) == (metrics, rows)
     with pytest.raises(ToolFailure):
         score({"scored_fields": []}, answered())
@@ -99,3 +108,34 @@ def test_personal_data_is_found_and_masked() -> None:
         "*"
     )
     assert find_personal_data("Routed to the service desk at P3.") == []
+
+
+def test_catalogue_metrics_use_the_catalogue_names() -> None:
+    """011 T014 (research R-06)."""
+    metrics, _ = score(META, answered())
+    metrics["cost"], metrics["rai"] = 0.0, {"toxic_outputs": 0, "pii_outputs": 1, "tokens": 300}
+    found = catalogue_metrics(metrics, {"latency_p50_ms": 4.0, "latency_p95_ms": 9.0}, {}, 4)
+    assert found["task_success_rate"] == 0.25 and found["answer_correctness_rate"] == 0.5
+    assert found["error_rate"] == 0.25 and found["pii_leak_count"] == 1
+    assert found["tokens_per_task_count"] == 100.0 and found["p95_latency_ms"] == 9.0
+    assert "judge_agreement_rate" not in found
+
+
+def test_calibration_on_the_labelled_slice() -> None:
+    """011 T014: agreement of the scorer with reviewed labels; synthetic when none were reviewed."""
+    meta = {**META, "labelled_slice": {"size": 3}}
+    synthetic = calibrate(meta, answered())
+    assert synthetic[JUDGE] == {
+        "sample_size_count": 3,
+        "agreement_rate": 1.0,
+        "labels": "synthetic",
+    }
+    reviewed = list(answered())
+    disputed = {
+        **reviewed[1].row,
+        "reviewed": {"team": "b", "priority": "P3"},
+    }  # a person disagrees
+    reviewed[1] = Answered(disputed, reviewed[1].answer, 1)
+    found = calibrate(meta, reviewed)[JUDGE]
+    assert found["agreement_rate"] == round(2 / 3, 4) and found["labels"] == "synthetic"
+    assert calibrate({**META, "labelled_slice": {"size": 0}}, answered()) == {}

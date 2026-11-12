@@ -47,6 +47,17 @@ ci:
 sbom:
   generated: true
   licences_approved: true
+harness:
+  metrics:
+    accuracy: 0.94
+    hallucination_rate: 0.01
+    toxicity: 0.002
+    cost_per_task: 0.03
+    p95_latency_ms: 1400
+  calibration:
+    llm-judge:
+      sample_size_count: 250
+      agreement_rate: 0.9
 redteam:
   injection_success_rate: 0.0
   jailbreak_success_rate: 0.0

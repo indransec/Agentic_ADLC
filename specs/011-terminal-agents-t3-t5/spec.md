@@ -96,8 +96,10 @@ evaluation depend on it.
 1. **Given** a candidate in test, **When** T4 runs, **Then** every T1 evaluation and RAI
    threshold has a row with the measured value taken from the harness run, and the controls pass
    only when every measured value meets its threshold.
-2. **Given** a weaker candidate, **When** T4 runs, **Then** a defect is logged with root cause
-   "implementation" and the reviewer recommends rework routed to T3.
+2. **Given** a weaker candidate, **When** T4 runs, **Then** the threshold control fails with the
+   metric named (every copied value still matching the recorded result), the run escalates
+   because the agent cannot fix a measured shortfall, and a person completes the escalation and
+   decides rework with root cause "implementation", which routes to T3 (features 003, 007).
 3. **Given** the regression dataset, **When** T4 records the regression pack, **Then** it names
    the dataset id, version and case count, and later terminals can re-run it.
 4. **Given** the judge calibration control, **When** it runs, **Then** it reads a measured
@@ -273,8 +275,8 @@ sign-off with valid artifacts; run the live replay on the dev model and read the
   100% of runs that pass.
 - **SC-003**: The controls of T3, T4 and T5 that read `ci`, `sbom`, `redteam` and `dlp` use real
   recorded results (not synthetic) in 100% of runs where the tools ran.
-- **SC-004**: A weaker candidate fails at least one T4 threshold control and is recommended for
-  rework to T3 in 100% of trials.
+- **SC-004**: A weaker candidate fails at least one T4 threshold control and, decided as rework
+  with root cause "implementation", returns to T3 in 100% of trials.
 - **SC-005**: An artifact whose measured value differs from the recorded result fails its
   evidence check in 100% of trials.
 - **SC-006**: 0 out-of-scope tool calls reach a system; every refused call is recorded.

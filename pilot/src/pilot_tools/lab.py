@@ -111,6 +111,7 @@ def create_lab(
                 "sha256": _canonical_sha(rows),
                 "scored_fields": list(d["scored_fields"]),
                 "slices": list(d.get("slices") or []),
+                "labelled_slice": dict(d.get("labelled_slice") or {}),
             }
             cache[dataset_id] = {"dataset": meta, "rows": rows}
         return cache[dataset_id]

@@ -245,8 +245,25 @@ class McpTool:
             package = _package(result)
             result_id = self.records.result(call_id, context, self.spec.evidence, package, result)
             if isinstance(result, dict):  # 011: the agent can cite or import this result
-                return json.dumps({"result_id": result_id, **result}, ensure_ascii=False)
+                view = agent_view(result)
+                return json.dumps({"result_id": result_id, **view}, ensure_ascii=False)
         return text
+
+
+LONG_LIST = 20  # rows of a list the agent sees in full; longer ones are stored, not shown
+
+
+def agent_view(result: Mapping[str, Any]) -> dict[str, Any]:
+    """011: what the model sees of an evidence result. The full result is recorded; long lists
+    (per-case rows, findings) are replaced by their size, to import or read by ``result_id``,
+    so the metrics the agent must copy are never cut off."""
+    view: dict[str, Any] = {}
+    for key, value in result.items():
+        if isinstance(value, list) and len(value) > LONG_LIST:
+            view[key] = {"count": len(value), "stored": "import or cite it by result_id"}
+        else:
+            view[key] = value
+    return view
 
 
 def _json(text: str) -> Any:

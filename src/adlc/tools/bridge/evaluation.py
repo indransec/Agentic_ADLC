@@ -66,6 +66,11 @@ def request_of(row: Mapping[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in row.items() if k not in LABELS}
 
 
+def p50(values: Sequence[float]) -> float | None:
+    ordered = sorted(values)
+    return round(ordered[len(ordered) // 2], 1) if ordered else None
+
+
 def p95(values: Sequence[float]) -> float | None:
     ordered = sorted(values)
     return round(ordered[int(len(ordered) * 0.95)] if ordered[-1:] else 0, 1) if ordered else None
@@ -149,9 +154,11 @@ def score(
         by_value[key][1] += 1
         rows.append(
             {
-                "row": item.row.get("incident_id"),
-                "answered": item.answer is not None,
-                "wrong": wrong,
+                "case_id": item.row.get("incident_id"),
+                "expected": {f: expected.get(f) for f in fields},
+                "actual": {f: got.get(f) for f in fields},
+                "score": round((len(fields) - len(wrong)) / len(fields), 4),
+                "result": "pass" if not wrong else "fail",
             }
         )
     slices: dict[str, Any] = {}
@@ -171,6 +178,61 @@ def score(
     return metrics, rows
 
 
+JUDGE = "deterministic-scorer"
+
+
+def calibrate(meta: Mapping[str, Any], answered: Sequence[Answered]) -> dict[str, Any]:
+    """011 (research R-06): the scorer's verdicts on the labelled slice against verdicts on the
+    human-reviewed labels (``reviewed`` per row; the generator's ``expected`` stands in, and says
+    so, when a dataset has no reviewed labels)."""
+    size = int((meta.get("labelled_slice") or {}).get("size") or 0)
+    fields = [str(f) for f in meta.get("scored_fields") or []]
+    sample = list(answered)[:size]
+    if not sample or not fields:
+        return {}
+    agree, synthetic = 0, False
+    for item in sample:
+        got = item.answer or {}
+        expected = item.row.get("expected") or {}
+        reviewed = item.row.get("reviewed")
+        synthetic |= reviewed is None
+        labels = reviewed if isinstance(reviewed, Mapping) else expected
+        scorer = all(got.get(f) == expected.get(f) for f in fields)
+        human = all(got.get(f) == labels.get(f) for f in fields)
+        agree += scorer == human
+    return {
+        JUDGE: {
+            "sample_size_count": len(sample),
+            "agreement_rate": round(agree / len(sample), 4),
+            "labels": "synthetic" if synthetic else "reviewed",
+        }
+    }
+
+
+def catalogue_metrics(
+    metrics: Mapping[str, Any], timing: Mapping[str, Any], calibration: Mapping[str, Any], n: int
+) -> dict[str, Any]:
+    """011 (research R-06): the measures named as in the metric catalogue."""
+    fields = metrics.get("field_accuracy") or {}
+    rai = metrics.get("rai") or {}
+    unanswered = int(metrics.get("unanswered") or 0)
+    answered = max(1, n - unanswered)
+    found: dict[str, Any] = {
+        "task_success_rate": metrics.get("accuracy"),
+        "answer_correctness_rate": next(iter(fields.values()), None),
+        "error_rate": round(unanswered / n, 4) if n else None,
+        "toxicity_rate": round(float(rai.get("toxic_outputs", 0)) / answered, 4),
+        "pii_leak_count": int(rai.get("pii_outputs", 0)),
+        "tokens_per_task_count": round(float(rai.get("tokens", 0)) / answered, 1),
+        "cost_per_task_usd": round(float(metrics.get("cost") or 0) / answered, 6),
+        "p50_latency_ms": timing.get("latency_p50_ms"),
+        "p95_latency_ms": timing.get("latency_p95_ms"),
+    }
+    if calibration:
+        found["judge_agreement_rate"] = calibration[JUDGE]["agreement_rate"]
+    return {k: v for k, v in found.items() if v is not None}
+
+
 def handlers(pilot: Pilot, suite_file: Path) -> dict[str, Handler]:
     lab = Lab(pilot)
 
@@ -187,12 +249,17 @@ def handlers(pilot: Pilot, suite_file: Path) -> dict[str, Handler]:
         metrics, verdicts = score(meta, answered)
         metrics["cost"] = round(after["cost"] - before["cost"], 6)
         metrics["rai"] = {k: after[k] - before[k] for k in RAI_COUNTS}
+        ms = [a.ms for a in answered]
+        timing = {"latency_p50_ms": p50(ms), "latency_p95_ms": p95(ms)}
+        calibration = calibrate(meta, answered)
         return {
             "package_hash": candidate,
             "dataset": {k: meta.get(k) for k in ("id", "version", "sha256", "size")},
             "metrics": metrics,
-            "timing": {"latency_p95_ms": p95([a.ms for a in answered])},
-            "rows": verdicts,
+            "timing": timing,
+            "catalogue": catalogue_metrics(metrics, timing, calibration, len(answered)),
+            "calibration": calibration,
+            "cases": verdicts,
         }
 
     def redteam_harness_run(call: Call, args: dict[str, Any]) -> Any:

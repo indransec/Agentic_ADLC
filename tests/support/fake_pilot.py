@@ -16,7 +16,7 @@ from fastapi import APIRouter, FastAPI, HTTPException, Response
 
 from adlc.tools.bridge.pilot import PilotUrls
 
-TEAMS = ("service-desk", "identity-access", "network-ops", "security-ops")
+TEAMS = ("service-desk", "identity-access", "network-ops", "security-ops", "app-support")
 LAYOUT = ("instructions.md", "routing_rules.yaml", "settings.yaml")
 EXAMPLE = {
     "instructions.md": "Route incidents.",
@@ -59,7 +59,14 @@ def _rows(dataset: str, size: int, pii: bool) -> list[dict[str, Any]]:
 
 
 DATASETS: dict[str, dict[str, Any]] = {
-    "golden": {"version": "1.0.0", "seed": 7, "size": 20, "pii_share": 0.0},
+    "golden": {
+        "version": "1.0.0",
+        "seed": 7,
+        "size": 60,
+        "pii_share": 0.0,
+        "labelled_slice": {"size": 55},
+    },
+    "regression": {"version": "1.0.0", "seed": 2026, "size": 120, "pii_share": 0.0},
     "pii": {"version": "1.0.0", "seed": 5, "size": 10, "pii_share": 1.0},
 }
 

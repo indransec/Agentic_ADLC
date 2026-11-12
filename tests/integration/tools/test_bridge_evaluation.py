@@ -27,7 +27,7 @@ def candidate_in_test(tools: Tools, terminal: str, *names: str) -> tuple[str, An
 def test_harness_is_repeatable_stored_and_sees_the_degraded_model(tools: Tools) -> None:
     candidate, t4 = candidate_in_test(tools, "T4", "dataset_registry_list", "harness_run")
     listed = output(t4("dataset_registry_list"))["datasets"]
-    assert {d["id"] for d in listed} == {"golden", "pii"}
+    assert {d["id"] for d in listed} == {"golden", "regression", "pii"}
     first = output(t4("harness_run", {"dataset_id": "golden"}))
     second = output(t4("harness_run", {"dataset_id": "golden"}))
     assert first["package_hash"] == candidate and first["metrics"] == second["metrics"]
