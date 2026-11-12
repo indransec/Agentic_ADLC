@@ -170,7 +170,7 @@ then polish.
 
 ## Phase 9: Polish
 
-- [ ] T038 [P] `src/adlc/tools/probe.py` (`adlc-tools-probe`): call any tool as a named terminal for a use case through the real gate, token and records (a dev command; refuses to run when `ADLC_ENV` is not `dev` or `demo`).
+- [X] T038 [P] `src/adlc/tools/probe.py` (`adlc-tools-probe`): call any tool as a named terminal for a use case through the real gate, token and records (a dev command; refuses to run when `ADLC_ENV` is not `dev` or `demo`).
 - [ ] T039 [P] Documents: `src/adlc/tools/README.md` (servers, tools, tokens, records); SA §13 (integration table: MVP column for each server), §11 (run tokens), §15 (services); build plan row 010 (no Docker SDK or Traefik, no DeepEval or garak/PyRIT); `deploy/README.md` (services and settings).
 - [ ] T040 Run the 001–009 suites, the new suites and the pilot suite 10 times in a row and record the result (SC-009).
 - [ ] T041 Run `make check` and fix any failure.

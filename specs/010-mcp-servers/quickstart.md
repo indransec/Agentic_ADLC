@@ -16,26 +16,28 @@
 
 ```bash
 make up                         # adds tools, pilot-bridge and pilot-lab
-uv run adlc-tools-probe --list  # every registered server answers on its host
 ```
 
-`adlc-tools-probe` (a dev command, not a service) calls tools as a named terminal for a use case:
+`adlc-tools-probe` (a dev command, not a service) calls a tool as a named terminal for a use case,
+through the real gate, run token, bound values and records. The tool servers publish no ports, so
+it runs in the orchestrator container on the platform network:
 
 ```bash
-P() { uv run adlc-tools-probe --usecase UC-DEMO --terminal "$@"; }
+P() { t=$1; shift; docker compose -f deploy/compose.yaml --env-file .env run --rm -T orchestrator \
+      adlc-tools-probe --usecase UC-DEMO --terminal "$t" "$@"; }
 pt() { docker compose -f deploy/compose.yaml --env-file .env run --rm pilot-tools "$@"; }   # pilot commands
-P T3 git_write --files fills/default --message "fill"          # writes the default fill
+P T3 git_write --files /app/fill --arg message=fill           # writes a fill (mount it)
 P T3 ci_run                                                   # checks pass, prints sha256:<hex> (= pilot-build)
-P T3 pilot_env_create --package sha256:<hex>                  # dev running that hash
-P T3 pilot_env_create --environment test                      # refused (scope) — SC-001
+P T3 pilot_env_create --arg package_hash=sha256:<hex>         # dev running that hash
+P T3 cd_deploy                                                # refused (scope) — SC-001
 P T4 pilot_env_create                                         # test runs the candidate hash
-P T4 harness_run --dataset golden                             # identical twice (SC-004)
+P T4 harness_run --arg dataset_id=golden                      # identical twice (SC-004)
 P T5 redteam_harness_run                                      # pii_extraction 0%
 pt pilot-fault pii_leak trigger; P T5 redteam_harness_run      # pii_extraction > 0 (SC-005)
 P T7 cd_deploy                                                # only the T6 hash (SC-006)
-P T6 monitoring_configure --metric routing_accuracy --operator "<" --threshold 0.8 --window 120
-pt pilot-fault model_swap trigger; P T8 monitoring_read        # fired within 5 minutes (SC-007)
-P T6 servicenow_change_create --summary "Release" ...
+P T6 monitoring_configure --arg metric=routing_accuracy --arg "operator=<" --arg threshold=0.8 --arg window_s=120
+pt pilot-fault model_swap trigger; P T8 monitoring_read       # fired within 5 minutes (SC-007)
+P T6 servicenow_change_create --arg summary=Release --arg window_start=... --arg window_end=... --arg risk=low
 ```
 
 Then check: `tools.tool_call` has a row per call (SC-002); the decision for PRE-T3-03 and PRE-T3-04
