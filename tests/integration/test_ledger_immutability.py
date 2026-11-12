@@ -113,7 +113,8 @@ def test_app_has_no_privileges_beyond_ledger_record(app_engine: Engine) -> None:
     reads = {table for table, privilege in grants if privilege == "SELECT"}
     # The ledger is insert-only. Feature 002 adds spec reads; 003 adds pin inserts and the run
     # and events schemas (exact grants tested in tests/integration/orchestration); 005 adds the
-    # insert-only content store, file objects, profile versions and verification runs.
+    # insert-only content store, file objects, profile versions and verification runs; 010 adds
+    # the insert-only tool calls, evidence results and enterprise mock records.
     outside_runtime = [w for w in writes if not w[0].startswith(("run.", "events."))]
     assert outside_runtime == [
         ("ledger.content_blob", "INSERT"),
@@ -122,7 +123,12 @@ def test_app_has_no_privileges_beyond_ledger_record(app_engine: Engine) -> None:
         ("ledger.profile_version", "INSERT"),
         ("ledger.verification_run", "INSERT"),
         ("spec.usecase_spec_pin", "INSERT"),
+        ("tools.enterprise_record", "INSERT"),
+        ("tools.tool_call", "INSERT"),
+        ("tools.tool_result", "INSERT"),
     ]
     assert not [w for w in writes if w[1] in ("DELETE", "TRUNCATE", "REFERENCES", "TRIGGER")]
-    assert all(t.split(".")[0] in ("ledger", "spec", "run", "events") for t in reads), reads
+    assert all(t.split(".")[0] in ("ledger", "spec", "run", "events", "tools") for t in reads), (
+        reads
+    )
     assert create_rights == []
