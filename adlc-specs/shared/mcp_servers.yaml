@@ -1,33 +1,43 @@
 # yaml-language-server: $schema=../schema/catalogues/mcp_servers.schema.json
 # MCP server registry (SA §7.3, §13). Every tool scope (mcp:<server>:<scope>) and grounding
 # server in a terminal spec must exist here (rule V-06). Mocks implement the same scopes.
+# `host` names the process that serves it (feature 010, research R-01): knowledge (008), tools
+# (eval store and enterprise mocks, platform network) or bridge (pilot-facing, both networks).
+# Host URLs are settings, never here. 2.0.0 (010): host added, pilot_env added, cd gains read.
 catalogue: mcp_servers
-version: "1.0.0"
+version: "2.0.0"
+# Where the platform reads the values it binds to a tool call (feature 010, research R-03): an
+# evidence reference <terminal>.<artifact>. The authorised hash is the one authorised row whose
+# sha256 equals the candidate hash; none or several give no authorised hash.
+bound_values:
+  candidate_hash: T3.candidate_package
+  authorised_hash: T6.deployment_package
 mcp_servers:
-  - {id: sharepoint, owner_role: adlc_coe, scopes: [read], description: "Enterprise documents (policies, strategy)"}
-  - {id: confluence, owner_role: adlc_coe, scopes: [read, write], description: "Enterprise wiki (capabilities, standards, runbooks)"}
-  - {id: portfolio, owner_role: adlc_coe, scopes: [read], description: "Use-case and agent portfolio (duplicate check)"}
-  - {id: jira, owner_role: product_owner, scopes: [read], description: "Epics and backlog"}
-  - {id: arch_repo, owner_role: solution_architect, scopes: [read], description: "Reference architectures and ADRs"}
-  - {id: mcp_registry, owner_role: adlc_coe, scopes: [read], description: "Approved MCP servers and tools"}
-  - {id: git, owner_role: engineering_lead, scopes: [branch_write, read], description: "Source control for the pilot agent"}
-  - {id: ci, owner_role: engineering_lead, scopes: [run], description: "CI pipeline runs and results"}
-  - {id: prompt_registry, owner_role: engineering_lead, scopes: [write, read], description: "Versioned prompts and instructions"}
-  - {id: artifact_store, owner_role: engineering_lead, scopes: [write, read], description: "Content-addressed build artifacts"}
-  - {id: harness, owner_role: qa_eval_lead, scopes: [run], description: "Evaluation harness"}
-  - {id: eval_store, owner_role: qa_eval_lead, scopes: [write, read], description: "Evaluation runs and results"}
-  - {id: dataset_registry, owner_role: data_owner, scopes: [read], description: "Approved datasets"}
-  - {id: redteam_harness, owner_role: security_officer, scopes: [run], description: "Red-team test harness"}
-  - {id: iam, owner_role: security_officer, scopes: [read, revoke], description: "Identities and permissions"}
-  - {id: dlp_scanner, owner_role: privacy_officer, scopes: [run], description: "Data loss prevention scanning"}
-  - {id: control_library, owner_role: security_officer, scopes: [read], description: "Security and RAI control library"}
-  - {id: grc, owner_role: compliance_officer, scopes: [write, read], description: "Governance, risk and compliance records"}
-  - {id: servicenow, owner_role: release_manager, scopes: [change_create, incident_create, read], description: "ITSM change and incident records (mocked in the MVP)"}
-  - {id: cmdb, owner_role: service_owner, scopes: [read, write], description: "Configuration management database (mocked in the MVP)"}
-  - {id: monitoring, owner_role: sre, scopes: [configure, read], description: "Dashboards and alerts"}
-  - {id: cd, owner_role: sre, scopes: [deploy], description: "Deployment pipeline (simulated in the MVP)"}
-  - {id: traffic_manager, owner_role: sre, scopes: [write], description: "Traffic splitting between versions"}
-  - {id: agent_registry, owner_role: adlc_coe, scopes: [write, read], description: "Enterprise agent registry"}
-  - {id: observability, owner_role: sre, scopes: [read], description: "Traces, metrics and logs of the pilot agent"}
-  - {id: feedback, owner_role: product_owner, scopes: [read], description: "User ratings and complaints"}
-  - {id: kill_switch, owner_role: service_owner, scopes: [invoke], description: "Emergency stop for the pilot agent"}
+  - {id: sharepoint, host: knowledge, owner_role: adlc_coe, scopes: [read], description: "Enterprise documents (policies, strategy)"}
+  - {id: confluence, host: knowledge, owner_role: adlc_coe, scopes: [read, write], description: "Enterprise wiki (capabilities, standards, runbooks)"}
+  - {id: portfolio, host: knowledge, owner_role: adlc_coe, scopes: [read], description: "Use-case and agent portfolio (duplicate check)"}
+  - {id: jira, host: knowledge, owner_role: product_owner, scopes: [read], description: "Epics and backlog"}
+  - {id: arch_repo, host: knowledge, owner_role: solution_architect, scopes: [read], description: "Reference architectures and ADRs"}
+  - {id: mcp_registry, host: knowledge, owner_role: adlc_coe, scopes: [read], description: "Approved MCP servers and tools"}
+  - {id: git, host: bridge, owner_role: engineering_lead, scopes: [branch_write, read], description: "Source control for the pilot agent"}
+  - {id: ci, host: bridge, owner_role: engineering_lead, scopes: [run], description: "CI pipeline runs and results"}
+  - {id: prompt_registry, host: bridge, owner_role: engineering_lead, scopes: [write, read], description: "Versioned prompts and instructions"}
+  - {id: artifact_store, host: bridge, owner_role: engineering_lead, scopes: [write, read], description: "Content-addressed build artifacts"}
+  - {id: harness, host: bridge, owner_role: qa_eval_lead, scopes: [run], description: "Evaluation harness"}
+  - {id: eval_store, host: tools, owner_role: qa_eval_lead, scopes: [write, read], description: "Evaluation runs and results"}
+  - {id: dataset_registry, host: bridge, owner_role: data_owner, scopes: [read], description: "Approved datasets"}
+  - {id: redteam_harness, host: bridge, owner_role: security_officer, scopes: [run], description: "Red-team test harness"}
+  - {id: iam, host: tools, owner_role: security_officer, scopes: [read, revoke], description: "Identities and permissions"}
+  - {id: dlp_scanner, host: bridge, owner_role: privacy_officer, scopes: [run], description: "Data loss prevention scanning"}
+  - {id: control_library, host: tools, owner_role: security_officer, scopes: [read], description: "Security and RAI control library"}
+  - {id: grc, host: tools, owner_role: compliance_officer, scopes: [write, read], description: "Governance, risk and compliance records"}
+  - {id: servicenow, host: tools, owner_role: release_manager, scopes: [change_create, incident_create, read], description: "ITSM change and incident records (mocked in the MVP)"}
+  - {id: cmdb, host: tools, owner_role: service_owner, scopes: [read, write], description: "Configuration management database (mocked in the MVP)"}
+  - {id: monitoring, host: bridge, owner_role: sre, scopes: [configure, read], description: "Dashboards and alerts"}
+  - {id: cd, host: bridge, owner_role: sre, scopes: [deploy, read], description: "Deployment pipeline (simulated in the MVP)"}
+  - {id: traffic_manager, host: bridge, owner_role: sre, scopes: [write], description: "Traffic splitting between versions"}
+  - {id: agent_registry, host: tools, owner_role: adlc_coe, scopes: [write, read], description: "Enterprise agent registry"}
+  - {id: observability, host: bridge, owner_role: sre, scopes: [read], description: "Traces, metrics and logs of the pilot agent"}
+  - {id: feedback, host: bridge, owner_role: product_owner, scopes: [read], description: "User ratings and complaints"}
+  - {id: kill_switch, host: bridge, owner_role: service_owner, scopes: [invoke], description: "Emergency stop for the pilot agent"}
+  - {id: pilot_env, host: bridge, owner_role: engineering_lead, scopes: [dev, test, read], description: "Pilot dev and test environments from the golden template's infrastructure definitions"}

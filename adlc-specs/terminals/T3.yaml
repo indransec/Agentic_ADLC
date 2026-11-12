@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T3
     name: Build & Integration
-    version: "1.0.0"
+    version: "2.0.0"
     schema_version: "1.1.0"
     purpose: Can we construct the agent reproducibly?
     owner_role: adlc_coe
@@ -53,7 +53,7 @@ terminal:
     allow: ["read:ledger.T0-T2", "write:repo.feature_branch", "open:pull_request", "run:ci_pipeline", "provision:dev_env"]
     deny: ["merge:main", "write:secrets", "deploy:test", "deploy:prod", "write:T1.thresholds"]
     data_access: {max_class: synthetic_or_masked}
-    tool_scopes: ["mcp:git:branch_write", "mcp:ci:run", "mcp:prompt_registry:write", "mcp:artifact_store:write"]
+    tool_scopes: ["mcp:git:branch_write", "mcp:ci:run", "mcp:prompt_registry:write", "mcp:artifact_store:write", "mcp:pilot_env:dev", "mcp:pilot_env:read", "mcp:git:read", "mcp:artifact_store:read"]
     sign_off:
       roles: [engineering_lead]
       min_approvers: 1

@@ -22,7 +22,7 @@ block.
 | `pilot_env_status` | `read` | `environment` (dev, test) | — | status, or `not running` | no |
 | `pilot_env_delete` | `dev` or `test` | — | `environment` | `{deleted: true}` | yes |
 | `pilot_env_infra` | `read` | `environment` (optional) | — | infrastructure definitions with versions (also MCP resources `infra://<environment>`) | no |
-| `git_list` | `read` | `path` (optional), `ref` (`main` or the bound branch) | `branch` | file list | no |
+| `git_list` | `read` | `path` (optional), `ref` (main or the bound branch) | `branch` | file list | no |
 | `git_read` | `read` | `path`, `ref` | `branch` | file text (≤ 50,000 characters) | no |
 | `git_write` | `branch_write` | `files` (path → text, ≤ 20 files, ≤ 200,000 characters), `message`, `parent` (commit id last read) | `branch` | `{commit}`; refused on `main`, outside the fill layout, or a moved branch | no |
 | `git_open_pull_request` | `branch_write` | `title`, `description` | `branch` | `{pull_request, commit}` | no |

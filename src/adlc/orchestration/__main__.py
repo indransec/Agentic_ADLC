@@ -78,6 +78,11 @@ def run() -> None:
             knowledge_token=None
             if settings.knowledge_token is None
             else settings.knowledge_token.get_secret_value(),
+            tool_urls={"tools": settings.tools_url, "bridge": settings.pilot_bridge_url},
+            tools_token_key=None
+            if settings.tools_token_key is None
+            else settings.tools_token_key.get_secret_value(),
+            tools_timeout_s=settings.tools_timeout_s,
         )
     except (MissingModelKey, MissingKnowledgeToken, UnknownProfile) as exc:
         print(f"adlc: configuration error\n  {exc}", file=sys.stderr)

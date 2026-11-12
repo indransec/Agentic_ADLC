@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T4
     name: Evaluation
-    version: "1.0.0"
+    version: "2.0.0"
     schema_version: "1.1.0"
     purpose: Does the agent behave as designed?
     owner_role: adlc_coe
@@ -56,7 +56,7 @@ terminal:
     allow: ["read:ledger.T0-T3", "invoke:test_env_agent", "write:eval_store", "write:T4.artifacts"]
     deny: ["write:repo", "write:candidate_package", "write:T1.thresholds", "deploy:any"]
     data_access: {max_class: confidential_masked}
-    tool_scopes: ["mcp:harness:run", "mcp:eval_store:write", "mcp:dataset_registry:read"]
+    tool_scopes: ["mcp:harness:run", "mcp:eval_store:write", "mcp:dataset_registry:read", "mcp:pilot_env:test", "mcp:pilot_env:read", "mcp:artifact_store:read"]
     sign_off: {roles: [qa_eval_lead, product_owner], min_approvers: 2}
     status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
   playbooks:

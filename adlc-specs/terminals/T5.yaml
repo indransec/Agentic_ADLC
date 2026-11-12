@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T5
     name: Trust, Risk & Assurance
-    version: "1.0.0"
+    version: "2.0.0"
     schema_version: "1.1.0"
     purpose: Is the agentic system safe and compliant for release?
     owner_role: adlc_coe
@@ -58,7 +58,7 @@ terminal:
     allow: ["read:ledger.T0-T4", "invoke:test_env_agent", "run:security_tests", "write:T5.artifacts"]
     deny: ["write:repo", "write:candidate_package", "accept:residual_risk", "deploy:any"]
     data_access: {max_class: confidential_masked}
-    tool_scopes: ["mcp:redteam_harness:run", "mcp:iam:read", "mcp:dlp_scanner:run", "mcp:control_library:read", "mcp:grc:write"]
+    tool_scopes: ["mcp:redteam_harness:run", "mcp:iam:read", "mcp:dlp_scanner:run", "mcp:control_library:read", "mcp:grc:write", "mcp:pilot_env:test", "mcp:pilot_env:read"]
     sign_off:
       by_tier:
         low: {roles: [security_officer], min_approvers: 1}
