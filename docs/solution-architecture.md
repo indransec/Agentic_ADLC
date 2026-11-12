@@ -339,12 +339,12 @@ The platform is itself an agentic system with write access to code, environments
 | Area | MVP design | Target state |
 | --- | --- | --- |
 | Human identity | SSO via OIDC (or local accounts in the demo environment); roles mapped from the role catalogue | Enterprise IdP groups mapped to roles |
-| Agent identity | One service identity per lifecycle agent; the orchestrator issues a short-lived, run-scoped token carrying terminal, use case, permissions and data ceiling | Workload identity federation; per-subagent tokens via token exchange |
+| Agent identity | One service identity per lifecycle agent; the orchestrator issues a short-lived, run-scoped token carrying terminal, use case, permissions and data ceiling. Feature 010: an HMAC-signed run token per tool call (five minutes, the run's `mcp:` scopes and the values bound to the call), verified again by each MCP server | Workload identity federation; per-subagent tokens via token exchange |
 | Authorisation | Policy engine `authorize()` on every tool call; deny wins; refusals logged | Same, with OPA or Cedar |
 | Secrets | Environment-injected secrets from a vault (or encrypted env file for the demo); never in specs, prompts or logs | Enterprise vault with rotation |
 | Data protection | Synthetic data only; data class labels enforced at MCP servers; logs and traces masked before storage | DLP scanning, field-level encryption for restricted data |
 | Prompt injection (lifecycle agents) | Grounded documents and tool outputs labelled as untrusted data; agents cannot change statuses or permissions; actions gated by policy, not by model judgement | Content scanning on ingestion; injection test suite for lifecycle agents |
-| MCP server trust | Only servers in the MCP registry; each runs with its own credentials and scopes | Signed server manifests, network isolation per server |
+| MCP server trust | Only servers in the MCP registry; each runs with its own credentials and scopes. MVP: two processes, `tools` (platform network, database) and `pilot-bridge` (the only service on both networks; no database, model or knowledge credentials) | Signed server manifests, network isolation per server |
 | Integrity | Content hashes on specs, playbooks, artifacts and ledger chain | Signed specs and evidence |
 | Network | Single private network for platform services; only the web app exposed | Segmented zones; private model endpoints |
 | Audit | Every human action, agent tool call, policy decision and event persisted with actor and timestamp | Forwarded to enterprise SIEM |
@@ -410,19 +410,19 @@ All external systems are reached through MCP servers (for agents) or adapters (f
 | Integration | Used by | Interface | MVP | Target |
 | --- | --- | --- | --- | --- |
 | Enterprise knowledge (Confluence, SharePoint, wiki) | T0–T2, T5 agents (grounding) | MCP read-only | Real if access available; otherwise local document folder MCP | Real MCP servers |
-| Source control (Git) | T3 agent, spec CI | MCP (branch write, PR) + Git API | Real (platform Git host) | Same |
-| CI pipeline | T3 agent | MCP (run pipeline, read results) | Real (repo CI) | Enterprise CI |
+| Source control (Git) | T3 agent, spec CI | MCP (branch write, PR) + Git API | Platform-hosted repository per use case on the bridge volume; branch per run, pull requests recorded (feature 010) | Platform Git host |
+| CI pipeline | T3 agent | MCP (run pipeline, read results) | Validate, build, reproducibility and smoke checks of the fill by the pilot's own build (`pilot-lab`) | Enterprise CI |
 | Model providers | All lifecycle agents, pilot agent | Model gateway (one API, model catalogue) | One provider via gateway | Multiple providers, private endpoints |
-| Eval harness | T4, T8 agents | MCP (run suite, read results) | Platform-hosted harness | Same, shared service |
-| Red-team harness | T5 agent | MCP | Platform-hosted test suite | Enterprise red-team tooling |
+| Eval harness | T4, T8 agents | MCP (run suite, read results) | Platform-hosted deterministic harness over registered datasets; results stored as evidence (no LLM judge) | Same, shared service |
+| Red-team harness | T5 agent | MCP | Fixed, versioned suite (`data/redteam/suite.yaml`) and a personal-data scan | Enterprise red-team tooling |
 | ITSM (change, incident) | T6, T7, T8 | Adapter + MCP | Mock (records in platform DB) | ServiceNow |
 | CMDB / enterprise agent registry | T7, T9 | Adapter + MCP | Platform table | Enterprise CMDB or AI inventory |
-| Deployment target | T7 agent | MCP (deploy hash, set traffic split, rollback) | Simulated: containers in the demo environment | Enterprise CD and runtime platform |
-| Telemetry of pilot agent | T8 agent | MCP (query metrics, traces) | Platform tracing + synthetic traffic | Enterprise observability |
+| Deployment target | T7 agent | MCP (deploy hash, set traffic split, rollback) | Simulated: prod-sim's own operations (feature 009), only the T6-authorised hash deployable; kill switch released by a person | Enterprise CD and runtime platform |
+| Telemetry of pilot agent | T8 agent | MCP (query metrics, traces) | Platform tracing + synthetic traffic; traces filtered to an attribute allowlist; monitors per use case | Enterprise observability |
 | Notifications | Approval service | Adapter | In-app + email | Teams, ServiceNow approvals |
 | Identity | All | OIDC | Demo IdP or local accounts | Enterprise IdP |
 
-**Integration rules:** every MCP server is listed in the MCP registry with owner and scopes; mocks implement the same tool names and schemas as the real server; adapters are idempotent and retried through the outbox.
+**Integration rules:** every MCP server is listed in the MCP registry with owner, scopes and host (feature 010: `knowledge`, `tools` or `bridge`); mocks implement the same tool names and schemas as the real server; adapters are idempotent and retried through the outbox.
 
 ## 14. Pilot use case execution environment
 
@@ -451,9 +451,9 @@ The MVP runs as containers on one host, defined in a single versioned Compose fi
 
 | Container group | Services | Notes |
 | --- | --- | --- |
-| Platform services | Web app (FastAPI + React), orchestrator and router, policy engine, agent workers, model gateway, MCP servers (real and mocked) | Stateless; state lives in PostgreSQL and the object store |
+| Platform services | Web app (FastAPI + React), orchestrator and router, policy engine, agent workers, model gateway, MCP servers (real and mocked): `knowledge` (008), `tools` (eval store and enterprise mocks, 010) and `pilot-bridge` (pilot-facing servers, 010; the only service on both networks) | Stateless; state lives in PostgreSQL and the object store (the bridge keeps Git repositories and its records on a volume) |
 | Data | PostgreSQL (spec, run, ledger, events schemas), MinIO object store, Langfuse tracing | Nightly backup of PostgreSQL and object store |
-| Pilot environments | Pilot dev, pilot test, prod-sim with traffic splitter, traffic generator, fault injector | Separate container network; reached by agents only through MCP servers |
+| Pilot environments | Pilot dev, pilot test, prod-sim with traffic splitter, traffic generator, fault injector, `pilot-lab` (builds and datasets, 010) | Separate container network; reached by agents only through the pilot bridge's MCP servers |
 
 **Platform environments:** `dev` (engineers, mocks everywhere) and `demo` (stable, used for the MVP demo). Spec releases target both registries; platform releases are image tags promoted from dev to demo.
 

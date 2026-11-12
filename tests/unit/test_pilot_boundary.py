@@ -15,7 +15,9 @@ PILOT_CODE = sorted(
     p for folder in ("src", "template", "tests") for p in (ROOT / "pilot" / folder).rglob("*.py")
 )
 PILOT_MODULES = ("pilot_tools", "triage_agent")
-SHARED = {"jaeger"}  # the shared trace collector joins both networks (research R-09)
+SHARED = {"jaeger", "pilot-bridge"}  # trace collector (009 R-09) and the MCP bridge (010 R-01)
+BRIDGE = "pilot-bridge"
+BRIDGE_MUST_NOT_HAVE = ("ADLC_DB_", "_API_KEY", "ADLC_KNOWLEDGE_TOKEN", "ADLC_SESSION_SECRET")
 
 
 def imported(path: Path) -> set[str]:
@@ -52,6 +54,25 @@ def test_pilot_services_exist() -> None:
     assert {"pilot-dev", "pilot-test", "pilot-prodsim", "pilot-traffic", "pilot-tools"} <= pilots
 
 
+def test_tool_services_exist() -> None:
+    assert {"tools", "pilot-bridge", "pilot-lab"} <= set(services())
+
+
+def test_the_bridge_holds_no_database_model_or_session_settings() -> None:
+    """010 R-01: the only service on both networks gets the least."""
+    bridge = services().get(BRIDGE)
+    if bridge is None:
+        pytest.skip("pilot-bridge not in Compose yet")
+    environment = bridge.get("environment") or {}
+    names = (
+        set(environment)
+        if isinstance(environment, dict)
+        else {str(e).split("=")[0] for e in environment}
+    )
+    assert not any(part in n for n in names for part in BRIDGE_MUST_NOT_HAVE), sorted(names)
+    assert not bridge.get("ports")
+
+
 def test_networks_keep_pilot_and_platform_apart() -> None:
     for name, service in services().items():
         joined = networks(service)
@@ -65,7 +86,7 @@ def test_networks_keep_pilot_and_platform_apart() -> None:
 
 def test_pilot_publishes_no_ports_and_nothing_mounts_the_docker_socket() -> None:
     for name, service in services().items():
-        if name.startswith("pilot-"):
+        if name.startswith("pilot-") or name == "tools":
             assert not service.get("ports"), name
         for volume in service.get("volumes") or []:
             assert "docker.sock" not in str(volume), name

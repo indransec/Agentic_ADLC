@@ -3,6 +3,11 @@ FROM python:3.12-slim
 
 COPY --from=ghcr.io/astral-sh/uv:0.10.7 /uv /usr/local/bin/uv
 
+# git: the pilot bridge's source control (feature 010, research R-05), run as a program.
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y git \
+    && rm -rf /var/lib/apt/lists/*
+
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     UV_PROJECT_ENVIRONMENT=/opt/venv \
@@ -23,8 +28,9 @@ COPY data ./data
 RUN uv sync --locked --no-dev
 
 RUN useradd --system --uid 10001 --no-create-home adlc \
-    && mkdir -p /var/lib/adlc/files && chown adlc /var/lib/adlc/files
-# The evidence file store (feature 005); a named volume mounted here inherits this owner.
+    && mkdir -p /var/lib/adlc/files /var/lib/adlc/bridge \
+    && chown adlc /var/lib/adlc/files /var/lib/adlc/bridge
+# The evidence file store (feature 005) and the bridge data (010); named volumes inherit the owner.
 USER adlc
 
 EXPOSE 8000

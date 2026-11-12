@@ -67,3 +67,27 @@ def test_the_system_under_test_gets_the_incident_only() -> None:
         traffic.stop()
     assert seen and all(set(body) <= set(INCIDENT_FIELDS) for body in seen)
     assert not any({"expected", "planted_pii", "edge_case", "synthetic"} & set(b) for b in seen)
+
+
+def test_feedback_is_synthetic_and_follows_correctness(
+    host: Callable[[str], Host], packages: Packages
+) -> None:
+    """010 T032 (FR-021): seeded ratings from answer correctness, labelled synthetic."""
+    from fastapi.testclient import TestClient
+
+    from pilot_tools.traffic import create_app
+
+    h = host("prod-sim")
+    h.client.post("/deployments", json={"package_hash": packages.default, "role": "stable"})
+    with serve(h.client.app) as url:
+        traffic = Traffic(url, seed=3, size=50, rate=30.0)
+        traffic.start()
+        time.sleep(1.5)
+        traffic.pause()
+        time.sleep(0.3)
+        body = TestClient(create_app(traffic)).get("/feedback?limit=10").json()
+        traffic.stop()
+    assert body["synthetic"] is True and 0 < len(body["feedback"]) <= 10
+    assert all(f["synthetic"] and f["rating"] in (1, 2, 4, 5) for f in body["feedback"])
+    assert all(f["package_hash"] == packages.default for f in body["feedback"])
+    assert all("description" not in f for f in body["feedback"])

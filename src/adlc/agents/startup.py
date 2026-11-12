@@ -46,10 +46,20 @@ class MissingKnowledgeToken(Exception):
     pass
 
 
-def check_knowledge_token(agents: AgentCatalogue, token: str | None) -> None:
-    """008 research R-12: an agent with knowledge tools needs the knowledge server's token."""
+def check_knowledge_token(
+    agents: AgentCatalogue, token: str | None, knowledge_servers: Iterable[str] | None = None
+) -> None:
+    """008 research R-12: an agent with knowledge tools needs the knowledge server's token.
+    010 T044: with the registry's knowledge servers given, only bindings to them count (tools on
+    the tools and bridge hosts use run tokens instead)."""
+    servers = None if knowledge_servers is None else set(knowledge_servers)
+
+    def grounding(permission: str) -> bool:
+        kind, _, rest = permission.partition(":")
+        return kind == "mcp" and (servers is None or rest.partition(":")[0] in servers)
+
     grounded = sorted(
-        a.id for a in agents.agents.values() if any(t.action == "mcp" for t in a.tools)
+        a.id for a in agents.agents.values() if any(grounding(t.permission) for t in a.tools)
     )
     if grounded and not token:
         raise MissingKnowledgeToken(

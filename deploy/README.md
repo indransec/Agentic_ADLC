@@ -34,6 +34,28 @@ is part of the image. It is reachable only inside the Compose network.
 - To use your own documents, mount a folder and point `ADLC_KNOWLEDGE_DIR` at it (format in
   `data/knowledge/README.md`).
 
+## MCP tool servers (feature 010)
+
+- `tools`: the eval store and the enterprise mocks (ITSM, CMDB, agent registry, IAM, GRC, control
+  library), platform network, app database role.
+- `pilot-bridge`: the pilot-facing servers (environments, Git, CI, artifact store, prompt registry,
+  datasets, harness, red-team, personal-data scan, deploy, traffic, kill switch, observability,
+  monitors, feedback). The only service on both networks; it holds no database, model, knowledge or
+  session settings.
+- `pilot-lab` (pilot image, pilot network): builds and datasets for CI and the harness.
+
+Set `ADLC_TOOLS_TOKEN_KEY` (at least 32 characters, generated locally, never committed): the
+platform signs a five-minute run token per tool call with it and both servers verify it. Without
+it the orchestrator starts with no acting tools and reads synthetic `env`/`template` evidence
+(labelled). Call any tool by hand with the probe, inside the platform network:
+
+```bash
+docker compose -f deploy/compose.yaml --env-file .env run --rm -T orchestrator \
+  adlc-tools-probe --usecase <use case> --terminal <terminal id> <tool> --arg key=value
+```
+
+Only a person releases the prod-sim kill switch: `pt pilot-kill release --reason <text>`.
+
 ## Pilot environments (feature 009)
 
 The pilot, an Incident Triage Assistant, runs on its own network (`adlc-pilot`) in the

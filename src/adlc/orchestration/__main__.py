@@ -31,8 +31,10 @@ from adlc.orchestration.stubs import StubAgent, StubReviewer
 from adlc.orchestration.worker import build_orchestrator
 from adlc.policy.directory import AccountFileDirectory
 from adlc.policy.factory import build_policy_engine
+from adlc.policy.pilot_evidence import PilotEvidence
 from adlc.policy.synthetic import load_synthetic_artifacts
 from adlc.spec_toolkit.registry import SqlSpecRegistry
+from adlc.tools.client import McpClient
 
 SERVICE_NAME = "adlc-orchestrator"
 app = typer.Typer(add_completion=False, help="Lifecycle orchestrator (feature 003).")
@@ -57,8 +59,19 @@ def run() -> None:
         if settings.accounts_file
         else None
     )
+    key = None if settings.tools_token_key is None else settings.tools_token_key.get_secret_value()
+    pilot = (
+        None
+        if key is None
+        else PilotEvidence(McpClient({"bridge": settings.pilot_bridge_url}, 30), key)
+    )
     policy = build_policy_engine(
-        engine, registry, clock, synthetic_dir=settings.synthetic_dir, directory=directory
+        engine,
+        registry,
+        clock,
+        synthetic_dir=settings.synthetic_dir,
+        directory=directory,
+        pilot=pilot,
     )
     try:
         runtime = build_runtime(
@@ -78,6 +91,9 @@ def run() -> None:
             knowledge_token=None
             if settings.knowledge_token is None
             else settings.knowledge_token.get_secret_value(),
+            tool_urls={"tools": settings.tools_url, "bridge": settings.pilot_bridge_url},
+            tools_token_key=key,
+            tools_timeout_s=settings.tools_timeout_s,
         )
     except (MissingModelKey, MissingKnowledgeToken, UnknownProfile) as exc:
         print(f"adlc: configuration error\n  {exc}", file=sys.stderr)

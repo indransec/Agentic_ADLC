@@ -97,6 +97,12 @@ class Split(BaseModel):
     share: float | None = Field(default=None, ge=0, le=1)
 
 
+class Kill(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    action: Literal["activate", "release"]
+    reason: str = Field(min_length=1, max_length=500)
+
+
 class FaultAction(BaseModel):
     model_config = ConfigDict(extra="forbid")
     action: Literal["trigger", "revert"]
@@ -124,6 +130,7 @@ def create_host(
         "candidate": None,
         "split": {"mode": "full", "share": 0.0},
         "faults": {},
+        "killed": False,  # 010: the kill switch (prod-sim)
     }
     counts: Counter[str] = Counter()
 
@@ -178,10 +185,10 @@ def create_host(
 
     @app.get("/infra")
     def infra() -> dict[str, Any]:
+        declared = YAML(typ="safe").load((template / "template.yaml").read_text())
         return {
-            "template_version": YAML(typ="safe").load((template / "template.yaml").read_text())[
-                "version"
-            ],
+            "template_id": declared["id"],
+            "template_version": declared["version"],
             "definitions": [load_definition(template, env) for env in ENVIRONMENTS],
         }
 
@@ -366,6 +373,9 @@ def create_host(
 
     @app.post("/triage")
     def triage(incident: dict[str, Any]) -> dict[str, Any]:
+        if state["killed"]:
+            counts["stopped"] += 1
+            raise HTTPException(503, "stopped by the kill switch")
         counts["requests"] += 1
         if environment != PROD_SIM:
             running: Running | None = state["env"]
@@ -449,6 +459,30 @@ def create_host(
                 affected=affected,
                 outcome="ok",
             )
+
+    @app.post("/kill")
+    def kill(body: Kill) -> dict[str, Any]:
+        """010: stop prod-sim answering with the pilot until a person releases it (FR-018)."""
+        if environment != PROD_SIM:
+            raise HTTPException(405, "the kill switch is in prod-sim")
+        with lock:
+            active = bool(state["killed"])
+            if body.action == "activate" and active:
+                raise HTTPException(409, "the kill switch is already active")
+            if body.action == "release" and not active:
+                raise HTTPException(409, "the kill switch is not active")
+            state["killed"] = body.action == "activate"
+            records.add(
+                "faults",
+                fault="kill_switch",
+                action=body.action,
+                parameters={"reason": body.reason},
+                affected={
+                    "packages": [r.package_hash for r in (state["stable"], state["candidate"]) if r]
+                },
+                outcome="ok",
+            )
+            return {"active": state["killed"]}
 
     @app.get("/faults")
     def list_faults() -> dict[str, Any]:

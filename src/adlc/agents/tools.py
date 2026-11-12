@@ -109,10 +109,14 @@ class ToolGate:
             else:
                 allowed = self.policy.authorize(actor, binding.action, binding.resource, evaluation)
                 reason = "" if allowed else f"not permitted: {binding.permission}"
+            context = ToolContext(run_id, usecase_id, terminal_id, spec or {}, attempt, step)
             if not allowed:
                 set_attributes(s, {"outcome": "refused"})
-                return ToolRefused(str(reason) or f"not permitted: {binding.permission}")
-            context = ToolContext(run_id, usecase_id, terminal_id, spec or {}, attempt, step)
+                refusal = str(reason) or f"not permitted: {binding.permission}"
+                record = getattr(self.tools[name], "refused", None)
+                if callable(record):  # 010: a refused tool call still leaves a record (FR-004)
+                    record(context, refusal)
+                return ToolRefused(refusal)
             output = self.tools[name].call(arguments, context)
             set_attributes(s, {"outcome": "ok"})
             return ToolOutput(cut(output))

@@ -564,3 +564,15 @@ Notes:
 - PRE-T9-02/03 `.current` suffix dropped: evidence reads always take the latest ledger record.
 - Retire-only controls CTL-T9-04..06 are conditioned on `run.mode != "retire" || ...`; retire-only artifacts are conditional on `run.mode == "retire"`.
 - `terminate.meaning` kept as `description`.
+
+## Changes after conversion: feature 010 (MCP servers)
+
+- `shared/mcp_servers.yaml` 2.0.0: every server names its `host` (knowledge, tools or bridge);
+  new server `pilot_env` (scopes `dev`, `test`, `read`); `cd` gains `read`.
+- T3 2.0.0: tool scopes add `mcp:pilot_env:dev`, `mcp:pilot_env:read`, `mcp:git:read`,
+  `mcp:artifact_store:read` (T3 provisions the dev environment and reads its own branch and builds).
+- T4 2.0.0: add `mcp:pilot_env:test`, `mcp:pilot_env:read`, `mcp:artifact_store:read`.
+- T5 2.0.0: add `mcp:pilot_env:test`, `mcp:pilot_env:read`.
+- T8 2.0.0: add `mcp:monitoring:read` (T6 configures monitors at readiness; T8 reads which fired).
+- `confluence` write (T6 runbooks, T9 lessons) is not served yet: the knowledge server is read-only.
+  T6 and T9 keep those texts as artifacts until a writable wiki server exists.

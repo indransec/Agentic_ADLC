@@ -7,6 +7,7 @@ online routing accuracy and the personal-data leak rate over a sliding window, p
 
 import argparse
 import os
+import random
 import threading
 import time
 from collections import deque
@@ -16,7 +17,7 @@ from typing import Any
 
 import httpx
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from pydantic import BaseModel, Field
 
 from pilot_tools.incidents import generate
@@ -49,6 +50,7 @@ class Traffic:
         window_s: float = WINDOW_S,
     ) -> None:
         self.target, self.rate, self.timeout_s, self.window_s = target, rate, timeout_s, window_s
+        self.seed = seed
         self.incidents = generate(seed, size, pii_share)
         self.lock = threading.Lock()
         self.results: deque[Result] = deque()
@@ -121,6 +123,26 @@ class Traffic:
             self.counts[result.outcome] += 1
             self.results.append(result)
 
+    def feedback(self, limit: int) -> list[dict[str, Any]]:
+        """010: seeded synthetic ratings for the latest answers: a correct team rates 4 or 5, a
+        wrong one 1 or 2. Labelled synthetic; no incident text."""
+        with self.lock:
+            answered = [r for r in self.results if r.outcome == "answered"][-limit:]
+        out = []
+        for n, result in enumerate(answered):
+            pick = random.Random(f"{self.seed}:{result.at}:{n}")  # noqa: S311 - synthetic data
+            rating = pick.choice((4, 5)) if result.correct else pick.choice((1, 2))
+            comments = GOOD if result.correct else BAD
+            out.append(
+                {
+                    "package_hash": result.package,
+                    "rating": rating,
+                    "comment": pick.choice(comments),
+                    "synthetic": True,
+                }
+            )
+        return out
+
     def metrics(self) -> dict[str, Any]:
         with self.lock:
             cutoff = time.monotonic() - self.window_s
@@ -158,6 +180,10 @@ class Rate(BaseModel):
     per_second: float = Field(ge=0.1, le=50)
 
 
+GOOD = ("Sent to the right team quickly.", "Routed well.", "Helpful assignment.")
+BAD = ("Wrong team; had to reassign.", "Bounced between teams.", "Not the right resolver group.")
+
+
 def create_app(traffic: Traffic) -> FastAPI:
     app = FastAPI(title="pilot-traffic")
 
@@ -179,6 +205,10 @@ def create_app(traffic: Traffic) -> FastAPI:
     @app.get("/metrics")
     def metrics() -> dict[str, Any]:
         return traffic.metrics()
+
+    @app.get("/feedback")
+    def feedback(limit: int = Query(default=20, ge=1, le=100)) -> dict[str, Any]:
+        return {"synthetic": True, "feedback": traffic.feedback(limit)}
 
     @app.get("/health")
     def health() -> dict[str, Any]:

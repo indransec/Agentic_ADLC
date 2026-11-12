@@ -16,6 +16,15 @@
       "type": "string",
       "minLength": 1
     },
+    "bound_values": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "candidate_hash": {"type": "string", "pattern": "^[A-Z][0-9]+\\.[a-z][a-z0-9_]*$"},
+        "authorised_hash": {"type": "string", "pattern": "^[A-Z][0-9]+\\.[a-z][a-z0-9_]*$"}
+      },
+      "required": ["candidate_hash", "authorised_hash"]
+    },
     "mcp_servers": {
       "type": "array",
       "items": {
@@ -25,6 +34,9 @@
           "id": {
             "type": "string",
             "pattern": "^[a-z][a-z0-9]*(_[a-z0-9]+)*$"
+          },
+          "host": {
+            "enum": ["knowledge", "tools", "bridge"]
           },
           "owner_role": {
             "type": "string",
@@ -45,6 +57,7 @@
         },
         "required": [
           "id",
+          "host",
           "owner_role",
           "scopes",
           "description"
