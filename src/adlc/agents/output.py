@@ -150,6 +150,10 @@ def validate_artifacts(
     ]
     for aid, decl in declared.items():
         rows = artifacts.get(aid)
+        if decl.format == SIGNED:  # 011 FR-003: people sign; agents never write it
+            if rows is not None:
+                problems.append(f"artifact {aid} is signed by people at sign-off; leave it out")
+            continue
         if rows is None:
             if required(decl):
                 problems.append(f"artifact {aid} is missing")
@@ -169,6 +173,7 @@ def validate_artifacts(
     return problems
 
 
+SIGNED = "signed_record"
 CITATION_KEYS = {"artifact", "row", "source", "document", "section"}
 
 

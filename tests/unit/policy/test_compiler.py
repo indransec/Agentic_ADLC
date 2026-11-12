@@ -37,5 +37,5 @@ def test_every_spec_rule_compiles() -> None:
         for t in bundle.usable_terminals()
         for check in (*spec_view.prerequisites(t.data), *spec_view.controls(t.data))
     ]
-    assert len(rules) == 102
+    assert len(rules) == 107
     assert all(compile_rule(r).error is None for r in rules)

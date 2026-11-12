@@ -66,8 +66,8 @@ polish.
 
 ## Phase 5: User Story 3 – T5 assures and accepts gaps only by waiver (P1)
 
-- [ ] T018 [US3] Spec content: prompt `t5-assurance-agent.md`; playbooks `t5-assurance.md`, `llm-red-team.md`, `privacy-impact-assessment.md`, `regulatory-mapping.md`; agents catalogue T5 entry (`pilot_env_create`, `pilot_env_status`, `redteam_harness_run`, `dlp_scanner_run`, `control_library_read`, `iam_read`, `grc_write`); T5 spec 3.0.0 with the R-07 control.
-- [ ] T019 [US3] Integration `tests/integration/agents/test_t5_agent.py`: `redteam` and `dlp` decisions read the run's results (not synthetic); the attestation row is not agent-written; the kill-switch scenario reported as not run in test → its control fails → the reviewer recommends exception with waiver fields (compensating control: the kill-switch check at release) → the run closes as exception only after the waiver approver accepts.
+- [X] T018 [US3] Spec content: prompt `t5-assurance-agent.md`; playbooks `t5-assurance.md`, `llm-red-team.md`, `privacy-impact-assessment.md`, `regulatory-mapping.md`; agents catalogue T5 entry (`pilot_env_create`, `pilot_env_status`, `redteam_harness_run`, `dlp_scanner_run`, `control_library_read`, `iam_read`, `grc_write`); T5 spec 3.0.0 with the R-07 control.
+- [X] T019 [US3] Integration `tests/integration/agents/test_t5_agent.py`: `redteam` and `dlp` decisions read the run's results (not synthetic); the attestation row is not agent-written; the kill-switch scenario reported as not run in test → its control fails → the reviewer recommends exception with waiver fields (compensating control: the kill-switch check at release) → the run closes as exception only after the waiver approver accepts.
 
 ---
 

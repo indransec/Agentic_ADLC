@@ -70,7 +70,19 @@ agents:
       - {tool: harness_run, permission: "mcp:harness:run"}
       - {tool: artifact_store_read, permission: "mcp:artifact_store:read"}
       - {tool: eval_store_write, permission: "mcp:eval_store:write"}
-  - {id: t5-assurance-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
+  - id: t5-assurance-agent
+    version: "2.0.0"
+    implementation: model
+    model_tier: reasoning
+    prompt: {id: t5-assurance-agent, version: "1.0.0"}
+    tools:
+      - {tool: pilot_env_create, permission: "mcp:pilot_env:test"}
+      - {tool: pilot_env_status, permission: "mcp:pilot_env:read"}
+      - {tool: redteam_harness_run, permission: "mcp:redteam_harness:run"}
+      - {tool: dlp_scanner_run, permission: "mcp:dlp_scanner:run"}
+      - {tool: control_library_read, permission: "mcp:control_library:read"}
+      - {tool: iam_read, permission: "mcp:iam:read"}
+      - {tool: grc_write, permission: "mcp:grc:write"}
   - {id: t6-readiness-agent, version: "1.0.0", implementation: stub, model_tier: standard, tools: []}
   - {id: t7-deployment-agent, version: "1.0.0", implementation: stub, model_tier: standard, tools: []}
   - {id: t8-operations-agent, version: "1.0.0", implementation: stub, model_tier: standard, tools: []}

@@ -74,3 +74,49 @@ def test_invalid_imports() -> None:
     for value, columns, fragment in cases:
         rows, provenance, problems = expand("t", columns, value, resolve)
         assert rows == [] and provenance is None and fragment in problems[0], problems
+
+
+def test_an_agent_cannot_write_a_signed_record() -> None:
+    """011 FR-003: the attestation is people's sign-off; an agent that writes it is corrected."""
+    import json
+
+    from adlc.agents.output import parse_builder
+
+    spec = {
+        "terminal": {
+            "evidence": {
+                "artifacts": [
+                    {
+                        "id": "notes",
+                        "format": "table",
+                        "columns": ["a"],
+                        "applicability": {"mode": "mandatory"},
+                    },
+                    {
+                        "id": "assurance_attestation",
+                        "format": "signed_record",
+                        "columns": ["role", "decision", "date"],
+                        "applicability": {"mode": "mandatory"},
+                    },
+                ]
+            }
+        }
+    }
+    written = json.dumps(
+        {
+            "artifacts": {
+                "notes": [{"a": 1}],
+                "assurance_attestation": [
+                    {"role": "x", "decision": "approve", "date": "2026-01-01"}
+                ],
+            }
+        }
+    )
+    parsed = parse_builder(written, spec, lambda a: True)
+    assert any("signed by people" in p for p in parsed.problems)
+    assert (
+        parse_builder(
+            json.dumps({"artifacts": {"notes": [{"a": 1}]}}), spec, lambda a: True
+        ).problems
+        == ()
+    )

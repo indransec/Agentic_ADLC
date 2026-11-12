@@ -93,6 +93,7 @@ class ArtifactSpec:
     id: str
     columns: tuple[str, ...]
     condition: str | None
+    format: str = "table"  # 011: a ``signed_record`` is written by people at sign-off, not agents
 
 
 def artifacts(spec: Spec) -> tuple[ArtifactSpec, ...]:
@@ -103,7 +104,12 @@ def artifacts(spec: Spec) -> tuple[ArtifactSpec, ...]:
             applicability.get("when") if applicability.get("mode") == "conditional" else None
         )
         out.append(
-            ArtifactSpec(str(a["id"]), tuple(str(c) for c in _list(a.get("columns"))), condition)
+            ArtifactSpec(
+                str(a["id"]),
+                tuple(str(c) for c in _list(a.get("columns"))),
+                condition,
+                str(a.get("format") or "table"),
+            )
         )
     return tuple(out)
 

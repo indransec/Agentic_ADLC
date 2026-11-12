@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T5
     name: Trust, Risk & Assurance
-    version: "2.0.0"
+    version: "3.0.0"
     schema_version: "1.1.0"
     purpose: Is the agentic system safe and compliant for release?
     owner_role: adlc_coe
@@ -67,10 +67,10 @@ terminal:
     status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
   playbooks:
     procedures:
-      - {id: PB-T5-01, ref: playbooks/t5-assurance.md, version: "1.0.0"}
-      - {id: PB-T5-02, ref: playbooks/llm-red-team.md, version: "1.0.0"}
-      - {id: PB-T5-03, ref: playbooks/privacy-impact-assessment.md, version: "1.0.0"}
-      - {id: PB-T5-04, ref: playbooks/regulatory-mapping.md, version: "1.0.0"}
+      - {id: PB-T5-01, ref: playbooks/t5-assurance.md, version: "1.1.0"}
+      - {id: PB-T5-02, ref: playbooks/llm-red-team.md, version: "1.1.0"}
+      - {id: PB-T5-03, ref: playbooks/privacy-impact-assessment.md, version: "1.1.0"}
+      - {id: PB-T5-04, ref: playbooks/regulatory-mapping.md, version: "1.1.0"}
     grounding:
       - {mcp: control_library, scope: security and RAI controls}
       - {mcp: sharepoint, scope: "/policies/security, /policies/privacy, /policies/rai"}
@@ -104,6 +104,11 @@ terminal:
       - id: CTL-T5-07
         rule: all_rows_have(T5.residual_risk_register, ["risk_owner", "decision"])
         description: every residual risk has risk_owner and decision
+        severity: blocking
+      # 011 (research R-07): RAI values copied from T4's harness result equal it
+      - id: CTL-T5-08
+        rule: rows_match_value(T5.rai_assurance, "rai_metric", "t4_actual", harness.metrics)
+        description: RAI actuals equal the recorded harness result
         severity: blocking
     checklist:
       ref: checklists/t5.yaml

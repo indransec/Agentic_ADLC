@@ -222,7 +222,8 @@ class SqlEvidenceProvider:
         run = run_store.load_run(conn, run_id) if run_id else None
         if run is None:
             return NOT_AVAILABLE
-        sign_offs = [s for s in run_store.sign_offs(conn, run.run_id) if s["decision"] == "pass"]
+        all_sign_offs = run_store.sign_offs(conn, run.run_id)
+        sign_offs = [s for s in all_sign_offs if s["decision"] == "pass"]
         waivers = [
             w["waiver_id"]
             for w in policy_store.approved_waivers(conn, usecase_id)
@@ -239,6 +240,15 @@ class SqlEvidenceProvider:
             "run_version": f"run-{run.run_number}",
             "waivers": waivers,
         }
+        # 011 FR-003: a record people sign is built from their sign-offs, never from an agent
+        for artifact in spec_view.artifacts(self._spec(run)):
+            current = record.get(artifact.id)
+            if artifact.format == "signed_record" and not (isinstance(current, list) and current):
+                record[artifact.id] = [
+                    {"role": s["role"], "decision": s["decision"], "date": str(s["signed_at"])[:10]}
+                    for s in all_sign_offs
+                    if s["decision"] in ("pass", "exception")
+                ]
         if run.closed_at is not None:
             record["closed_at"] = run.closed_at
         bound = self._bound_to(conn, usecase_id, run, ctx, depth)

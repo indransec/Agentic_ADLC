@@ -7,7 +7,7 @@ loop. Output is validated in both cases, and every attempt is recorded in ``run.
 
 import re
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
@@ -26,7 +26,7 @@ from adlc.agents.context import (
 )
 from adlc.agents.gateway import UNAVAILABLE, CallIds, ModelGateway, ModelRequest, request_tokens
 from adlc.agents.limits import Budget, Limits, limits_for
-from adlc.agents.output import Parsed, correction, parse_builder, validate_artifacts
+from adlc.agents.output import SIGNED, Parsed, correction, parse_builder, validate_artifacts
 from adlc.agents.prompts import SpecText, SpecTexts
 from adlc.agents.store import insert_attempt
 from adlc.agents.telemetry import set_attributes
@@ -397,6 +397,11 @@ class RuntimeAgentRunner:
     ) -> AgentResult:
         result = self.stub.build(context)
         if isinstance(result, Artifacts):
+            # 011 FR-003: a stub, like any agent, never writes a record people sign
+            signed = {a.id for a in spec_view.artifacts(spec) if a.format == SIGNED}
+            if signed & set(result.artifacts):
+                kept = {k: v for k, v in result.artifacts.items() if k not in signed}
+                result = replace(result, artifacts=kept)
             problems = validate_artifacts(result.artifacts, spec, required)
             if problems:
                 return AttemptFailed("; ".join(problems))
