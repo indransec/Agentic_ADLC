@@ -10,7 +10,7 @@ from typing import Any
 import uvicorn
 from starlette.applications import Starlette
 
-from adlc.agents.mcp_tools import McpClient
+from adlc.tools.client import McpClient
 from adlc.tools.token import issue, sign
 from tests.support.knowledge import free_port
 

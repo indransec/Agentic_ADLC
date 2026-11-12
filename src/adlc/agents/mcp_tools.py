@@ -19,15 +19,13 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-import anyio
-import httpx
-
 from adlc.agents.catalogue import AgentCatalogue
 from adlc.agents.tools import Tool, ToolContext
 from adlc.orchestration import spec_view
 from adlc.orchestration.interfaces import EvalContext
 from adlc.policy.evidence import Evidence, EvidenceProvider
 from adlc.tools.catalogue import CATALOGUE, ENVIRONMENT_SCOPE, Catalogue, ToolSpec
+from adlc.tools.client import ToolUnavailable
 from adlc.tools.registry import ENVIRONMENT_SCOPES, TOOL_HOSTS, Registry
 from adlc.tools.token import canonical, issue, sign
 
@@ -38,10 +36,6 @@ SHA = "sha256:"
 
 def sha256_of(value: Any) -> str:
     return SHA + hashlib.sha256(canonical(value)).hexdigest()
-
-
-class ToolUnavailable(Exception):
-    pass
 
 
 class McpClientLike(Protocol):
@@ -266,46 +260,6 @@ def _package(result: Any) -> str | None:
         if value.startswith(SHA) and len(value) == len(SHA) + 64:
             return value
     return None
-
-
-# ------------------------------------------------------------------ MCP client
-
-
-class McpClient:
-    """Calls ``<url of host>/mcp/<server>/`` with a per-call run token (MCP streamable HTTP)."""
-
-    def __init__(self, urls: Mapping[str, str], timeout_s: float) -> None:
-        self.urls = {h: u.rstrip("/") for h, u in urls.items()}
-        self.timeout_s = timeout_s
-
-    def __call__(
-        self, host: str, server: str, tool: str, arguments: Mapping[str, Any], token: str
-    ) -> tuple[bool, str]:
-        url = self.urls.get(host)
-        if not url:
-            raise ToolUnavailable(host)
-        try:
-            return anyio.run(self._call, f"{url}/mcp/{server}/", tool, dict(arguments), token)
-        except Exception as exc:  # connection, timeout, HTTP or protocol failure
-            raise ToolUnavailable(server) from exc
-
-    async def _call(
-        self, url: str, tool: str, arguments: dict[str, Any], token: str
-    ) -> tuple[bool, str]:
-        from mcp import ClientSession  # noqa: PLC0415 - only processes that call tools load MCP
-        from mcp.client.streamable_http import streamable_http_client  # noqa: PLC0415
-
-        headers = {"Authorization": f"Bearer {token}"}
-        with anyio.fail_after(self.timeout_s):
-            async with (
-                httpx.AsyncClient(headers=headers, timeout=self.timeout_s) as http,
-                streamable_http_client(url, http_client=http) as streams,
-                ClientSession(streams[0], streams[1]) as session,
-            ):
-                await session.initialize()
-                result = await session.call_tool(tool, arguments)
-        text = "".join(getattr(c, "text", "") for c in result.content)
-        return bool(result.isError), text
 
 
 # ------------------------------------------------------------------ building the tools

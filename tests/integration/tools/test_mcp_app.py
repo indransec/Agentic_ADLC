@@ -6,8 +6,8 @@ from typing import Any
 
 import pytest
 
-from adlc.agents.mcp_tools import ToolUnavailable
 from adlc.tools.catalogue import CATALOGUE
+from adlc.tools.client import ToolUnavailable
 from adlc.tools.mcp_app import Call, ServerTools, ToolFailure, build_app
 from tests.support.tools import ALLOWED, KEY, call, serve, token
 

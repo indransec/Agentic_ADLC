@@ -207,6 +207,12 @@ services:
       # Knowledge MCP server (feature 008).
       ADLC_KNOWLEDGE_URL: http://knowledge:8020
       ADLC_KNOWLEDGE_TOKEN: ${ADLC_KNOWLEDGE_TOKEN:?ADLC_KNOWLEDGE_TOKEN is required}
+      # MCP tool servers (feature 010): agents' tools and the pilot evidence. Without the key the
+      # platform has no tools and reads synthetic env/template evidence (labelled).
+      ADLC_TOOLS_URL: http://tools:8030
+      ADLC_PILOT_BRIDGE_URL: http://pilot-bridge:8040
+      ADLC_TOOLS_TOKEN_KEY: ${ADLC_TOOLS_TOKEN_KEY:-}
+      ADLC_TOOLS_TIMEOUT_S: ${ADLC_TOOLS_TIMEOUT_S:-120}
     volumes:
       - ${ADLC_ACCOUNTS_FILE:?ADLC_ACCOUNTS_FILE is required}:/run/adlc/accounts.yaml:ro
       - adlc-files:/var/lib/adlc/files
@@ -223,6 +229,41 @@ services:
       timeout: 5s
       retries: 6
       start_period: 15s
+    restart: unless-stopped
+
+  # Pilot bridge (feature 010): the pilot-facing MCP servers. The only service on both networks;
+  # it holds no database, model, knowledge or session settings (research R-01). No ports.
+  pilot-bridge:
+    networks: [platform, pilot]
+    image: adlc-api:0.1.0
+    command: ["adlc-pilot-bridge"]
+    environment:
+      ADLC_TOOLS_TOKEN_KEY: ${ADLC_TOOLS_TOKEN_KEY:?ADLC_TOOLS_TOKEN_KEY is required}
+      ADLC_BRIDGE_PORT: "8040"
+      ADLC_BRIDGE_DATA_DIR: /var/lib/adlc/bridge
+      ADLC_BRIDGE_PILOT_DEV_URL: http://pilot-dev:8100
+      ADLC_BRIDGE_PILOT_TEST_URL: http://pilot-test:8100
+      ADLC_BRIDGE_PILOT_PRODSIM_URL: http://pilot-prodsim:8100
+      ADLC_BRIDGE_PILOT_LAB_URL: http://pilot-lab:8300
+      ADLC_BRIDGE_PILOT_TRAFFIC_URL: http://pilot-traffic:8200
+      ADLC_BRIDGE_JAEGER_URL: http://jaeger:16686
+      ADLC_BRIDGE_PILOT_SERVICE: ${ADLC_BRIDGE_PILOT_SERVICE:-pilot-triage-prod-sim}
+      ADLC_BRIDGE_MONITOR_INTERVAL_S: ${ADLC_BRIDGE_MONITOR_INTERVAL_S:-30}
+      ADLC_SPEC_DIR: adlc-specs
+      ADLC_REDTEAM_SUITE: data/redteam/suite.yaml
+      ADLC_LOG_LEVEL: ${ADLC_LOG_LEVEL:-INFO}
+    volumes:
+      - bridge-data:/var/lib/adlc/bridge
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8040/health', timeout=2).status == 200 else 1)"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
     restart: unless-stopped
 
   # Pilot environments (feature 009): the Incident Triage Assistant on its own network. The
@@ -360,6 +401,7 @@ volumes:
   pilot-packages:
   pilot-records:
   pilot-data:
+  bridge-data:
 
 networks:
   platform:

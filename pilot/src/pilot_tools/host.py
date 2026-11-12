@@ -178,10 +178,10 @@ def create_host(
 
     @app.get("/infra")
     def infra() -> dict[str, Any]:
+        declared = YAML(typ="safe").load((template / "template.yaml").read_text())
         return {
-            "template_version": YAML(typ="safe").load((template / "template.yaml").read_text())[
-                "version"
-            ],
+            "template_id": declared["id"],
+            "template_version": declared["version"],
             "definitions": [load_definition(template, env) for env in ENVIRONMENTS],
         }
 

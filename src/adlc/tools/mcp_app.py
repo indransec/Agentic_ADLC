@@ -21,6 +21,7 @@ import anyio
 import anyio.to_thread
 from mcp import types
 from mcp.server.lowlevel import Server
+from mcp.server.lowlevel.helper_types import ReadResourceContents
 from mcp.server.streamable_http_manager import StreamableHTTPSessionManager
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.applications import Starlette
@@ -59,9 +60,20 @@ Audit = Callable[[str, Claims | None, str], None]  # tool, claims, outcome
 
 
 @dataclass(frozen=True)
+class ResourceSpec:
+    """A readable MCP resource (e.g. ``infra://dev``), checked against a scope like a tool."""
+
+    uri: str
+    name: str
+    scope: str  # mcp:<server>:<scope>
+    read: Callable[[], Any]
+
+
+@dataclass(frozen=True)
 class ServerTools:
     tools: list[ToolSpec]
     handlers: Mapping[str, Handler]  # by the tool's full name
+    resources: tuple[ResourceSpec, ...] = ()
 
 
 def _bearer(request: Request | None) -> str:
@@ -135,6 +147,37 @@ def server_for(
         counts[f"{tool.full_name}.{outcome}"] += 1
         audit(tool.full_name, claims, outcome)
         return reply
+
+    if offered.resources:
+        by_uri = {r.uri: r for r in offered.resources}
+
+        @server.list_resources()  # type: ignore[no-untyped-call,untyped-decorator]
+        async def list_resources() -> list[types.Resource]:
+            return [
+                types.Resource(uri=r.uri, name=r.name, mimeType="application/json")  # type: ignore[arg-type]
+                for r in offered.resources
+            ]
+
+        @server.read_resource()  # type: ignore[no-untyped-call,untyped-decorator]
+        async def read_resource(uri: Any) -> list[ReadResourceContents]:
+            resource = by_uri.get(str(uri))
+            if resource is None:
+                raise ToolFailure(f"not found: resource {uri}")
+            request = server.request_context.request
+            try:
+                verify(
+                    _bearer(request if isinstance(request, Request) else None),
+                    key,
+                    scope=resource.scope,
+                    now=clock(),
+                )
+            except TokenError as exc:
+                audit(resource.uri, None, "refused")
+                raise ToolFailure(f"not permitted: {exc}") from None
+            value = await anyio.to_thread.run_sync(resource.read)
+            audit(resource.uri, None, "ok")
+            text = json.dumps(value, ensure_ascii=False, default=str)
+            return [ReadResourceContents(content=text, mime_type="application/json")]
 
     return server
 

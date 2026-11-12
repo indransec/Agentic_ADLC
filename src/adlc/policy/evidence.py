@@ -68,6 +68,20 @@ class CompositeEvidenceProvider:
         return NOT_AVAILABLE
 
 
+class ChainEvidenceProvider:
+    """The first provider that has evidence wins (010: the records, then the pilot)."""
+
+    def __init__(self, *providers: EvidenceProvider) -> None:
+        self.providers = providers
+
+    def get(self, source: str, context: EvalContext) -> Answer:
+        for provider in self.providers:
+            answer = provider.get(source, context)
+            if isinstance(answer, Evidence):
+                return answer
+        return NOT_AVAILABLE
+
+
 # ---------------------------------------------------------- SQL provider (feature 003 records)
 
 

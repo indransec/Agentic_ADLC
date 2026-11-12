@@ -5,11 +5,13 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
 
-from adlc.agents.mcp_tools import BoundValues, McpTool, ToolUnavailable, scope_for
+from adlc.agents.mcp_tools import BoundValues, McpTool, scope_for
 from adlc.agents.tools import ToolContext
 from adlc.orchestration.interfaces import EvalContext
-from adlc.policy.evidence import NOT_AVAILABLE, Answer, Evidence
+from adlc.policy.evidence import Answer, Evidence
+from adlc.policy.values import NOT_AVAILABLE
 from adlc.tools.catalogue import CATALOGUE, ToolSpec
+from adlc.tools.client import ToolUnavailable
 from adlc.tools.token import verify
 
 KEY = "k" * 40

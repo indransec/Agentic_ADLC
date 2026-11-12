@@ -14,7 +14,12 @@ from adlc.orchestration import store as run_store
 from adlc.orchestration.interfaces import Clock, EvalContext
 from adlc.policy.directory import Directory
 from adlc.policy.engine import CelPolicyEngine
-from adlc.policy.evidence import CompositeEvidenceProvider, SqlEvidenceProvider
+from adlc.policy.evidence import (
+    ChainEvidenceProvider,
+    CompositeEvidenceProvider,
+    EvidenceProvider,
+    SqlEvidenceProvider,
+)
 from adlc.policy.parameters import ParameterService, ProfileSource
 from adlc.policy.predicates import load_all
 from adlc.policy.store import DecisionSink, SqlDecisionSink
@@ -31,7 +36,10 @@ def build_policy_engine(
     directory: Directory | None = None,
     profile: ProfileSource | None = None,
     sink: DecisionSink | None = None,
+    pilot: EvidenceProvider | None = None,
 ) -> CelPolicyEngine:
+    """``pilot`` (010) answers ``env.*`` and ``template.*`` from the pilot through the bridge,
+    ahead of synthetic evidence."""
     guardrails = _catalogue(registry, "guardrails") or {}
     profile = profile or SqlProfileSource(engine)  # 005: the versioned use-case profile
     real = SqlEvidenceProvider(
@@ -43,8 +51,9 @@ def build_policy_engine(
         profile=profile,
     )
     synthetic = SyntheticEvidenceProvider.from_dir(synthetic_dir) if synthetic_dir else None
+    records: EvidenceProvider = real if pilot is None else ChainEvidenceProvider(real, pilot)
     return CelPolicyEngine(
-        CompositeEvidenceProvider(real, synthetic),
+        CompositeEvidenceProvider(records, synthetic),
         load_all(),
         catalogue=lambda name: _catalogue(registry, name),
         spec_for=_SpecLookup(engine, registry),

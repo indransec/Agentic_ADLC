@@ -11,7 +11,7 @@ from adlc.agents.citations import SqlRetrievalLog
 from adlc.agents.cost import CostAlerts
 from adlc.agents.gateway import LiteLLMTransport, ModelGateway, RoutingGateway
 from adlc.agents.knowledge import KnowledgeCaller, McpCaller, knowledge_tools
-from adlc.agents.mcp_tools import BoundValues, McpClient, McpClientLike, mcp_tools
+from adlc.agents.mcp_tools import BoundValues, McpClientLike, mcp_tools
 from adlc.agents.prompts import SpecTexts, SqlSpecTexts
 from adlc.agents.runner import RuntimeDeps
 from adlc.agents.startup import check_knowledge_token, check_model_keys
@@ -22,6 +22,7 @@ from adlc.config.settings import DEFAULT_AGENT_LIMITS, AgentLimit, AgentLimitOve
 from adlc.orchestration.interfaces import Clock, PolicyEngine
 from adlc.policy.evidence import EvidenceProvider, SqlEvidenceProvider
 from adlc.spec_toolkit.registry import SpecRegistry
+from adlc.tools.client import McpClient
 from adlc.tools.registry import Registry
 
 
