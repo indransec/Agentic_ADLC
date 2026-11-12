@@ -92,5 +92,5 @@ priority], slices: [{name, field, value}]}`. Defaults: `golden` (seed 7, 200), `
 | Source | Value |
 | --- | --- |
 | `env.dev`, `env.test` | `{provisioned, healthy, deployed_hash, infra_version}`; `provisioned` = the host answers and its definition loads |
-| `env.prod` | `{deployed_hash}`: prod-sim's stable hash (or the candidate at full) |
+| `env.prod` | `{deployed_hash}`: prod-sim's stable hash (a full rollout promotes the candidate to stable) |
 | `template.version` | The template version from the infrastructure resources (e.g. `incident-triage@1.0.0`) |

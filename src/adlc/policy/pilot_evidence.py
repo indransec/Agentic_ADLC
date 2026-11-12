@@ -61,15 +61,14 @@ class PilotEvidence:
         }
 
     def _prod(self) -> str | None:
-        """Prod-sim's deployed hash: the stable package, or the candidate at full; ``None`` when
-        prod-sim cannot be read (``env.prod`` is then not available, never guessed)."""
+        """Prod-sim's deployed hash: the stable package (a full rollout promotes the candidate to
+        stable); ``None`` when prod-sim cannot be read (``env.prod`` is then not available)."""
         try:
             split = self._call("cd", "status", {})
         except (ToolUnavailable, ValueError):
             return None
-        candidate, stable = split.get("candidate"), split.get("stable")
-        deployed = candidate if split.get("mode") == "full" and candidate else stable
-        return str(deployed) if deployed else None
+        stable = split.get("stable")
+        return str(stable) if stable else None
 
     def get(self, source: str, context: EvalContext) -> Answer:
         if source not in SOURCES:

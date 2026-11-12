@@ -25,6 +25,7 @@ pilot-split = "pilot_tools.cli:split_main"
 pilot-fault = "pilot_tools.cli:fault_main"
 pilot-traffic-ctl = "pilot_tools.cli:traffic_main"
 pilot-lab = "pilot_tools.lab:main"
+pilot-kill = "pilot_tools.cli:kill_main"
 
 [dependency-groups]
 dev = [

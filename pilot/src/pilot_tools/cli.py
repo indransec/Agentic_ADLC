@@ -112,6 +112,17 @@ def fault_main(argv: Sequence[str] | None = None) -> None:
     sys.exit(_show(httpx.post(f"{base}/faults/{args.fault}", json=body, timeout=30)))
 
 
+def kill_main(argv: Sequence[str] | None = None) -> None:
+    """010: a person releases (or activates) prod-sim's kill switch; agents can only activate."""
+    parser = argparse.ArgumentParser(prog="pilot-kill", description="Prod-sim kill switch")
+    parser.add_argument("action", choices=["release", "activate"])
+    parser.add_argument("--reason", required=True)
+    parser.add_argument("--host", default=PRODSIM)
+    args = parser.parse_args(argv)
+    body = {"action": args.action, "reason": args.reason}
+    sys.exit(_show(httpx.post(f"{host_url(args.host)}/kill", json=body, timeout=10)))
+
+
 def traffic_main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="pilot-traffic-ctl", description="Traffic generator")
     parser.add_argument("action", choices=["rate", "start", "pause", "metrics"])

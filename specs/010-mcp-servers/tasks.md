@@ -131,10 +131,10 @@ then polish.
 
 **Independent Test**: as a T7 run, deploy the authorised hash and step through the split; try another hash; as a T8 run, invoke the kill switch.
 
-- [ ] T028 [P] [US4] Pilot tests `pilot/tests/integration/test_kill.py`: activate makes `/triage` answer 503; activating twice 409; release restores; records in `faults.jsonl`; `pilot-kill release` command.
-- [ ] T029 [US4] `pilot/src/pilot_tools/host.py` `POST /kill` and `pilot/src/pilot_tools/cli.py` `pilot-kill` (release by a person; the bridge only activates).
-- [ ] T030 [P] [US4] Tests `tests/unit/tools/test_release.py` and integration `tests/integration/tools/test_bridge_release.py`: `cd_deploy` with the bound authorised hash; no authorised hash refused at the platform (no T6 pass) and at the server (token without `authorised_hash`); a model-sent hash ignored; `traffic_manager_set` and `traffic_manager_rollback`; `kill_switch_invoke` twice; evidence results recorded (SC-006).
-- [ ] T031 [US4] `src/adlc/tools/bridge/release.py`: `cd_deploy`, `cd_status`, `traffic_manager_set`, `traffic_manager_rollback`, `kill_switch_invoke`.
+- [X] T028 [P] [US4] Pilot tests `pilot/tests/integration/test_kill.py`: activate makes `/triage` answer 503; activating twice 409; release restores; records in `faults.jsonl`; `pilot-kill release` command.
+- [X] T029 [US4] `pilot/src/pilot_tools/host.py` `POST /kill` and `pilot/src/pilot_tools/cli.py` `pilot-kill` (release by a person; the bridge only activates).
+- [X] T030 [P] [US4] Tests `tests/unit/tools/test_release.py` and integration `tests/integration/tools/test_bridge_release.py`: `cd_deploy` with the bound authorised hash; no authorised hash refused at the platform (no T6 pass) and at the server (token without `authorised_hash`); a model-sent hash ignored; `traffic_manager_set` and `traffic_manager_rollback`; `kill_switch_invoke` twice; evidence results recorded (SC-006).
+- [X] T031 [US4] `src/adlc/tools/bridge/release.py`: `cd_deploy`, `cd_status`, `traffic_manager_set`, `traffic_manager_rollback`, `kill_switch_invoke`.
 
 **Checkpoint**: US4 passes alone.
 

@@ -132,9 +132,10 @@ with e-mail, phone and payment-card patterns; findings are returned masked (`a**
 ## R-10 Release tools wrap the pilot host
 
 **Decision.** `cd_deploy` → prod-sim `POST /deployments` (candidate, `authorised_hash` only);
-`cd_status` → `GET /split`; `traffic_manager_set` → `PUT /split` (shadow, canary with share,
-full); `traffic_manager_rollback` → `PUT /split full` after redeploying nothing (stable keeps
-serving); `kill_switch_invoke` → a new prod-sim `POST /kill` that makes `/triage` answer 503
+`cd_status` → `GET /split`; `traffic_manager_set` → `PUT /split` (shadow, canary with share);
+`full` promotes the deployed candidate to stable (prod-sim's `full` sends everything to stable)
+and records the previous stable; `traffic_manager_rollback` → `PUT /split full`, redeploying the
+previous stable after a promotion; `kill_switch_invoke` → a new prod-sim `POST /kill` that makes `/triage` answer 503
 "stopped" until a person releases it with the pilot command `pilot-kill release`.
 
 **Rationale.** 009 built the operations (no Docker SDK, no Traefik); the kill switch is the one
@@ -157,7 +158,7 @@ gives it without T8 polling.
 
 **Decision.** A `PilotEvidence` source in the platform's evidence provider answers `env.dev`,
 `env.test` (`{provisioned, deployed_hash, healthy}`), `env.prod` (`{deployed_hash}` = prod-sim's
-stable, or the candidate at full) and `template.version` (from the infrastructure resources)
+stable, or the candidate at full) and `template.version` (from the infrastructure resources); `env.prod.deployed_hash` is prod-sim's stable package, which a full rollout replaces with the candidate
 through the bridge with the service token. When the bridge is not configured or not reachable it
 answers "not available" and the composite provider falls back to synthetic evidence, labelled
 synthetic (feature 004).

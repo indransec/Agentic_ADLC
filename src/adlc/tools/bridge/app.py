@@ -10,7 +10,7 @@ from typing import Any
 from starlette.applications import Starlette
 
 from adlc.config.settings import BridgeSettings
-from adlc.tools.bridge import environments, evaluation, git_repo, stores
+from adlc.tools.bridge import environments, evaluation, git_repo, release, stores
 from adlc.tools.bridge.git_repo import GitRepos
 from adlc.tools.bridge.pilot import Pilot, PilotUrls
 from adlc.tools.bridge.records import Records
@@ -49,6 +49,7 @@ def all_handlers(pilot: Pilot, settings: BridgeSettings, records: Records) -> di
         **git_repo.handlers(repos),
         **stores.handlers(pilot, repos, data, records),
         **evaluation.handlers(pilot, Path(settings.redteam_suite)),
+        **release.handlers(pilot, records),
     }
 
 
