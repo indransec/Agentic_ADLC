@@ -22,8 +22,8 @@ polish.
 
 ## Phase 1: Setup
 
-- [ ] T001 Pilot dependencies `coverage` 7.x and `bandit` 1.8.x in `pilot/pyproject.toml` (lock), `pilot/licences.yaml` (licence allowlist), and the image builds.
-- [ ] T002 [P] Tier step defaults: `coding` 16, `reasoning` 14 in `src/adlc/config/settings.py` (`DEFAULT_AGENT_LIMITS`), timeouts still within the lease; tests updated.
+- [X] T001 Pilot dependencies `coverage` 7.x and `bandit` 1.8.x in `pilot/pyproject.toml` (lock), `pilot/licences.yaml` (licence allowlist), and the image builds.
+- [X] T002 [P] Tier step defaults: `coding` 16, `reasoning` 14 in `src/adlc/config/settings.py` (`DEFAULT_AGENT_LIMITS`), timeouts still within the lease; tests updated.
 
 ---
 
