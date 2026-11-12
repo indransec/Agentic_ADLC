@@ -94,7 +94,22 @@ polish.
 - [X] T026 Run `make check` and fix any failure (SC-008).
   **Result (2026-11-12):** 2,207 platform tests (core coverage 95%) and 65 pilot tests (93%) pass;
   lint, types and spec validation clean.
-- [ ] T027 Live: `adlc-replay --profile dev --usecase it-service-desk` through T5 on the running stack; record SC-002, SC-003 and SC-007 (cost and tool calls per terminal), and any quality findings.
+- [X] T027 Live: `adlc-replay --profile dev --usecase it-service-desk` through T5 on the running stack; record SC-002, SC-003 and SC-007 (cost and tool calls per terminal), and any quality findings.
+  **Result (2026-11-12), accepted by the user:** SC-007 not met on the dev model (GPT-4o mini), as
+  for 008's SC-001. Four live runs of `it-service-desk` (about $0.18 in all):
+  1. Fully live: stopped at T2 (two T2 design controls failed; the 008 dev-model limit).
+  2. `--recording` T0–T2 + `--live-rest`: T3 escalated (hash without `sha256:`, 2 of 5
+     requirements traced, a stale parent on retry). Fixed: hash prefix is notation, refusals name
+     the branch head, T3 prompt 1.1.0.
+  3. Same: **T3 passed live** (11 tool calls, green CI after a red one); T4 used the table import
+     (candidate 1.0 on the real pilot) but escalated on judgement (traceability, failure modes,
+     failed controls logged as defects). Fixed: edge-case evidence in the harness, T4 prompt 1.1.0
+     and playbook 1.2.0, CTL-T3-13 (dev runs CI's package; T3 had skipped it).
+  4. Same: T3 escalated with invented values (artifacts looked up as repository files, a hash
+     from another use case); every one was caught by the evidence checks.
+  The model varies between runs; the deterministic parts (tools, run tokens, recorded evidence,
+  checks, imports, waiver path) behaved as specified in every run. A stronger model (default
+  profile) was not run, on the user's decision.
 
 ---
 
