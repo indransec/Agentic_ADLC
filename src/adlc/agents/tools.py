@@ -96,7 +96,13 @@ class ToolGate:
         """``on_behalf_of`` names the run the call is for; an agent may act only for its own."""
         binding = agent.tool(name)
         if binding is None or name not in self.tools:
-            return ToolRefused(f"tool {name} is not available to {agent.id}")
+            refusal = f"tool {name} is not available to {agent.id}"
+            record = getattr(self.tools.get(name), "refused", None)
+            if callable(record):  # 011: a tool another terminal holds; the attempt is recorded
+                record(
+                    ToolContext(run_id, usecase_id, terminal_id, spec or {}, attempt, step), refusal
+                )
+            return ToolRefused(refusal)
         evaluation = EvalContext(terminal_id, f"tool:{name}", on_behalf_of or run_id, usecase_id)
         actor = f"agent:{run_id}"
         with span(

@@ -9,8 +9,12 @@ intake_text: >-
   ticket and drafts the first reply for the analyst to send. Analysts keep the final decision, and
   security tickets must never be closed automatically. Success means fewer than 10% reassignments
   and first assignment within 15 minutes.
-# The terminal whose review ends the replay (it is not passed).
-until: T2
+# The terminal whose review ends the replay (it is not passed). 011: this reference matches the
+# pilot's golden template (incident triage), so it runs through the acting terminals T3-T5.
+until: T5
+# 011: the kill switch cannot be tested in test, so T5 escalates by design; a person completes the
+# escalation and the gap is decided at sign-off (an exception with a waiver in the demo).
+complete_escalations: [T5]
 answers:
   business_owner:
     - "Tickets are internal data owned by the IT operations director; personal data is masked."
@@ -22,4 +26,4 @@ approver_fields:
   T0: {risk_tier: low}
 expected:
   risk_tier: low
-  minimum_outcome: "T2 reached, every mandatory artifact present, every blocking control passing"
+  minimum_outcome: "T5 sign-off reached; every mandatory artifact present; the only failed blocking control is the kill-switch scenario at T5"

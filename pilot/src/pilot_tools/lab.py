@@ -23,6 +23,7 @@ from fastapi.testclient import TestClient
 from pydantic import BaseModel, Field
 from ruamel.yaml import YAML
 
+from pilot_tools import ci_checks
 from pilot_tools.build import BuildError, build, digest_of, exists, extract
 from pilot_tools.incidents import generate
 from triage_agent.app import create_app as package_app
@@ -64,7 +65,32 @@ def _smoke(registry: Path, package_hash: str, template: Path) -> dict[str, Any]:
     return _check("smoke", True, f"{SMOKE_SIZE} incidents answered")
 
 
-def create_lab(template: Path, registry: Path, datasets_file: Path) -> FastAPI:
+def _report(registry: Path, package_hash: str, licences_file: Path | None) -> dict[str, Any]:
+    """011: tests with coverage, SAST, secret scan, SBOM and observability
+    (contracts/ci-report.md)."""
+    with tempfile.TemporaryDirectory() as work:
+        root = extract(registry, package_hash, Path(work) / "package")
+        tests_check, tests, signals = ci_checks.package_suite(root, package_hash)
+        sast_check, sast = ci_checks.sast()
+        secret_check, secrets = ci_checks.secret_scan(ci_checks.scanned_texts(root))
+    checks = [tests_check, sast_check, secret_check]
+    report: dict[str, Any] = {"tests": tests, "scans": {"sast": sast, "secret_scan": secrets}}
+    if licences_file is not None:
+        sbom_check, sbom = ci_checks.sbom(licences_file)
+        checks.append(sbom_check)
+        report["sbom"] = sbom
+    checks.append(ci_checks.observability_check(signals))
+    report["observability"] = signals
+    return {"checks": checks, **report}
+
+
+def create_lab(
+    template: Path,
+    registry: Path,
+    datasets_file: Path,
+    example_fill: Path | None = None,
+    licences_file: Path | None = None,
+) -> FastAPI:
     app = FastAPI(title="pilot-lab")
     declared = YAML(typ="safe").load(datasets_file.read_text())["datasets"]
     by_id = {str(d["id"]): d for d in declared}
@@ -85,6 +111,7 @@ def create_lab(template: Path, registry: Path, datasets_file: Path) -> FastAPI:
                 "sha256": _canonical_sha(rows),
                 "scored_fields": list(d["scored_fields"]),
                 "slices": list(d.get("slices") or []),
+                "labelled_slice": dict(d.get("labelled_slice") or {}),
             }
             cache[dataset_id] = {"dataset": meta, "rows": rows}
         return cache[dataset_id]
@@ -96,8 +123,15 @@ def create_lab(template: Path, registry: Path, datasets_file: Path) -> FastAPI:
     @app.get("/layout")
     def get_layout() -> dict[str, Any]:
         spec = template_spec(template)
+        files = layout(template)
+        example = {}
+        if example_fill is not None:  # 011: the repository's main starts with the example fill
+            example = {
+                n: (example_fill / n).read_text() for n in files if (example_fill / n).is_file()
+            }
         return {
-            "files": layout(template),
+            "files": files,
+            "example": example,
             "template_id": spec["id"],
             "template_version": spec["version"],
         }
@@ -127,7 +161,12 @@ def create_lab(template: Path, registry: Path, datasets_file: Path) -> FastAPI:
             same = again.package_hash == built.package_hash
             checks.append(_check("reproducible", same, "" if same else again.package_hash))
             checks.append(_smoke(registry, built.package_hash, template))
-            return {"checks": checks, "package_hash": built.package_hash}
+            report = _report(registry, built.package_hash, licences_file)
+            checks += report.pop("checks")
+            answer: dict[str, Any] = {"checks": checks, **report}
+            if all(c["passed"] for c in checks):  # the hash only when CI is green
+                answer["package_hash"] = built.package_hash
+            return answer
 
     @app.get("/packages/{package_hash}")
     def manifest(package_hash: str) -> dict[str, Any]:
@@ -158,6 +197,8 @@ def main() -> None:
         Path(os.environ.get("PILOT_TEMPLATE", project / "template")),
         Path(os.environ.get("PILOT_REGISTRY", "/packages")),
         Path(os.environ.get("PILOT_DATASETS", project / "datasets.yaml")),
+        Path(os.environ.get("PILOT_EXAMPLE_FILL", project / "fills" / "default")),
+        Path(os.environ.get("PILOT_LICENCES", project / "licences.yaml")),
     )
     uvicorn.run(app, host="0.0.0.0", port=args.port, log_config=None)  # noqa: S104
 

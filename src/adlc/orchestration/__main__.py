@@ -17,7 +17,7 @@ import typer
 from adlc.agents.catalogue import UnknownProfile
 from adlc.agents.reviewer import RuntimeReviewer
 from adlc.agents.runner import RuntimeAgentRunner
-from adlc.agents.startup import MissingKnowledgeToken, MissingModelKey
+from adlc.agents.startup import MissingKnowledgeToken, MissingModelKey, MissingToolsKey
 from adlc.agents.wiring import build_runtime
 from adlc.config.errors import load_settings_or_exit
 from adlc.config.settings import OrchestratorSettings
@@ -95,7 +95,7 @@ def run() -> None:
             tools_token_key=key,
             tools_timeout_s=settings.tools_timeout_s,
         )
-    except (MissingModelKey, MissingKnowledgeToken, UnknownProfile) as exc:
+    except (MissingModelKey, MissingKnowledgeToken, MissingToolsKey, UnknownProfile) as exc:
         print(f"adlc: configuration error\n  {exc}", file=sys.stderr)
         raise typer.Exit(2) from exc
     orchestrator = build_orchestrator(

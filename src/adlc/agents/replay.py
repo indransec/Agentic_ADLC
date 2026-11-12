@@ -26,7 +26,7 @@ from adlc.agents.fake import FakeGateway, reply
 from adlc.agents.gateway import CallRecorder, Outcome, ProviderReply, Transport
 from adlc.orchestration import routing, spec_view
 from adlc.orchestration.engine import PostgresTerminalRun
-from adlc.orchestration.service import Actor, OrchestratorService
+from adlc.orchestration.service import Actor, NotAuthorised, OrchestratorService
 from adlc.orchestration.states import RunState
 from adlc.orchestration.store import RunRow
 
@@ -136,6 +136,9 @@ class Reference:
     answers: Mapping[str, Sequence[str]]
     approver_fields: Mapping[str, Mapping[str, Any]]
     expected: Mapping[str, Any]
+    # 011: terminals whose escalation a person completes so the run reaches sign-off (e.g. a gap
+    # the agent cannot close, decided by people)
+    complete_escalations: tuple[str, ...] = ()
 
 
 def load_references(folder: Path, only: Sequence[str] = ()) -> list[Reference]:
@@ -155,6 +158,7 @@ def load_references(folder: Path, only: Sequence[str] = ()) -> list[Reference]:
                 },
                 approver_fields=dict(data.get("approver_fields") or {}),
                 expected=dict(data.get("expected") or {}),
+                complete_escalations=tuple(str(t) for t in data.get("complete_escalations") or []),
             )
         )
     return references
@@ -183,6 +187,7 @@ class TerminalResult:
     playbook_hashes: dict[str, str]
     models: list[str]
     changed_from: str | None = None
+    tool_calls: int = 0  # 011: calls to the MCP tool servers (every outcome)
 
     @property
     def ok(self) -> bool:
@@ -256,6 +261,10 @@ class Replayer:
                 if run.terminal_id == ref.until:
                     return "completed"
                 self._pass(run, ref)
+            elif run.state == RunState.ESCALATED and run.terminal_id in ref.complete_escalations:
+                seen[run.terminal_id] = self._result(run)
+                if not self._complete(run):
+                    return f"stopped: nobody could complete the {run.terminal_id} escalation"
             elif run.state in (RunState.ESCALATED, RunState.BLOCKED):
                 seen[run.terminal_id] = self._result(run)
                 return f"stopped: {run.terminal_id} {run.state}"
@@ -286,6 +295,23 @@ class Replayer:
         )
         return True
 
+    def _complete(self, run: RunRow) -> bool:
+        """011: a person of the terminal's roles completes the escalation with the run's artifacts
+        (the gap stays visible in the failed controls; people decide at sign-off)."""
+        spec = self.runs.entry(run.terminal_id, run.spec_version).spec
+        roles = [
+            str(r["role"])
+            for r in (spec_view.body(spec).get("actors") or {}).get("human_roles") or []
+        ]
+        for role in roles:
+            for person in self.people(role):
+                try:
+                    self.service.complete_escalation(person, run.run_id, run.artifacts)
+                    return True
+                except NotAuthorised:
+                    continue
+        return False
+
     def _pass(self, run: RunRow, ref: Reference) -> None:
         spec = self.runs.entry(run.terminal_id, run.spec_version).spec
         typed = dict(ref.approver_fields.get(run.terminal_id) or {})
@@ -313,7 +339,11 @@ class Replayer:
 
     def _result(self, run: RunRow) -> TerminalResult:
         spec = self.runs.entry(run.terminal_id, run.spec_version).spec
-        mandatory = [a.id for a in spec_view.artifacts(spec) if a.condition is None]
+        mandatory = [
+            a.id
+            for a in spec_view.artifacts(spec)
+            if a.condition is None and a.format != "signed_record"  # 011: people sign those
+        ]
         with self.engine.connect() as conn:
             attempts = conn.execute(
                 text(
@@ -337,6 +367,9 @@ class Replayer:
             rounds = conn.execute(
                 text("SELECT count(*) FROM run.clarification_round WHERE run_id = :r"),
                 {"r": run.run_id},
+            ).scalar_one()
+            tool_calls = conn.execute(
+                text("SELECT count(*) FROM tools.tool_call WHERE run_id = :r"), {"r": run.run_id}
             ).scalar_one()
         last = attempts[-1] if attempts else None
         costs = [a[7] for a in attempts]
@@ -366,6 +399,7 @@ class Replayer:
             prompt_hash=None if last is None or last[2] is None else str(last[2]),
             playbook_hashes={} if last is None else dict(last[3]),
             models=[str(m) for m in models],
+            tool_calls=int(tool_calls),
         )
 
 
@@ -426,8 +460,8 @@ def markdown(report: Report) -> str:
             f"## {u.id} ({u.usecase_id}): {u.outcome}",
             "",
             "| Terminal | Mandatory missing | Blocking failed | First attempt clean | "
-            "Recommendation | Changed from | Clarifications | Citations | Cost USD |",
-            "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+            "Recommendation | Changed from | Clarifications | Citations | Tool calls | Cost USD |",
+            "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
         ]
         for t in u.terminals:
             cost = "?" if t.cost_usd is None else f"{t.cost_usd:.4f}"
@@ -435,7 +469,7 @@ def markdown(report: Report) -> str:
                 f"| {t.terminal_id} | {', '.join(t.mandatory_missing) or '-'} | "
                 f"{', '.join(t.blocking_failed) or '-'} | {t.first_attempt_clean} | "
                 f"{t.recommendation or '-'} | {t.changed_from or '-'} | {t.clarifications} | "
-                f"{t.citations} | {cost} |"
+                f"{t.citations} | {t.tool_calls} | {cost} |"
             )
     return "\n".join(lines) + "\n"
 
@@ -462,15 +496,28 @@ def main(
     recording: Annotated[Path | None, typer.Option("--recording")] = None,
     baseline: Annotated[Path | None, typer.Option("--baseline")] = None,
     out: Annotated[Path, typer.Option("--out")] = Path("reports/replays"),
+    live_rest: Annotated[bool, typer.Option("--live-rest")] = False,
 ) -> None:
     """Replay the reference use cases and write report.json and report.md."""
     from adlc.agents.replay_cli import run_cli  # noqa: PLC0415 - heavy imports only when run
 
-    if (profile is None) == (recording is None) or (record is not None and profile is None):
-        print("adlc-replay: give --profile (optionally --record) or --recording", file=sys.stderr)
+    mixed = live_rest and recording is not None and profile is not None
+    if not mixed and (
+        (profile is None) == (recording is None) or (record is not None and profile is None)
+    ):
+        print(
+            "adlc-replay: give --profile (optionally --record), --recording, or "
+            "--recording with --profile --live-rest",
+            file=sys.stderr,
+        )
         raise typer.Exit(2)
     report = run_cli(
-        reference_set, list(only or []), profile=profile, record=record, recording=recording
+        reference_set,
+        list(only or []),
+        profile=profile,
+        record=record,
+        recording=recording,
+        live_rest=mixed,
     )
     folder = write_report(report, out, baseline)
     print(f"adlc-replay: report written to {folder}")

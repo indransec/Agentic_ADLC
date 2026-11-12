@@ -11,6 +11,7 @@ from sqlalchemy import Engine, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql.expression import bindparam
 
+from adlc.agents.imports import ImportSource, Resolver
 from adlc.agents.mcp_tools import sha256_of
 from adlc.agents.tools import ToolContext
 from adlc.orchestration.interfaces import Clock
@@ -61,13 +62,13 @@ class SqlToolRecords:
 
     def result(
         self, call_id: int, context: ToolContext, kind: str, package: str | None, result: Any
-    ) -> None:
+    ) -> str:
         with self.engine.begin() as conn:
-            conn.execute(
+            found = conn.execute(
                 text(
                     "INSERT INTO tools.tool_result (tool_call_id, run_id, usecase_id, "
                     "terminal_id, kind, package_hash, result, result_sha256, at) VALUES (:call, "
-                    ":run, :uc, :t, :kind, :package, :result, :sha, :at)"
+                    ":run, :uc, :t, :kind, :package, :result, :sha, :at) RETURNING tool_result_id"
                 ).bindparams(bindparam("result", type_=JSONB)),
                 {
                     "call": call_id,
@@ -80,4 +81,26 @@ class SqlToolRecords:
                     "sha": sha256_of(result),
                     "at": self.clock.now(),
                 },
-            )
+            ).scalar_one()
+        return f"RES-{found}"
+
+
+def case_results(engine: Engine, run_id: str) -> Resolver:
+    """011: the run's recorded results that offer case rows, for table imports (R-08)."""
+
+    def resolve(result_id: str) -> ImportSource | None:
+        if not result_id.startswith("RES-") or not result_id[4:].isdigit():
+            return None
+        with engine.connect() as conn:
+            row = conn.execute(
+                text(
+                    "SELECT kind, result, result_sha256 FROM tools.tool_result "
+                    "WHERE tool_result_id = :id AND run_id = :run"
+                ),
+                {"id": int(result_id[4:]), "run": run_id},
+            ).first()
+        if row is None or not isinstance(row[1], dict) or not isinstance(row[1].get("cases"), list):
+            return None
+        return ImportSource(result_id, str(row[0]), str(row[2]), list(row[1]["cases"]))
+
+    return resolve

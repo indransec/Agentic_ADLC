@@ -682,14 +682,43 @@ def evidence() -> dict[str, Any]:
     return {
         "directory": ["business_owner-person"],
         "env": {
-            "dev": {"provisioned": True},
+            "dev": {"provisioned": True, "deployed_hash": HASH},
             "test": {"provisioned": True, "deployed_hash": HASH},
             "prod": {"provisioned": True, "deployed_hash": HASH},
         },
         "template": {"version": "golden-template-1.4.2"},
         "dataset": {"golden": {"version": "1", "approved_by": ["data_owner"]}},
-        "ci": {"status": "green", "run_id": "ci-1"},
+        # 011: the CI report's fields, matching the synthetic T3 artifacts (research R-05)
+        "ci": {
+            "status": "green",
+            "run_id": "ci-1",
+            "package_hash": HASH,
+            "tests": {
+                "unit": {
+                    "total_count": 120,
+                    "passed_count": 120,
+                    "failed_count": 0,
+                    "coverage_pct": 92,
+                }
+            },
+            "scans": {
+                "sast": {"critical_count": 0, "high_count": 0, "medium_count": 1},
+                "secret_scan": {"critical_count": 0, "high_count": 0, "medium_count": 0},
+            },
+            "observability": {"p95_latency": {"emitting": True}, "error_rate": {"emitting": True}},
+        },
         "sbom": {"generated": True, "licences_approved": True},
+        # 011: the harness result matching the synthetic T4 (and T5 RAI) measured values
+        "harness": {
+            "metrics": {
+                "accuracy": 0.94,
+                "hallucination_rate": 0.01,
+                "toxicity": 0.002,
+                "cost_per_task": 0.03,
+                "p95_latency_ms": 1400,
+            },
+            "calibration": {"llm-judge": {"sample_size_count": 250, "agreement_rate": 0.9}},
+        },
         "redteam": {"injection_success_rate": 0.0, "jailbreak_success_rate": 0.0},
         "dlp": {"pii_leak_count": 0},
         "portfolio": {"max_similarity": 0.2},

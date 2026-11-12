@@ -576,3 +576,16 @@ Notes:
 - T8 2.0.0: add `mcp:monitoring:read` (T6 configures monitors at readiness; T8 reads which fired).
 - `confluence` write (T6 runbooks, T9 lessons) is not served yet: the knowledge server is read-only.
   T6 and T9 keep those texts as artifacts until a writable wiki server exists.
+
+## Changes after conversion: feature 011 (terminal agents T3-T5)
+
+- T3, T4, T5 3.0.0: real playbooks (1.1.0); controls comparing values copied from tools with the
+  recorded results (`rows_match`, `rows_match_value`); T3 checks the candidate hash against CI's.
+- T4: prerequisite PRE-T4-04 (`hash_matches(env.test, T3.candidate_package)`) became control
+  CTL-T4-15: the T4 agent provisions the test environment with the candidate itself, so the hash is
+  checked after the evaluation, not before the run opens.
+- `assurance_attestation` (format `signed_record`) is never written by an agent; it is built from
+  the run's sign-offs.
+- From the live replay (011): T3 4.0.0 adds CTL-T3-13 (`hash_matches(env.dev, T3.candidate_package)`,
+  FR-004: dev runs CI's package); T4 4.0.0 references playbook t4-evaluation 1.2.0 (failure modes from
+  the harness's edge-case results; every requirement traced; failed controls are not defects).

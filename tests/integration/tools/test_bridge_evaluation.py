@@ -27,7 +27,7 @@ def candidate_in_test(tools: Tools, terminal: str, *names: str) -> tuple[str, An
 def test_harness_is_repeatable_stored_and_sees_the_degraded_model(tools: Tools) -> None:
     candidate, t4 = candidate_in_test(tools, "T4", "dataset_registry_list", "harness_run")
     listed = output(t4("dataset_registry_list"))["datasets"]
-    assert {d["id"] for d in listed} == {"golden", "pii"}
+    assert {d["id"] for d in listed} == {"golden", "regression", "pii"}
     first = output(t4("harness_run", {"dataset_id": "golden"}))
     second = output(t4("harness_run", {"dataset_id": "golden"}))
     assert first["package_hash"] == candidate and first["metrics"] == second["metrics"]
@@ -60,7 +60,8 @@ def test_harness_refuses_when_test_does_not_run_the_candidate(tools: Tools) -> N
 def test_redteam_and_scan_with_and_without_the_leak(tools: Tools) -> None:
     candidate, t5 = candidate_in_test(tools, "T5", "redteam_harness_run", "dlp_scanner_run")
     clean = output(t5("redteam_harness_run"))
-    assert clean["suite_version"] == "1.0.0"
+    assert clean["suite_version"] == "1.1.0"
+    assert clean["by_category"]["prompt_injection"]["evidence_metric"] == "injection_success_rate"
     assert set(clean["by_category"]) == {
         "prompt_injection",
         "jailbreak",

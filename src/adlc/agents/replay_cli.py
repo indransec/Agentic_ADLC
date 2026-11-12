@@ -44,8 +44,10 @@ from adlc.orchestration.stubs import StubAgent, StubReviewer
 from adlc.orchestration.worker import build_orchestrator
 from adlc.policy.directory import AccountFileDirectory
 from adlc.policy.factory import build_policy_engine
+from adlc.policy.pilot_evidence import PilotEvidence
 from adlc.policy.synthetic import load_synthetic_artifacts
 from adlc.spec_toolkit.registry import SqlSpecRegistry
+from adlc.tools.client import McpClient
 
 SERVICE_NAME = "adlc-replay"
 
@@ -57,6 +59,20 @@ class SwitchGateway:
 
     def complete(self, request: Any) -> Any:
         return self.current.complete(request)
+
+
+class MixedGateway:
+    """011: agents with a recording replay it; the others call the live model (to run later
+    terminals live after earlier ones from their recordings)."""
+
+    def __init__(self, replies: AgentReplies, recorded: Any, live: Any) -> None:
+        self.replies, self.recorded, self.live = replies, recorded, live
+
+    def complete(self, request: Any) -> Any:
+        agent = self.replies.agent_of(request.messages)
+        if agent is not None and self.replies.replies.get(agent):
+            return self.recorded.complete(request)
+        return self.live.complete(request)
 
 
 def _fail(message: str) -> typer.Exit:
@@ -71,6 +87,7 @@ def run_cli(
     profile: str | None,
     record: Path | None,
     recording: Path | None,
+    live_rest: bool = False,
 ) -> Report:
     settings = load_settings_or_exit(OrchestratorSettings)
     provider = setup_process_tracing(SERVICE_NAME, settings)  # spans go to the same collector
@@ -101,6 +118,7 @@ def run_cli(
         raise _fail(f"no reference use cases in {reference_set}")
     registry = SqlSpecRegistry(engine)
     clock = SystemClock()
+    key = None if settings.tools_token_key is None else settings.tools_token_key.get_secret_value()
     policy = build_policy_engine(
         engine,
         registry,
@@ -109,6 +127,10 @@ def run_cli(
         directory=AccountFileDirectory(
             settings.accounts_file, settings.role_catalogue, settings.env
         ),
+        # 011: the acting terminals' evidence (env, template) from the pilot through the bridge
+        pilot=None
+        if key is None
+        else PilotEvidence(McpClient({"bridge": settings.pilot_bridge_url}, 30), key),
     )
     chosen = profile or settings.model_profile
     models, agents = load_catalogues(registry, chosen)
@@ -117,9 +139,11 @@ def run_cli(
     switch = SwitchGateway()
     recorder = SqlCallRecorder(engine)
     capture: RecordingTransport | None = None
-    if recording is None:
+    live_gateway: Any = None
+    live = recording is None or live_rest
+    if live:
         capture = RecordingTransport(LiteLLMTransport(), AgentReplies(prompts, {}))
-        switch.current = RoutingGateway(
+        live_gateway = RoutingGateway(
             models,
             settings.provider_keys(),
             capture,
@@ -127,6 +151,7 @@ def run_cli(
             clock,
             after_record=CostAlerts(engine, settings.cost_alert_levels).check,
         )
+        switch.current = live_gateway
     token = settings.knowledge_token
     runtime = build_runtime(
         engine,
@@ -141,9 +166,12 @@ def run_cli(
         overrides=settings.agent_limit_overrides,
         corrections=settings.agent_corrections,
         gateway=switch,
-        check_keys=recording is None,
+        check_keys=live,
         knowledge_url=settings.knowledge_url,
         knowledge_token=None if token is None else token.get_secret_value(),
+        tool_urls={"tools": settings.tools_url, "bridge": settings.pilot_bridge_url},
+        tools_token_key=key,
+        tools_timeout_s=settings.tools_timeout_s,
     )
     orchestrator = build_orchestrator(
         engine,
@@ -163,9 +191,13 @@ def run_cli(
     for ref in references:
         if recording is not None:
             replies = AgentReplies(prompts, read_recording(recording / ref.id))
-            switch.current = replay_gateway(models, replies, recorder)
+            recorded = replay_gateway(models, replies, recorder)
+            switch.current = (
+                MixedGateway(replies, recorded, live_gateway) if live_rest else recorded
+            )
         results.append(replayer.run(ref))
         if capture is not None and record is not None:
             capture.save(record / ref.id)
     provider.force_flush()
-    return Report("recording" if recording else "live", chosen, results)
+    mode = "live" if recording is None else ("recording+live" if live_rest else "recording")
+    return Report(mode, chosen, results)

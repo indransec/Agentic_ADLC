@@ -65,3 +65,26 @@ def check_knowledge_token(
         raise MissingKnowledgeToken(
             f"agents {', '.join(grounded)} have knowledge tools; set ADLC_KNOWLEDGE_TOKEN"
         )
+
+
+class MissingToolsKey(Exception):
+    """010/011: an agent has tools on the tools or bridge servers and no run-token key is set."""
+
+
+def check_tools_key(agents: AgentCatalogue, tool_servers: Iterable[str], key: str | None) -> None:
+    """Agents bound to servers on the tool hosts sign a run token per call; without the key their
+    tools would silently be missing, so the process refuses to start."""
+    servers = set(tool_servers)
+    acting = sorted(
+        a.id
+        for a in agents.agents.values()
+        if any(
+            t.permission.partition(":")[0] == "mcp" and t.permission.split(":")[1] in servers
+            for t in a.tools
+        )
+    )
+    if acting and not key:
+        raise MissingToolsKey(
+            f"agents {', '.join(acting)} have tools on the MCP tool servers; "
+            "set ADLC_TOOLS_TOKEN_KEY"
+        )

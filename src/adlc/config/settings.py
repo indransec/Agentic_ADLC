@@ -185,8 +185,9 @@ class AgentLimitOverride(BaseModel):
 
 
 DEFAULT_AGENT_LIMITS: dict[str, AgentLimit] = {
-    "reasoning": AgentLimit(steps=8, tokens=400_000, timeout_s=240),
-    "coding": AgentLimit(steps=8, tokens=400_000, timeout_s=240),
+    # 011: acting agents call a tool per step (a build takes about 10-14 steps), research R-02
+    "reasoning": AgentLimit(steps=14, tokens=400_000, timeout_s=240),
+    "coding": AgentLimit(steps=16, tokens=400_000, timeout_s=240),
     "standard": AgentLimit(steps=6, tokens=200_000, timeout_s=120),
 }
 

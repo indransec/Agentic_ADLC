@@ -228,9 +228,9 @@ The platform runs eleven lifecycle agents: one per terminal plus the common revi
 | T0 intake agent | Intake card, suitability, value, risk tier, RACI | None (single agent with rubric playbooks) | reasoning |
 | T1 requirements agent | Requirements, applicable metrics, thresholds, KPIs, autonomy levels | None | reasoning |
 | T2 architect agent | Design contract, tool contracts, token budget | None | reasoning |
-| T3 builder agent | Code, prompts, tools, pipeline for the pilot agent | Up to 2 (e.g. agent implementer, harness integrator) | coding |
-| T4 evaluation agent | Golden set, test runs, judging, regression pack | Judge as a separate call | reasoning |
-| T5 assurance agent | Security, privacy, RAI tests and residual risk register | None | reasoning |
+| T3 builder agent | Adapts the golden template's fill, runs CI, provisions dev, build evidence (feature 011: configuration only; code and infrastructure are fixed in the template) | Up to 2 allowed; none used in the MVP | coding |
+| T4 evaluation agent | Golden and regression runs, threshold comparison, defects by root cause, regression pack | None (MVP judge: the harness's deterministic scorer, calibrated on a labelled slice) | reasoning |
+| T5 assurance agent | Red-team suite, personal-data scan, controls and identities, residual risk register; gaps go to people as exceptions | None | reasoning |
 | T6 readiness agent | Evidence chain check, runbook, rollout plan | None | standard |
 | T7 deployment agent | Simulated rollout, smoke validation, registration | None | standard |
 | T8 operations agent | Monitor evaluation, periodic health report, events | None | standard |
@@ -243,7 +243,8 @@ The platform runs eleven lifecycle agents: one per terminal plus the common revi
 2. **Grounding.** Read-only MCP tools give access to enterprise knowledge within the spec's grounding scope; retrieved passages are cited in the artifacts. If required information is still missing, the agent raises a clarification (section 6.2) stating where it looked, instead of guessing.
 3. **Structured output.** The agent must return artifacts matching the column schemas in `evidence.artifacts`; output is schema-validated before anything else sees it, and invalid output is returned to the agent automatically.
 4. **Bounded execution.** Each agent run has a step limit, a token budget and a timeout from configuration; breaching them ends the run as escalate.
-5. **Reviewer separation.** The reviewer agent receives only the spec checklist, the artifacts and the ledger slice, never the builder's reasoning, so its judgement is independent and reproducible.
+5. **Evidence, not claims (feature 011).** Numbers an agent copies from its tools (CI results, metrics, rates, findings) are checked by controls against the results the platform recorded; per-case tables are imported from a recorded result. Records people sign are never written by agents.
+6. **Reviewer separation.** The reviewer agent receives only the spec checklist, the artifacts and the ledger slice, never the builder's reasoning, so its judgement is independent and reproducible.
 
 ### 7.3 Registries
 
@@ -589,7 +590,7 @@ Editable source: page 5 of `adlc-solution-architecture.drawio`.
 | 3 | T2 | Agent asks one clarification (incident data retention period); owner answers; same run resumes; design contract passes | D-1, D-9 |
 | 4 | T3 | Builder agent produces the pilot agent and candidate package hash | D-1, D-6 |
 | 5 | T4 | Evaluation finds a tool-timeout defect; rework routed to T3 (root cause: implementation); T3 run 2; T4 pass | D-3 |
-| 6 | T5 | A log-masking gap is accepted as an exception with waiver | D-5 |
+| 6 | T5 | A gap the agent cannot close (in the MVP: the kill switch, testable only at release) is accepted as an exception with waiver | D-5 |
 | 7 | T6 | Readiness verifies the evidence chain, hash match and waiver; release authorised | D-5, D-6 |
 | 8 | T7 | Simulated canary then full rollout of the authorised hash; smoke pass; handover | D-6 |
 | 9 | T8 | Synthetic traffic runs; fault injector swaps the model; drift event raised | D-7 |

@@ -419,6 +419,8 @@ services:
       PILOT_TEMPLATE: /pilot/template
       PILOT_REGISTRY: /packages
       PILOT_DATASETS: /pilot/datasets.yaml
+      PILOT_EXAMPLE_FILL: /pilot/fills/default
+      PILOT_LICENCES: /pilot/licences.yaml
     volumes:
       - pilot-packages:/packages
     healthcheck:

@@ -14,12 +14,9 @@ def test_repository_catalogues_have_no_errors() -> None:
     bundle = load_bundle(SPECS)
     errors = [f for f in validate(Context(bundle)) if f.severity == "error"]
     assert errors == []
-    assert sorted(p.data["id"] for p in bundle.prompts.values()) == [
-        "common-terminal-reviewer",
-        "t0-intake-agent",
-        "t1-requirements-agent",
-        "t2-architect-agent",
-    ]
+    agents = bundle.catalogue_data("agents")["agents"]
+    prompted = sorted(a["prompt"]["id"] for a in agents if a.get("prompt"))
+    assert sorted(p.data["id"] for p in bundle.prompts.values()) == prompted
 
 
 def test_profiles_order_and_data_class() -> None:
@@ -36,9 +33,10 @@ def test_profiles_order_and_data_class() -> None:
         }
 
 
-def test_t0_to_t2_are_grounded_models_and_the_rest_stubs() -> None:
-    """008: T0-T2 agents are model agents with a prompt and knowledge tools for exactly the
-    sources in both their terminal's tool scopes and grounding (FR-002); T3-T9 stay stubs."""
+def test_model_agents_tools_follow_their_terminals() -> None:
+    """008: grounded agents get knowledge tools for exactly the sources in both their terminal's
+    tool scopes and grounding (FR-002). 011: acting agents' tool permissions are within their
+    terminal's tool scopes. Stub agents have no tools."""
     bundle = load_bundle(SPECS)
     agents = {a["id"]: a for a in bundle.catalogue_data("agents")["agents"]}
     assert agents.pop("common-terminal-reviewer")["implementation"] == "model"
@@ -46,13 +44,22 @@ def test_t0_to_t2_are_grounded_models_and_the_rest_stubs() -> None:
         t.data["terminal"]["actors"]["agent"]["id"]: t.data["terminal"]
         for t in bundle.terminals.values()
     }
+    knowledge = {
+        s["id"]
+        for s in bundle.catalogue_data("mcp_servers")["mcp_servers"]
+        if s["host"] == "knowledge"
+    }
     models = {aid for aid, a in agents.items() if a["implementation"] == "model"}
-    assert len(models) == 3 and len(agents) == 10
+    assert {"t0-intake-agent", "t1-requirements-agent", "t2-architect-agent"} <= models
+    assert len(agents) == 10
     for aid in models:
         terminal = terminals[aid]
-        scoped = {s.split(":")[1] for s in terminal["authorities"]["tool_scopes"]}
+        scopes = set(terminal["authorities"]["tool_scopes"])
+        scoped = {s.split(":")[1] for s in scopes}
         grounded = {g["mcp"] for g in terminal["playbooks"]["grounding"]}
-        bound = {t["permission"].split(":")[1] for t in agents[aid]["tools"]}
-        assert bound == scoped & grounded, aid
+        permissions = {t["permission"] for t in agents[aid]["tools"]}
+        bound = {p.split(":")[1] for p in permissions}
+        assert bound & knowledge == scoped & grounded & knowledge, aid
+        assert {p for p in permissions if p.split(":")[1] not in knowledge} <= scopes, aid
         assert agents[aid]["prompt"]["id"] == aid
     assert all(not a["tools"] for aid, a in agents.items() if aid not in models)

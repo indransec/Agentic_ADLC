@@ -23,11 +23,17 @@ def ranks() -> dict[str, int]:
 def grounded_items() -> list[tuple[str, str, str]]:
     bundle = load_bundle(SPECS)
     agents = {a["id"]: a for a in bundle.catalogue_data("agents")["agents"]}
+    # 010/011: only sources the knowledge server hosts are grounded in documents
+    knowledge = {
+        s["id"]
+        for s in bundle.catalogue_data("mcp_servers")["mcp_servers"]
+        if s["host"] == "knowledge"
+    }
     found = []
     for loaded in bundle.terminals.values():
         terminal = loaded.data["terminal"]
         agent = agents[terminal["actors"]["agent"]["id"]]
-        bound = {t["permission"].split(":")[1] for t in agent.get("tools") or []}
+        bound = {t["permission"].split(":")[1] for t in agent.get("tools") or []} & knowledge
         for entry in terminal["playbooks"].get("grounding") or []:
             if entry["mcp"] in bound:
                 for item in str(entry["scope"]).split(","):

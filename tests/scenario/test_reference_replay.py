@@ -1,5 +1,6 @@
 """T028 (US5, SC-001): the reference use cases replay through T0-T2 from recordings, with every
-mandatory artifact present and every blocking control passing."""
+mandatory artifact present and every blocking control passing. 011 T023: the reference that
+matches the pilot runs on through the acting terminals T3-T5 (see test_reference_replay_t3_t5)."""
 
 import json
 from dataclasses import replace
@@ -11,7 +12,8 @@ from tests.support.grounded import grounded
 from tests.support.orchestration import person
 from tests.support.pg import REPO_ROOT, PlatformDatabase
 
-REFERENCES = load_references(REPO_ROOT / "data" / "reference_usecases")
+ALL = load_references(REPO_ROOT / "data" / "reference_usecases")
+REFERENCES = [replace(r, until="T2", complete_escalations=()) for r in ALL]  # T0-T2 here
 RECORDINGS = REPO_ROOT / "tests" / "fixtures" / "replays"
 
 

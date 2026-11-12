@@ -4,7 +4,7 @@
 # evaluated by the policy engine (feature 004). Kinds: evidence_ref, terminal_list, string,
 # string_list, number, duration, role, any.
 catalogue: predicates
-version: "1.0.0"
+version: "1.1.0"
 predicates:
   - {name: evidence_exists, params: [{name: ref, kind: evidence_ref}], returns: bool, description: "The referenced evidence exists in the ledger for this use case"}
   - {name: is_signed, params: [{name: ref, kind: evidence_ref}], returns: bool, description: "The referenced signed record carries all required signatures"}
@@ -37,6 +37,8 @@ predicates:
   - {name: latency_within_nfr, params: [{name: measured, kind: evidence_ref}, {name: nfrs, kind: evidence_ref}], returns: bool, description: "Measured p95 latency is within the latency NFR"}
   - {name: judge_disputed, params: [{name: calibration, kind: evidence_ref}], returns: bool, description: "A judge result is disputed by a human labeller"}
   - {name: permissions_subset, params: [{name: matrix, kind: evidence_ref}, {name: design, kind: evidence_ref}], returns: bool, description: "Agent identity permissions are a subset of the designed ones"}
+  - {name: rows_match, params: [{name: table, kind: evidence_ref}, {name: key_column, kind: string}, {name: recorded, kind: evidence_ref}], returns: bool, description: "Every row's key has a recorded result and its columns equal it (011)"}
+  - {name: rows_match_value, params: [{name: table, kind: evidence_ref}, {name: key_column, kind: string}, {name: column, kind: string}, {name: recorded, kind: evidence_ref}], returns: bool, description: "Each row's measured column equals the recorded value; unmeasured keys say so (011)"}
   - {name: scenario_passed, params: [{name: table, kind: evidence_ref}, {name: scenario, kind: string}], returns: bool, description: "The named resilience scenario passed"}
   - {name: no_unmitigated_critical, params: [{name: threats, kind: evidence_ref}], returns: bool, description: "No critical finding is left unmitigated"}
   - {name: assurance_disagreement, params: [{name: attestation, kind: evidence_ref}], returns: bool, description: "Assurance functions disagree on the attestation"}

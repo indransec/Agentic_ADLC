@@ -177,7 +177,25 @@ resource come from the tool binding's `permission` in `agents.yaml`, for example
 
 - A refused call is not made; the refusal and its reason go back to the agent.
 - Output reaches the model as a data block.
-- Real tools (MCP servers) arrive with features 008 and 010.
+- Real tools: knowledge (008) and the acting tools on the tools and bridge servers (010, 011).
+- A refused call to a tool another terminal holds is still recorded (`tools.tool_call`, 011).
+
+### Acting tools (features 010 and 011)
+
+- **Bindings.** T3–T5 are model agents bound to the tools their terminal's `tool_scopes` allow
+  (`mcp:<server>:<scope>`); `McpTool` signs a five-minute run token per call with the bound values
+  (branch, environment, candidate and authorised hash) and records every call.
+- **Evidence results.** CI, harness, red-team, scan, deploy, traffic and kill-switch results are
+  stored in `tools.tool_result` by the platform; the agent sees them with a `result_id`, long lists
+  shown as counts (`agent_view`).
+- **Copied values are checked.** Controls compare what the agent copied with the recorded result
+  (`rows_match`, `rows_match_value`); `ci`, `sbom`, `harness`, `redteam` and `dlp` evidence come
+  from those results (`adlc.policy.tool_evidence`).
+- **Imports.** A per-case table may be `{"import": {"result": "RES-<n>", "req_id_by": {...}}}`;
+  `imports.py` expands it from the run's recorded result and the run activity keeps the provenance.
+- **Signed records.** A `signed_record` artifact (the T5 attestation) is never accepted from an
+  agent or stub; the evidence builds it from the sign-offs.
+- **Startup.** Agents with acting tools need `ADLC_TOOLS_TOKEN_KEY`.
 
 ### Knowledge tools (feature 008)
 

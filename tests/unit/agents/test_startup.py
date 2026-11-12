@@ -30,15 +30,15 @@ def test_stub_mode_needs_no_keys(registry: InMemorySpecRegistry) -> None:
 
 
 def test_model_builders_need_a_key(registry: InMemorySpecRegistry) -> None:
-    """008: the registered T0-T2 agents are model agents, so even stub-reviewer mode needs a key."""
+    """008: registered terminal agents are model agents; even stub-reviewer mode needs a key."""
     models, agents = load_catalogues(registry, "dev")
-    with pytest.raises(MissingModelKey, match="t0-intake-agent"):
+    with pytest.raises(MissingModelKey, match=r"needed by t\d-"):
         check_model_keys(models, agents, NO_KEYS, [REVIEWER], "stub")
 
 
 def test_model_reviewer_needs_a_key(registry: InMemorySpecRegistry) -> None:
     models, agents = load_catalogues(registry, "dev")
-    with pytest.raises(MissingModelKey, match="profile 'dev', tier 'reasoning'"):
+    with pytest.raises(MissingModelKey, match="profile 'dev', tier '(coding|reasoning)'"):
         check_model_keys(models, agents, NO_KEYS, [REVIEWER], "model")
     check_model_keys(models, agents, {**NO_KEYS, "openai": "k"}, [REVIEWER], "model")
     default, _ = load_catalogues(registry, "default")
@@ -94,3 +94,20 @@ def test_tools_on_the_tool_hosts_do_not_need_the_knowledge_token() -> None:
     )
     with pytest.raises(MissingKnowledgeToken):
         check_knowledge_token(AgentCatalogue({"a": grounded}), None, ["confluence", "jira"])
+
+
+def test_acting_agents_need_the_tools_key() -> None:
+    """011 T021: agents with tools on the tool servers need ADLC_TOOLS_TOKEN_KEY to start."""
+    from adlc.agents.catalogue import AgentCatalogue, AgentDefinition, ToolBinding
+    from adlc.agents.startup import MissingToolsKey, check_tools_key
+
+    acting = AgentDefinition(
+        "t3", "1", "model", "coding", ("t3", "1"), (ToolBinding("ci_run", "mcp:ci:run"),)
+    )
+    grounded = AgentDefinition(
+        "t1", "1", "model", "reasoning", ("t1", "1"), (ToolBinding("jira_search", "mcp:jira:read"),)
+    )
+    with pytest.raises(MissingToolsKey, match="ADLC_TOOLS_TOKEN_KEY"):
+        check_tools_key(AgentCatalogue({"a": acting}), ["ci", "git"], None)
+    check_tools_key(AgentCatalogue({"a": acting}), ["ci", "git"], "k" * 32)
+    check_tools_key(AgentCatalogue({"b": grounded}), ["ci", "git"], None)

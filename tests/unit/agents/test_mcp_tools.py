@@ -1,6 +1,7 @@
 """T008: the platform side of the 010 tools: only the model's declared arguments pass, bound values
 come from the run and real evidence, the token carries them, and every call is recorded."""
 
+import json
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any
@@ -81,8 +82,9 @@ class FakeRecords:
 
     def result(
         self, call_id: int, context: ToolContext, kind: str, package: str | None, result: Any
-    ) -> None:
+    ) -> str:
         self.results.append({"call": call_id, "kind": kind, "package": package, "result": result})
+        return f"RES-{len(self.results)}"
 
 
 def tool(
@@ -204,3 +206,42 @@ def test_errors_unavailable_and_gate_refusals_are_recorded() -> None:
 def test_describe_shows_only_model_arguments() -> None:
     t, _, _ = tool("harness_run")
     assert t.describe()["arguments"] == {"dataset_id": "a dataset id from the registry"}
+
+
+def test_long_lists_are_stored_not_shown() -> None:
+    """011: the agent sees the size of a long list; the full result is recorded."""
+    cases = [{"case_id": f"C-{n}"} for n in range(50)]
+    answer = json.dumps(
+        {"package_hash": CANDIDATE, "catalogue": {"task_success_rate": 1.0}, "cases": cases}
+    )
+    evidence = FakeEvidence({"T3": {"candidate_package": {"sha256": CANDIDATE}}})
+    t, _, records = tool("harness_run", evidence, FakeClient((False, answer)))
+    seen = json.loads(t.call({"dataset_id": "golden"}, context("T4", ("mcp:harness:run",))))
+    assert seen["cases"] == {"count": 50, "stored": "import or cite it by result_id"}
+    assert seen["catalogue"] == {"task_success_rate": 1.0}
+    assert len(records.results[0]["result"]["cases"]) == 50
+
+
+def test_the_gate_records_a_tool_another_terminal_holds() -> None:
+    """011 T020 (SC-006): an agent without the binding is refused, and the attempt is recorded."""
+    from adlc.agents.catalogue import AgentDefinition
+    from adlc.agents.tools import ToolGate, ToolRefused
+
+    class Allow:
+        def authorize(self, *args: Any) -> bool:
+            return True
+
+    t, client, records = tool("git_write")
+    gate = ToolGate(Allow(), {"git_write": t})  # type: ignore[arg-type]
+    t4 = AgentDefinition("t4-evaluation-agent", "1", "model", "reasoning", None, ())
+    reply = gate.call(
+        run_id="UC-0001/T4/run-1",
+        usecase_id="UC-0001",
+        terminal_id="T4",
+        agent=t4,
+        name="git_write",
+        arguments={"files": {}},
+        spec={},
+    )
+    assert isinstance(reply, ToolRefused) and "not available to t4-evaluation-agent" in reply.reason
+    assert client.calls == [] and records.calls[0]["outcome"] == "refused"

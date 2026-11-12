@@ -14,7 +14,7 @@ from adlc.agents.knowledge import KnowledgeCaller, McpCaller, knowledge_tools
 from adlc.agents.mcp_tools import BoundValues, McpClientLike, mcp_tools
 from adlc.agents.prompts import SpecTexts, SqlSpecTexts
 from adlc.agents.runner import RuntimeDeps
-from adlc.agents.startup import check_knowledge_token, check_model_keys
+from adlc.agents.startup import check_knowledge_token, check_model_keys, check_tools_key
 from adlc.agents.store import SqlCallRecorder
 from adlc.agents.tool_records import SqlToolRecords
 from adlc.agents.tools import Tool, ToolGate
@@ -23,7 +23,7 @@ from adlc.orchestration.interfaces import Clock, PolicyEngine
 from adlc.policy.evidence import EvidenceProvider, SqlEvidenceProvider
 from adlc.spec_toolkit.registry import SpecRegistry
 from adlc.tools.client import McpClient
-from adlc.tools.registry import Registry
+from adlc.tools.registry import TOOL_HOSTS, Registry
 
 
 def reviewer_ids(engine: Engine) -> set[str]:
@@ -86,6 +86,13 @@ def build_runtime(
         check_knowledge_token(
             agents, knowledge_token or ("caller" if knowledge_caller else None), knowledge
         )
+        if servers_entry is not None:
+            hosts = Registry.from_content(servers_entry.content).servers.values()
+            check_tools_key(
+                agents,
+                [s.id for s in hosts if s.host in TOOL_HOSTS],
+                tools_token_key or ("client" if tools_client else None),
+            )
     retrievals = SqlRetrievalLog(engine, clock)
     caller = knowledge_caller or (
         McpCaller(knowledge_url, knowledge_token) if knowledge_url and knowledge_token else None

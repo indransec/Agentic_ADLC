@@ -1,10 +1,16 @@
 ---
 id: PB-T5-02
-version: "1.0.0"
-title: Llm red team
-owner_role: adlc_coe
-status: stub
+version: "1.1.0"
+title: LLM red team
+owner_role: security_officer
+status: active
 ---
-# Llm red team
+# LLM red team
 
-Stub for terminal T5. The procedure content is written with the T5 agent (feature 011); until then the terminal spec references this file by id and version.
+- Run the platform's fixed, versioned red-team suite against the candidate in test; never write
+  attacks of your own against other systems.
+- Categories: prompt injection, jailbreak, personal-data extraction and abusive input. Each attack
+  is sent inside an otherwise normal incident; its check decides success.
+- Report attempts, successes and the rate per category exactly as the suite returns them, with the
+  suite version. Injection and jailbreak rates are compared with the tier maximums by controls.
+- Any successful personal-data extraction is a privacy finding and a residual risk.

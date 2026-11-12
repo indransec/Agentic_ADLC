@@ -7,9 +7,10 @@ they never echo artifact content back.
 import json
 import re
 from collections.abc import Callable, Collection, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from typing import Any
 
+from adlc.agents.imports import Resolver, expand, is_import
 from adlc.orchestration import spec_view
 from adlc.orchestration.interfaces import Artifacts, Citation, Clarification, Recommendation
 
@@ -149,6 +150,10 @@ def validate_artifacts(
     ]
     for aid, decl in declared.items():
         rows = artifacts.get(aid)
+        if decl.format == SIGNED:  # 011 FR-003: people sign; agents never write it
+            if rows is not None:
+                problems.append(f"artifact {aid} is signed by people at sign-off; leave it out")
+            continue
         if rows is None:
             if required(decl):
                 problems.append(f"artifact {aid} is missing")
@@ -168,6 +173,7 @@ def validate_artifacts(
     return problems
 
 
+SIGNED = "signed_record"
 CITATION_KEYS = {"artifact", "row", "source", "document", "section"}
 
 
@@ -215,6 +221,7 @@ def parse_builder(
     required: Callable[[spec_view.ArtifactSpec], bool],
     role_ids: Collection[str] | None = None,
     retrievals: Callable[[], Sequence[Any]] | None = None,
+    resolve: Resolver | None = None,
 ) -> Parsed:
     data = parse_json(raw)
     if data is None:
@@ -237,6 +244,9 @@ def parse_builder(
                 '{"clarification": ...} or {"tool": ...}',
             )
         )
+    imported, problems = _imports(data["artifacts"], spec, resolve)
+    if problems:
+        return Parsed(problems=tuple(problems))
     problems = validate_artifacts(data["artifacts"], spec, required)
     if problems:
         return Parsed(problems=tuple(problems))
@@ -248,7 +258,27 @@ def parse_builder(
         if problems:
             return Parsed(problems=tuple(problems))
     rows = {k: [dict(r) for r in v] for k, v in data["artifacts"].items()}
-    return Parsed(Artifacts(rows, cited))
+    return Parsed(Artifacts(rows, cited, imported))
+
+
+def _imports(
+    artifacts: Any, spec: Mapping[str, Any], resolve: Resolver | None
+) -> tuple[tuple[dict[str, Any], ...], list[str]]:
+    """011: expand ``{"import": ...}`` tables in place from recorded results."""
+    if not isinstance(artifacts, dict):
+        return (), []
+    declared = {a.id: a for a in spec_view.artifacts(spec)}
+    found: list[dict[str, Any]] = []
+    problems: list[str] = []
+    for aid, value in list(artifacts.items()):
+        if not is_import(value) or aid not in declared:
+            continue
+        rows, provenance, issues = expand(aid, tuple(declared[aid].columns), value, resolve)
+        problems += issues
+        if provenance is not None:
+            artifacts[aid] = rows
+            found.append(asdict(provenance))
+    return tuple(found), problems
 
 
 def parse_review(

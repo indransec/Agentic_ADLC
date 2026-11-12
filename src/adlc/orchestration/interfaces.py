@@ -50,6 +50,7 @@ class PolicyEngine(Protocol):
 class Artifacts:
     artifacts: ArtifactSet
     citations: tuple["Citation", ...] = ()  # 008: validated against the attempt's retrievals
+    imports: tuple[dict[str, Any], ...] = ()  # 011: tables imported from recorded results
 
 
 @dataclass(frozen=True)

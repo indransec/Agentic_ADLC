@@ -11,7 +11,7 @@ from adlc.policy.predicates.context import PredicateError, current, fail, name_o
 from adlc.policy.predicates.evaluation import OPERATORS, _disagree
 from adlc.policy.values import as_number, is_empty, is_open_row, is_truthy, text, to_py
 
-HASH_FIELDS = ("sha256", "deployed_hash", "hash")
+HASH_FIELDS = ("sha256", "deployed_hash", "package_hash", "hash")  # 011: CI reports package_hash
 GOOD = ("pass", "success")
 BAD = ("fail", "failed", "breach")
 
@@ -76,7 +76,9 @@ def hash_matches(a: Any, b: Any) -> Any:
     left, right = _hash(a), _hash(b)
     if not left or not right:
         return fail(f"{name_of(a) if not left else name_of(b)} has no hash")
-    return ok() if left == right else fail(f"hash {left} does not match {right}")
+    # 011: the algorithm prefix is notation, not part of the value (sha256:abc == abc)
+    same = left.removeprefix("sha256:") == right.removeprefix("sha256:")
+    return ok() if same else fail(f"hash {left} does not match {right}")
 
 
 def _stage_rows(metrics: Any, stage: Any) -> list[tuple[int, dict[str, Any]]]:

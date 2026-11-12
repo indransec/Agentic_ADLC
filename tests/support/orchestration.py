@@ -204,6 +204,10 @@ def harness(
     tools: Mapping[str, Any] | None = None,
     real_agents: bool = False,
     knowledge_caller: KnowledgeCaller | None = None,
+    model_agents: tuple[str, ...] = (),
+    tools_client: Any = None,
+    tools_token_key: str | None = None,
+    pilot_evidence: Any = None,
 ) -> Iterator[Harness]:
     with fresh_database(db) as fresh:
         app = create_engine(fresh.app_url)
@@ -215,14 +219,22 @@ def harness(
             agent.base = load_synthetic_artifacts(synthetic_dir)
         reviewer = reviewer or StubReviewer()
         engine_policy: PolicyEngine = policy or build_policy_engine(
-            app, registry, clock, synthetic_dir=synthetic_dir
+            app, registry, clock, synthetic_dir=synthetic_dir, pilot=pilot_evidence
         )
         # 006: stub terminal agents run through the runtime (FR-024); tests script models with
         # a FakeGateway and switch agents to implementation: model with ``agents``. Since 008 the
         # registered T0-T2 agents are model agents: unless ``real_agents`` (or ``agents``) is
         # given, every terminal builder runs as a stub, as the 003-007 suites expect.
         if agents is None and not real_agents:
-            agents = stub_builders(load_catalogues(registry, "default")[1], reviewer_ids(app))
+            registered = load_catalogues(registry, "default")[1]
+            agents = stub_builders(registered, reviewer_ids(app))
+            # 011: the named agents stay the registered model agents (prompt and tools)
+            agents = AgentCatalogue(
+                {
+                    aid: registered.agents[aid] if aid in model_agents else a
+                    for aid, a in agents.agents.items()
+                }
+            )
         runtime = build_runtime(
             app,
             registry,
@@ -238,6 +250,8 @@ def harness(
             check_keys=False,
             tools=tools,
             knowledge_caller=knowledge_caller,
+            tools_client=tools_client,
+            tools_token_key=tools_token_key,
         )
         orch = build_orchestrator(
             app,

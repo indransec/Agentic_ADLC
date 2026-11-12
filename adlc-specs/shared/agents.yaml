@@ -2,9 +2,10 @@
 # Lifecycle agent registry (SA 7.3, features 006 and 008). T0-T2 agents are model agents with a
 # prompt and knowledge tools (feature 008): a source gets tools only when the terminal's tool_scopes
 # and grounding both name it. T3-T9 stay stubs until features 011 and 012. The reviewer is a model
-# agent.
+# agent. 4.0.0 (011): T3-T5 are model agents acting through the feature 010 tools their
+# terminal's tool scopes allow.
 catalogue: agents
-version: "3.0.0"
+version: "6.0.0"
 agents:
   - id: t0-intake-agent
     version: "1.2.0"
@@ -40,9 +41,48 @@ agents:
       - {tool: arch_repo_read, permission: "mcp:arch_repo:read"}
       - {tool: mcp_registry_search, permission: "mcp:mcp_registry:read"}
       - {tool: mcp_registry_read, permission: "mcp:mcp_registry:read"}
-  - {id: t3-builder-agent, version: "1.0.0", implementation: stub, model_tier: coding, tools: []}
-  - {id: t4-evaluation-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
-  - {id: t5-assurance-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
+  - id: t3-builder-agent
+    version: "2.1.0"
+    implementation: model
+    model_tier: coding
+    prompt: {id: t3-builder-agent, version: "1.1.0"}
+    tools:
+      - {tool: git_list, permission: "mcp:git:read"}
+      - {tool: git_read, permission: "mcp:git:read"}
+      - {tool: git_write, permission: "mcp:git:branch_write"}
+      - {tool: git_open_pull_request, permission: "mcp:git:branch_write"}
+      - {tool: ci_run, permission: "mcp:ci:run"}
+      - {tool: artifact_store_read, permission: "mcp:artifact_store:read"}
+      - {tool: artifact_store_write, permission: "mcp:artifact_store:write"}
+      - {tool: prompt_registry_write, permission: "mcp:prompt_registry:write"}
+      - {tool: pilot_env_create, permission: "mcp:pilot_env:dev"}
+      - {tool: pilot_env_status, permission: "mcp:pilot_env:read"}
+      - {tool: pilot_env_infra, permission: "mcp:pilot_env:read"}
+  - id: t4-evaluation-agent
+    version: "2.1.0"
+    implementation: model
+    model_tier: reasoning
+    prompt: {id: t4-evaluation-agent, version: "1.1.0"}
+    tools:
+      - {tool: pilot_env_create, permission: "mcp:pilot_env:test"}
+      - {tool: pilot_env_status, permission: "mcp:pilot_env:read"}
+      - {tool: dataset_registry_list, permission: "mcp:dataset_registry:read"}
+      - {tool: harness_run, permission: "mcp:harness:run"}
+      - {tool: artifact_store_read, permission: "mcp:artifact_store:read"}
+      - {tool: eval_store_write, permission: "mcp:eval_store:write"}
+  - id: t5-assurance-agent
+    version: "2.0.0"
+    implementation: model
+    model_tier: reasoning
+    prompt: {id: t5-assurance-agent, version: "1.0.0"}
+    tools:
+      - {tool: pilot_env_create, permission: "mcp:pilot_env:test"}
+      - {tool: pilot_env_status, permission: "mcp:pilot_env:read"}
+      - {tool: redteam_harness_run, permission: "mcp:redteam_harness:run"}
+      - {tool: dlp_scanner_run, permission: "mcp:dlp_scanner:run"}
+      - {tool: control_library_read, permission: "mcp:control_library:read"}
+      - {tool: iam_read, permission: "mcp:iam:read"}
+      - {tool: grc_write, permission: "mcp:grc:write"}
   - {id: t6-readiness-agent, version: "1.0.0", implementation: stub, model_tier: standard, tools: []}
   - {id: t7-deployment-agent, version: "1.0.0", implementation: stub, model_tier: standard, tools: []}
   - {id: t8-operations-agent, version: "1.0.0", implementation: stub, model_tier: standard, tools: []}

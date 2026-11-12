@@ -15,7 +15,7 @@ from adlc.tools.mcp_app import ToolFailure
 from adlc.tools.token import Claims
 
 EVIDENCE_KINDS = ("harness", "redteam", "dlp")
-SUMMARY_DROP = ("rows", "findings")  # long per-row lists stay in tools.tool_result
+SUMMARY_DROP = ("rows", "cases", "findings")  # long per-row lists stay in tools.tool_result
 TRIES = 5
 
 

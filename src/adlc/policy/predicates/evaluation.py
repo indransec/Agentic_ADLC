@@ -6,7 +6,7 @@ from typing import Any
 
 from adlc.policy.predicates import predicate
 from adlc.policy.predicates.context import PredicateError, fail, name_of, ok, rows
-from adlc.policy.values import as_number, is_truthy, text
+from adlc.policy.values import as_number, is_truthy, text, to_py
 
 OPERATORS: dict[str, Callable[[float, float], bool]] = {
     ">=": operator.ge,
@@ -140,3 +140,64 @@ def unacceptable_residual_risk(register: Any) -> Any:
         if text(row.get("decision")).lower() in ("unacceptable", "reject"):
             return ok()
     return fail(f"{name_of(register)}: no residual risk rated unacceptable")
+
+
+# ------------------------------------------------------------------ 011: copied values checked
+
+NOT_MEASURED = ("", "not measured", "n/a")
+TOLERANCE = 0.001
+
+
+def _same(copied: Any, recorded: Any) -> bool:
+    if isinstance(recorded, bool):
+        return is_truthy(copied) == recorded
+    number = as_number(recorded)
+    if number is not None:
+        got = as_number(copied)
+        return got is not None and abs(got - number) <= TOLERANCE
+    return text(copied).strip().lower() == text(recorded).strip().lower()
+
+
+def _recorded(recorded: Any) -> dict[str, Any]:
+    value = to_py(recorded)
+    if not isinstance(value, dict):
+        raise PredicateError(f"{name_of(recorded)} is not a map of recorded results")
+    return {text(k): v for k, v in value.items()}
+
+
+@predicate("rows_match", 3)
+def rows_match(table: Any, key_column: Any, recorded: Any) -> Any:
+    """011 (FR-012): every row's key has a recorded result, and each of the row's columns that the
+    result records equals it (numbers within 0.001)."""
+    found, key = _recorded(recorded), text(key_column)
+    for i, row in enumerate(rows(table), start=1):
+        name = text(row.get(key))
+        if name not in found:
+            return fail(f"{name_of(table)} row {i}: no recorded result for {name}")
+        values = found[name] if isinstance(found[name], dict) else {}
+        for column, value in values.items():
+            if column in row and not _same(row[column], value):
+                return fail(
+                    f"{name_of(table)} row {i}: {name} {column} {row[column]} is not the "
+                    f"recorded {value}"
+                )
+    return ok()
+
+
+@predicate("rows_match_value", 4)
+def rows_match_value(table: Any, key_column: Any, column: Any, recorded: Any) -> Any:
+    """011 (FR-012): each row's measured column equals the recorded value for its key; a key that
+    was not measured must say so ("not measured")."""
+    found, key, measured = _recorded(recorded), text(key_column), text(column)
+    for i, row in enumerate(rows(table), start=1):
+        name, copied = text(row.get(key)), row.get(measured)
+        if name not in found:
+            if text(copied).strip().lower() not in NOT_MEASURED:
+                return fail(f"{name_of(table)} row {i}: {name} was not measured")
+            continue
+        if not _same(copied, found[name]):
+            return fail(
+                f"{name_of(table)} row {i}: {name} {measured} {copied} is not the recorded "
+                f"{found[name]}"
+            )
+    return ok()
