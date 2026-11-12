@@ -83,8 +83,8 @@ value fails, naming the row. New blocking controls (specs 3.0.0):
 
 | Terminal | Control |
 | --- | --- |
-| T3 | `rows_match(T3.test_results, "suite", ci.tests)`, `rows_match(T3.security_build_checks, "scan", ci.scans)`, `T3.candidate_package.sha256 == ci.package_hash` |
-| T4 | `rows_match(T4.quality_vs_threshold, "metric", harness.metrics)`, `rows_match(T4.rai_vs_threshold, "metric", harness.metrics)`, `rows_match(T4.judge_calibration, "judge", harness.calibration)` |
+| T3 | `rows_match(T3.test_results, "suite", ci.tests)`, `rows_match(T3.security_build_checks, "scan", ci.scans)`, `rows_match(T3.observability_check, "signal", ci.observability)`, `T3.candidate_package.sha256 == ci.package_hash` |
+| T4 | `rows_match(T4.quality_vs_threshold, "metric", harness.metrics)`, `rows_match(T4.rai_vs_threshold, "metric", harness.metrics)`, `rows_match(T4.judge_calibration, "judge", harness.calibration)`, `rows_match(T4.cost_latency, "measure", harness.metrics)` (measures named as in the metric catalogue, e.g. `cost_per_task_usd`, `p95_latency_ms`) |
 | T5 | `rows_match(T5.rai_assurance, "rai_metric", harness.metrics)` |
 
 `harness.metrics` here is the catalogue map, keyed by metric name with the value under the

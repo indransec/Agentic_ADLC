@@ -187,6 +187,10 @@ sign-off with valid artifacts; run the live replay on the dev model and read the
 - T4 re-runs after rework: it evaluates the new candidate hash, never the previous one.
 - A red-team rate exceeds the tier maximum: the control fails; the only path to proceed is rework
   or an exception with a waiver.
+- The kill switch cannot be tested in the test environment (it exists only in prod-sim, and T5
+  holds no kill-switch scope): T5 reports the kill-switch scenario as not run, the control fails,
+  and the path is an exception with a waiver whose compensating control is the kill-switch check at
+  release (T7).
 
 ## Requirements *(mandatory)*
 
@@ -245,8 +249,9 @@ sign-off with valid artifacts; run the live replay on the dev model and read the
 
 **Reference use cases**
 
-- **FR-013**: The 008 reference use cases MUST be extended through T3–T5 with recorded replies
-  for offline tests, and the live replay MUST report, per terminal, artifact validity, control
+- **FR-013**: The 008 reference use case whose pilot matches the golden template (the incident
+  triage one) MUST be extended through T3–T5 with recorded replies for offline tests (the others
+  stay at T2), and the live replay MUST report, per terminal, artifact validity, control
   results, reviewer recommendation, tool calls and cost.
 
 ### Key Entities
