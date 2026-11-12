@@ -176,8 +176,26 @@ then polish.
   **Result (2026-11-12):** 3 of 3 rounds green, 131 tool tests each (about 24 s per round); `make check`
   2,170 platform and 62 pilot tests passed.
 - [X] T041 Run `make check` and fix any failure.
-- [ ] T042 Live check (quickstart §2): every server answers; fill to running dev package within 5 minutes with CI's hash equal to `pilot-build` (SC-003); out-of-scope calls refused at both ends (SC-001); a record per call (SC-002); harness repeatable and degraded ≥ 20 points lower (SC-004); red-team with and without the leak (SC-005); only the T6 hash deploys (SC-006); monitor fires within 5 minutes of the swap (SC-007); no incident text in telemetry or tool output over a traffic run (SC-008). Record the results.
+- [X] T042 Live check (quickstart §2): every server answers; fill to running dev package within 5 minutes with CI's hash equal to `pilot-build` (SC-003); out-of-scope calls refused at both ends (SC-001); a record per call (SC-002); harness repeatable and degraded ≥ 20 points lower (SC-004); red-team with and without the leak (SC-005); only the T6 hash deploys (SC-006); monitor fires within 5 minutes of the swap (SC-007); no incident text in telemetry or tool output over a traffic run (SC-008). Record the results.
 
+
+  **Result (2026-11-12, `make up`, simulated pilot model):**
+
+  | Criterion | Measured | Verdict |
+  | --- | --- | --- |
+  | SC-001 | Gate: T3 `cd_deploy` refused (not in scope); T7 `cd_deploy` and T4 `harness_run` refused with no T6/T3 evidence. Server: a T3 token for test, an expired token, deploy without an authorised hash and a wrong key all `not permitted`; nothing reached the pilot | Pass |
+  | SC-002 | Every probe call has a `tools.tool_call` row with scope, outcome and reason (2 ok, 3 refused) | Pass |
+  | SC-003 | Default fill written, pull request PR-1, CI checks validate/build/reproducible/smoke passed, dev running the CI hash: 0.7 s | Pass |
+  | SC-004 | Golden set on the candidate in test: team 1.0, P1 recall 1.0, identical twice; a fill with weaker priority rules: priority 1.0 → 0.36, P1 recall 1.0 → 0.5. A ≥ 20-point drop on team routing needs a degraded model in test, which the pilot offers only in prod-sim; covered by `tests/integration/tools/test_bridge_evaluation.py` | Pass (team drop: integration test) |
+  | SC-005 | Red-team suite 1.0.0 on the default package: every category 0%; scan of 100 answers: rate 0, 0 of 200 planted values exposed. The leak case (rate > 0, every planted value found) is covered by the integration test (the leak fault is prod-sim only) | Pass (leak case: integration test) |
+  | SC-006 | `cd_deploy` deployed only the bound authorised hash; `full` promoted it to stable | Pass |
+  | SC-007 | Traffic 5/s, baseline accuracy 1.0; model swap → monitor fired 30 s later at accuracy 0.75 | Pass |
+  | SC-008 | 6 tool outputs during traffic (PII share 0.25): 0 e-mails, 0 phones, no incident text fields; traces keep only the allowlisted attributes | Pass |
+  | FR-009 | `is_provisioned(env.dev)` and `is_pinned(template.version)` passed with synthetic = False through the bridge; without it, synthetic = True | Pass |
+
+  Also: rollback after a promotion with no earlier stable keeps the split on stable (nothing to
+  restore); the kill switch's second activation is refused and a person released it with
+  `pilot-kill release`.
 ---
 
 ## Dependencies and execution order
