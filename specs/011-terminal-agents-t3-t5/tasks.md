@@ -73,8 +73,8 @@ polish.
 
 ## Phase 6: User Story 4 – Agents act only through their terminal's tools (P1)
 
-- [ ] T020 [US4] Integration `tests/integration/agents/test_acting_scopes.py`: scripted replies asking T3 for `cd_deploy` and for the test environment, T4 for `git_write`, T5 for `traffic_manager_set`: refused, each with a `tools.tool_call` row and reason, nothing reached the fake pilot; tool output with injected instructions does not change statuses or permissions.
-- [ ] T021 [US4] The knowledge-token start-up check and the runtime with the 4.0.0 agents catalogue: T3–T5 tools need the tools token key, not the knowledge token; a missing key is a configuration error naming the setting.
+- [X] T020 [US4] Integration `tests/integration/agents/test_acting_scopes.py`: scripted replies asking T3 for `cd_deploy` and for the test environment, T4 for `git_write`, T5 for `traffic_manager_set`: refused, each with a `tools.tool_call` row and reason, nothing reached the fake pilot; tool output with injected instructions does not change statuses or permissions.
+- [X] T021 [US4] The knowledge-token start-up check and the runtime with the 4.0.0 agents catalogue: T3–T5 tools need the tools token key, not the knowledge token; a missing key is a configuration error naming the setting.
 
 ---
 
