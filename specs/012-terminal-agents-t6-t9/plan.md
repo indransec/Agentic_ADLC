@@ -10,7 +10,9 @@ T6–T9 become model agents acting through feature 010's tools (research R-01). 
 - real **`change`, `release`, `retirement`** evidence from the ITSM, IAM, CMDB and registry mocks
   (R-04), and a **change-approval** inbox action (R-05);
 - **observability results as evidence**, so T7's copied stage metrics are checked (R-06);
-- an inbox action to confirm or dismiss **agent-proposed events** (R-02).
+- an inbox action to confirm or dismiss **agent-proposed events** (R-02);
+- **platform-built artifacts** `T4.eval_baseline` and `T6.gate_evidence_summary` (R-09), so
+  baselines and the evidence chain are never copied by an agent.
 
 ## Technical Context
 
@@ -54,7 +56,8 @@ monitors or confirmed by people only.
 specs/012-terminal-agents-t6-t9/  plan.md research.md data-model.md quickstart.md contracts/ checklists/
 adlc-specs/prompts/t6-readiness-agent.md t7-deployment-agent.md t8-operations-agent.md t9-evolution-agent.md
 adlc-specs/playbooks/ (T6–T9 playbooks)  adlc-specs/shared/agents.yaml  adlc-specs/terminals/T6–T9.yaml
-src/adlc/orchestration/monitors.py      # monitor evaluator (worker loop)
+src/adlc/orchestration/monitors.py      # monitor evaluator (worker loop; any spec declaring monitors)
+src/adlc/policy/built_artifacts.py      # signed_record, baseline, gate_summary built from records
 src/adlc/policy/pilot_evidence.py       # telemetry source
 src/adlc/policy/enterprise_evidence.py  # change, release, retirement sources
 src/adlc/api/routes_changes.py  src/adlc/inbox/* src/adlc/ui/pages/*   # change approval, proposed events

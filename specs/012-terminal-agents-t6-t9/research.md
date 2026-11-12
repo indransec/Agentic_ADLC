@@ -13,8 +13,9 @@ through deploy, three stages, smoke and registration).
 **Decision.** The T8 spec already declares its monitors (`MON-01`..`MON-07`): a signal, a threshold
 written as a policy expression over `telemetry` (and T1/T2/T4 evidence) and the event it raises.
 A **monitor evaluator** in the orchestrator worker evaluates, every `ADLC_MONITOR_INTERVAL`, the
-monitors of every use case whose T8 has started, through the policy engine (each evaluation is a
-policy decision with check id `MON-xx`). When a monitor's threshold becomes true it raises the
+`monitors` declared by any pinned terminal spec of a use case once that terminal has a run (today
+only T8 declares them; the evaluator names no terminal), through the policy engine, on that
+terminal's latest run (each evaluation is a policy decision with check id = the monitor id). When a monitor's threshold becomes true it raises the
 declared operational event (`raise_operational_event`, actor `system:monitor`) with the monitor
 id and measured value — once per breach episode (the previous decision for that monitor was not a
 breach). A threshold that cannot be evaluated (signal not measured) never fires.
@@ -30,9 +31,12 @@ inbox of T8's accountable role; a person confirms (raises) or dismisses each (ne
 **Decision.** The pilot evidence source (feature 010) answers `telemetry` from the bridge's
 observability (service token with the use case): `online_eval_score` = routing accuracy,
 `pii_leak_count`, `availability_pct` (answered / sent), `cost_per_task_usd`, and `monitors`
-(`{<monitor id>: reporting}` where reporting = its signal's value is present). Fields the pilot does
+(`{<signal>: reporting}` for each signal T6 configured in `monitoring_readiness`, reporting = the
+signal has data in the period; CTL-T8-01 therefore checks what was configured, and CTL-T6-06
+already requires that to cover T1's KPIs and T2's observability design). Fields the pilot does
 not measure (policy violations, KPI values, autonomy breaches, upstream notices) are absent, so
-their monitors do not fire.
+their monitors cannot be evaluated and do not fire. `online_eval_score` is the same metric as
+`T4.eval_baseline.metric` (R-09).
 
 ## R-04 Real `change`, `release`, `retirement` evidence (FR-010)
 
@@ -72,4 +76,28 @@ disposed`) and `agent_registry_write` (`status: retired`).
 
 **Decision.** The incident-triage reference runs until T9 (offline, scripted acting replies, the
 monitor evaluator on): T7 releases, T8's first review, the model swap on the fake pilot, the drift
-event from MON-04, T9 classifies and re-enters at T2. Approver fields supply `eval_baseline` at T4.
+event from MON-04, T9 classifies and re-enters at T2. `T4.eval_baseline` comes from R-09.
+
+## R-09 Platform-built artifacts: `eval_baseline` and `gate_evidence_summary` (analysis A1, A4)
+
+**Decision.** Like the T5 attestation (`signed_record`, feature 011), two artifacts are built by the
+platform from records, never written by an agent:
+
+- `T4.eval_baseline` (format `baseline`, columns `metric`, `value`, `tolerance`): from the recorded
+  harness result of the candidate; the metric and tolerance are T4 parameters (`baseline_metric`,
+  `baseline_tolerance`), so no metric name is in code. T4 declares it (next major). MON-04's
+  `below_baseline`, CTL-T7-03 and CTL-T8-02 then evaluate against a number.
+- `T6.gate_evidence_summary` (format `gate_summary`): one row per terminal in T6's `all_statuses_in`
+  list from run statuses, sign-offs and open waivers with expiry.
+
+The agent's output for these artifacts is rejected (as `signed_record`); they count as emitted.
+
+**Rejected.** Agent-written with a `rows_match` control: the agent would copy what the platform
+already knows exactly.
+
+## R-10 Change window (analysis A6)
+
+**Decision.** T6's playbook proposes a window starting at approval and lasting the rollout's
+total soak at the demo time scale. A window not yet open blocks T7's prerequisite; the existing
+`window` timer reopens the check. Tests and the replay set the clock inside the window.
+

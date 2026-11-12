@@ -34,8 +34,9 @@ and T7 deterministic with a thin agent; one T8 monitor."
   action; `change`, `release` and `retirement` evidence are read from those records, with synthetic
   evidence as the labelled fallback.
 - Q: Who raises T8's lifecycle events? → A: The platform raises them deterministically when a
-  monitor fires (the monitors T6 configured); the T8 agent writes the periodic report and may
-  propose an event, which a person confirms before it is raised.
+  monitor fires (the monitors declared in the T8 spec, whose signals T6's monitoring readiness
+  must cover); the T8 agent writes the periodic report and may propose an event, which a person
+  confirms before it is raised.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -150,7 +151,10 @@ only in retire mode.
 
 ### Edge Cases
 
-- The change window has passed or not started: T7's prerequisite blocks until it is inside it.
+- The change window has passed or not started: T7's prerequisite blocks until it is inside it
+  (T6's playbook proposes a window starting at approval, at the demo time scale).
+- The baseline T7 and T8 compare against is T4's measured result for the candidate, not a value
+  an agent writes.
 - T6's package differs from T3's candidate: the hash control fails; nothing is deployable.
 - Traffic is not running during a T7 stage: the stage metrics are "not measured" and the stage
   check fails rather than passing on no data.
@@ -177,6 +181,8 @@ only in retire mode.
   waivers and expiry, bound hashes), raise the change request with the release window, configure
   monitors covering T1's KPIs and T2's observability design, and name the deployment package as
   T3's candidate.
+- **FR-012**: A person in the change approver role MUST be able to approve or reject a change
+  request in the ITSM mock from the inbox; the approval is recorded with the person and time.
 
 **T7**
 
@@ -191,8 +197,6 @@ only in retire mode.
 - **FR-007**: A monitor that fires on drift, cost or KPI shortfall MUST raise the corresponding
   lifecycle event deterministically (platform), with the measured value; an event the T8 agent
   proposes is raised only after a person confirms it.
-- **FR-012**: A person in the change approver role MUST be able to approve or reject a change
-  request in the ITSM mock from the inbox; the approval is recorded with the person and time.
 
 **T9**
 
