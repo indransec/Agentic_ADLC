@@ -146,9 +146,9 @@ then polish.
 
 **Independent Test**: with fake traffic metrics, set a monitor, lower the accuracy, check it fires and records the time.
 
-- [ ] T032 [P] [US5] Pilot test and code: `pilot/src/pilot_tools/traffic.py` `GET /feedback` (seeded ratings from answer correctness, `synthetic: true`) with a test in `pilot/tests/integration/test_traffic.py`.
-- [ ] T033 [P] [US5] Tests `tests/unit/tools/test_telemetry.py` and `test_monitors.py`: metrics per package; traces keep only allowlisted attributes (no description, title, reason or personal data); monitors per use case; operators; one fired event per breach episode with value and time; re-arms after recovery; background evaluation interval.
-- [ ] T034 [US5] `src/adlc/tools/bridge/telemetry.py` (`observability_metrics`, `observability_traces` via Jaeger's v3 API), `monitors.py` (`monitoring_configure`, `monitoring_read`, background loop), `feedback.py` (`feedback_read`).
+- [X] T032 [P] [US5] Pilot test and code: `pilot/src/pilot_tools/traffic.py` `GET /feedback` (seeded ratings from answer correctness, `synthetic: true`) with a test in `pilot/tests/integration/test_traffic.py`.
+- [X] T033 [P] [US5] Tests `tests/unit/tools/test_telemetry.py` and `test_monitors.py`: metrics per package; traces keep only allowlisted attributes (no description, title, reason or personal data); monitors per use case; operators; one fired event per breach episode with value and time; re-arms after recovery; background evaluation interval.
+- [X] T034 [US5] `src/adlc/tools/bridge/operate.py` (one module): `observability_metrics`, `observability_traces` via Jaeger's v3 API, `monitoring_configure`, `monitoring_read` with the background loop, `feedback_read`. T8 2.0.0 gains `mcp:monitoring:read` (T6 configures monitors, T8 reads them).
 
 **Checkpoint**: US5 passes alone.
 

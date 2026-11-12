@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T8
     name: Operate & Observe
-    version: "1.0.0"
+    version: "2.0.0"
     schema_version: "1.1.0"
     purpose: Is the system operating as expected and can we trace its impact?
     owner_role: adlc_coe
@@ -54,7 +54,7 @@ terminal:
       when: telemetry.safety_breach_severity == "critical"
       notify: [service_owner, security_officer]
     data_access: {max_class: confidential_masked}
-    tool_scopes: ["mcp:observability:read", "mcp:eval_store:write", "mcp:servicenow:incident_create", "mcp:feedback:read", "mcp:kill_switch:invoke"]
+    tool_scopes: ["mcp:observability:read", "mcp:eval_store:write", "mcp:servicenow:incident_create", "mcp:feedback:read", "mcp:kill_switch:invoke", "mcp:monitoring:read"]
     sign_off: {roles: [service_owner], min_approvers: 1}
     status_rights: {reviewer: [recommend], human: [pass, rework, exception], orchestrator: [escalate], agent: [raise_event]}
   playbooks:

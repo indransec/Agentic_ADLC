@@ -573,5 +573,6 @@ Notes:
   `mcp:artifact_store:read` (T3 provisions the dev environment and reads its own branch and builds).
 - T4 2.0.0: add `mcp:pilot_env:test`, `mcp:pilot_env:read`, `mcp:artifact_store:read`.
 - T5 2.0.0: add `mcp:pilot_env:test`, `mcp:pilot_env:read`.
+- T8 2.0.0: add `mcp:monitoring:read` (T6 configures monitors at readiness; T8 reads which fired).
 - `confluence` write (T6 runbooks, T9 lessons) is not served yet: the knowledge server is read-only.
   T6 and T9 keep those texts as artifacts until a writable wiki server exists.

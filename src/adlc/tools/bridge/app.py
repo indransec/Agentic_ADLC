@@ -10,8 +10,9 @@ from typing import Any
 from starlette.applications import Starlette
 
 from adlc.config.settings import BridgeSettings
-from adlc.tools.bridge import environments, evaluation, git_repo, release, stores
+from adlc.tools.bridge import environments, evaluation, git_repo, operate, release, stores
 from adlc.tools.bridge.git_repo import GitRepos
+from adlc.tools.bridge.operate import Monitors, Telemetry
 from adlc.tools.bridge.pilot import Pilot, PilotUrls
 from adlc.tools.bridge.records import Records
 from adlc.tools.catalogue import CATALOGUE
@@ -34,7 +35,9 @@ def pilot_from(settings: BridgeSettings) -> Pilot:
     )
 
 
-def all_handlers(pilot: Pilot, settings: BridgeSettings, records: Records) -> dict[str, Handler]:
+def all_handlers(
+    pilot: Pilot, settings: BridgeSettings, records: Records, monitors: Monitors | None = None
+) -> dict[str, Handler]:
     data = Path(settings.bridge_data_dir)
     layout_cache: list[str] = []
 
@@ -50,7 +53,18 @@ def all_handlers(pilot: Pilot, settings: BridgeSettings, records: Records) -> di
         **stores.handlers(pilot, repos, data, records),
         **evaluation.handlers(pilot, Path(settings.redteam_suite)),
         **release.handlers(pilot, records),
+        **operate.handlers(
+            pilot, telemetry_of(pilot, settings), monitors or monitors_of(pilot, settings, records)
+        ),
     }
+
+
+def telemetry_of(pilot: Pilot, settings: BridgeSettings) -> Telemetry:
+    return Telemetry(pilot, settings.bridge_jaeger_url, settings.bridge_pilot_service)
+
+
+def monitors_of(pilot: Pilot, settings: BridgeSettings, records: Records) -> Monitors:
+    return Monitors(records, telemetry_of(pilot, settings).metrics)
 
 
 def resources(pilot: Pilot) -> dict[str, tuple[ResourceSpec, ...]]:
@@ -87,7 +101,8 @@ def build_bridge(settings: BridgeSettings, pilot: Pilot | None = None) -> Starle
     registry.check()
     pilot = pilot or pilot_from(settings)
     records = Records(Path(settings.bridge_data_dir) / "records")
-    handlers = all_handlers(pilot, settings, records)
+    monitors = monitors_of(pilot, settings, records)
+    handlers = all_handlers(pilot, settings, records, monitors)
     hosts = [h.strip() for h in settings.bridge_allowed_hosts.split(",") if h.strip()]
     app = build_app(
         "adlc-pilot-bridge",
@@ -95,6 +110,7 @@ def build_bridge(settings: BridgeSettings, pilot: Pilot | None = None) -> Starle
         settings.tools_token_key.get_secret_value(),
         hosts,
         audit=records.audit,
+        background=monitors.loop(settings.bridge_monitor_interval_s),
     )
     app.state.records = records
     return app

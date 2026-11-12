@@ -144,7 +144,36 @@ class FakePilot:
             app.include_router(self._host(self.hosts[environment]), prefix=prefix)
         app.include_router(self._lab(), prefix="/lab")
         app.include_router(self._traffic(), prefix="/traffic")
+        app.include_router(self._jaeger(), prefix="/jaeger")
         return app
+
+    def _jaeger(self) -> APIRouter:
+        r = APIRouter()
+
+        @r.get("/api/v3/traces")
+        def traces() -> dict[str, Any]:
+            def attr(key: str, value: str) -> dict[str, Any]:
+                return {"key": key, "value": {"stringValue": value}}
+
+            spans = [
+                {
+                    "traceId": f"t{n}",
+                    "name": "triage.request",
+                    "startTimeUnixNano": "1000000",
+                    "endTimeUnixNano": "4000000",
+                    "status": {"code": "ok"},
+                    "attributes": [
+                        attr("request_id", f"INC-{n}"),
+                        attr("package_hash", "sha256:" + "a" * 64),
+                        attr("description", "Reach me at secret@example.com"),
+                        attr("reason", "Contact: secret@example.com"),
+                    ],
+                }
+                for n in (1, 2)
+            ]
+            return {"result": {"resourceSpans": [{"scopeSpans": [{"spans": spans}]}]}}
+
+        return r
 
     def _host(self, host: Host) -> APIRouter:
         r = APIRouter()

@@ -73,6 +73,7 @@ Unique (`system`, `record_id`, `version`).
 | `adlc-specs/terminals/T3.yaml` | Tool scopes add `mcp:pilot_env:dev`, `mcp:pilot_env:read`, `mcp:git:read`, `mcp:artifact_store:read` | 2.0.0 |
 | `adlc-specs/terminals/T4.yaml` | Add `mcp:pilot_env:test`, `mcp:pilot_env:read`, `mcp:artifact_store:read` | 2.0.0 |
 | `adlc-specs/terminals/T5.yaml` | Add `mcp:pilot_env:test`, `mcp:pilot_env:read` | 2.0.0 |
+| `adlc-specs/terminals/T8.yaml` | Add `mcp:monitoring:read` (T6 configures, T8 reads) | 2.0.0 |
 
 ## Platform data files
 

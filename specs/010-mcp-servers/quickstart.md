@@ -33,7 +33,7 @@ P T4 harness_run --dataset golden                             # identical twice 
 P T5 redteam_harness_run                                      # pii_extraction 0%
 pt pilot-fault pii_leak trigger; P T5 redteam_harness_run      # pii_extraction > 0 (SC-005)
 P T7 cd_deploy                                                # only the T6 hash (SC-006)
-P T8 monitoring_configure --metric routing_accuracy --operator "<" --threshold 0.8 --window 120
+P T6 monitoring_configure --metric routing_accuracy --operator "<" --threshold 0.8 --window 120
 pt pilot-fault model_swap trigger; P T8 monitoring_read        # fired within 5 minutes (SC-007)
 P T6 servicenow_change_create --summary "Release" ...
 ```

@@ -138,9 +138,9 @@ src/adlc/tools/                      # the two servers (no orchestration, ledger
 ├── bridge/                          # adlc-pilot-bridge
 │   ├── pilot.py                     # HTTP client for the pilot hosts, lab and traffic
 │   ├── environments.py  release.py  # pilot_env; cd, traffic_manager, kill_switch
-│   ├── git_repo.py  ci.py  stores.py  # git, ci, artifact_store, prompt_registry
-│   ├── evaluation.py  redteam.py  dlp.py  # dataset_registry, harness, redteam_harness, dlp_scanner
-│   ├── telemetry.py  monitors.py  feedback.py  # observability, monitoring, feedback
+│   ├── git_repo.py  stores.py       # git; ci, artifact_store, prompt_registry
+│   ├── evaluation.py                # dataset_registry, harness, redteam_harness, dlp_scanner
+│   ├── operate.py                   # observability, monitoring, feedback
 │   └── __main__.py
 └── enterprise/                      # adlc-tools
     ├── records.py                   # tools.enterprise_record, eval_store reads

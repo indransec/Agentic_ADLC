@@ -171,6 +171,8 @@ synthetic (feature 004).
 - T3 2.0.0: tool scopes add `mcp:pilot_env:dev`, `mcp:pilot_env:read`, `mcp:git:read`,
   `mcp:artifact_store:read`.
 - T4 and T5 2.0.0: add `mcp:pilot_env:test`, `mcp:pilot_env:read`; T4 adds `mcp:artifact_store:read`.
+- T8 2.0.0 (found in implementation): adds `mcp:monitoring:read`; T6 configures monitors
+  (`mcp:monitoring:configure`, already granted) and T8 reads which fired.
 - The agents catalogue is unchanged: T3–T9 are still stub agents; features 011 and 012 bind tools.
 
 **Rationale.** V-06 (every scope in the registry) and V-24 (a changed value is a major version).
