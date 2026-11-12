@@ -171,7 +171,7 @@ then polish.
 ## Phase 9: Polish
 
 - [X] T038 [P] `src/adlc/tools/probe.py` (`adlc-tools-probe`): call any tool as a named terminal for a use case through the real gate, token and records (a dev command; refuses to run when `ADLC_ENV` is not `dev` or `demo`).
-- [ ] T039 [P] Documents: `src/adlc/tools/README.md` (servers, tools, tokens, records); SA §13 (integration table: MVP column for each server), §11 (run tokens), §15 (services); build plan row 010 (no Docker SDK or Traefik, no DeepEval or garak/PyRIT); `deploy/README.md` (services and settings).
+- [X] T039 [P] Documents: `src/adlc/tools/README.md` (servers, tools, tokens, records); SA §13 (integration table: MVP column for each server), §11 (run tokens), §15 (services); build plan row 010 (no Docker SDK or Traefik, no DeepEval or garak/PyRIT); `deploy/README.md` (services and settings).
 - [ ] T040 Run the 001–009 suites, the new suites and the pilot suite 10 times in a row and record the result (SC-009).
 - [ ] T041 Run `make check` and fix any failure.
 - [ ] T042 Live check (quickstart §2): every server answers; fill to running dev package within 5 minutes with CI's hash equal to `pilot-build` (SC-003); out-of-scope calls refused at both ends (SC-001); a record per call (SC-002); harness repeatable and degraded ≥ 20 points lower (SC-004); red-team with and without the leak (SC-005); only the T6 hash deploys (SC-006); monitor fires within 5 minutes of the swap (SC-007); no incident text in telemetry or tool output over a traffic run (SC-008). Record the results.
