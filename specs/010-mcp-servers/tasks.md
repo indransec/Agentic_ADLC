@@ -99,11 +99,11 @@ then polish.
 
 **Independent Test**: as a T3 run, write the default fill, run CI, read the manifest; compare with `pilot-build`.
 
-- [ ] T018 [P] [US2] Pilot tests `pilot/tests/unit/test_lab.py` and `pilot/tests/integration/test_lab.py`: `POST /build` with the default fill returns the four checks passed and the hash `pilot-build` gives; an invalid fill fails `validate` naming the part; `GET /packages/{hash}`; `GET /datasets` and `/datasets/{id}` reproducible with content hashes; unknown dataset 404.
-- [ ] T019 [US2] `pilot/datasets.yaml` (golden, regression, pii with scored fields `team`, `category`, `priority` and slice `p1: priority == P1`), `pilot/src/pilot_tools/lab.py` (`pilot-lab`, port 8300) and Compose service `pilot-lab` (pilot image, pilot network, `pilot-packages` volume).
-- [ ] T020 [P] [US2] Tests `tests/unit/tools/test_git_repo.py`: repository created per use case with the fill layout on `main`; writes only on the bound branch; `main` refused; paths outside the fill layout refused; size limits; a write with a stale `parent` refused; pull request recorded; no hooks run (a planted hook does nothing).
-- [ ] T021 [US2] `src/adlc/tools/bridge/git_repo.py`: bare repositories under `ADLC_BRIDGE_DATA_DIR/git`, `git` as a subprocess with a fixed argument list, `GIT_CONFIG_NOSYSTEM`, hooks path empty, no remotes; tools `git_list`, `git_read`, `git_write`, `git_open_pull_request`.
-- [ ] T022 [US2] `src/adlc/tools/bridge/ci.py` (`ci_run`: read the branch's fill, `POST /build`, return checks and hash) and `src/adlc/tools/bridge/stores.py` (`artifact_store_read`, `artifact_store_write`, `prompt_registry_write`, `prompt_registry_read`, content-addressed), with tests against the fake lab.
+- [X] T018 [P] [US2] Pilot tests `pilot/tests/unit/test_lab.py` and `pilot/tests/integration/test_lab.py`: `POST /build` with the default fill returns the four checks passed and the hash `pilot-build` gives; an invalid fill fails `validate` naming the part; `GET /packages/{hash}`; `GET /datasets` and `/datasets/{id}` reproducible with content hashes; unknown dataset 404.
+- [X] T019 [US2] `pilot/datasets.yaml` (golden, regression, pii with scored fields `team`, `category`, `priority` and slice `p1: priority == P1`), `pilot/src/pilot_tools/lab.py` (`pilot-lab`, port 8300) and Compose service `pilot-lab` (pilot image, pilot network, `pilot-packages` volume).
+- [X] T020 [P] [US2] Tests `tests/unit/tools/test_git_repo.py`: repository created per use case with the fill layout on `main`; writes only on the bound branch; `main` refused; paths outside the fill layout refused; size limits; a write with a stale `parent` refused; pull request recorded; no hooks run (a planted hook does nothing).
+- [X] T021 [US2] `src/adlc/tools/bridge/git_repo.py`: bare repositories under `ADLC_BRIDGE_DATA_DIR/git`, `git` as a subprocess with a fixed argument list, `GIT_CONFIG_NOSYSTEM`, hooks path empty, no remotes; tools `git_list`, `git_read`, `git_write`, `git_open_pull_request`.
+- [X] T022 [US2] `src/adlc/tools/bridge/ci.py` (`ci_run`: read the branch's fill, `POST /build`, return checks and hash) and `src/adlc/tools/bridge/stores.py` (`artifact_store_read`, `artifact_store_write`, `prompt_registry_write`, `prompt_registry_read`, content-addressed), with tests against the fake lab.
 
 **Checkpoint**: US2 passes alone.
 

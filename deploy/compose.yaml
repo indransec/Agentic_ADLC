@@ -381,6 +381,29 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  # Builds and datasets for the platform's CI, artifact store and evaluation harness (feature 010).
+  pilot-lab:
+    image: adlc-pilot:0.1.0
+    networks: [pilot]
+    command: ["pilot-lab"]
+    environment:
+      PILOT_TEMPLATE: /pilot/template
+      PILOT_REGISTRY: /packages
+      PILOT_DATASETS: /pilot/datasets.yaml
+    volumes:
+      - pilot-packages:/packages
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8300/health', timeout=2).status == 200 else 1)"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
   # Operator commands: docker compose run --rm pilot-tools pilot-build --fill fills/default
   pilot-tools:
     image: adlc-pilot:0.1.0

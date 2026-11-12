@@ -18,6 +18,7 @@ RUN uv sync --locked --no-dev --no-install-project
 COPY pilot/src ./src
 COPY pilot/template ./template
 COPY pilot/fills ./fills
+COPY pilot/datasets.yaml ./datasets.yaml
 RUN uv sync --locked --no-dev
 
 # Package registry, records, generated data and worker scratch; named volumes inherit the owner.

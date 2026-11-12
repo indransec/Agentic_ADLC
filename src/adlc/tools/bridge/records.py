@@ -15,16 +15,16 @@ class Records:
         self.folder = folder
         self.lock = threading.Lock()
 
-    def add(self, name: str, **row: Any) -> dict[str, Any]:
+    def add(self, record: str, **row: Any) -> dict[str, Any]:
         entry = {"at": datetime.now(UTC).isoformat(), **row}
         with self.lock:
             self.folder.mkdir(parents=True, exist_ok=True)
-            with (self.folder / f"{name}.jsonl").open("a") as handle:
+            with (self.folder / f"{record}.jsonl").open("a") as handle:
                 handle.write(json.dumps(entry, default=str, ensure_ascii=False) + "\n")
         return entry
 
-    def read(self, name: str) -> list[dict[str, Any]]:
-        path = self.folder / f"{name}.jsonl"
+    def read(self, record: str) -> list[dict[str, Any]]:
+        path = self.folder / f"{record}.jsonl"
         if not path.exists():
             return []
         with self.lock:

@@ -17,6 +17,7 @@ from fastapi import APIRouter, FastAPI, HTTPException, Response
 from adlc.tools.bridge.pilot import PilotUrls
 
 TEAMS = ("service-desk", "identity-access", "network-ops", "security-ops")
+LAYOUT = ("instructions.md", "routing_rules.yaml", "settings.yaml")
 EMAIL = re.compile(r"[\w.+-]+@example\.com")
 SLICES = [{"name": "p1", "field": "priority", "value": "P1"}]
 
@@ -266,11 +267,19 @@ class FakePilot:
     def _lab(self) -> APIRouter:
         r = APIRouter()
 
+        @r.get("/layout")
+        def get_layout() -> dict[str, Any]:
+            return {
+                "files": list(LAYOUT),
+                "template_id": "incident-triage",
+                "template_version": "1.0.0",
+            }
+
         @r.post("/build")
         def build(body: dict[str, Any]) -> dict[str, Any]:
             files = {str(k): str(v) for k, v in body["files"].items()}
             self.builds.append(files)
-            if "routing_rules.yaml" not in files:
+            if not files.get("routing_rules.yaml", "").strip():
                 return {
                     "checks": [
                         {"name": "validate", "passed": False, "detail": "routing_rules: missing"}

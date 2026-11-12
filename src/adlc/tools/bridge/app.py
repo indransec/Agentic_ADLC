@@ -10,7 +10,8 @@ from typing import Any
 from starlette.applications import Starlette
 
 from adlc.config.settings import BridgeSettings
-from adlc.tools.bridge import environments
+from adlc.tools.bridge import environments, git_repo, stores
+from adlc.tools.bridge.git_repo import GitRepos
 from adlc.tools.bridge.pilot import Pilot, PilotUrls
 from adlc.tools.bridge.records import Records
 from adlc.tools.catalogue import CATALOGUE
@@ -34,7 +35,20 @@ def pilot_from(settings: BridgeSettings) -> Pilot:
 
 
 def all_handlers(pilot: Pilot, settings: BridgeSettings, records: Records) -> dict[str, Handler]:
-    return {**environments.handlers(pilot)}
+    data = Path(settings.bridge_data_dir)
+    layout_cache: list[str] = []
+
+    def layout() -> list[str]:
+        if not layout_cache:
+            layout_cache.extend(pilot.request("GET", pilot.urls.lab, "/layout")["files"])
+        return list(layout_cache)
+
+    repos = GitRepos(data / "git", layout, records)
+    return {
+        **environments.handlers(pilot),
+        **git_repo.handlers(repos),
+        **stores.handlers(pilot, repos, data, records),
+    }
 
 
 def resources(pilot: Pilot) -> dict[str, tuple[ResourceSpec, ...]]:
