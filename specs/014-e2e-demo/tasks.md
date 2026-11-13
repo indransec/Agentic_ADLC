@@ -56,16 +56,16 @@ unfinished task.
 
 ## Phase 5: User Story 3 – Resilience on the running stack (P1)
 
-- [ ] T016 [P] [US3] `tests/unit/orchestration/test_route_fault.py`: `ADLC_ROUTE_FAULT` makes routing of that event type fail only when `ADLC_ENV` is `dev` or `demo` (refused at start otherwise), unset by default; other event types route normally.
-- [ ] T017 [US3] The route-fault hook (settings, the orchestrator's `FaultHook` wiring in `src/adlc/orchestration/__main__.py`), documented in `.env.example` as test-only.
-- [ ] T018 [US3] `scripts/resilience.py` and `make resilience` (demo env only): restart mid-run, duplicate delivery, dead letter and re-queue, each with its pass condition and evidence printed.
+- [X] T016 [P] [US3] `tests/unit/orchestration/test_route_fault.py`: `ADLC_ROUTE_FAULT` makes routing of that event type fail only when `ADLC_ENV` is `dev` or `demo` (refused at start otherwise), unset by default; other event types route normally.
+- [X] T017 [US3] The route-fault hook (settings, the orchestrator's `FaultHook` wiring in `src/adlc/orchestration/__main__.py`), documented in `.env.example` as test-only.
+- [X] T018 [US3] `scripts/resilience.py` and `make resilience` (demo env only): restart mid-run, duplicate delivery, dead letter and re-queue, each with its pass condition and evidence printed.
 
 ---
 
 ## Phase 6: User Story 4 – Traceability (P2)
 
-- [ ] T019 [P] [US4] `tests/integration/ledger/test_trace.py`: over a walked use case, every sign-off, control decision, routing event and artifact version has a spec version, actor and hash; a missing link is reported as a gap; the chain verification result is included.
-- [ ] T020 [US4] `src/adlc/ledger/trace.py` and `adlc-ledger trace <usecase>`; `make trace`.
+- [X] T019 [P] [US4] `tests/integration/ledger/test_trace.py`: over a walked use case, every sign-off, control decision, routing event and artifact version has a spec version, actor and hash; a missing link is reported as a gap; the chain verification result is included.
+- [X] T020 [US4] `src/adlc/ledger/trace.py` and `adlc-ledger trace <usecase>`; `make trace`.
 
 ---
 

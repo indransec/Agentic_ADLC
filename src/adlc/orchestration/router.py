@@ -27,6 +27,21 @@ from adlc.orchestration.tracing import span
 
 FaultHook = Callable[[EventRow], None]
 
+
+class RouteFault(RuntimeError):
+    """014: the configured route fault (resilience checks)."""
+
+
+def route_fault(event_type: str) -> FaultHook:
+    """014: a hook that fails routing of ``event_type`` (``ADLC_ROUTE_FAULT``, test only)."""
+
+    def hook(event: EventRow) -> None:
+        if event.event_type == event_type:
+            raise RouteFault(f"route fault for {event_type} (ADLC_ROUTE_FAULT)")
+
+    return hook
+
+
 _CONTEXT_KEYS = (
     "comment",
     "root_cause",

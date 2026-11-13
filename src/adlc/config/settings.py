@@ -219,6 +219,11 @@ class OrchestratorSettings(RuntimeSettings):
     monitor_interval: Duration = Field(
         default=timedelta(minutes=1), json_schema_extra=_meta(DURATION_FORM)
     )
+    # 014 (resilience checks, test only): routing of this event type fails, so it is retried and
+    # dead-lettered; unset in normal running. ADLC_ENV is only ever dev or demo.
+    route_fault: str | None = Field(
+        default=None, json_schema_extra=_meta("an event type (test only; leave unset)")
+    )
 
     # 008 knowledge MCP server (the agents' grounding)
     knowledge_url: str = Field(
