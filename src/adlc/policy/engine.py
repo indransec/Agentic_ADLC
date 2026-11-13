@@ -184,7 +184,12 @@ class CelPolicyEngine:
         ):
             started = self.timer()
             spec = self.spec_for(context)
-            allowed, reason = authorization.decide(actor, action, resource, context.run_id, spec)
+            run = self.evidence.get("run", context)  # 012: mode-conditional tool scopes
+            value = getattr(run, "value", None)
+            mode = value.get("mode") if isinstance(value, dict) else None
+            allowed, reason = authorization.decide(
+                actor, action, resource, context.run_id, spec, mode
+            )
             self.sink.record(
                 PolicyDecision(
                     kind="authorize",

@@ -54,7 +54,11 @@ def test_model_agents_tools_follow_their_terminals() -> None:
     assert len(agents) == 10
     for aid in models:
         terminal = terminals[aid]
-        scopes = set(terminal["authorities"]["tool_scopes"])
+        scopes = set(terminal["authorities"]["tool_scopes"]) | {
+            s
+            for m in (terminal["authorities"].get("tool_scopes_by_mode") or {}).values()
+            for s in m
+        }
         scoped = {s.split(":")[1] for s in scopes}
         grounded = {g["mcp"] for g in terminal["playbooks"]["grounding"]}
         permissions = {t["permission"] for t in agents[aid]["tools"]}

@@ -124,7 +124,19 @@ agents:
       - {tool: servicenow_incident_create, permission: "mcp:servicenow:incident_create"}
       - {tool: eval_store_write, permission: "mcp:eval_store:write"}
       - {tool: kill_switch_invoke, permission: "mcp:kill_switch:invoke"}
-  - {id: t9-evolution-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
+  - id: t9-evolution-agent
+    version: "2.0.0"
+    implementation: model
+    model_tier: reasoning
+    prompt: {id: t9-evolution-agent, version: "1.0.0"}
+    tools:
+      - {tool: agent_registry_read, permission: "mcp:agent_registry:read"}
+      - {tool: agent_registry_write, permission: "mcp:agent_registry:write"}
+      - {tool: cmdb_read, permission: "mcp:cmdb:read"}
+      - {tool: iam_read, permission: "mcp:iam:read"}
+      - {tool: servicenow_change_create, permission: "mcp:servicenow:change_create"}
+      - {tool: iam_revoke, permission: "mcp:iam:revoke"}
+      - {tool: cmdb_write, permission: "mcp:cmdb:write"}
   - id: common-terminal-reviewer
     version: "1.0.0"
     description: "Scores each checklist item and recommends an outcome (SA 7.2 point 5)"

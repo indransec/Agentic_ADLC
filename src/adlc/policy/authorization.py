@@ -43,8 +43,14 @@ def bound_run(actor: str) -> str | None:
 
 
 def decide(
-    actor: str, action: str, resource: str, run_id: str | None, spec: Mapping[str, Any] | None
+    actor: str,
+    action: str,
+    resource: str,
+    run_id: str | None,
+    spec: Mapping[str, Any] | None,
+    mode: str | None = None,
 ) -> tuple[bool, str]:
+    """``mode`` is the run's mode (012): scopes granted only in another mode are refused."""
     wanted = request(action, resource)
     actor_run = bound_run(actor)
     if run_id is None or actor_run != run_id:
@@ -53,8 +59,15 @@ def decide(
     if denied is not None:
         return False, f"denied by {denied}"
     if wanted.startswith(TOOL_PREFIX):
-        scope = _matches(wanted, _patterns(spec, "tool_scopes"))
+        scopes = [_normalise(s) for s in spec_view.tool_scopes(spec, mode)] if spec else []
+        scope = _matches(wanted, scopes)
         if scope is None:
+            granted_in = spec_view.modes_granting(spec, wanted) if spec else ()
+            if granted_in:
+                return False, (
+                    f"tool not in scope in mode {mode or 'default'}: {wanted} is granted only "
+                    f"in mode {', '.join(granted_in)}"
+                )
             return False, f"tool not in scope: {wanted}"
         return True, f"allowed by tool scope {scope}"
     allowed = _matches(wanted, _patterns(spec, "allow"))

@@ -81,15 +81,15 @@ unfinished task.
 
 ## Phase 6: User Story 4 – T9 classifies the change and re-enters, or retires (P1)
 
-- [ ] T024 [P] [US4] Prompt `adlc-specs/prompts/t9-evolution-agent.md` 1.0.0 and playbooks `t9-change-impact.md`, `retirement.md` 1.1.0: classify with the change-class catalogue from the trigger evidence; re-entry terminal consistent with the class; in retire mode revoke identity and tool scopes, mark data disposed, retire the registry entry.
-- [ ] T025 [US4] `agents.yaml`: `t9-evolution-agent` model agent (reasoning tier); `adlc-specs/terminals/T9.yaml` next major (playbook versions).
-- [ ] T026 [US4] Scripted T9 replies (`Evolution`) and `tests/integration/agents/test_t9_agent.py`: a drift event from a model change is at least moderate and re-enters at T2 (CTL-T9-01..03); retire mode revokes through IAM, CMDB and the registry, and CTL-T9-04..06 read those records; a retirement leaving an unowned dependant fails CTL-T9-06.
+- [X] T024 [P] [US4] Prompt `adlc-specs/prompts/t9-evolution-agent.md` 1.0.0 and playbooks `t9-change-impact.md`, `retirement.md` 1.1.0: classify with the change-class catalogue from the trigger evidence; re-entry terminal consistent with the class; in retire mode revoke identity and tool scopes, mark data disposed, retire the registry entry.
+- [X] T025 [US4] `agents.yaml`: `t9-evolution-agent` model agent (reasoning tier); `adlc-specs/terminals/T9.yaml` next major (playbook versions).
+- [X] T026 [US4] Scripted T9 replies (`Evolution`) and `tests/integration/agents/test_t9_agent.py`: a drift event from a model change is at least moderate and re-enters at T2 (CTL-T9-01..03); retire mode revokes through IAM, CMDB and the registry, and CTL-T9-04..06 read those records; a retirement leaving an unowned dependant fails CTL-T9-06.
 
 ---
 
 ## Phase 7: User Story 5 – Agents act only through their terminal's tools (P2)
 
-- [ ] T027 [US5] `tests/integration/agents/test_acting_scopes.py` additions: T6 cannot deploy; T7 cannot approve the change and cannot deploy a hash other than the authorised one; T8 cannot release the kill switch; T9 outside retire mode cannot revoke; every refusal recorded, nothing reaches the fake pilot or mocks (SC-006).
+- [X] T027 [US5] `tests/integration/agents/test_acting_scopes.py` additions: T6 cannot deploy; T7 cannot approve the change and cannot deploy a hash other than the authorised one; T8 cannot release the kill switch; T9 outside retire mode cannot revoke; every refusal recorded, nothing reaches the fake pilot or mocks (SC-006).
 
 ---
 

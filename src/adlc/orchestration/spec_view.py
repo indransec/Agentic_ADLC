@@ -246,6 +246,27 @@ def reentry_terminals(spec: Spec) -> frozenset[str]:
     )
 
 
+def tool_scopes(spec: Spec, mode: str | None = None) -> tuple[str, ...]:
+    """012: the terminal's tool scopes; with a mode, plus the scopes granted in that mode; with
+    ``mode="*"``, plus every mode's (what the terminal may ever use)."""
+    authorities = _section(spec, "authorities") or {}
+    found = [str(s) for s in _list(authorities.get("tool_scopes"))]
+    by_mode = authorities.get("tool_scopes_by_mode") or {}
+    if isinstance(by_mode, Mapping):
+        for name, scopes in by_mode.items():
+            if mode == "*" or name == mode:
+                found += [str(s) for s in _list(scopes) if str(s) not in found]
+    return tuple(found)
+
+
+def modes_granting(spec: Spec, scope: str) -> tuple[str, ...]:
+    """012: the modes whose extra tool scopes include ``scope``."""
+    by_mode = (_section(spec, "authorities") or {}).get("tool_scopes_by_mode") or {}
+    if not isinstance(by_mode, Mapping):
+        return ()
+    return tuple(sorted(m for m, scopes in by_mode.items() if scope in _list(scopes)))
+
+
 def raised_events(spec: Spec) -> frozenset[str]:
     return frozenset(str(m["raises"]) for m in _list(_section(spec, "monitors")) if m.get("raises"))
 

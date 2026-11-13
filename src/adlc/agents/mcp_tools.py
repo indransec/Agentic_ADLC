@@ -149,9 +149,9 @@ def _outcome(text: str) -> str:
 
 
 def mcp_scopes(spec: Mapping[str, Any]) -> list[str]:
-    """The terminal's ``mcp:`` tool scopes, from the pinned spec."""
-    authorities = spec_view.body(spec).get("authorities") or {}
-    return [str(s) for s in authorities.get("tool_scopes") or [] if str(s).startswith("mcp:")]
+    """The terminal's ``mcp:`` tool scopes, from the pinned spec (every mode's: the tool gate has
+    already refused a scope the run's mode does not grant)."""
+    return [s for s in spec_view.tool_scopes(spec, "*") if s.startswith("mcp:")]
 
 
 def scope_for(spec: ToolSpec, terminal_spec: Mapping[str, Any]) -> str | None:
