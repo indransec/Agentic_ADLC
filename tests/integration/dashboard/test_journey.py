@@ -1,13 +1,15 @@
 """013 T006 (US1; FR-001, FR-002): the journey of a walk with a clarification, a rework routed to
 another terminal, an exception with a waiver, an escalation and a drift re-entry."""
 
+from typing import Any
+
 from adlc.dashboard.service import DashboardService
 from tests.integration.dashboard.walk import walked
 from tests.support.orchestration import harness
 from tests.support.pg import PlatformDatabase
 
 
-def _arrows(journey: dict, kind: str) -> list[dict]:
+def _arrows(journey: dict[str, Any], kind: str) -> list[dict[str, Any]]:
     return [a for a in journey["arrows"] if a["kind"] == kind]
 
 
