@@ -23,7 +23,7 @@ unfinished task.
 ### Tests first
 
 - [ ] T002 [P] `tests/unit/dashboard/test_timesplit.py`: state intervals from transitions (research R-04): `building` → agent; `checking`, `reviewing` → reviewer; `awaiting_clarification` → clarification; `awaiting_sign_off`, `escalated` → people; `blocked` → blocked; an open run's last interval ends at now; a closed run's at its close.
-- [ ] T003 [P] `tests/unit/dashboard/test_arrows.py`: arrow kinds per research R-02 from (event type, source terminal, target terminal): rework (same terminal), reroute (another terminal), exception, event, re-entry (target before source), terminate, pass; no causation run → no arrow; terminal order by number (no names).
+- [ ] T003 [P] `tests/unit/dashboard/test_arrows.py`: arrow kinds per research R-02 from (event type, source terminal, target terminal): rework (same terminal), reroute (another terminal), exception, event, re-entry (target before source), terminate, pass; the event type decides first, so a rework reroute to an earlier terminal is a reroute, never a re-entry (analysis A1); no causation run → no arrow; terminal order by number (no names).
 
 ### Implementation
 
@@ -54,7 +54,7 @@ unfinished task.
 
 ## Phase 5: User Story 3 – KPIs (P1)
 
-- [ ] T012 [P] [US3] `tests/unit/dashboard/test_kpis.py`: each of the eleven KPIs (research R-05) on fixed records with hand-computed values: elapsed; time split per terminal; reworks per terminal by root cause; clarifications per terminal with role; clarification wait; first-pass yield; escalations with trigger; reviewer–human agreement; human edit rate; control first-time pass rate; SLA adherence (expected duration per tier from the spec timeline); a zero denominator gives `null` ("no data").
+- [ ] T012 [P] [US3] `tests/unit/dashboard/test_kpis.py`: each of the eleven KPIs (research R-05) on fixed records with hand-computed values: elapsed; time split per terminal; reworks per terminal by root cause; clarifications per terminal with role; clarification wait; first-pass yield; escalations with trigger; reviewer–human agreement; human edit rate; reviewer–human agreement ignores `escalate` recommendations (A4); control first-time pass rate; SLA adherence (expected duration per tier from the spec timeline); a zero denominator gives `null` ("no data").
 - [ ] T013 [US3] `src/adlc/dashboard/kpis.py` (pure formulas with id, name, definition, unit) and `DashboardService.kpis(usecase_id)`; `GET /dashboard/usecases/{id}/kpis`.
 - [ ] T014 [US3] `tests/integration/dashboard/test_kpis_walk.py`: the scripted walk of T006 gives the hand-computed values (SC-002).
 
@@ -84,7 +84,7 @@ unfinished task.
 ## Phase 9: Polish & cross-cutting
 
 - [ ] T021 [P] `tests/integration/dashboard/test_reference_journey.py`: after the 012 reference replay to T9, every reroute, the T5 exception and the T9 drift re-entry are arrows with their causes (SC-001).
-- [ ] T022 [P] Access and performance: every `/dashboard` route `401` without a session (SC-005); a use case with 50 runs answers its journey in under 2 s (SC-004).
-- [ ] T023 [P] UI tests `tests/integration/ui/test_dashboard.py` (AppTest through the API): journey renders lanes and arrows, activity filters survive a refresh, KPI strip shows "no data" where undefined, portfolio, dead letters for the CoE only.
+- [ ] T022 [P] Access and performance: every `/dashboard` route `401` without a session (SC-005); a role with no part in a use case reads its journey, activity and KPIs (FR-009, analysis A2); a use case with 50 runs answers its journey in under 2 s (SC-004).
+- [ ] T023 [P] UI tests `tests/integration/ui/test_dashboard.py` (AppTest through the API): journey renders lanes and arrows, activity filters survive a refresh, KPI strip shows "no data" where undefined, the journey fragment refreshes every `ADLC_UI_DASHBOARD_REFRESH` (SC-003, analysis A3), portfolio, dead letters for the CoE only.
 - [ ] T024 [P] Docs: `src/adlc/dashboard/README.md` (views, KPI definitions, arrow kinds), `src/adlc/ui/README.md` pages.
 - [ ] T025 Targeted suites locally (unit dashboard, integration dashboard, API, UI); push after the user's approval and let CI run `make check` (SC-006).

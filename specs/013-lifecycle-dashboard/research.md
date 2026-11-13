@@ -14,7 +14,9 @@ computed on read well under the 2 s target (SC-004); a view or cache can come la
 
 **Decision.** Each run's `trigger_event_id` names the routing event that opened it; the event's
 `causation_run_id` is the run it came from. An arrow is (from run, to run, kind, cause, actor,
-time). Kind from the event type and the two terminals, with no terminal names in code:
+time). Kind from the event type and the two terminals, with no terminal names in code; the event
+type decides first (rework, exception, event, terminate), and only a pass whose target lies before
+its source is a re-entry (analysis A1):
 
 | Event | Kind |
 | --- | --- |
@@ -54,7 +56,7 @@ waiting for people; `blocked` → blocked. Intervals are wall-clock time; the ti
 | Clarification wait | round asked → answer given |
 | First-pass yield | terminals whose first run closed pass or exception / terminals with a closed run |
 | Escalations | runs entering `escalated`, with trigger (`escalation_trigger`) |
-| Reviewer–human agreement | sign-off decisions equal to the run's recommendation status / decisions with a recommendation |
+| Reviewer–human agreement | sign-off decisions equal to the run's recommendation status / decisions whose recommended status a person can decide (pass, rework, exception, terminate; an `escalate` recommendation is not counted, analysis A4) |
 | Human edit rate | agent artifact versions followed by a person version before the pass / agent artifact versions |
 | Control first-time pass rate | blocking control decisions at attempt 1 passed / blocking controls at attempt 1 |
 | SLA adherence | closed runs within the spec timeline's expected duration for the tier / closed runs |
