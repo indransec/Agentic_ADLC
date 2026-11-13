@@ -1,0 +1,166 @@
+# The demo script (feature 014, SA §21): data for adlc-demo. Each step waits until its terminal's
+# run needs people, then takes (--auto) or waits for (presenter) its actions, and checks `expect`.
+# Human steps go through the platform's service operations as the named roles.
+usecases:
+  main: it-service-desk        # the Incident Triage reference (data/reference_usecases)
+  escalation: it-service-desk  # a second, short use case for D-4 (keeps the main journey clean)
+recordings: demo/recordings    # writing agents' recorded replies (<recordings>/<agent>.jsonl)
+rehearsed: demo.rehearsed.replies:replies  # acting agents' rehearsed reply programs
+
+steps:
+  - number: 1
+    usecase: main
+    terminal: T0
+    proves: [D-1, D-8]
+    say: The business owner submits the Incident Triage use case; the agent builds the intake card; the owner passes it and sets the risk tier.
+    actions:
+      - {kind: submit, role: business_owner}
+      - {kind: pass, fields: {risk_tier: low}}
+    expect: {final_status: pass}
+
+  - number: 2
+    usecase: main
+    terminal: T1
+    proves: [D-1, D-2]
+    say: The agent proposes requirements; the product owner rejects them because the KPI baselines are estimates, with a comment; the agent reworks using it.
+    actions:
+      - kind: reject
+        role: product_owner
+        comment: The KPI baselines are estimates; take them from the ticket system's last quarter.
+        root_cause: requirement
+        reason: The baselines must be measured before we commit to targets.
+    expect: {final_status: rework, run_number: 1}
+
+  - number: 3
+    usecase: main
+    terminal: T1
+    proves: [D-2]
+    say: The reworked requirements carry measured baselines; both owners pass them.
+    actions:
+      - {kind: pass}
+    expect: {final_status: pass, run_number: 2}
+
+  - number: 4
+    usecase: main
+    terminal: T2
+    proves: [D-1, D-9]
+    say: The architect agent asks how long incident data is kept; the data owner answers; the same run resumes without counting as rework; the design passes.
+    actions:
+      - {kind: answer, text: "Incident records are kept for 24 months, then anonymised; personal data in free text is masked at intake."}
+      - {kind: pass}
+    expect: {final_status: pass, run_number: 1}
+
+  - number: 5
+    usecase: main
+    terminal: T3
+    proves: [D-1, D-6]
+    say: The builder agent adapts the golden template, runs CI and produces the candidate package and its hash.
+    actions:
+      - {kind: pass}
+    expect: {final_status: pass}
+
+  - number: 6
+    usecase: main
+    terminal: T4
+    proves: [D-1, D-3]
+    say: Evaluation shows a tool-timeout defect; the QA lead sends it back to T3 with root cause implementation.
+    actions:
+      - kind: reject
+        role: qa_eval_lead
+        comment: The lookup tool times out on long tickets; fix the timeout handling.
+        root_cause: implementation
+        reason: The defect is in the build, not the evaluation.
+        fields: {defect_log: "DEF-1 tool timeout on tickets over 4,000 characters"}
+    expect: {final_status: rework, run_number: 1, arrow: reroute}
+
+  - number: 7
+    usecase: main
+    terminal: T3
+    proves: [D-3]
+    say: T3 run 2 rebuilds the candidate; it passes.
+    actions:
+      - {kind: pass}
+    expect: {final_status: pass, run_number: 2}
+
+  - number: 8
+    usecase: main
+    terminal: T4
+    proves: [D-3]
+    say: T4 run 2 evaluates the new candidate; it passes.
+    actions:
+      - {kind: pass}
+    expect: {final_status: pass, run_number: 2}
+
+  - number: 9
+    usecase: main
+    terminal: T5
+    proves: [D-1, D-5]
+    say: Assurance cannot test the kill switch before release; a person completes the escalation and the gap is accepted as an exception with a waiver, approved by the risk owner.
+    actions:
+      - {kind: complete_escalation, role: security_officer}
+      - kind: exception
+        role: security_officer
+        reason: The kill switch exists only in production; it is checked at release.
+        fields: {risk_acceptance: accepted, expiry: "2099-12-31", compensating_control: kill switch checked at release (T7)}
+    expect: {final_status: exception, arrow: exception}
+
+  - number: 10
+    usecase: main
+    terminal: T6
+    proves: [D-1, D-5, D-6]
+    say: Readiness checks the evidence chain, the waiver and the hash; the release manager approves the change in the inbox; the release is authorised.
+    actions:
+      - {kind: approve_change}
+      - {kind: pass}
+    expect: {final_status: pass}
+
+  - number: 11
+    usecase: main
+    terminal: T7
+    proves: [D-1, D-6]
+    say: The deployment agent rolls out the authorised hash in stages and registers the agent; operations accept the handover.
+    actions:
+      - {kind: pass}
+    expect: {final_status: pass}
+
+  - number: 12
+    usecase: main
+    terminal: T8
+    proves: [D-1, D-7]
+    say: Traffic runs; the operations review passes; then the model behind the pilot is swapped.
+    actions:
+      - {kind: pass}
+      - {kind: fault, name: model_swap, action: trigger}
+    expect: {final_status: pass}
+
+  - number: 13
+    usecase: main
+    terminal: T9
+    proves: [D-1, D-7, D-8]
+    say: The drift monitor raised the event; the evolution agent classifies a moderate model change; the product owner passes it and the lifecycle re-enters at T2.
+    actions:
+      - {kind: pass}
+      - {kind: fault, name: model_swap, action: revert}
+    expect: {final_status: pass, arrow: re-entry}
+
+  - number: 14
+    usecase: escalation
+    terminal: T0
+    proves: [D-4]
+    say: A second use case; its intake passes.
+    actions:
+      - {kind: submit, role: business_owner}
+      - {kind: pass, fields: {risk_tier: low}}
+    expect: {final_status: pass}
+
+  - number: 15
+    usecase: escalation
+    terminal: T1
+    proves: [D-4]
+    say: The product owner rejects the requirements four times; the fourth rework opens the run escalated to a person.
+    actions:
+      - {kind: reject, role: product_owner, comment: Rework 1, root_cause: requirement, reason: demo}
+      - {kind: reject, role: product_owner, comment: Rework 2, root_cause: requirement, reason: demo}
+      - {kind: reject, role: product_owner, comment: Rework 3, root_cause: requirement, reason: demo}
+      - {kind: reject, role: product_owner, comment: Rework 4, root_cause: requirement, reason: demo}
+    expect: {escalated: true}

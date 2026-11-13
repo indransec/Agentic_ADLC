@@ -14,7 +14,8 @@ UV := uv run
 GITLEAKS_IMAGE := ghcr.io/gitleaks/gitleaks:v8.30.1
 
 .PHONY: help install up down status reset migrate migrate-down lint typecheck test \
-        migration-check secret-scan check spec-validate spec-register
+        migration-check secret-scan check spec-validate spec-register \
+        demo demo-auto demo-live demo-reset resilience trace
 
 # L5 spec validation compares with this git ref (override in the environment).
 ADLC_SPEC_BASELINE_REF ?= origin/main
@@ -112,3 +113,35 @@ check:
 	@$(MAKE) --no-print-directory migration-check
 	@$(MAKE) --no-print-directory secret-scan
 	@echo "==> check passed"
+
+# ------------------------------------------------------------------ demo (feature 014)
+FROM_STEP ?= 1
+
+demo: .env
+	@echo "==> demo"
+	$(UV) python -m scripts.demo --from-step $(FROM_STEP)
+
+demo-auto: .env
+	@echo "==> demo-auto"
+	$(UV) python -m scripts.demo --auto --from-step $(FROM_STEP)
+
+demo-live: .env
+	@echo "==> demo-live"
+	$(UV) python -m scripts.demo --live --from-step $(FROM_STEP)
+
+demo-reset: .env
+	@echo "==> demo-reset"
+	@deploy/require-env.sh demo
+	@deploy/confirm-env.sh "Demo reset removes the platform and pilot data volumes"
+	$(COMPOSE) down -v
+	$(MAKE) up
+
+resilience: .env
+	@echo "==> resilience"
+	@deploy/require-env.sh demo
+	$(UV) python -m scripts.resilience
+
+trace: .env
+	@echo "==> trace"
+	$(COMPOSE) run --rm -T orchestrator adlc-ledger trace $(USECASE)
+

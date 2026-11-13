@@ -14,8 +14,8 @@ unfinished task.
 
 ## Phase 1: Setup
 
-- [ ] T001 Move the rehearsed reply programs from `tests/support/acting_scripts.py` to `demo/rehearsed/` (one module per acting terminal plus shared helpers), keep `tests/support/acting_scripts.py` as a re-export so every existing test is unchanged; `demo/README.md` stub; `demo/` included in the orchestrator image build context only for the demo (mounted by `make demo`).
-- [ ] T002 [P] Console script `adlc-demo` (`src/adlc/demo/__main__.py`) in `pyproject.toml`; package skeleton `src/adlc/demo/__init__.py`.
+- [X] T001 Move the rehearsed reply programs from `tests/support/acting_scripts.py` to `demo/rehearsed/` (one module per acting terminal plus shared helpers), keep `tests/support/acting_scripts.py` as a re-export so every existing test is unchanged; `demo/README.md` stub; `demo/` included in the orchestrator image build context only for the demo (mounted by `make demo`).
+- [X] T002 [P] Console script `adlc-demo` (`src/adlc/demo/__main__.py`) in `pyproject.toml`; package skeleton `src/adlc/demo/__init__.py`.
 
 ---
 
@@ -23,12 +23,12 @@ unfinished task.
 
 ### Tests first
 
-- [ ] T003 [P] `tests/unit/demo/test_script.py`: `demo/script.yaml` loads and validates per data-model.md (every step has a number, a terminal, actions of known kinds with their fields, `proves` from D-1..D-9, an expectation); every D-1..D-9 is proven by at least one step; unknown action kinds and roles not in the role catalogue are refused with the step number.
+- [X] T003 [P] `tests/unit/demo/test_script.py`: `demo/script.yaml` loads and validates per data-model.md (every step has a number, a terminal, actions of known kinds with their fields, `proves` from D-1..D-9, an expectation); every D-1..D-9 is proven by at least one step; unknown action kinds and roles not in the role catalogue are refused with the step number.
 
 ### Implementation
 
-- [ ] T004 `src/adlc/demo/script.py`: the script model and loader (no terminal or use-case names in code).
-- [ ] T005 `demo/script.yaml`: the ten SA §21 steps plus the D-4 escalation step and the dashboard checkpoints (D-4 on a second, short use case: T0 → T1 rejected until it escalates, then completed by a person, so the main journey stays clean; each step names its `usecase` key, analysis A2), with roles, comments, root causes, waiver fields and expectations; the T1 rework and T2 clarification recordings added to `demo/recordings/it-service-desk/` (from the reference recordings).
+- [X] T004 `src/adlc/demo/script.py`: the script model and loader (no terminal or use-case names in code).
+- [X] T005 `demo/script.yaml`: the ten SA §21 steps plus the D-4 escalation step and the dashboard checkpoints (D-4 on a second, short use case: T0 → T1 rejected until it escalates, then completed by a person, so the main journey stays clean; each step names its `usecase` key, analysis A2), with roles, comments, root causes, waiver fields and expectations; the T1 rework and T2 clarification recordings added to `demo/recordings/it-service-desk/` (from the reference recordings).
 
 **Checkpoint**: the script is data, validated.
 
@@ -36,11 +36,11 @@ unfinished task.
 
 ## Phase 3: User Story 1 – The demo script runs end to end (P1)
 
-- [ ] T006 [P] [US1] `tests/unit/demo/test_driver.py`: step expectations evaluated against run state (state, final status, an arrow of a kind); a failed expectation stops with the step, reason and `--from-step` hint; presenter mode waits until the run shows the action done (fake clock, no keyboard); `fault` lines and the `done` answer.
-- [ ] T007 [US1] `src/adlc/demo/driver.py`: its own worker and gateway (rehearsed replies by default: recordings for writing agents, `demo/rehearsed` programs for acting agents; `--live` the configured profile), the change approver and monitor evaluator (as `adlc-replay`), human actions through the service operations in `--auto`, waiting in presenter mode, faults through the wrapper, `--from-step` resume from the use case's state; on a model outage in `--live`, stop naming the step and offer to rerun it from that step with rehearsed replies (analysis A4); the demo report (markdown and JSON) with D-1..D-9 and their evidence.
-- [ ] T008 [US1] `tests/integration/demo/test_demo_auto.py`: `adlc-demo --auto` over the fake pilot (faults applied by the test as the wrapper would) completes every step and reports D-1..D-9 each with evidence; a forced failing step stops with the resume hint.
-- [ ] T009 [US1] `make demo-reset` (research R-04) and `tests/unit/test_demo_reset.py`: refused unless `ADLC_ENV=demo` (exit non-zero, nothing removed), asks for confirmation, then removes platform and pilot volumes and brings the stack back with migrations, specs and accounts (analysis A1).
-- [ ] T010 [US1] Host wrapper `scripts/demo.py` and Makefile targets `demo`, `demo-auto`, `demo-live`: stop the orchestrator, `compose run` the driver with `demo/` mounted, relay output, answer `fault` lines by running `pilot-fault` in the pilot container, restart the orchestrator at the end.
+- [X] T006 [P] [US1] `tests/unit/demo/test_driver.py`: step expectations evaluated against run state (state, final status, an arrow of a kind); a failed expectation stops with the step, reason and `--from-step` hint; presenter mode waits until the run shows the action done (fake clock, no keyboard); `fault` lines and the `done` answer.
+- [X] T007 [US1] `src/adlc/demo/driver.py`: its own worker and gateway (rehearsed replies by default: recordings for writing agents, `demo/rehearsed` programs for acting agents; `--live` the configured profile), the change approver and monitor evaluator (as `adlc-replay`), human actions through the service operations in `--auto`, waiting in presenter mode, faults through the wrapper, `--from-step` resume from the use case's state; on a model outage in `--live`, stop naming the step and offer to rerun it from that step with rehearsed replies (analysis A4); the demo report (markdown and JSON) with D-1..D-9 and their evidence.
+- [X] T008 [US1] `tests/integration/demo/test_demo_auto.py`: `adlc-demo --auto` over the fake pilot (faults applied by the test as the wrapper would) completes every step and reports D-1..D-9 each with evidence; a forced failing step stops with the resume hint.
+- [X] T009 [US1] `make demo-reset` (research R-04) and `tests/unit/test_demo_reset.py`: refused unless `ADLC_ENV=demo` (exit non-zero, nothing removed), asks for confirmation, then removes platform and pilot volumes and brings the stack back with migrations, specs and accounts (analysis A1).
+- [X] T010 [US1] Host wrapper `scripts/demo.py` and Makefile targets `demo`, `demo-auto`, `demo-live`: stop the orchestrator, `compose run` the driver with `demo/` mounted, relay output, answer `fault` lines by running `pilot-fault` in the pilot container, restart the orchestrator at the end.
 
 ---
 

@@ -6,7 +6,8 @@ its own models. Stop it first (``docker compose stop orchestrator``).
 """
 
 import sys
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -82,17 +83,29 @@ def _fail(message: str) -> typer.Exit:
     return typer.Exit(2)
 
 
-def run_cli(
-    reference_set: Path,
-    only: Sequence[str],
-    *,
-    profile: str | None,
-    record: Path | None,
-    recording: Path | None,
-    live_rest: bool = False,
-) -> Report:
-    settings = load_settings_or_exit(OrchestratorSettings)
-    provider = setup_process_tracing(SERVICE_NAME, settings)  # spans go to the same collector
+@dataclass
+class Stack:
+    """The pieces a replay or the demo runs on: its own worker, gateway and people (014 reuses
+    them for ``adlc-demo``)."""
+
+    engine: Any
+    registry: SqlSpecRegistry
+    policy: Any
+    orchestrator: Any
+    people: Callable[[str], list[Actor]]
+    prompts: dict[str, str]
+    models: Any
+    switch: SwitchGateway
+    live_gateway: Any
+    recorder: Any
+    capture: RecordingTransport | None
+    clock: SystemClock
+    chosen: str
+
+
+def build_stack(
+    settings: OrchestratorSettings, profile: str | None, live: bool, worker_id: str
+) -> Stack:
     engine = app_engine(settings)
     with engine.connect() as conn:
         beat = store.last_beat(conn)
@@ -115,9 +128,6 @@ def run_cli(
             raise _fail(f"no account in the account file holds role {role}")
         return by_role[role]
 
-    references = load_references(reference_set, only)
-    if not references:
-        raise _fail(f"no reference use cases in {reference_set}")
     registry = SqlSpecRegistry(engine)
     clock = SystemClock()
     key = None if settings.tools_token_key is None else settings.tools_token_key.get_secret_value()
@@ -142,7 +152,6 @@ def run_cli(
     recorder = SqlCallRecorder(engine)
     capture: RecordingTransport | None = None
     live_gateway: Any = None
-    live = recording is None or live_rest
     if live:
         capture = RecordingTransport(LiteLLMTransport(), AgentReplies(prompts, {}))
         live_gateway = RoutingGateway(
@@ -186,8 +195,54 @@ def run_cli(
         clock,
         deadletter_role=settings.deadletter_role,
         config=EngineConfig(time_scale=settings.time_scale, lease=settings.lease),
-        worker_id="adlc-replay",
+        worker_id=worker_id,
     )
+    return Stack(
+        engine,
+        registry,
+        policy,
+        orchestrator,
+        people,
+        prompts,
+        models,
+        switch,
+        live_gateway,
+        recorder,
+        capture,
+        clock,
+        chosen,
+    )
+
+
+def run_cli(
+    reference_set: Path,
+    only: Sequence[str],
+    *,
+    profile: str | None,
+    record: Path | None,
+    recording: Path | None,
+    live_rest: bool = False,
+) -> Report:
+    settings = load_settings_or_exit(OrchestratorSettings)
+    provider = setup_process_tracing(SERVICE_NAME, settings)  # spans go to the same collector
+    stack = build_stack(settings, profile, recording is None or live_rest, "adlc-replay")
+    engine, registry, policy, orchestrator = (
+        stack.engine,
+        stack.registry,
+        stack.policy,
+        stack.orchestrator,
+    )
+    people, prompts, models, switch = stack.people, stack.prompts, stack.models, stack.switch
+    live_gateway, recorder, capture, clock = (
+        stack.live_gateway,
+        stack.recorder,
+        stack.capture,
+        stack.clock,
+    )
+    chosen = stack.chosen
+    references = load_references(reference_set, only)
+    if not references:
+        raise _fail(f"no reference use cases in {reference_set}")
     # 012: awaited change approvals and monitor rounds; a pilot fault is caused by an operator
     # (pilot-fault), so a live replay waits for the monitors and never fakes the event
     replayer = Replayer(
