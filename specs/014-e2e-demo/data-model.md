@@ -2,7 +2,8 @@
 
 No new tables.
 
-- **Demo script** (`demo/script.yaml`): `reference` (use case id), `steps[]`: `number`,
+- **Demo script** (`demo/script.yaml`): `usecases` (key → reference use case id), `steps[]`:
+  `usecase` (key), `number`,
   `terminal`, `proves` (D-n list), `actions[]` (`decide {role, decision, comment?, root_cause?,
   reason?, fields?}`, `answer {role, text}`, `approve_change {}`, `approve_waiver {}`,
   `complete_escalation {role}`, `fault {name, action}`), `expect {state?, final_status?, arrow?}`.
