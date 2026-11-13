@@ -475,6 +475,12 @@ class OrchestratorService:
         with self.runs.engine.connect() as conn:
             return store.dead_letters(conn)
 
+    def dead_letter(self, actor: Actor, event_id: UUID) -> Mapping[str, Any] | None:
+        """013: one event's payload and re-queue history (CoE only)."""
+        self._coe(actor)
+        with self.runs.engine.connect() as conn:
+            return store.dead_letter(conn, event_id)
+
     def requeue(self, actor: Actor, event_id: UUID) -> None:
         self._coe(actor)
         with self.runs.engine.begin() as conn:

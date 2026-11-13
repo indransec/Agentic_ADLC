@@ -8,11 +8,14 @@ import streamlit as st
 from adlc.config.settings import UiSettings
 from adlc.ui.client import ApiClient, ApiError
 from adlc.ui.pages import (
+    activity,
     clarification,
     dead_letters,
     escalation,
     inbox,
     intake,
+    journey,
+    portfolio,
     run,
     usecases,
     waiver,
@@ -23,6 +26,9 @@ PAGES = {
     "Inbox": inbox.render,
     "New use case": intake.render,
     "Use cases": usecases.render,
+    "Journey": journey.render,  # 013
+    "Activity": activity.render,  # 013
+    "Portfolio": portfolio.render,  # 013
     "Run": run.render,
     "Clarification": clarification.render,
     "Escalation": escalation.render,

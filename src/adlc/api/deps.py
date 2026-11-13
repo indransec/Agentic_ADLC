@@ -27,6 +27,7 @@ from adlc.policy.factory import build_policy_engine
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 
 if TYPE_CHECKING:
+    from adlc.dashboard.service import DashboardService
     from adlc.inbox.changes import ChangeService
     from adlc.inbox.proposed_events import ProposedEventService
     from adlc.inbox.service import InboxService
@@ -58,6 +59,12 @@ class Services:
     @cached_property
     def orchestration(self) -> OrchestratorService:
         return OrchestratorService(self.runs, self.settings.deadletter_role or "")
+
+    @cached_property
+    def dashboard(self) -> "DashboardService":
+        from adlc.dashboard.service import DashboardService  # noqa: PLC0415
+
+        return DashboardService(self.runs, self.settings.time_scale)
 
     @cached_property
     def proposed_events(self) -> "ProposedEventService":

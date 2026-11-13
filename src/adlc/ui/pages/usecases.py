@@ -63,6 +63,8 @@ def journey(api: ApiClient, usecase_id: str) -> None:
         ],
         key="journey_runs",
     )
+    if st.button("Open the journey view", key="open_journey"):  # 013
+        navigate("Journey", journey_usecase=usecase_id)
     run_ids = [r["run_id"] for r in data["runs"]]
     if run_ids:
         pick = st.selectbox("Open run", run_ids, key="journey_run")

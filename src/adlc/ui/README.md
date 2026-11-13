@@ -21,7 +21,10 @@ the person may not take is a convenience; the API enforces every rule.
 | Use cases | "Only mine" or all, the journey (runs with times and cost), ledger verification. |
 | Run | Every SA §8.2 section and the prerequisites (a blocked run says so and why), the artifact editor (up to 1,000 rows; above that read-only with upload offered), spreadsheet upload, attachments, downloads, history, evidence and the decision form. |
 | Clarification, Escalation, Waiver | The forms for each request. |
-| Dead letters | List and re-queue (the API allows the CoE role only). |
+| Dead letters | List with attempts, error and re-queue count; payload and re-queue history on request; re-queue (the API allows the CoE role only). |
+| Journey | 013: lanes per terminal, a bar per run, arrows for reworks, reroutes, exceptions, events and re-entry; KPI strip; escalations and exceptions. Refreshes every `ADLC_UI_DASHBOARD_REFRESH`. |
+| Activity | 013: the activity feed, filterable by use case, terminal, actor and step; filters survive refreshes. |
+| Portfolio | 013: the KPIs across use cases, by risk tier and status. |
 
 ## Rendering rules
 

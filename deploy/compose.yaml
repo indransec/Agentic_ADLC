@@ -80,6 +80,7 @@ services:
     networks: [platform]
     image: adlc-api:0.1.0
     environment:
+      ADLC_TIME_SCALE: ${ADLC_TIME_SCALE:-1.0}  # 013: shown beside dashboard durations
       <<: *db-settings
       ADLC_DB_APP_PASSWORD: ${ADLC_DB_APP_PASSWORD:?ADLC_DB_APP_PASSWORD is required}
       ADLC_DB_CONNECT_TIMEOUT: ${ADLC_DB_CONNECT_TIMEOUT:-60s}
@@ -130,6 +131,7 @@ services:
       - --browser.gatherUsageStats=false
     environment:
       ADLC_API_URL: http://api:8000
+      ADLC_UI_DASHBOARD_REFRESH: ${ADLC_UI_DASHBOARD_REFRESH:-10s}
     ports:
       - "${ADLC_UI_PORT:-8501}:8501"
     depends_on:

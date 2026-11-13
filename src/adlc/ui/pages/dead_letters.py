@@ -21,5 +21,9 @@ def render(api: ApiClient) -> None:
     if not ids:
         return
     pick = st.selectbox("Event", ids, key="dead_pick")
+    if st.button("Show payload and history", key="dead_detail"):  # 013 US5
+        detail = api.get(f"/dead-letters/{pick}")
+        st.json(detail.get("payload") or {})
+        table(detail.get("history") or [], key="dead_history")
     if st.button("Re-queue", key="dead_requeue"):
         act(lambda: api.post(f"/dead-letters/{pick}/requeue"), "Re-queued")
