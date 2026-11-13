@@ -94,8 +94,36 @@ agents:
       - {tool: monitoring_configure, permission: "mcp:monitoring:configure"}
       - {tool: monitoring_read, permission: "mcp:monitoring:read"}
       - {tool: cmdb_read, permission: "mcp:cmdb:read"}
-  - {id: t7-deployment-agent, version: "1.0.0", implementation: stub, model_tier: standard, tools: []}
-  - {id: t8-operations-agent, version: "1.0.0", implementation: stub, model_tier: standard, tools: []}
+  - id: t7-deployment-agent
+    version: "2.0.0"
+    implementation: model
+    model_tier: standard
+    prompt: {id: t7-deployment-agent, version: "1.0.0"}
+    tools:
+      - {tool: cd_deploy, permission: "mcp:cd:deploy"}
+      - {tool: cd_status, permission: "mcp:cd:read"}
+      - {tool: traffic_manager_set, permission: "mcp:traffic_manager:write"}
+      - {tool: traffic_manager_rollback, permission: "mcp:traffic_manager:write"}
+      - {tool: observability_metrics, permission: "mcp:observability:read"}
+      - {tool: monitoring_read, permission: "mcp:monitoring:read"}
+      - {tool: servicenow_read, permission: "mcp:servicenow:read"}
+      - {tool: servicenow_incident_create, permission: "mcp:servicenow:incident_create"}
+      - {tool: agent_registry_write, permission: "mcp:agent_registry:write"}
+      - {tool: cmdb_write, permission: "mcp:cmdb:write"}
+  - id: t8-operations-agent
+    version: "2.0.0"
+    implementation: model
+    model_tier: standard
+    prompt: {id: t8-operations-agent, version: "1.0.0"}
+    tools:
+      - {tool: observability_metrics, permission: "mcp:observability:read"}
+      - {tool: observability_traces, permission: "mcp:observability:read"}
+      - {tool: monitoring_read, permission: "mcp:monitoring:read"}
+      - {tool: feedback_read, permission: "mcp:feedback:read"}
+      - {tool: servicenow_read, permission: "mcp:servicenow:read"}
+      - {tool: servicenow_incident_create, permission: "mcp:servicenow:incident_create"}
+      - {tool: eval_store_write, permission: "mcp:eval_store:write"}
+      - {tool: kill_switch_invoke, permission: "mcp:kill_switch:invoke"}
   - {id: t9-evolution-agent, version: "1.0.0", implementation: stub, model_tier: reasoning, tools: []}
   - id: common-terminal-reviewer
     version: "1.0.0"

@@ -62,9 +62,7 @@ def test_t6_waits_for_the_change_approval_then_releases(
         assert run.artifacts["deployment_package"][0]["sha256"] == CANDIDATE
 
         with pytest.raises(InvalidTransition, match="CTL-T6-07"):
-            a.h.service.decide(
-                person("release_manager"), run.run_id, "pass"
-            )
+            a.h.service.decide(person("release_manager"), run.run_id, "pass")
 
         changes = ChangeService(a.h.app, SqlSpecRegistry(a.h.app), a.h.service, a.h.clock)
         waiting = changes.waiting(person("release_manager"))

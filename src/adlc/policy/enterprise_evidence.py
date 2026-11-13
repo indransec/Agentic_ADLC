@@ -1,5 +1,5 @@
 """Evidence from the enterprise mocks' records (feature 012, research R-04,
-contracts/telemetry-evidence.md): ``change``, ``release`` and ``retirement``.
+contracts/telemetry-evidence.md): ``change``, ``release``, ``retirement`` and ``registry``.
 
 The records are the ones the agents' tools wrote (feature 010, ``tools.enterprise_record``, the
 latest version of each). The release package is the one the MCP registry's
@@ -12,7 +12,8 @@ from typing import Any
 
 from sqlalchemy import Connection, text
 
-SOURCES = ("change", "release", "retirement")
+SOURCES = ("change", "release", "retirement", "registry")
+REGISTRY_FIELDS = ("name", "version", "package_hash", "owner", "status", "autonomy_level")
 REVOKED = ("identity", "tool_scopes")
 DISPOSED = "disposed"
 
@@ -82,6 +83,19 @@ def _retirement(conn: Connection, usecase_id: str) -> dict[str, Any] | None:
     }
 
 
+def _registry(conn: Connection, usecase_id: str) -> dict[str, Any] | None:
+    """The use case's agent-registry entries by id (the deployment terminal registers the agent)."""
+    found = _records(conn, "agent_registry", "agent", usecase_id)
+    if not found:
+        return None
+    return {
+        "agents": {
+            str(a["id"]): {k: a[k] for k in REGISTRY_FIELDS if a.get(k) not in (None, "")}
+            for a in found
+        }
+    }
+
+
 def read(
     conn: Connection, source: str, usecase_id: str, authorised: Callable[[], str | None]
 ) -> dict[str, Any] | None:
@@ -92,4 +106,6 @@ def read(
         return _release(conn, usecase_id, authorised)
     if source == "retirement":
         return _retirement(conn, usecase_id)
+    if source == "registry":
+        return _registry(conn, usecase_id)
     return None

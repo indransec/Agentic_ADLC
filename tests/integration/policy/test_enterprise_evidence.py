@@ -94,3 +94,10 @@ def test_retirement_reads_revocations_cmdb_and_dependants(
 def test_one_revocation_is_not_enough(app_engine: Engine, store: EnterpriseStore) -> None:
     store.add("iam", "revocation", "REV", _claims("T9"), {"what": "identity", "identities": []})
     assert _read(app_engine, "retirement")["credentials_revoked"] is False
+
+
+def test_registry_by_agent_id(app_engine: Engine, store: EnterpriseStore) -> None:
+    assert _read(app_engine, "registry") is None
+    attributes = {"name": "a", "version": "1.0.0", "owner": "service_owner", "autonomy_level": "2"}
+    agent = store.add("agent_registry", "agent", "AG", _claims("T7"), attributes)
+    assert _read(app_engine, "registry") == {"agents": {agent["id"]: attributes}}

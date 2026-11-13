@@ -1,1 +1,2 @@
-- {file: shared/agents.yaml, op: append, path: /agents/6/tools, value: {tool: frob, permission: "frobnicate:kb"}}
+# 012: the reviewer has no tools, so the bad permission is tools/0
+- {file: shared/agents.yaml, op: append, path: /agents/10/tools, value: {tool: frob, permission: "frobnicate:kb"}}

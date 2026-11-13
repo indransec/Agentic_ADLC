@@ -1,1 +1,2 @@
-- {file: shared/agents.yaml, op: set, path: /agents/6/implementation, value: model}
+# 012: every terminal agent is now a model agent; the reviewer (last entry) loses its prompt
+- {file: shared/agents.yaml, op: delete, path: /agents/10/prompt}

@@ -6,7 +6,17 @@ from opentelemetry.sdk.trace.export import SpanExporter
 from adlc.api.auth import install_auth
 from adlc.api.deps import Services
 from adlc.api.errors import install_errors
-from adlc.api.routes import artifacts, auth, changes, health, inbox, requests, runs, usecases
+from adlc.api.routes import (
+    artifacts,
+    auth,
+    changes,
+    events,
+    health,
+    inbox,
+    requests,
+    runs,
+    usecases,
+)
 from adlc.config.settings import Settings
 from adlc.db.engine import app_engine
 from adlc.identity.local import LocalIdentityProvider
@@ -41,6 +51,7 @@ def create_app(settings: Settings, span_exporter: SpanExporter | None = None) ->
     app.include_router(artifacts.router)
     app.include_router(requests.router)
     app.include_router(changes.router)  # 012
+    app.include_router(events.router)  # 012
     app.include_router(runs.detail_router())  # last: its run-id path matches anything
     setup_tracing(app, settings, span_exporter)
     return app

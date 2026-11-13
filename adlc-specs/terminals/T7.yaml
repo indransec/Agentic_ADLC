@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T7
     name: Deployment & Transition
-    version: "1.0.0"
+    version: "2.0.0"
     schema_version: "1.1.0"
     purpose: Can the approved agentic system be safely deployed and handed over?
     owner_role: adlc_coe
@@ -47,7 +47,7 @@ terminal:
     allow: ["run:cd_pipeline.with_hash_only", "set:traffic_split", "trigger:rollback", "write:agent_registry", "write:cmdb", "write:T7.artifacts"]
     deny: ["write:repo", "write:config", "write:secrets", "deploy:unauthorised_hash", "deploy:outside_window", "promote:100pct_without_approval"]
     data_access: {max_class: per_T2_prod_design}
-    tool_scopes: ["mcp:cd:deploy", "mcp:traffic_manager:write", "mcp:monitoring:read", "mcp:agent_registry:write", "mcp:cmdb:write", "mcp:servicenow:incident_create"]
+    tool_scopes: ["mcp:cd:deploy", "mcp:cd:read", "mcp:traffic_manager:write", "mcp:observability:read", "mcp:monitoring:read", "mcp:agent_registry:write", "mcp:cmdb:write", "mcp:servicenow:incident_create", "mcp:servicenow:read"]
     sign_off:
       roles: [release_manager, service_owner]
       min_approvers: 2
@@ -55,7 +55,7 @@ terminal:
     status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate, rework_on_auto_rollback]}
   playbooks:
     procedures:
-      - {id: PB-T7-01, ref: playbooks/t7-deployment.md, version: "1.0.0"}
+      - {id: PB-T7-01, ref: playbooks/t7-deployment.md, version: "1.1.0"}
       - {id: PB-T7-02, ref: playbooks/rollback.md, version: "1.0.0"}
       - {id: PB-T7-03, ref: playbooks/hypercare-handover.md, version: "1.0.0"}
     grounding:
@@ -92,6 +92,14 @@ terminal:
         rule: no_open_rows(T7.hypercare_log, "severity", ["sev1", "sev2"])
         description: "hypercare: no open sev1/sev2 at exit"
         severity: blocking
+      - id: CTL-T7-08
+        rule: rows_match_value(T7.stage_metrics, "key", "actual", observability.stages)
+        description: "012: stage metrics are the readings observability recorded in that stage"
+        severity: blocking
+      - id: CTL-T7-09
+        rule: rows_match(T7.registry_entry, "agent_id", registry.agents)
+        description: "012: the registry entry is the one recorded in the agent registry"
+        severity: blocking
     auto_rollback_on: [CTL-T7-01, CTL-T7-03, CTL-T7-04, CTL-T7-05]
     checklist:
       ref: checklists/t7.yaml
@@ -105,7 +113,7 @@ terminal:
     artifacts:
       - {id: deployment_log, format: table, columns: [stage, start, end, traffic_pct, result], applicability: {mode: mandatory}}
       - {id: env_config_verification, format: table, columns: [check, expected, actual, result], applicability: {mode: mandatory}}
-      - {id: stage_metrics, format: table, columns: [stage, metric, threshold, actual, result], applicability: {mode: mandatory}}
+      - {id: stage_metrics, format: table, columns: [key, stage, metric, threshold, actual, result], applicability: {mode: mandatory}}
       - {id: smoke_results, format: table, columns: [case_id, result], applicability: {mode: mandatory}}
       - {id: hypercare_log, format: table, columns: [incident_id, severity, opened, closed, resolution], applicability: {mode: mandatory}}
       - {id: registry_entry, format: reference, columns: [agent_id, version, owner, autonomy_level], applicability: {mode: mandatory}}

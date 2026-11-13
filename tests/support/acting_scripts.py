@@ -355,3 +355,296 @@ class Readiness:
             self.answer,
         ]
         return first + [self.answer] * retries
+
+
+# ------------------------------------------------------------------ T7 (012)
+
+
+class Deployment:
+    """T7: deploy, step through the stages reading observability after each, roll back on a
+    breach, register. ``breach_at`` lowers the pilot's accuracy just before that stage's reading
+    (a regression only production traffic shows)."""
+
+    METRIC, THRESHOLD = "routing_accuracy", 0.85
+
+    def __init__(
+        self,
+        stages: Sequence[str] = ("shadow", "canary", "full"),
+        pilot: Any = None,
+        breach_at: str | None = None,
+    ) -> None:
+        self.stages, self.pilot, self.breach_at = tuple(stages), pilot, breach_at
+        self.seen: dict[str, list[dict[str, Any]]] = {}  # a retry answers from the first attempt
+        self.evidence: list[dict[str, Any]] = []
+
+    def _outputs(self, messages: Messages, name: str) -> list[dict[str, Any]]:
+        found = all_outputs(messages, name)
+        if found:
+            self.seen[name] = found
+        return self.seen.get(name, [])
+
+    def _read(self, stage: str) -> Reply:
+        def reply(messages: Messages) -> str:
+            if stage == self.breach_at and self.pilot is not None:
+                self.pilot.traffic[self.METRIC] = 0.5
+            return tool("observability_metrics")
+
+        return reply
+
+    def _stage_rows(self, messages: Messages) -> list[tuple[str, dict[str, Any]]]:
+        readings = self._outputs(messages, "observability_metrics")
+        return list(zip(self.stages, (r["metrics"] for r in readings), strict=False))
+
+    def answer(self, messages: Messages) -> str:
+        deployed = self._outputs(messages, "cd_deploy")[-1]
+        self.evidence = rows_of(messages, "T6", "deployment_package") or self.evidence
+        package = self.evidence[0]["sha256"]
+        stages = self._stage_rows(messages)
+        results = [
+            (stage, metrics.get(self.METRIC), (metrics.get(self.METRIC) or 0) >= self.THRESHOLD)
+            for stage, metrics in stages
+        ]
+        log = [
+            {
+                "stage": s,
+                "start": "",
+                "end": "",
+                "traffic_pct": 0,
+                "result": "pass" if ok else "fail",
+            }
+            for s, _, ok in results
+        ]
+        rolled_back = bool(self._outputs(messages, "traffic_manager_rollback"))
+        if rolled_back:
+            log.append(
+                {"stage": "rollback", "start": "", "end": "", "traffic_pct": 0, "result": "pass"}
+            )
+        incidents = (self._outputs(messages, "servicenow_read") or [{"records": []}])[-1]["records"]
+        registered = self._outputs(messages, "agent_registry_write")
+        artifacts = {
+            "deployment_log": log,
+            "env_config_verification": [
+                {
+                    "check": "package",
+                    "expected": package,
+                    "actual": deployed["package_hash"],
+                    "result": "pass" if deployed["package_hash"] == package else "fail",
+                }
+            ],
+            "stage_metrics": [
+                {
+                    "key": f"{s}:{self.METRIC}",
+                    "stage": s,
+                    "metric": self.METRIC,
+                    "threshold": self.THRESHOLD,
+                    "actual": value if value is not None else "not measured",
+                    "result": "pass" if ok else "fail",
+                }
+                for s, value, ok in results
+            ],
+            "smoke_results": [
+                {"case_id": f"traffic:{s}", "result": "pass" if m.get("failed") == 0 else "fail"}
+                for s, m in stages
+            ],
+            "hypercare_log": [
+                {
+                    "incident_id": i["id"],
+                    "severity": f"sev{i['severity']}",
+                    "opened": i["at"][:10],
+                    "closed": "" if i.get("state") != "closed" else i["at"][:10],
+                    "resolution": "",
+                }
+                for i in incidents
+            ]
+            or [
+                {
+                    "incident_id": "none",
+                    "severity": "none",
+                    "opened": "",
+                    "closed": "",
+                    "resolution": "",
+                }
+            ],
+            "registry_entry": [
+                {
+                    "agent_id": registered[-1]["agent_id"],
+                    "version": "1.0.0",
+                    "owner": "service_owner",
+                    "autonomy_level": "2",
+                }
+            ]
+            if registered
+            else [],
+        }
+        return json.dumps({"artifacts": artifacts})
+
+    def script(self, retries: int = 0) -> list[Any]:
+        steps: list[Any] = [tool("cd_status"), tool("cd_deploy")]
+        for stage in self.stages:
+            arguments: dict[str, Any] = {"mode": stage}
+            if stage == "canary":
+                arguments["share"] = 0.1
+            steps += [tool("traffic_manager_set", arguments), self._read(stage)]
+            if stage == self.breach_at:
+                steps += [
+                    tool("traffic_manager_rollback"),
+                    tool(
+                        "servicenow_incident_create",
+                        {"summary": f"{stage} breached; rolled back", "severity": 2},
+                    ),
+                    tool("servicenow_read", {"kind": "incident"}),
+                    self.answer,
+                ]
+                return steps + [self.answer] * retries
+        steps += [
+            tool("servicenow_read", {"kind": "incident"}),
+            tool(
+                "agent_registry_write",
+                {
+                    "attributes": {
+                        "name": "incident-triage",
+                        "version": "1.0.0",
+                        "owner": "service_owner",
+                        "autonomy_level": "2",
+                        "status": "live",
+                    }
+                },
+            ),
+            tool(
+                "cmdb_write", {"attributes": {"name": "incident-triage", "owner": "service_owner"}}
+            ),
+            self.answer,
+        ]
+        return steps + [self.answer] * retries
+
+
+# ------------------------------------------------------------------ T8 (012)
+
+
+class Operations:
+    """T8: one review period from the recorded reading; the monitors' fired events are listed as
+    raised; ``propose`` adds an event the agent proposes for a person to confirm."""
+
+    METRICS = (
+        ("routing_accuracy", 0.85, ">="),
+        ("latency_p95_ms", 2000, "<="),
+        ("cost", 10.0, "<="),
+    )
+    BASELINE = 0.94
+
+    def __init__(self, propose: str | None = None) -> None:
+        self.propose = propose
+        self.seen: dict[str, list[dict[str, Any]]] = {}
+
+    def _last(self, messages: Messages, name: str, default: dict[str, Any]) -> dict[str, Any]:
+        found = all_outputs(messages, name)
+        if found:
+            self.seen[name] = found
+        return (self.seen.get(name) or [default])[-1]
+
+    def answer(self, messages: Messages) -> str:
+        reading = self._last(messages, "observability_metrics", {"metrics": {}})["metrics"]
+        monitors = self._last(messages, "monitoring_read", {"monitors": []})["monitors"]
+        incidents = self._last(messages, "servicenow_read", {"records": []})["records"]
+        rows: dict[str, Any] = copy.deepcopy(dict(SYN["T8"]))
+
+        def ok(value: Any, threshold: float, op: str) -> bool:
+            return value is not None and (value >= threshold if op == ">=" else value <= threshold)
+
+        rows["operating_health_report"] = [
+            {
+                "metric": m,
+                "threshold": t,
+                "actual": reading[m],
+                "trend": "stable",
+                "status": "ok" if ok(reading[m], t, op) else "breach",
+            }
+            for m, t, op in self.METRICS
+            if reading.get(m) is not None
+        ]
+        current = reading.get("routing_accuracy")
+        rows["drift_report"] = (
+            [
+                {
+                    "metric": "routing_accuracy",
+                    "slice": "all",
+                    "baseline": self.BASELINE,
+                    "current": current,
+                    "delta": round(current - self.BASELINE, 4),
+                }
+            ]
+            if current is not None
+            else []
+        )
+        rows["cost_report"] = [
+            {
+                "period": "current",
+                "task_count": reading.get("requests", 0),
+                "token_count": reading.get("tokens", 0),
+                "cost_usd": reading.get("cost", 0.0),
+                "budget_usd": 10.0,
+            }
+        ]
+        rows["incident_problem_log"] = [
+            {
+                "incident_id": i["id"],
+                "severity": f"sev{i['severity']}",
+                "opened": i["at"][:10],
+                "closed": "" if i.get("state") != "closed" else i["at"][:10],
+                "root_cause": "",
+                "linked_event": "",
+            }
+            for i in incidents
+        ] or [
+            {
+                "incident_id": "none",
+                "severity": "none",
+                "opened": "",
+                "closed": "",
+                "root_cause": "",
+                "linked_event": "",
+            }
+        ]
+        events = [
+            {
+                "event_id": f"{m['monitor_id']}-{n}",
+                "event_type": "monitor",
+                "raised_at": e["at"],
+                "routed_to": "",
+                "status": "raised",
+            }
+            for m in monitors
+            for n, e in enumerate(m.get("events") or [], start=1)
+            if e["kind"] == "fired"
+        ]
+        if self.propose:
+            events.append(
+                {
+                    "event_id": "PROP-1",
+                    "event_type": self.propose,
+                    "raised_at": "",
+                    "routed_to": "T9",
+                    "status": "proposed",
+                }
+            )
+        rows["raised_events"] = events or [
+            {
+                "event_id": "none",
+                "event_type": "none",
+                "raised_at": "",
+                "routed_to": "",
+                "status": "none",
+            }
+        ]
+        return json.dumps({"artifacts": rows})
+
+    def script(self, retries: int = 0) -> list[Any]:
+        first = [
+            tool("observability_metrics"),
+            tool("monitoring_read"),
+            tool("servicenow_read", {"kind": "incident"}),
+            tool("feedback_read"),
+            tool("eval_store_write", {"note": "Review period: reading recorded."}),
+            self.answer,
+        ]
+        return first + [self.answer] * retries

@@ -46,7 +46,7 @@ terminal:
     allow: ["read:ledger.T0-T5", "write:runbook_repo", "create:change_request", "configure:monitoring_dev", "write:T6.artifacts"]
     deny: ["deploy:prod", "approve:change_request", "write:candidate_package"]
     data_access: {max_class: internal}
-    tool_scopes: ["mcp:servicenow:change_create", "mcp:servicenow:read", "mcp:cmdb:read", "mcp:monitoring:configure", "mcp:monitoring:read", "mcp:confluence:write"]
+    tool_scopes: ["mcp:servicenow:change_create", "mcp:servicenow:read", "mcp:cmdb:read", "mcp:monitoring:configure", "mcp:monitoring:read"]
     sign_off:
       roles: [release_manager, service_owner, business_owner]
       min_approvers: 3

@@ -15,6 +15,7 @@ from sqlalchemy import Engine
 from adlc.orchestration import store
 from adlc.orchestration.engine import EngineConfig, PostgresTerminalRun
 from adlc.orchestration.interfaces import AgentRunner, Clock, PolicyEngine, Reviewer
+from adlc.orchestration.monitors import MonitorEvaluator
 from adlc.orchestration.outbox import OutboxProcessor
 from adlc.orchestration.router import FaultHook, PostgresRouter
 from adlc.orchestration.service import OrchestratorService
@@ -33,6 +34,7 @@ class Orchestrator:
     timers: TimerLoop
     service: OrchestratorService
     worker_id: str
+    monitors: MonitorEvaluator | None = None  # 012: declared monitors, every monitor interval
 
     def drain(self, max_rounds: int = 10_000) -> int:
         """Deliver, advance and fire until nothing changes; returns the number of steps."""
@@ -48,6 +50,11 @@ class Orchestrator:
         raise RuntimeError("orchestrator did not settle")
 
     def run_once(self) -> int:
+        if self.monitors is not None:
+            try:
+                self.monitors.tick_if_due()  # an event it raises is delivered by the drain
+            except Exception:  # a monitor round must never stop the worker
+                log.exception("monitor round failed")
         steps = self.drain()
         with self.runs.engine.begin() as conn:
             store.beat(conn, self.worker_id, self.runs.clock.now())

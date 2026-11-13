@@ -21,17 +21,20 @@ env_config_verification:
   actual: '2'
   result: pass
 stage_metrics:
-- stage: shadow
+- key: shadow:accuracy
+  stage: shadow
   metric: accuracy
   threshold: 0.9
   actual: 0.93
   result: pass
-- stage: canary
+- key: canary:accuracy
+  stage: canary
   metric: accuracy
   threshold: 0.9
   actual: 0.93
   result: pass
-- stage: full
+- key: full:accuracy
+  stage: full
   metric: accuracy
   threshold: 0.9
   actual: 0.93

@@ -2,7 +2,7 @@
 # Non-terminal evidence sources an expression or evidence_ref may start with (rule V-12),
 # plus `terminal_record`: fields every terminal run record has, readable as T<n>.<field>.
 catalogue: evidence_sources
-version: "2.1.0"
+version: "2.2.0"
 evidence_sources:
   - {id: terminal_record, fields: [status, bound_to, signed_by, closed_at, run_version, waivers], description: "Fields of every terminal's ledger record, read as T<n>.<field>"}
   - {id: intake, fields: [free_text, business_owner, title], description: "The use case as submitted"}
@@ -27,4 +27,6 @@ evidence_sources:
       pii_leak_count: {metric: pii_outputs}
       availability_pct: {ratio: [answered, sent], scale: 100}
       cost_per_task_usd: {ratio: [cost, requests]}
+  - {id: observability, fields: [stages, latest], description: "012: the run's recorded observability readings, keyed <stage>:<metric> by the traffic mode set before each, and the latest reading of each metric"}
+  - {id: registry, fields: [agents], description: "012: the use case's agent-registry entries by agent id (version, owner, autonomy level, status, package)"}
   - {id: retirement, fields: [credentials_revoked, data_disposed, unowned_dependants], description: "Retirement checks (T9 retire mode)"}

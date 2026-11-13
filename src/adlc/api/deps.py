@@ -28,6 +28,7 @@ from adlc.spec_toolkit.registry import SqlSpecRegistry
 
 if TYPE_CHECKING:
     from adlc.inbox.changes import ChangeService
+    from adlc.inbox.proposed_events import ProposedEventService
     from adlc.inbox.service import InboxService
 
 
@@ -57,6 +58,12 @@ class Services:
     @cached_property
     def orchestration(self) -> OrchestratorService:
         return OrchestratorService(self.runs, self.settings.deadletter_role or "")
+
+    @cached_property
+    def proposed_events(self) -> "ProposedEventService":
+        from adlc.inbox.proposed_events import ProposedEventService  # noqa: PLC0415
+
+        return ProposedEventService(self.runs, self.orchestration)
 
     @cached_property
     def changes(self) -> "ChangeService":

@@ -12,7 +12,7 @@ from ruamel.yaml import YAML
 from adlc.tools.enterprise.records import EnterpriseStore
 from adlc.tools.mcp_app import Call, Handler, ToolFailure
 
-# 012: autonomy level (T7 registry entry) and dependants (T9 retirement)
+# 012: autonomy level (registry entry at deployment) and dependants (retirement checks)
 AGENT_ATTRIBUTES = (
     "name",
     "version",

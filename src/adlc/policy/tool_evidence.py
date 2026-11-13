@@ -1,5 +1,6 @@
 """Evidence from the tool results the platform recorded (feature 011, research R-05,
-contracts/evidence-sources.md): ``ci``, ``sbom``, ``harness``, ``redteam`` and ``dlp``.
+contracts/evidence-sources.md): ``ci``, ``sbom``, ``harness``, ``redteam`` and ``dlp``; 012:
+``observability``, the run's metrics per rollout stage.
 
 The candidate package is the one the MCP registry's ``bound_values.candidate_hash`` reference
 names (the terminal and artifact are spec content, never code). A source with no recorded result
@@ -11,7 +12,8 @@ from typing import Any
 
 from sqlalchemy import Connection, text
 
-SOURCES = ("ci", "sbom", "harness", "redteam", "dlp")
+SOURCES = ("ci", "sbom", "harness", "redteam", "dlp", "observability")
+ROLLBACK = "rollback"
 HASH_FIELDS = ("sha256", "package_hash", "hash")
 SHA = "sha256:"
 
@@ -51,6 +53,33 @@ def _ci(conn: Connection, usecase_id: str, run_id: str | None) -> tuple[int, dic
     return _latest(conn, usecase_id, "ci", run_id=run_id) or _latest(conn, usecase_id, "ci")
 
 
+def stages(conn: Connection, usecase_id: str, run_id: str | None) -> dict[str, Any] | None:
+    """012 (research R-06): the run's recorded metrics keyed ``<stage>:<metric>`` (the stage is
+    the traffic mode the run set last before the reading, ``rollback`` after a rollback), and the
+    latest reading of each metric (``latest``)."""
+    if run_id is None:
+        return None
+    rows = conn.execute(
+        text(
+            "SELECT kind, result FROM tools.tool_result WHERE usecase_id = :u AND run_id = :r "
+            "AND kind IN ('traffic', 'observability') ORDER BY tool_result_id"
+        ),
+        {"u": usecase_id, "r": run_id},
+    ).all()
+    found: dict[str, Any] = {}
+    latest: dict[str, Any] = {}
+    stage = "before"
+    for kind, result in rows:
+        if kind == "traffic":
+            stage = ROLLBACK if "restored_stable" in result else str(result.get("mode") or stage)
+            continue
+        for metric, value in (result.get("metrics") or {}).items():
+            if value is not None:
+                found[f"{stage}:{metric}"] = value
+                latest[metric] = value
+    return {"stages": found, "latest": latest} if found else None
+
+
 def read(
     conn: Connection,
     source: str,
@@ -59,6 +88,8 @@ def read(
     candidate: Callable[[], str | None],
 ) -> dict[str, Any] | None:
     """The source's value, or ``None`` when nothing was recorded for it."""
+    if source == "observability":
+        return stages(conn, usecase_id, run_id)
     if source in ("ci", "sbom"):
         found = _ci(conn, usecase_id, run_id)
         if found is None:
