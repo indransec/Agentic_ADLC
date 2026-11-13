@@ -16,11 +16,12 @@ from sqlalchemy import Connection
 from adlc.identity.protocol import Person
 from adlc.inbox import rules
 from adlc.orchestration import ids, routing, spec_view, store
-from adlc.orchestration.engine import PostgresTerminalRun, StaleRun, UnknownRun
+from adlc.orchestration.engine import PostgresTerminalRun, StaleRun, UnknownRun, awaiting
 from adlc.orchestration.states import (
     DECISIONS,
     ActorType,
     InvalidTransition,
+    RunState,
     Signal,
     SignalKind,
 )
@@ -412,6 +413,23 @@ class OrchestratorService:
                 ),
                 expected_version=expected_version,
             )
+
+    def awaited_action_done(self, actor: Actor, usecase_id: str) -> list[str]:
+        """012: a person's action outside the runs happened (e.g. a change decided): the use
+        case's runs at sign-off whose controls wait for one re-run them. Returns their ids."""
+        self._human(actor)
+        rechecked = []
+        with self.runs.engine.begin() as conn:
+            for run in store.runs_of_usecase(conn, usecase_id):
+                if run.state != RunState.AWAITING_SIGN_OFF or not awaiting(run.control_results):
+                    continue
+                self.runs.apply_in(
+                    conn,
+                    run.run_id,
+                    Signal(SignalKind.EVIDENCE_CHANGED, ActorType.HUMAN, actor.account_name, {}),
+                )
+                rechecked.append(run.run_id)
+        return rechecked
 
     # -------------------------------------------------------------- operational events
 

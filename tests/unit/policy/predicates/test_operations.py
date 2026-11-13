@@ -133,6 +133,18 @@ def test_monitor_thresholds(check: Check) -> None:
     )
     passes(check("below_baseline(telemetry.online_eval_score, T4.eval_baseline)", T))
     fails(check("below_baseline(T4.eval_baseline.value, T4.eval_baseline)", T), "is not below")
+    # 012 R-09: the built baseline is a one-row table
+    built = {
+        **T,
+        "T4": {**T["T4"], "eval_baseline": [{"metric": "m", "value": 0.9, "tolerance": 0.05}]},
+    }
+    built["telemetry"] = {**T["telemetry"], "online_eval_score": 0.8}
+    passes(check("below_baseline(telemetry.online_eval_score, T4.eval_baseline)", built))
+    built["telemetry"] = {**T["telemetry"], "online_eval_score": 0.86}
+    fails(
+        check("below_baseline(telemetry.online_eval_score, T4.eval_baseline)", built),
+        "is not below",
+    )
     passes(check('above_budget_for(telemetry.cost_series, T2.token_budget, "7d")', T))
     fails(
         check(

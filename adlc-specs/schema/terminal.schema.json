@@ -513,6 +513,11 @@
                       "$ref": "#/$defs/tier"
                     },
                     "minItems": 1
+                  },
+                  "awaits": {
+                    "description": "012: a person's action outside the run this control waits for (e.g. a change approval); while only such controls fail, the run goes to sign-off and pass is refused until they pass",
+                    "type": "string",
+                    "minLength": 1
                   }
                 },
                 "required": [
@@ -681,7 +686,9 @@
                       "diagram+table",
                       "document",
                       "reference",
-                      "signed_record"
+                      "signed_record",
+                      "baseline",
+                      "gate_summary"
                     ]
                   },
                   "columns": {
@@ -717,6 +724,29 @@
                   "description": {
                     "type": "string",
                     "minLength": 1
+                  },
+                  "built_from": {
+                    "description": "012: what a platform-built baseline is built from (an evidence source, a field path in it, and the tolerance)",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "evidence": {
+                        "$ref": "#/$defs/snake"
+                      },
+                      "field": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)*$"
+                      },
+                      "tolerance": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    },
+                    "required": [
+                      "evidence",
+                      "field",
+                      "tolerance"
+                    ]
                   }
                 },
                 "required": [
@@ -724,6 +754,40 @@
                   "format",
                   "columns",
                   "applicability"
+                ],
+                "allOf": [
+                  {
+                    "if": {
+                      "properties": {
+                        "format": {
+                          "const": "baseline"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "built_from"
+                      ]
+                    }
+                  },
+                  {
+                    "if": {
+                      "not": {
+                        "properties": {
+                          "format": {
+                            "const": "baseline"
+                          }
+                        }
+                      }
+                    },
+                    "then": {
+                      "not": {
+                        "required": [
+                          "built_from"
+                        ]
+                      }
+                    }
+                  }
                 ]
               },
               "minItems": 1

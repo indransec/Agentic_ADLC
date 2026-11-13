@@ -418,6 +418,7 @@ SAMPLE_PAYLOADS: dict[SignalKind, list[dict[str, Any]]] = {
     K.LIFECYCLE_ENDED: [{}],
     K.ARTIFACT_EDITED: [{"artifacts": {}}],
     K.CONTROLS_RECHECKED: [{"results": []}],
+    K.EVIDENCE_CHANGED: [{}],
 }
 
 ALLOWED: set[tuple[RunState, SignalKind]] = {
@@ -441,6 +442,7 @@ ALLOWED: set[tuple[RunState, SignalKind]] = {
         for s in (S.AWAITING_SIGN_OFF, S.ESCALATED)
         for k in (K.ARTIFACT_EDITED, K.CONTROLS_RECHECKED)
     ),
+    (S.AWAITING_SIGN_OFF, K.EVIDENCE_CHANGED),
 }
 
 
@@ -507,6 +509,24 @@ def test_no_pass_or_exception_while_controls_are_pending() -> None:
             transition(S.AWAITING_SIGN_OFF, sig(K.DECIDE, payload), pending)
     rework = sig(K.DECIDE, {"decision": "rework", "role": "owner"})
     assert transition(S.AWAITING_SIGN_OFF, rework, pending).next_state == S.CLOSED
+
+
+def test_awaited_controls_hold_pass_until_rechecked() -> None:
+    """012: a failed control that awaits a person's action (e.g. a change approval) refuses
+    pass; that action re-runs the controls; rework and terminate stay open."""
+    waiting = TransitionContext(rule_roles=frozenset({"owner"}), awaiting=("CTL-T6-07",))
+    passing = sig(K.DECIDE, {"decision": "pass", "role": "owner"})
+    with pytest.raises(InvalidTransition, match="CTL-T6-07 wait for an action"):
+        transition(S.AWAITING_SIGN_OFF, passing, waiting)
+    rework = sig(K.DECIDE, {"decision": "rework", "role": "owner"})
+    assert transition(S.AWAITING_SIGN_OFF, rework, waiting).next_state == S.CLOSED
+    changed = sig(K.EVIDENCE_CHANGED, {})
+    assert go(S.AWAITING_SIGN_OFF, changed, waiting) == (
+        S.AWAITING_SIGN_OFF,
+        (SetControlsPending(True),),
+    )
+    with pytest.raises(InvalidTransition):  # nothing awaited: nothing to re-run
+        transition(S.AWAITING_SIGN_OFF, changed, TransitionContext())
 
 
 def test_failed_build_attempt_is_an_auto_retry() -> None:

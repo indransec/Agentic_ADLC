@@ -33,7 +33,8 @@ def test_terminal_record_of_the_latest_closed_run(h: Harness) -> None:
     t4 = _value(h, "T4", t5)
     assert isinstance(t4, dict)
     assert t4["bound_to"] == h.agent.base["T3"]["candidate_package"][0]["sha256"]  # T3 package hash
-    assert t4["eval_baseline"] == "eval_baseline (typed)"  # an emitted value
+    # 012 R-09: built from the candidate's harness result; none is recorded here (fails closed)
+    assert "eval_baseline" not in t4
 
 
 def test_own_run_is_open_and_missing_terminals_are_not_available(h: Harness) -> None:

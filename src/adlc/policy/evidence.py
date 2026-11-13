@@ -10,15 +10,15 @@ from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
 from typing import TYPE_CHECKING, Any, Protocol
 
-from sqlalchemy import Connection, Engine
+from sqlalchemy import Connection, Engine, text
 
 from adlc.ledger.binding import resolve_bound_to
 from adlc.orchestration import durations, spec_view
 from adlc.orchestration import store as run_store
 from adlc.orchestration.interfaces import Clock, EvalContext
 from adlc.orchestration.store import RunRow
+from adlc.policy import built_artifacts, enterprise_evidence, tool_evidence
 from adlc.policy import store as policy_store
-from adlc.policy import tool_evidence
 from adlc.policy.directory import Directory, UnavailableDirectory
 from adlc.policy.values import NOT_AVAILABLE, _NotAvailable
 from adlc.spec_toolkit.registry import SpecRegistry
@@ -89,6 +89,7 @@ class ChainEvidenceProvider:
 TERMINAL = re.compile(r"^[A-Z][0-9]+$")
 DEFAULT_TIER = "medium"
 SIGNED_STATUSES = ("pass", "exception")
+SYNTHETIC_PART = "__synthetic__"  # a terminal record holding a value built on synthetic evidence
 ParameterSource = Callable[[EvalContext], Answer]
 
 
@@ -111,6 +112,9 @@ class SqlEvidenceProvider:
         self.directory = directory or UnavailableDirectory()
         self.parameters = parameters
         self.profile = profile
+        # 012: the whole chain (records, pilot, labelled synthetic), for what a built artifact
+        # is built from; set by the factory, else this provider alone.
+        self.sources: EvidenceProvider | None = None
 
     def get(self, source: str, context: EvalContext) -> Answer:
         variables = context.variables or {}
@@ -131,7 +135,10 @@ class SqlEvidenceProvider:
             return NOT_AVAILABLE
         with self.engine.connect() as conn:
             value = self._read(conn, source, context)
-        return NOT_AVAILABLE if value is NOT_AVAILABLE else Evidence(value, source)
+        if isinstance(value, _NotAvailable):
+            return NOT_AVAILABLE
+        synthetic = isinstance(value, dict) and bool(value.pop(SYNTHETIC_PART, False))
+        return Evidence(value, source, synthetic=synthetic)
 
     # -------------------------------------------------------------- sources
 
@@ -145,7 +152,15 @@ class SqlEvidenceProvider:
                 source,
                 usecase_id,
                 ctx.run_id,
-                lambda: self._candidate(conn, usecase_id, ctx),
+                lambda: self._bound(conn, usecase_id, ctx, "candidate_hash"),
+            )
+            return NOT_AVAILABLE if value is None else value
+        if source in enterprise_evidence.SOURCES:  # 012: the enterprise mocks' records
+            value = enterprise_evidence.read(
+                conn,
+                source,
+                usecase_id,
+                lambda: self._bound(conn, usecase_id, ctx, "authorised_hash"),
             )
             return NOT_AVAILABLE if value is None else value
         run = run_store.load_run(conn, ctx.run_id) if ctx.run_id else None
@@ -192,13 +207,11 @@ class SqlEvidenceProvider:
             return dict(value) if isinstance(value, Mapping) else {}
         return NOT_AVAILABLE
 
-    def _candidate(self, conn: Connection, usecase_id: str, ctx: EvalContext) -> str | None:
-        """The candidate package: the artifact the MCP registry's ``bound_values.candidate_hash``
-        names (011), from the use case's records; one distinct hash or none."""
+    def _bound(self, conn: Connection, usecase_id: str, ctx: EvalContext, name: str) -> str | None:
+        """A bound package: the artifact the MCP registry's ``bound_values.<name>`` names (011
+        candidate, 012 authorised release), from the use case's records; one hash or none."""
         entry = self.registry.catalogue("mcp_servers")
-        ref = str(
-            ((entry.content if entry else {}).get("bound_values") or {}).get("candidate_hash") or ""
-        )
+        ref = str(((entry.content if entry else {}).get("bound_values") or {}).get(name) or "")
         terminal, _, artifact = ref.partition(".")
         if not terminal or not artifact:
             return None
@@ -240,21 +253,84 @@ class SqlEvidenceProvider:
             "run_version": f"run-{run.run_number}",
             "waivers": waivers,
         }
-        # 011 FR-003: a record people sign is built from their sign-offs, never from an agent
+        # 011 FR-003, 012 R-09: built from records, never from an agent
         for artifact in spec_view.artifacts(self._spec(run)):
-            current = record.get(artifact.id)
-            if artifact.format == "signed_record" and not (isinstance(current, list) and current):
-                record[artifact.id] = [
-                    {"role": s["role"], "decision": s["decision"], "date": str(s["signed_at"])[:10]}
-                    for s in all_sign_offs
-                    if s["decision"] in ("pass", "exception")
-                ]
+            if artifact.built:
+                record.pop(artifact.id, None)
+                built = self._built(conn, usecase_id, run, artifact, all_sign_offs, ctx)
+                if built is not None:
+                    rows, synthetic = built
+                    record[artifact.id] = rows
+                    if synthetic:
+                        record[SYNTHETIC_PART] = True
         if run.closed_at is not None:
             record["closed_at"] = run.closed_at
         bound = self._bound_to(conn, usecase_id, run, ctx, depth)
         if bound is not None:
             record["bound_to"] = bound
         return record
+
+    def _built(
+        self,
+        conn: Connection,
+        usecase_id: str,
+        run: RunRow,
+        artifact: spec_view.ArtifactSpec,
+        sign_offs: list[dict[str, Any]],
+        ctx: EvalContext,
+    ) -> tuple[list[dict[str, Any]], bool] | None:
+        """A built artifact's rows and whether they rest on synthetic evidence."""
+        if artifact.format == "signed_record":
+            return built_artifacts.signed_record(sign_offs), False
+        if artifact.format == "gate_summary":
+            return built_artifacts.gate_summary(self._gates(conn, usecase_id, run)), False
+        if artifact.format == "baseline" and artifact.built_from:
+            source = str(artifact.built_from["evidence"])
+            provider = self.sources or self
+            answer = provider.get(source, ctx)
+            if not isinstance(answer, Evidence):
+                return None
+            rows = built_artifacts.baseline(artifact.built_from, answer.value)
+            return None if rows is None else (rows, answer.synthetic)
+        return None
+
+    def _gates(
+        self, conn: Connection, usecase_id: str, run: RunRow
+    ) -> list[built_artifacts.GateRecord]:
+        """Every other terminal's latest closed run in this use case (012 R-09)."""
+        terminals = conn.execute(
+            text(
+                "SELECT DISTINCT terminal_id FROM run.terminal_run WHERE usecase_id = :u "
+                "AND state = 'closed' AND terminal_id <> :t"
+            ),
+            {"u": usecase_id, "t": run.terminal_id},
+        ).scalars()
+        waivers = policy_store.approved_waivers(conn, usecase_id)
+        found = []
+        for terminal in terminals:
+            run_id = policy_store.latest_closed_run_id(conn, usecase_id, str(terminal))
+            other = run_store.load_run(conn, run_id) if run_id else None
+            if other is None:
+                continue
+            signers = [
+                s["person"]
+                for s in run_store.sign_offs(conn, other.run_id)
+                if s["decision"] in built_artifacts.SIGNED_DECISIONS
+            ]
+            found.append(
+                built_artifacts.GateRecord(
+                    other.terminal_id,
+                    str(other.final_status or ""),
+                    tuple(signers),
+                    other.closed_at,
+                    tuple(
+                        (str(w["waiver_id"]), str(w["expiry"] or "")[:10])
+                        for w in waivers
+                        if w["run_id"] == other.run_id
+                    ),
+                )
+            )
+        return found
 
     def _bound_to(
         self, conn: Connection, usecase_id: str, run: RunRow, ctx: EvalContext, depth: int

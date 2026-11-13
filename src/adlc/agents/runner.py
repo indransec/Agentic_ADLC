@@ -26,7 +26,7 @@ from adlc.agents.context import (
 )
 from adlc.agents.gateway import UNAVAILABLE, CallIds, ModelGateway, ModelRequest, request_tokens
 from adlc.agents.limits import Budget, Limits, limits_for
-from adlc.agents.output import SIGNED, Parsed, correction, parse_builder, validate_artifacts
+from adlc.agents.output import Parsed, correction, parse_builder, validate_artifacts
 from adlc.agents.prompts import SpecText, SpecTexts
 from adlc.agents.store import insert_attempt
 from adlc.agents.telemetry import set_attributes
@@ -397,10 +397,10 @@ class RuntimeAgentRunner:
     ) -> AgentResult:
         result = self.stub.build(context)
         if isinstance(result, Artifacts):
-            # 011 FR-003: a stub, like any agent, never writes a record people sign
-            signed = {a.id for a in spec_view.artifacts(spec) if a.format == SIGNED}
-            if signed & set(result.artifacts):
-                kept = {k: v for k, v in result.artifacts.items() if k not in signed}
+            # 011 FR-003, 012 R-09: a stub, like any agent, never writes a built artifact
+            built = {a.id for a in spec_view.artifacts(spec) if a.built}
+            if built & set(result.artifacts):
+                kept = {k: v for k, v in result.artifacts.items() if k not in built}
                 result = replace(result, artifacts=kept)
             problems = validate_artifacts(result.artifacts, spec, required)
             if problems:

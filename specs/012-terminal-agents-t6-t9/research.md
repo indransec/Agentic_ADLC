@@ -101,3 +101,16 @@ already knows exactly.
 total soak at the demo time scale. A window not yet open blocks T7's prerequisite; the existing
 `window` timer reopens the check. Tests and the replay set the clock inside the window.
 
+## R-11 Controls that wait for a person's action (found while implementing US1)
+
+**Decision.** A failed blocking control normally sends the agent back (auto-retry, then
+escalation). CTL-T6-07 (change approved) cannot be fixed by the agent: it waits for a person in
+another system. Such a control is declared with `awaits: <what>` (terminal schema, additive).
+While only awaited controls fail, the run goes on to review and sign-off; `pass` is refused
+naming them; rework and terminate stay open. When the awaited action happens (the change is
+decided in the inbox), the service signals `evidence_changed` to the use case's runs at sign-off
+that await one, and the worker re-runs their controls (the 005 `controls_pending` path).
+
+**Rejected.** Moving the approval check to T7's prerequisites (T6 would be signed before the
+change is approved); retrying the agent until approval (burns attempts and escalates).
+

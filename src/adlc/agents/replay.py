@@ -342,7 +342,7 @@ class Replayer:
         mandatory = [
             a.id
             for a in spec_view.artifacts(spec)
-            if a.condition is None and a.format != "signed_record"  # 011: people sign those
+            if a.condition is None and not a.built  # 011, 012: built from records
         ]
         with self.engine.connect() as conn:
             attempts = conn.execute(

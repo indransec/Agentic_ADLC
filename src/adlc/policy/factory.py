@@ -21,6 +21,7 @@ from adlc.policy.evidence import (
     SqlEvidenceProvider,
 )
 from adlc.policy.parameters import ParameterService, ProfileSource
+from adlc.policy.pilot_evidence import PilotEvidence
 from adlc.policy.predicates import load_all
 from adlc.policy.store import DecisionSink, SqlDecisionSink
 from adlc.policy.synthetic import SyntheticEvidenceProvider
@@ -52,8 +53,12 @@ def build_policy_engine(
     )
     synthetic = SyntheticEvidenceProvider.from_dir(synthetic_dir) if synthetic_dir else None
     records: EvidenceProvider = real if pilot is None else ChainEvidenceProvider(real, pilot)
+    if isinstance(pilot, PilotEvidence):  # 012: telemetry's mapping is catalogue content
+        pilot.catalogue = lambda name: _catalogue(registry, name)
+    evidence = CompositeEvidenceProvider(records, synthetic)
+    real.sources = evidence  # 012: built artifacts read their source through the whole chain
     return CelPolicyEngine(
-        CompositeEvidenceProvider(records, synthetic),
+        evidence,
         load_all(),
         catalogue=lambda name: _catalogue(registry, name),
         spec_for=_SpecLookup(engine, registry),

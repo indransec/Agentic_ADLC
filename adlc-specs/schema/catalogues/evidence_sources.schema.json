@@ -36,6 +36,49 @@
           "description": {
             "type": "string",
             "minLength": 1
+          },
+          "from_pilot": {
+            "description": "012: how the pilot's observability metrics give this source's fields: a metric, or a ratio of two with an optional scale",
+            "type": "object",
+            "additionalProperties": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "metric": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  },
+                  "required": [
+                    "metric"
+                  ]
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "ratio": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "pattern": "^[a-z][a-z0-9_]*$"
+                      },
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "scale": {
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "required": [
+                    "ratio"
+                  ]
+                }
+              ]
+            }
           }
         },
         "required": [

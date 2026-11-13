@@ -27,6 +27,7 @@ from adlc.policy.factory import build_policy_engine
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 
 if TYPE_CHECKING:
+    from adlc.inbox.changes import ChangeService
     from adlc.inbox.service import InboxService
 
 
@@ -56,6 +57,12 @@ class Services:
     @cached_property
     def orchestration(self) -> OrchestratorService:
         return OrchestratorService(self.runs, self.settings.deadletter_role or "")
+
+    @cached_property
+    def changes(self) -> "ChangeService":
+        from adlc.inbox.changes import ChangeService  # noqa: PLC0415 - avoids an import cycle
+
+        return ChangeService(self.engine, self.runs.registry, self.orchestration, self.clock)
 
     @cached_property
     def inbox(self) -> "InboxService":

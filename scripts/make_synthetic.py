@@ -716,6 +716,7 @@ def evidence() -> dict[str, Any]:
                 "toxicity": 0.002,
                 "cost_per_task": 0.03,
                 "p95_latency_ms": 1400,
+                "task_success_rate": 0.94,  # 012: what T4's eval_baseline is built from
             },
             "calibration": {"llm-judge": {"sample_size_count": 250, "agreement_rate": 0.9}},
         },
