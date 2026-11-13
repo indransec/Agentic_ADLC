@@ -28,6 +28,7 @@ from adlc.orchestration import store
 from adlc.orchestration.engine import EngineConfig
 from adlc.orchestration.interfaces import SystemClock
 from adlc.orchestration.monitors import MonitorEvaluator
+from adlc.orchestration.router import route_fault
 from adlc.orchestration.stubs import StubAgent, StubReviewer
 from adlc.orchestration.worker import build_orchestrator
 from adlc.policy.directory import AccountFileDirectory
@@ -114,7 +115,14 @@ def run() -> None:
             lease=settings.lease,
             model_outage_limit=settings.model_outage_limit,
         ),
+        # 014: test only (resilience checks); never set in normal running
+        fault=route_fault(settings.route_fault) if settings.route_fault else None,
     )
+    if settings.route_fault:
+        print(
+            f"adlc: ADLC_ROUTE_FAULT is set: routing of {settings.route_fault} fails",
+            file=sys.stderr,
+        )
     orchestrator.monitors = MonitorEvaluator(  # 012 FR-007
         engine, registry, policy, orchestrator.service, settings.monitor_interval
     )

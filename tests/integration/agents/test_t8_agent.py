@@ -98,6 +98,7 @@ def test_review_period_then_the_model_swap_raises_drift(
         )
         assert monitors.tick() == 0  # quality at the baseline: nothing fires
         fake.traffic["routing_accuracy"] = 0.6  # the model swap
+        assert monitors.tick(only={"UC-9999"}) == 0  # 014: a round for other use cases only
         assert monitors.tick() == 1
         assert monitors.tick() == 0  # the same breach episode
         drift = [p for t, p in _events(a.h, usecase) if t == "T8.event.drift"]
