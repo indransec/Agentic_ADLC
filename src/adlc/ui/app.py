@@ -13,6 +13,7 @@ from adlc.ui.pages import (
     escalation,
     inbox,
     intake,
+    journey,
     run,
     usecases,
     waiver,
@@ -23,6 +24,7 @@ PAGES = {
     "Inbox": inbox.render,
     "New use case": intake.render,
     "Use cases": usecases.render,
+    "Journey": journey.render,  # 013
     "Run": run.render,
     "Clarification": clarification.render,
     "Escalation": escalation.render,

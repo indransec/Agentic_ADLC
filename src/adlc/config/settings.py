@@ -158,6 +158,10 @@ class Settings(RuntimeSettings):
         default=timedelta(hours=8), json_schema_extra=_meta(DURATION_FORM)
     )
     accounts_file: Path = Field(json_schema_extra=_meta("path to a readable file"))
+    # 013: the orchestrator's time scale, shown beside dashboard durations (wall time)
+    time_scale: float = Field(
+        default=1.0, gt=0, json_schema_extra=_meta("number greater than zero")
+    )
 
     @field_validator("accounts_file")
     @classmethod
@@ -482,4 +486,8 @@ class UiSettings(BaseSettings):
         default="http://api:8000",
         pattern=r"^https?://",
         json_schema_extra=_meta("http(s) URL of the platform API"),
+    )
+    # 013: how often the dashboard views refresh themselves (SC-003 needs 15 s)
+    ui_dashboard_refresh: Duration = Field(
+        default=timedelta(seconds=10), json_schema_extra=_meta(DURATION_FORM)
     )
