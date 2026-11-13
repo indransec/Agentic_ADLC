@@ -189,7 +189,7 @@ def run_cli(
         worker_id="adlc-replay",
     )
     # 012: awaited change approvals and monitor rounds; a pilot fault is caused by an operator
-    # (pilot-fault), so a live replay to T9 waits for the monitors, never fakes the event
+    # (pilot-fault), so a live replay waits for the monitors and never fakes the event
     replayer = Replayer(
         orchestrator.service,
         orchestrator.runs,
