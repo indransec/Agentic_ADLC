@@ -77,5 +77,5 @@ unfinished task.
 
 ## Phase 8: Polish
 
-- [ ] T022 [P] `demo/README.md`: the rehearsed reply programs are demo assets outside `src/adlc` (use-case values allowed there; the driver stays generic, analysis A6); presenter guide (steps, what to click as which role, timings, recovery), resets, rehearsal log.
-- [ ] T023 Targeted suites locally (unit demo, integration demo, scenario, ledger, orchestration); push after the user's approval; CI runs `make check` (SC-006).
+- [X] T022 [P] `demo/README.md`: the rehearsed reply programs are demo assets outside `src/adlc` (use-case values allowed there; the driver stays generic, analysis A6); presenter guide (steps, what to click as which role, timings, recovery), resets, rehearsal log.
+- [X] T023 Targeted suites locally (unit demo, integration demo, scenario, ledger, orchestration); push after the user's approval; CI runs `make check` (SC-006).
