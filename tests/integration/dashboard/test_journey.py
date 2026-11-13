@@ -46,6 +46,7 @@ def test_journey_shows_every_run_and_arrow(orch_template: PlatformDatabase) -> N
         panel = journey["panel"]
         assert [e["terminal_id"] for e in panel["escalations"]] == ["T6"]
         assert [x["waiver_id"] for x in panel["exceptions"]] == ["WVR-0001"]
+        assert panel["unlinked"] == []  # every terminal event here has its source run
         open_t2 = lanes["T2"]["runs"][-1]
         assert open_t2["closed_at"] is None and open_t2["owner"]  # who it waits for
         t2_first = lanes["T2"]["runs"][0]

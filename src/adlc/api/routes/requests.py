@@ -54,6 +54,14 @@ def dead_letters(actor: ActorDep, services: ServicesDep) -> list[dict[str, Any]]
     return [dict(d) for d in services.orchestration.list_dead_letters(actor)]
 
 
+@router.get("/dead-letters/{event_id}")
+def dead_letter(event_id: UUID, actor: ActorDep, services: ServicesDep) -> dict[str, Any]:
+    found = services.orchestration.dead_letter(actor, event_id)
+    if found is None:
+        raise NotFound(f"event {event_id}")
+    return dict(found)
+
+
 @router.post("/dead-letters/{event_id}/requeue", status_code=204)
 def requeue(event_id: UUID, actor: ActorDep, services: ServicesDep) -> Response:
     services.orchestration.requeue(actor, event_id)

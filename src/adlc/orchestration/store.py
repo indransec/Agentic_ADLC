@@ -760,12 +760,39 @@ def record_failure(
 def dead_letters(conn: Connection) -> list[dict[str, Any]]:
     rows = conn.execute(
         text(
-            "SELECT event_id, event_type, usecase_id, attempts, last_error, dead_lettered_at "
-            "FROM events.outbox_event WHERE dead_lettered_at IS NOT NULL "
-            "ORDER BY dead_lettered_at, event_id"
+            "SELECT event_id, event_type, usecase_id, causation_run_id, attempts, last_error, "
+            "dead_lettered_at, (SELECT count(*) FROM events.dead_letter_action d WHERE "
+            "d.event_id = e.event_id) AS requeues FROM events.outbox_event e "
+            "WHERE dead_lettered_at IS NOT NULL ORDER BY dead_lettered_at, event_id"
         )
     ).mappings()
     return [dict(r) for r in rows]
+
+
+def dead_letter(conn: Connection, event_id: UUID) -> dict[str, Any] | None:
+    """013: one event (dead-lettered or re-queued before) with its payload and re-queue history."""
+    row = (
+        conn.execute(
+            text(
+                "SELECT event_id, event_type, usecase_id, causation_run_id, attempts, last_error, "
+                "dead_lettered_at, processed_at, payload FROM events.outbox_event "
+                "WHERE event_id = :e"
+            ),
+            {"e": event_id},
+        )
+        .mappings()
+        .first()
+    )
+    if row is None:
+        return None
+    history = conn.execute(
+        text(
+            "SELECT action, actor, at FROM events.dead_letter_action WHERE event_id = :e "
+            "ORDER BY dead_letter_action_id"
+        ),
+        {"e": event_id},
+    ).mappings()
+    return {**dict(row), "history": [dict(h) for h in history]}
 
 
 def requeue(conn: Connection, event_id: UUID, actor: str, now: datetime) -> bool:

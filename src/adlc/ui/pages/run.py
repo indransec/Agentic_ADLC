@@ -30,7 +30,24 @@ def render(api: ApiClient) -> None:
     header(data)
     artifacts(api, data, seen)
     sections(data)
+    timeline(api, run_id)
     decision_form(api, data, seen)
+
+
+def timeline(api: ApiClient, run_id: str) -> None:
+    """013 US4: the step timeline with durations, and each attempt's model and tool calls."""
+    with st.expander("Timeline", expanded=False):
+        found = api.get(f"/dashboard/runs/{run_id}/timeline")
+        table(found["activity"], key="run_timeline_activity")
+        for attempt in found["attempts"]:
+            st.caption(
+                f"{attempt['kind']} attempt {attempt['attempt']}: {attempt['agent_id']} "
+                f"({attempt['implementation']}), {attempt['tokens_in']} + {attempt['tokens_out']} "
+                f"tokens, USD {attempt['cost_usd']}"
+            )
+            ident = f"{attempt['kind']}_{attempt['attempt']}"
+            table(attempt["model_calls"], key=f"run_timeline_models_{ident}")
+            table(attempt["tool_calls"], key=f"run_timeline_tools_{ident}")
 
 
 def load(api: ApiClient, run_id: str) -> tuple[dict[str, Any], int]:

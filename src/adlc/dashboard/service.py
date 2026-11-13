@@ -6,6 +6,7 @@ tool calls. Nothing is written here. Lanes come from the use case's pinned specs
 use-case name is in code.
 """
 
+import re
 from collections import defaultdict
 from collections.abc import Mapping
 from datetime import datetime
@@ -25,8 +26,11 @@ from adlc.orchestration.states import RunState
 from adlc.orchestration.store import RunRow
 
 ACTIVITY_LIMIT, ACTIVITY_MAX = 200, 1000  # contracts/api-dashboard.md
-DEFAULT_TIER = "medium"  # as the policy engine assumes before T0 sets the tier
-MAX_BARS = 20  # bars per lane before the oldest collapse into one (research R-03)
+DEFAULT_TIER = "medium"  # as the policy engine assumes before the tier is set
+MAX_BARS = 20
+TERMINAL_EVENT = re.compile(
+    r"^[A-Z][0-9]+\."
+)  # events a terminal raised  # bars per lane before the oldest collapse into one (research R-03)
 
 
 def _iso(value: datetime | None) -> str | None:
@@ -337,8 +341,8 @@ class DashboardService:
 
     @staticmethod
     def _submitted(conn: Connection, usecase_id: str) -> datetime:
-        """When the lifecycle started: the first run's opening (SA §12.3: T0 open), on the
-        engine's clock like every other time here; the submission time before any run."""
+        """When the lifecycle started (SA §12.3): the first run's opening, on the engine's clock
+        like every other time here; the submission time before any run."""
         found = conn.execute(
             text(
                 "SELECT coalesce(min(r.opened_at), u.created_at) FROM run.usecase u LEFT JOIN "
@@ -431,12 +435,15 @@ class DashboardService:
             lanes.append({"terminal_id": terminal, "name": name, "runs": _collapse(in_lane)})
         by_run = {r.run_id: r for r in runs}
         arrows = []
+        unlinked = []  # spec edge case: an event from a terminal whose run is unknown
         for run in runs:
             event = events.get(str(run.trigger_event_id)) if run.trigger_event_id else None
             if event is None:
                 continue
             source = _source_run(event, run, runs, by_run)
             if source is None:
+                if TERMINAL_EVENT.match(str(event["event_type"])):
+                    unlinked.append({"run_id": run.run_id, "event_type": event["event_type"]})
                 continue
             kind = arrow_kind(str(event["event_type"]), source.terminal_id, run.terminal_id)
             decided = [s for s in sign_offs.get(source.run_id, []) if s["decision"] != "pass"]
@@ -461,6 +468,7 @@ class DashboardService:
                 if r.escalation_trigger
             ],
             "exceptions": [w for w in waivers if w["status"] == "approved"],
+            "unlinked": unlinked,
         }
         return {
             "usecase": {

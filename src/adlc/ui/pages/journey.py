@@ -165,6 +165,9 @@ def figure(data: dict[str, Any]) -> go.Figure:
 
 def panel(data: dict[str, Any]) -> None:
     st.subheader("Escalations and exceptions")
+    if data.get("unlinked"):
+        st.caption("Runs opened by an event whose source run is unknown:")
+        table(data["unlinked"], key="journey_unlinked")
     if not data["escalations"] and not data["exceptions"]:
         st.caption("None.")
         return
