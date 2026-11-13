@@ -207,14 +207,23 @@ class DemoDriver:
                     str(action.params["name"]), str(action.params.get("action", "trigger"))
                 )
                 self.drain()
-                self.monitors.tick()
+                # 014 rehearsal finding: only the demo's use cases; on a database with earlier
+                # use cases, their monitors would open runs that use up the rehearsed replies
+                self.monitors.tick(set(self.usecases.values()))
                 continue
             run = self._wait_for_people(step)
             acted = run
-            if self.auto:
-                self._act(run, action)
-            else:
-                self._presenter(run, action)
+            try:
+                if self.auto:
+                    self._act(run, action)
+                else:
+                    self._presenter(run, action)
+            except StepFailed:
+                raise
+            except Exception as exc:  # the platform refused the action: report, never crash
+                raise StepFailed(
+                    f"{action.kind} on {run.run_id} ({run.state}) was refused: {exc}"
+                ) from exc
             self.drain()
         last = acted or self._latest(step)
         return last, self._check(step, last)
@@ -234,6 +243,9 @@ class DemoDriver:
 
     def _wait_for_people(self, step: Step) -> RunRow:
         for _ in range(self.rounds):
+            # 014 rehearsal finding: the driver is the only worker, so it evaluates the declared
+            # monitors at their interval while it waits (a drift shows once the window moves)
+            self.monitors.tick_if_due(set(self.usecases.values()))
             self.drain()
             run = self._latest(step)
             if run is not None and run.state in NEEDS_PEOPLE and not run.controls_pending:

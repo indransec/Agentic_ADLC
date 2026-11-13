@@ -70,7 +70,7 @@ def main(
     from_step: Annotated[int, typer.Option(help="Resume from this step")] = 1,
     profile: Annotated[str | None, typer.Option(help="Model profile with --live")] = None,
     references: Annotated[Path, typer.Option()] = Path("data/reference_usecases"),
-    out: Annotated[Path, typer.Option(help="Report folder")] = Path("demo-report"),
+    out: Annotated[Path | None, typer.Option(help="Also write the report here")] = None,
 ) -> None:
     settings = load_settings_or_exit(OrchestratorSettings)
     loaded = load_script(script, load_role_ids(settings.role_catalogue))
@@ -102,10 +102,11 @@ def main(
         auto=auto,
     )
     report = driver.run(from_step)
-    out.mkdir(parents=True, exist_ok=True)
-    (out / "report.md").write_text(report.markdown())
-    (out / "report.json").write_text(json.dumps(report.to_json(), indent=1, default=str))
-    print(report.markdown(), flush=True)
+    print(report.markdown(), flush=True)  # the wrapper keeps the output on the host
+    if out is not None:
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "report.md").write_text(report.markdown())
+        (out / "report.json").write_text(json.dumps(report.to_json(), indent=1, default=str))
     if not report.ok:
         failed = next(s for s in report.steps if s.outcome != "ok")
         if live:  # analysis A4: a live model outage or misstep; rehearsed replies always run

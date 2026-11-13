@@ -14,7 +14,7 @@ that rests on synthetic evidence, never fires. Nothing here names a terminal or 
 import logging
 import re
 import time
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Collection, Mapping
 from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any
@@ -83,15 +83,16 @@ class MonitorEvaluator:
         self.interval, self.clock = interval.total_seconds(), clock
         self.last: float | None = None
 
-    def tick_if_due(self) -> int:
+    def tick_if_due(self, only: Collection[str] | None = None) -> int:
         now = self.clock()
         if self.last is not None and now - self.last < self.interval:
             return 0
         self.last = now
-        return self.tick()
+        return self.tick(only)
 
-    def tick(self) -> int:
-        """Evaluate every declared monitor once; returns the number of events raised."""
+    def tick(self, only: Collection[str] | None = None) -> int:
+        """Evaluate every declared monitor once; returns the number of events raised. ``only``
+        limits the round to some use cases (014: the demo driver watches its own)."""
         raised = 0
         with self.engine.connect() as conn:
             usecases = [
@@ -99,6 +100,7 @@ class MonitorEvaluator:
                 for u in conn.execute(
                     text("SELECT usecase_id FROM run.usecase WHERE status = 'active'")
                 ).scalars()
+                if only is None or str(u) in only
             ]
             plans = []
             for usecase in usecases:

@@ -29,6 +29,16 @@ FILL = {
     "routing_rules.yaml": "a: 2",
 }
 REQS = {team: f"FR-0{i}" for i, team in enumerate(TEAMS, start=1)}
+# 014 rehearsal finding: the real pilot's team directory (pilot/template/reference) has eight
+# teams; every requirement needs evaluation cases, so each real team maps to one too
+REQS.update(
+    {
+        "end-user-computing": "FR-03",
+        "app-support-erp": "FR-05",
+        "app-support-collab": "FR-05",
+        "database-ops": "FR-05",
+    }
+)
 
 
 def all_outputs(messages: Messages, name: str) -> list[dict[str, Any]]:

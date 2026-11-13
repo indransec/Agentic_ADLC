@@ -25,3 +25,4 @@ build/
 .claude/settings.local.json
 # 005 file store (local runs)
 data/files/
+demo-report/

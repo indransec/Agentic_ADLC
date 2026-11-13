@@ -64,6 +64,10 @@ resumed with the rehearsed replies (`make demo FROM_STEP=<n>`).
 
 ## Known behaviour
 
+- Run the demo on a reset demo environment. On a database with earlier use cases it still works
+  (the driver evaluates only its own use cases' monitors), but its worker also advances any
+  earlier run that is due.
+
 - After an escalation (T5's kill-switch gap) a person completes the run and it goes to sign-off
   without a reviewer recommendation (the orchestrator's design since feature 003); D-1's test
   states this.
@@ -72,3 +76,16 @@ resumed with the rehearsed replies (`make demo FROM_STEP=<n>`).
 
 | Date | Mode | Result | Duration | Findings |
 | --- | --- | --- | --- | --- |
+| 2026-11-13 | auto, dev stack (no reset) | stopped at step 1 | — | the model reviewer had no rehearsed replies: added `rehearsed/reviewer.py`; the report folder was not writable in the container: the wrapper keeps the output on the host |
+| 2026-11-13 | auto | stopped at step 4 (T3) | — | the test fill fails the real pilot's CI: T3 adapts the example fill the branch starts with |
+| 2026-11-13 | auto | stopped at step 6 (T4) | — | the real pilot has eight teams: every team maps to a requirement; a refused action is a failed step, not a crash |
+| 2026-11-13 | auto | stopped at step 11 (T7) | — | no traffic: the wrapper starts the pilot's traffic (and reverts a leftover model swap) before the run; the shared image is built by `migrate` |
+| 2026-11-13 | auto | stopped at step 13 (T9) | — | the driver evaluated the monitors only once after the swap: it now evaluates them at their interval while it waits |
+| 2026-11-13 | auto | passed, 15/15, D-1..D-9 | 2:04 | trace UC-0029: 100% traceable, chain verified |
+| 2026-11-13 | auto | stopped at step 13 (T9) | — | an earlier use case's monitor opened a T9 run that used the rehearsed replies: the driver watches only its own use cases |
+| 2026-11-13 | auto | passed, 15/15, D-1..D-9 | 1:57 | trace UC-0032: 100% traceable, 0 gaps, chain verified |
+| 2026-11-13 | auto (next run) | passed, 15/15, D-1..D-9 | 1:57 | trace UC-0034: 100% traceable, 0 gaps, chain verified |
+
+`make resilience` and `make demo-reset` run only in the demo environment; these rehearsals ran on
+the dev stack (by choice, to keep its data), so they are tested offline and by their guards only.
+

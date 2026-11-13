@@ -71,7 +71,7 @@ unfinished task.
 
 ## Phase 7: User Story 5 – Rehearsals (P2)
 
-- [ ] T021 [US5] Two `make demo-auto` rehearsals on a `make demo-reset` demo stack, each followed by `make trace` (100% linked, chain verified; SC-004, analysis A3) with timings logged (SC-001, A5); fixes applied; findings recorded in `demo/README.md` and convergence.
+- [X] T021 [US5] Two `make demo-auto` rehearsals on a `make demo-reset` demo stack, each followed by `make trace` (100% linked, chain verified; SC-004, analysis A3) with timings logged (SC-001, A5); fixes applied; findings recorded in `demo/README.md` and convergence.
 
 ---
 
@@ -79,3 +79,15 @@ unfinished task.
 
 - [X] T022 [P] `demo/README.md`: the rehearsed reply programs are demo assets outside `src/adlc` (use-case values allowed there; the driver stays generic, analysis A6); presenter guide (steps, what to click as which role, timings, recovery), resets, rehearsal log.
 - [X] T023 Targeted suites locally (unit demo, integration demo, scenario, ledger, orchestration); push after the user's approval; CI runs `make check` (SC-006).
+
+---
+
+## Phase 9: Convergence
+
+- [X] T024 Rehearse the reviewer too: a model reviewer has no recorded replies; `demo/rehearsed/reviewer.py` scores every checklist item through the real reviewer path per FR-002 (missing; rehearsal finding)
+- [X] T025 The demo's T3 adapts the example fill the branch starts with (the fixed test fill fails the real pilot's CI); the real pilot's eight teams each map to a requirement per FR-002 (contradicts; rehearsal findings)
+- [X] T026 The wrapper prepares the pilot (reverts a leftover model swap, starts traffic) and keeps the driver output on the host; a refused action is a failed step with a resume hint, never a crash, per US1/AC3 (missing; rehearsal findings)
+- [X] T027 The driver evaluates its own use cases' monitors at their interval while it waits (once was too early; other use cases' monitors used up rehearsed replies) per FR-001 (partial; rehearsal findings)
+- [X] T028 D-1 after an escalation: the person's completion stands in for the reviewer's recommendation (003 design); stated in the D-1 test and the demo README per US2/AC1 (contradicts, accepted)
+- [ ] T029 `make demo-reset` and `make resilience` on a demo environment (`ADLC_ENV=demo`); not run live: the user kept the dev stack's data (SC-003 offline and by guard only)
+
