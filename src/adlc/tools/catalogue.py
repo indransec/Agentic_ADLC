@@ -351,8 +351,8 @@ TOOLS: tuple[ToolSpec, ...] = (
         "Create a change request.",
         (
             _s("summary", "summary", required=True, max_length=500),
-            _s("window_start", "ISO date-time", required=True),
-            _s("window_end", "ISO date-time", required=True),
+            _s("window_start", "ISO date-time (default now)"),
+            _s("window_end", "ISO date-time (default seven days after the start)"),
             _s("risk", "low, medium or high", required=True, enum=("low", "medium", "high")),
             _s("plan", "implementation and backout plan", max_length=10_000),
         ),

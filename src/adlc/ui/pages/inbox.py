@@ -25,6 +25,39 @@ def render(api: ApiClient) -> None:
     st.header("Inbox")
     st.button("Refresh", key="inbox_refresh")
     items(api)
+    changes(api)
+
+
+def changes(api: ApiClient) -> None:
+    """012 FR-012: change requests waiting for this person's decision (ITSM owner role)."""
+    found = api.get("/changes")
+    if not found:
+        return
+    st.subheader("Change requests")
+    table(
+        [
+            {
+                "change": c["change_id"],
+                "use case": c["usecase_id"],
+                "summary": c.get("summary", ""),
+                "window": f"{c.get('window_start', '')} to {c.get('window_end', '')}",
+                "risk": c.get("risk", ""),
+            }
+            for c in found
+        ]
+    )
+    ids = [c["change_id"] for c in found]
+    pick = st.selectbox("Change", ids, key="change_pick")
+    plan = next(c for c in found if c["change_id"] == pick).get("plan", "")
+    if plan:
+        st.markdown(f"**Plan**\n\n{plan}")
+    decision = st.radio("Decision", ["approve", "reject"], key=f"change_decision:{pick}")
+    comment = st.text_area("Comment", key=f"change_comment:{pick}")
+    if st.button("Record decision", key=f"change_submit:{pick}"):
+        api.post(
+            f"/changes/{pick}/decision", {"approve": decision == "approve", "comment": comment}
+        )
+        st.success(f"{pick} {'approved' if decision == 'approve' else 'rejected'}")
 
 
 @st.fragment(run_every=REFRESH_SECONDS)
