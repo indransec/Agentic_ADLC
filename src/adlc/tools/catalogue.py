@@ -79,7 +79,17 @@ def _i(name: str, description: str, lo: float, hi: float, *, required: bool = Fa
 
 HASH = "a package hash, sha256:<64 hex>"
 ENVIRONMENTS = ("dev", "test")
-EVIDENCE_KINDS = ("ci", "harness", "redteam", "dlp", "deploy", "traffic", "kill_switch")
+EVIDENCE_KINDS = (
+    "ci",
+    "harness",
+    "redteam",
+    "dlp",
+    "deploy",
+    "traffic",
+    "kill_switch",
+    "observability",  # 012: stage and health metrics are copied, then checked
+    "monitoring",  # 012: the monitors configured
+)
 
 TOOLS: tuple[ToolSpec, ...] = (
     # ------------------------------------------------------------ pilot environments (US1)
@@ -282,6 +292,7 @@ TOOLS: tuple[ToolSpec, ...] = (
         "read",
         "The pilot's metrics per package over a window.",
         (_i("window_s", "window in seconds", 60, 3600),),
+        evidence="observability",
     ),
     ToolSpec(
         "observability",
@@ -305,6 +316,7 @@ TOOLS: tuple[ToolSpec, ...] = (
             Arg("threshold", "number", "threshold", required=True),
             _i("window_s", "window in seconds", 60, 3600, required=True),
         ),
+        evidence="monitoring",
     ),
     ToolSpec("monitoring", "read", "read", "This use case's monitors and fired events."),
     ToolSpec(
@@ -339,8 +351,8 @@ TOOLS: tuple[ToolSpec, ...] = (
         "Create a change request.",
         (
             _s("summary", "summary", required=True, max_length=500),
-            _s("window_start", "ISO date-time", required=True),
-            _s("window_end", "ISO date-time", required=True),
+            _s("window_start", "ISO date-time (default now)"),
+            _s("window_end", "ISO date-time (default seven days after the start)"),
             _s("risk", "low, medium or high", required=True, enum=("low", "medium", "high")),
             _s("plan", "implementation and backout plan", max_length=10_000),
         ),

@@ -551,8 +551,15 @@ def t7() -> dict[str, Any]:
         "env_config_verification": [
             {"check": "autonomy", "expected": "2", "actual": "2", "result": "pass"}
         ],
-        "stage_metrics": [
-            {"stage": s, "metric": "accuracy", "threshold": 0.9, "actual": 0.93, "result": "pass"}
+        "stage_metrics": [  # 012: keyed <stage>:<metric> for the recorded observability check
+            {
+                "key": f"{s}:accuracy",
+                "stage": s,
+                "metric": "accuracy",
+                "threshold": 0.9,
+                "actual": 0.93,
+                "result": "pass",
+            }
             for s in ("shadow", "canary", "full")
         ],
         "smoke_results": [{"case_id": "SM-1", "result": "pass"}],
@@ -716,10 +723,21 @@ def evidence() -> dict[str, Any]:
                 "toxicity": 0.002,
                 "cost_per_task": 0.03,
                 "p95_latency_ms": 1400,
+                "task_success_rate": 0.94,  # 012: what T4's eval_baseline is built from
             },
             "calibration": {"llm-judge": {"sample_size_count": 250, "agreement_rate": 0.9}},
         },
         "redteam": {"injection_success_rate": 0.0, "jailbreak_success_rate": 0.0},
+        # 012: the recorded stage metrics and registry records matching the synthetic T7
+        "observability": {
+            "stages": {f"{s}:accuracy": 0.93 for s in ("shadow", "canary", "full")},
+            "latest": {"accuracy": 0.92},  # the synthetic T8 health report
+        },
+        "registry": {
+            "agents": {
+                "claims-triage": {"version": "1.0.0", "owner": "service_owner", "autonomy_level": 2}
+            }
+        },
         "dlp": {"pii_leak_count": 0},
         "portfolio": {"max_similarity": 0.2},
         "change": {

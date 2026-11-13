@@ -61,6 +61,21 @@ blocked   awaiting_clarification                      ▼
 
 To switch, wire the real implementations in `__main__.py` (`build_orchestrator`).
 
+## Monitors and awaited controls (feature 012)
+
+- **Monitor evaluator** (`monitors.py`): every `ADLC_MONITOR_INTERVAL` (real time) the worker
+  evaluates the `monitors` of each pinned spec that declares them, once that terminal has a run,
+  through the policy engine (a decision per monitor, check id = monitor id). A threshold that
+  becomes true raises its `<terminal>.event.<name>` once per breach episode, with the inputs it
+  read; an unevaluable or synthetic threshold never fires. No terminal or monitor is named here.
+- **Awaited controls**: a control declared with `awaits` (e.g. a change approval) does not send
+  the agent back; the run goes to sign-off and `pass` is refused while it fails. The awaited
+  action signals `evidence_changed`, and the worker re-runs the controls (`controls_pending`).
+- **Mode tool scopes**: `authorities.tool_scopes_by_mode` grants scopes only while the run is in
+  that mode (T9's revocations in `retire`); the policy engine reads `run.mode`.
+- `auto_rollback_on` is not acted on by the engine: the agent rolls back, the failing stage
+  control escalates, and people decide the rework.
+
 ## Settings
 
 | Setting | Meaning |

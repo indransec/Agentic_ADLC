@@ -7,7 +7,7 @@ from adlc.config.settings import DEFAULT_AGENT_LIMITS, AgentLimitOverride
 def test_tier_limits_and_overrides() -> None:
     overrides = {"T3": AgentLimitOverride(timeout_s=200)}
     assert limits_for(DEFAULT_AGENT_LIMITS, overrides, "coding", "T3") == Limits(16, 400_000, 200)
-    assert limits_for(DEFAULT_AGENT_LIMITS, overrides, "standard", "T6") == Limits(6, 200_000, 120)
+    assert limits_for(DEFAULT_AGENT_LIMITS, overrides, "standard", "T6") == Limits(14, 400_000, 240)
 
 
 def test_budget_order_steps_tokens_time() -> None:

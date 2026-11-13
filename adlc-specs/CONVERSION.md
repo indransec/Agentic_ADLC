@@ -589,3 +589,21 @@ Notes:
 - From the live replay (011): T3 4.0.0 adds CTL-T3-13 (`hash_matches(env.dev, T3.candidate_package)`,
   FR-004: dev runs CI's package); T4 4.0.0 references playbook t4-evaluation 1.2.0 (failure modes from
   the harness's edge-case results; every requirement traced; failed controls are not defects).
+
+## Changes after conversion: feature 012 (terminal agents T6-T9)
+
+- Schema (additive): artifact formats `baseline` and `gate_summary` (built by the platform;
+  `built_from` names a baseline's evidence, field and tolerance); a control's `awaits`; the
+  authorities' `tool_scopes_by_mode`.
+- T4 5.0.0: `eval_baseline` is a declared artifact built from the candidate's harness result
+  (it was only an emitted name, so MON-04, CTL-T7-03 and CTL-T8-02 had no number to compare).
+- T6 2.0.0: `gate_evidence_summary` is built from records; CTL-T6-07 awaits the change approval;
+  `confluence:write` removed (no writable wiki server); ITSM and monitoring read scopes added.
+- T7 2.0.0: `stage_metrics` gains `key` (`<stage>:<metric>`); CTL-T7-08 (stage metrics are the
+  recorded readings) and CTL-T7-09 (registry entry is the recorded one); read scopes added.
+- T8 3.0.0: CTL-T8-05 and CTL-T8-06 (health and drift values are the recorded readings);
+  ITSM read scope added.
+- T9 2.0.0: `iam:revoke` and `cmdb:write` only in `retire` mode; read scopes added;
+  `confluence:write` removed.
+- Evidence sources 2.2.0: `change.change_id`, `telemetry.monitors` and `from_pilot`,
+  `observability` (stages, latest), `registry` (agents).

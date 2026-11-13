@@ -39,14 +39,14 @@ def pinned(terminal: str) -> dict[str, Any]:
 class SpecPolicy:
     """The real authorisation rules (feature 004 ``decide``) over the repository's pinned specs."""
 
-    def __init__(self, specs: Mapping[str, Mapping[str, Any]]) -> None:
-        self.specs = specs
+    def __init__(self, specs: Mapping[str, Mapping[str, Any]], mode: str | None = None) -> None:
+        self.specs, self.mode = specs, mode  # 012: the run's mode (mode-only tool scopes)
 
     def authorize_decision(
         self, actor: str, action: str, resource: str, context: EvalContext
     ) -> tuple[bool, str]:
         return authorization.decide(
-            actor, action, resource, context.run_id, self.specs.get(context.terminal_id)
+            actor, action, resource, context.run_id, self.specs.get(context.terminal_id), self.mode
         )
 
     def authorize(self, actor: str, action: str, resource: str, context: EvalContext) -> bool:
@@ -71,7 +71,9 @@ class Tools:
     bridge_dir: Path
     tools_url: str = ""
 
-    def gate(self, terminal: str, *tools: str) -> Callable[..., ToolOutput | ToolRefused]:
+    def gate(
+        self, terminal: str, *tools: str, mode: str | None = None
+    ) -> Callable[..., ToolOutput | ToolRefused]:
         spec = pinned(terminal)
         bindings = []
         for name in tools:
@@ -93,7 +95,7 @@ class Tools:
         bound = BoundValues(self.evidence, registry.bound_values)
         records = SqlToolRecords(self.engine, _Clock())
         gate = ToolGate(
-            SpecPolicy({terminal: spec}),  # type: ignore[arg-type]
+            SpecPolicy({terminal: spec}, mode),  # type: ignore[arg-type]
             {
                 n: McpTool(
                     CATALOGUE.tools[n],

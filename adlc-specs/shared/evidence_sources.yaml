@@ -2,12 +2,12 @@
 # Non-terminal evidence sources an expression or evidence_ref may start with (rule V-12),
 # plus `terminal_record`: fields every terminal run record has, readable as T<n>.<field>.
 catalogue: evidence_sources
-version: "2.0.0"
+version: "2.2.0"
 evidence_sources:
   - {id: terminal_record, fields: [status, bound_to, signed_by, closed_at, run_version, waivers], description: "Fields of every terminal's ledger record, read as T<n>.<field>"}
   - {id: intake, fields: [free_text, business_owner, title], description: "The use case as submitted"}
   - {id: env, fields: [dev, test, prod], description: "Pilot environments; members such as env.test.deployed_hash"}
-  - {id: change, fields: [window, window_requested, request_status], description: "The ITSM change record for a release"}
+  - {id: change, fields: [change_id, window, window_requested, request_status], description: "The ITSM change record for a release (012: the latest change of the use case in the ITSM mock)"}
   - {id: template, fields: [version], description: "The pinned golden template"}
   - {id: dataset, fields: [golden], description: "Registered datasets"}
   - {id: trigger, fields: [evidence, severity, event_id], description: "The event that opened the run"}
@@ -19,5 +19,14 @@ evidence_sources:
   - {id: redteam, fields: [injection_success_rate, jailbreak_success_rate], description: "Red-team harness results for the candidate (011: recorded result)"}
   - {id: dlp, fields: [pii_leak_count], description: "DLP scan results for the candidate (011: recorded result)"}
   - {id: portfolio, fields: [max_similarity], description: "Duplicate check against the agent portfolio"}
-  - {id: telemetry, fields: [policy_violation_rate, pii_leak_count, availability_pct, online_eval_score, cost_per_task_usd, kpi_values, autonomy_breach_count, upstream_deprecation_notice, safety_breach_severity], description: "Live signals of the deployed agent (T8 monitors)"}
+  - id: telemetry
+    fields: [policy_violation_rate, pii_leak_count, availability_pct, online_eval_score, cost_per_task_usd, kpi_values, autonomy_breach_count, upstream_deprecation_notice, safety_breach_severity, monitors]
+    description: "Live signals of the deployed agent (T8 monitors) (012: from the pilot's observability and the monitors configured; unmeasured fields are absent)"
+    from_pilot:
+      online_eval_score: {metric: routing_accuracy}  # the same measure as T4's harness task_success_rate
+      pii_leak_count: {metric: pii_outputs}
+      availability_pct: {ratio: [answered, sent], scale: 100}
+      cost_per_task_usd: {ratio: [cost, requests]}
+  - {id: observability, fields: [stages, latest], description: "012: the run's recorded observability readings, keyed <stage>:<metric> by the traffic mode set before each, and the latest reading of each metric"}
+  - {id: registry, fields: [agents], description: "012: the use case's agent-registry entries by agent id (version, owner, autonomy level, status, package)"}
   - {id: retirement, fields: [credentials_revoked, data_disposed, unowned_dependants], description: "Retirement checks (T9 retire mode)"}

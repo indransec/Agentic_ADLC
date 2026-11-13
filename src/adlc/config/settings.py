@@ -188,7 +188,8 @@ DEFAULT_AGENT_LIMITS: dict[str, AgentLimit] = {
     # 011: acting agents call a tool per step (a build takes about 10-14 steps), research R-02
     "reasoning": AgentLimit(steps=14, tokens=400_000, timeout_s=240),
     "coding": AgentLimit(steps=16, tokens=400_000, timeout_s=240),
-    "standard": AgentLimit(steps=6, tokens=200_000, timeout_s=120),
+    # 012: release and operations agents act through tools too (deploy, stages, registration)
+    "standard": AgentLimit(steps=14, tokens=400_000, timeout_s=240),
 }
 
 
@@ -209,6 +210,10 @@ class OrchestratorSettings(RuntimeSettings):
     )
     accounts_file: Path | None = Field(
         default=None, json_schema_extra=_meta("path to a readable file (optional)")
+    )
+    # 012: how often declared monitors are evaluated (real time; not scaled by time_scale)
+    monitor_interval: Duration = Field(
+        default=timedelta(minutes=1), json_schema_extra=_meta(DURATION_FORM)
     )
 
     # 008 knowledge MCP server (the agents' grounding)

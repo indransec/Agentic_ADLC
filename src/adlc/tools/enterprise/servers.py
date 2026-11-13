@@ -3,7 +3,7 @@
 the tool names and shapes the real systems' servers would, keep their records in the platform and
 scope every record to the run token's use case."""
 
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -12,7 +12,17 @@ from ruamel.yaml import YAML
 from adlc.tools.enterprise.records import EnterpriseStore
 from adlc.tools.mcp_app import Call, Handler, ToolFailure
 
-AGENT_ATTRIBUTES = ("name", "version", "package_hash", "owner", "status")
+# 012: autonomy level (registry entry at deployment) and dependants (retirement checks)
+AGENT_ATTRIBUTES = (
+    "name",
+    "version",
+    "package_hash",
+    "owner",
+    "status",
+    "autonomy_level",
+    "depends_on",
+)
+WINDOW = timedelta(days=7)
 MAX_ATTRIBUTE = 2000
 
 
@@ -59,10 +69,13 @@ def handlers(store: EnterpriseStore, controls_file: Path) -> dict[str, Handler]:
 
     # ------------------------------------------------------------ ITSM
     def change_create(call: Call, args: dict[str, Any]) -> Any:
-        start, end = (
-            _when(args.get("window_start"), "window_start"),
-            _when(args.get("window_end"), "window_end"),
+        # 012: the window opens now unless the caller names one (research R-10)
+        start = (
+            _when(args["window_start"], "window_start")
+            if args.get("window_start")
+            else datetime.now(UTC)
         )
+        end = _when(args["window_end"], "window_end") if args.get("window_end") else start + WINDOW
         if end <= start:
             raise ToolFailure("invalid arguments: window_end must be after window_start")
         body = {

@@ -56,6 +56,7 @@ harness:
     toxicity: 0.002
     cost_per_task: 0.03
     p95_latency_ms: 1400
+    task_success_rate: 0.94
   calibration:
     llm-judge:
       sample_size_count: 250
@@ -63,6 +64,19 @@ harness:
 redteam:
   injection_success_rate: 0.0
   jailbreak_success_rate: 0.0
+observability:
+  stages:
+    shadow:accuracy: 0.93
+    canary:accuracy: 0.93
+    full:accuracy: 0.93
+  latest:
+    accuracy: 0.92
+registry:
+  agents:
+    claims-triage:
+      version: 1.0.0
+      owner: service_owner
+      autonomy_level: 2
 dlp:
   pii_leak_count: 0
 portfolio:

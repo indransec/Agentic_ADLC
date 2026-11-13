@@ -80,3 +80,82 @@ def test_t4_cannot_use_t3_tools(orch_template: PlatformDatabase, tmp_path: Path)
         )  # the agent asked; it decided nothing
         # git_write is not wired (no model agent holds it here): refused without a system call
         assert recorded == []
+
+
+# ------------------------------------------------------------------ 012 (US5)
+
+T6, T7, T8 = "t6-readiness-agent", "t7-deployment-agent", "t8-operations-agent"
+
+
+def to_late(h: Harness, terminal: str) -> str:
+    usecase = h.submit()
+    h.pass_run(h.active(usecase, "T0").run_id, {"risk_tier": "low"})
+    for t in ("T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8"):
+        if t == terminal:
+            break
+        run = h.active(usecase, t)
+        h.drain()
+        h.pass_run(run.run_id)
+    return h.active(usecase, terminal).run_id
+
+
+def _released() -> FakePilot:
+    from tests.support.fake_pilot import SYNTHETIC_CANDIDATE  # noqa: PLC0415
+
+    fake = with_candidate(FakePilot(), "test")
+    fake.hosts["prod-sim"].stable = SYNTHETIC_CANDIDATE
+    return fake
+
+
+def test_t6_cannot_deploy(orch_template: PlatformDatabase, tmp_path: Path) -> None:
+    fake = _released()
+    replies = {T6: [tool("cd_deploy"), tool("traffic_manager_set", {"mode": "full"}), STOP], T7: []}
+    with acting(orch_template, replies, (T6, T7), tmp_path, fake) as a:
+        before = list(fake.hosts["prod-sim"].calls)
+        run_id = to_late(a.h, "T6")
+        recorded = calls(a.h, run_id)
+        assert [(t, o) for t, o, _ in recorded] == [
+            ("cd_deploy", "refused"),
+            ("traffic_manager_set", "refused"),
+        ]
+        assert fake.hosts["prod-sim"].calls == before  # nothing reached prod-sim
+        assert a.h.run(run_id).state == "awaiting_clarification"
+
+
+def test_t7_deploys_only_the_authorised_package(
+    orch_template: PlatformDatabase, tmp_path: Path
+) -> None:
+    fake = _released()
+    other = fake.add_package()
+    replies = {T7: [tool("cd_deploy", {"package_hash": other}), STOP]}
+    with acting(orch_template, replies, (T7,), tmp_path, fake) as a:
+        run_id = to_late(a.h, "T7")
+        from tests.support.fake_pilot import SYNTHETIC_CANDIDATE  # noqa: PLC0415
+
+        assert fake.hosts["prod-sim"].candidate == SYNTHETIC_CANDIDATE != other
+        assert [(t, o) for t, o, _ in calls(a.h, run_id)] == [("cd_deploy", "ok")]
+
+
+def test_t8_cannot_raise_a_change_or_deploy(
+    orch_template: PlatformDatabase, tmp_path: Path
+) -> None:
+    fake = _released()
+    replies = {
+        T8: [
+            tool("servicenow_change_create", {"summary": "x", "risk": "low"}),
+            tool("cd_deploy"),
+            STOP,
+        ]
+    }
+    # only T8 acts here: tools no acting agent holds are not wired, so nothing is called
+    with acting(orch_template, replies, (T8,), tmp_path, fake) as a:
+        before = list(fake.hosts["prod-sim"].calls)
+        run_id = to_late(a.h, "T8")
+        assert calls(a.h, run_id) == []
+        assert fake.hosts["prod-sim"].calls == before
+        with a.h.app.connect() as conn:
+            changes = conn.execute(
+                text("SELECT count(*) FROM tools.enterprise_record WHERE system = 'servicenow'")
+            ).scalar_one()
+        assert changes == 0
+        assert a.h.run(run_id).state == "awaiting_clarification"

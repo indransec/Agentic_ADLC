@@ -35,10 +35,12 @@ from adlc.config.settings import OrchestratorSettings
 from adlc.db.engine import app_engine
 from adlc.identity.accounts import load_accounts
 from adlc.identity.catalogue import load_role_ids
+from adlc.inbox.changes import ChangeService
 from adlc.observability.tracing import setup_process_tracing
 from adlc.orchestration import store
 from adlc.orchestration.engine import EngineConfig
 from adlc.orchestration.interfaces import SystemClock
+from adlc.orchestration.monitors import MonitorEvaluator
 from adlc.orchestration.service import Actor
 from adlc.orchestration.stubs import StubAgent, StubReviewer
 from adlc.orchestration.worker import build_orchestrator
@@ -186,7 +188,18 @@ def run_cli(
         config=EngineConfig(time_scale=settings.time_scale, lease=settings.lease),
         worker_id="adlc-replay",
     )
-    replayer = Replayer(orchestrator.service, orchestrator.runs, orchestrator.drain, people)
+    # 012: awaited change approvals and monitor rounds; a pilot fault is caused by an operator
+    # (pilot-fault), so a live replay to T9 waits for the monitors, never fakes the event
+    replayer = Replayer(
+        orchestrator.service,
+        orchestrator.runs,
+        orchestrator.drain,
+        people,
+        changes=ChangeService(engine, registry, orchestrator.service, clock),
+        monitors=MonitorEvaluator(
+            engine, registry, policy, orchestrator.service, settings.monitor_interval
+        ),
+    )
     results = []
     for ref in references:
         if recording is not None:

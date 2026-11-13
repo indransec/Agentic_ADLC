@@ -48,6 +48,8 @@ SOURCES = (
     "release",
     "portfolio",
     "retirement",
+    "observability",  # 012
+    "registry",  # 012
 )
 
 
@@ -87,7 +89,7 @@ def test_every_rule_evaluates_and_blocking_ones_pass(h: Harness) -> None:
             )  # SC-001
             if blocking:
                 assert result.passed, (check_id, result.reason)  # SC-002
-    assert count == 108
+    assert count == 112
     p95 = statistics.quantiles(timings, n=20)[18]
     print(f"\n98 rules: p95 {p95:.1f} ms, max {max(timings):.1f} ms")
     assert p95 < (100 if os.environ.get("CI") else 50)  # SC-008

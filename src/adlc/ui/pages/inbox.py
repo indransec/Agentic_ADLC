@@ -25,6 +25,40 @@ def render(api: ApiClient) -> None:
     st.header("Inbox")
     st.button("Refresh", key="inbox_refresh")
     items(api)
+    changes(api)
+    proposed_events(api)
+
+
+def changes(api: ApiClient) -> None:
+    """012 FR-012: change requests waiting for this person's decision (ITSM owner role)."""
+    found = api.get("/changes")
+    if not found:
+        return
+    st.subheader("Change requests")
+    table(
+        [
+            {
+                "change": c["change_id"],
+                "use case": c["usecase_id"],
+                "summary": c.get("summary", ""),
+                "window": f"{c.get('window_start', '')} to {c.get('window_end', '')}",
+                "risk": c.get("risk", ""),
+            }
+            for c in found
+        ]
+    )
+    ids = [c["change_id"] for c in found]
+    pick = st.selectbox("Change", ids, key="change_pick")
+    plan = next(c for c in found if c["change_id"] == pick).get("plan", "")
+    if plan:
+        st.markdown(f"**Plan**\n\n{plan}")
+    decision = st.radio("Decision", ["approve", "reject"], key=f"change_decision:{pick}")
+    comment = st.text_area("Comment", key=f"change_comment:{pick}")
+    if st.button("Record decision", key=f"change_submit:{pick}"):
+        api.post(
+            f"/changes/{pick}/decision", {"approve": decision == "approve", "comment": comment}
+        )
+        st.success(f"{pick} {'approved' if decision == 'approve' else 'rejected'}")
 
 
 @st.fragment(run_every=REFRESH_SECONDS)
@@ -69,3 +103,33 @@ def open_item(item: dict[str, Any]) -> None:
         navigate("Dead letters")
     else:
         navigate("Run", run_id=item["run_id"])
+
+
+def proposed_events(api: ApiClient) -> None:
+    """012 FR-007: lifecycle events an agent proposed; confirming raises the event."""
+    found = api.get("/events/proposed")
+    if not found:
+        return
+    st.subheader("Proposed events")
+    table(
+        [
+            {
+                "event": e["event_id"],
+                "type": e["event_type"],
+                "use case": e["usecase_id"],
+                "run": e["run_id"],
+                "routed to": e.get("routed_to") or "",
+            }
+            for e in found
+        ]
+    )
+    labels = {f"{e['event_id']} ({e['run_id']})": e for e in found}
+    pick = labels[st.selectbox("Event", list(labels), key="event_pick")]
+    ident = f"{pick['run_id']}/{pick['event_id']}"
+    decision = st.radio("Decision", ["confirm", "dismiss"], key=f"event_decision:{ident}")
+    comment = st.text_area("Comment", key=f"event_comment:{ident}")
+    if st.button("Record decision", key=f"event_submit:{ident}"):
+        api.post(
+            f"/events/proposed/{ident}", {"confirm": decision == "confirm", "comment": comment}
+        )
+        st.success(f"{pick['event_id']} {'confirmed' if decision == 'confirm' else 'dismissed'}")

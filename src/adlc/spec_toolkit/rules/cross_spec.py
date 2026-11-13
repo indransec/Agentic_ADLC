@@ -408,13 +408,22 @@ def v06_mcp(ctx: Context) -> Iterator[Finding]:
     servers = catalogues(ctx).mcp_scopes
     for loaded in ctx.terminals():
         t = spec(loaded)
-        for i, scope in enumerate((t.get("authorities") or {}).get("tool_scopes") or []):
+        authorities = t.get("authorities") or {}
+        listed = [
+            (f"/terminal/authorities/tool_scopes/{i}", s)
+            for i, s in enumerate(authorities.get("tool_scopes") or [])
+        ] + [
+            (f"/terminal/authorities/tool_scopes_by_mode/{m}/{i}", s)
+            for m, scopes in (authorities.get("tool_scopes_by_mode") or {}).items()
+            for i, s in enumerate(scopes or [])
+        ]
+        for path, scope in listed:
             parts = str(scope).split(":")
             if len(parts) != 3 or parts[1] not in servers or parts[2] not in servers[parts[1]]:
                 yield ctx.finding(
                     "V-06",
                     loaded.rel,
-                    f"/terminal/authorities/tool_scopes/{i}",
+                    path,
                     f"tool scope {scope} is not in the MCP registry (shared/mcp_servers.yaml)",
                 )
         for i, ground in enumerate((t.get("playbooks") or {}).get("grounding") or []):
@@ -820,7 +829,13 @@ def v23_unused(ctx: Context) -> Iterator[Finding]:
             parsed = _parsed(text)
             if parsed is not None:
                 used_predicates.update(c.name for c in parsed.calls)
-        for scope in (t.get("authorities") or {}).get("tool_scopes") or []:
+        authorities = t.get("authorities") or {}
+        every = list(authorities.get("tool_scopes") or []) + [
+            s
+            for scopes in (authorities.get("tool_scopes_by_mode") or {}).values()
+            for s in scopes or []
+        ]
+        for scope in every:
             parts = str(scope).split(":")
             if len(parts) == 3:
                 used_servers.add(parts[1])

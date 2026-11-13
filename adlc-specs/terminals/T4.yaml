@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T4
     name: Evaluation
-    version: "4.0.0"
+    version: "5.0.0"
     schema_version: "1.1.0"
     purpose: Does the agent behave as designed?
     owner_role: adlc_coe
@@ -146,6 +146,8 @@ terminal:
       - {id: defect_log, format: table, columns: [defect_id, severity, root_cause_terminal, status], applicability: {mode: mandatory}}
       - {id: judge_calibration, format: table, columns: [judge, sample_size_count, agreement_rate], applicability: {mode: mandatory}}
       - {id: regression_pack, format: reference, columns: [pack_id, version, case_count], applicability: {mode: mandatory}}
+      # 012 R-09: built by the platform from the candidate's harness result; agents never write it
+      - {id: eval_baseline, format: baseline, columns: [metric, value, tolerance], built_from: {evidence: harness, field: metrics.task_success_rate, tolerance: 0.05}, applicability: {mode: mandatory}}
     ledger: {key: "${usecase_id}/T4/${run_version}", immutable: true, bound_to: T3.candidate_package.sha256, retention: per_tier}
   outcome_model:
     pass: {route: T5, emits: [regression_pack, eval_baseline]}

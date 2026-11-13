@@ -15,7 +15,7 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 import typer
 from ruamel.yaml import YAML
@@ -24,13 +24,18 @@ from sqlalchemy import Engine, text
 from adlc.agents.catalogue import ModelCatalogue, ModelEntry
 from adlc.agents.fake import FakeGateway, reply
 from adlc.agents.gateway import CallRecorder, Outcome, ProviderReply, Transport
+from adlc.inbox.rules import waiver_approvers
 from adlc.orchestration import routing, spec_view
-from adlc.orchestration.engine import PostgresTerminalRun
+from adlc.orchestration.engine import PostgresTerminalRun, awaiting
 from adlc.orchestration.service import Actor, NotAuthorised, OrchestratorService
 from adlc.orchestration.states import RunState
 from adlc.orchestration.store import RunRow
 
 Planned = str | ProviderReply | Callable[[Sequence[Mapping[str, str]]], str | ProviderReply]
+if TYPE_CHECKING:
+    from adlc.inbox.changes import ChangeService
+    from adlc.orchestration.monitors import MonitorEvaluator
+
 People = Callable[[str], Sequence[Actor]]  # every account holding the role, in order
 SIGNATURE = 300  # characters of a system prompt that identify its agent
 MAX_ROUNDS = 80
@@ -139,6 +144,10 @@ class Reference:
     # 011: terminals whose escalation a person completes so the run reaches sign-off (e.g. a gap
     # the agent cannot close, decided by people)
     complete_escalations: tuple[str, ...] = ()
+    # 012: terminals people pass with an exception (its fields), the waiver then approved
+    exceptions: Mapping[str, Mapping[str, Any]] = field(default_factory=dict)
+    # 012: a pilot fault to cause after a terminal passes, followed by a monitor round
+    faults_after: Mapping[str, str] = field(default_factory=dict)
 
 
 def load_references(folder: Path, only: Sequence[str] = ()) -> list[Reference]:
@@ -159,6 +168,8 @@ def load_references(folder: Path, only: Sequence[str] = ()) -> list[Reference]:
                 approver_fields=dict(data.get("approver_fields") or {}),
                 expected=dict(data.get("expected") or {}),
                 complete_escalations=tuple(str(t) for t in data.get("complete_escalations") or []),
+                exceptions=dict(data.get("exceptions") or {}),
+                faults_after={str(k): str(v) for k, v in (data.get("faults_after") or {}).items()},
             )
         )
     return references
@@ -218,9 +229,15 @@ class Replayer:
         drain: Callable[[], int],
         people: People,
         max_rounds: int = MAX_ROUNDS,
+        *,
+        changes: "ChangeService | None" = None,
+        monitors: "MonitorEvaluator | None" = None,
+        fault: Callable[[str], None] | None = None,
     ) -> None:
         self.service, self.runs, self.drain, self.people = service, runs, drain, people
         self.max_rounds = max_rounds
+        # 012: who approves awaited changes, evaluates monitors, causes pilot faults
+        self.changes, self.monitors, self.fault = changes, monitors, fault
 
     @property
     def engine(self) -> Engine:
@@ -260,7 +277,16 @@ class Replayer:
                 seen[run.terminal_id] = self._result(run)
                 if run.terminal_id == ref.until:
                     return "completed"
-                self._pass(run, ref)
+                if awaiting(run.control_results):  # 012: e.g. a change waiting for approval
+                    if not self._awaited(run):
+                        return f"stopped: {run.terminal_id} waits for an action nobody took"
+                    continue
+                if run.terminal_id in ref.exceptions:
+                    self._exception(run, ref.exceptions[run.terminal_id])
+                else:
+                    self._pass(run, ref)
+                if run.terminal_id in ref.faults_after:
+                    self._fault(ref.faults_after[run.terminal_id])
             elif run.state == RunState.ESCALATED and run.terminal_id in ref.complete_escalations:
                 seen[run.terminal_id] = self._result(run)
                 if not self._complete(run):
@@ -312,6 +338,55 @@ class Replayer:
                     continue
         return False
 
+    def _awaited(self, run: RunRow) -> bool:
+        """012: approve the use case's waiting changes as the ITSM owner (what the awaited
+        control waits for); the decision re-runs the controls."""
+        if self.changes is None:
+            return False
+        role = self.changes.approver()
+        people = self.people(role) if role else []
+        waiting = (
+            [c for c in self.changes.waiting(people[0]) if c["usecase_id"] == run.usecase_id]
+            if people
+            else []
+        )
+        for change in waiting:
+            self.changes.decide(people[0], change["change_id"], True, REPLAY_REASON)
+        return bool(waiting)
+
+    def _exception(self, run: RunRow, fields: Mapping[str, Any]) -> None:
+        """012: an approver decides an exception with the reference's waiver fields; a waiver
+        approver of the terminal (another person) approves the waiver."""
+        spec = self.runs.entry(run.terminal_id, run.spec_version).spec
+        with self.engine.connect() as conn:
+            ctx = self.runs.context(conn, run)
+        deciders = [
+            a for r in sorted(ctx.rule_roles | ctx.required_plus_roles) for a in self.people(r)
+        ]
+        if not deciders:
+            return
+        decider = deciders[0]
+        decided = self.service.decide(
+            decider, run.run_id, "exception", reason=REPLAY_REASON, fields=dict(fields)
+        )
+        waiver = decided.pending_waiver_id
+        if waiver is None:
+            return
+        for role in sorted(waiver_approvers(spec)):
+            for person in self.people(role):
+                if person.account_name != decider.account_name:
+                    self.service.decide_waiver(person, waiver, True, REPLAY_REASON)
+                    return
+
+    def _fault(self, name: str) -> None:
+        """012: cause the pilot fault, then evaluate the monitors (an event they raise opens the
+        next run on the next round)."""
+        if self.fault is not None:
+            self.fault(name)
+        if self.monitors is not None:
+            self.drain()
+            self.monitors.tick()
+
     def _pass(self, run: RunRow, ref: Reference) -> None:
         spec = self.runs.entry(run.terminal_id, run.spec_version).spec
         typed = dict(ref.approver_fields.get(run.terminal_id) or {})
@@ -342,7 +417,7 @@ class Replayer:
         mandatory = [
             a.id
             for a in spec_view.artifacts(spec)
-            if a.condition is None and a.format != "signed_record"  # 011: people sign those
+            if a.condition is None and not a.built  # 011, 012: built from records
         ]
         with self.engine.connect() as conn:
             attempts = conn.execute(

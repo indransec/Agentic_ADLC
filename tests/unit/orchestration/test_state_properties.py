@@ -59,6 +59,7 @@ PAYLOADS: dict[SignalKind, list[dict[str, Any]]] = {
     SignalKind.LIFECYCLE_ENDED: [{}],
     SignalKind.ARTIFACT_EDITED: [{"artifacts": {}}],
     SignalKind.CONTROLS_RECHECKED: [{"results": []}],
+    SignalKind.EVIDENCE_CHANGED: [{}],
 }
 
 signals = st.builds(

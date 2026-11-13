@@ -91,8 +91,8 @@ def _stage_rows(metrics: Any, stage: Any) -> list[tuple[int, dict[str, Any]]]:
 
 @predicate("within_baseline_tolerance", 3)
 def within_baseline_tolerance(metrics: Any, baseline: Any, stage: Any) -> Any:
-    if is_empty(baseline):
-        return fail("baseline is not available")
+    if not _has_baseline(baseline):
+        return fail(f"{name_of(baseline)} is not a measured baseline")
     for i, row in _stage_rows(metrics, stage):
         if text(row.get("result")).lower() != "pass":
             return fail(
@@ -160,6 +160,8 @@ def below_nfr(signal: Any, nfrs: Any, category: Any) -> Any:
 
 def _baseline(value: Any) -> tuple[float, float]:
     plain = to_py(value)
+    if isinstance(plain, list) and len(plain) == 1:  # 012: a built baseline is a one-row table
+        plain = plain[0]
     if isinstance(plain, dict):
         base, tolerance = as_number(plain.get("value")), as_number(plain.get("tolerance")) or 0.0
     else:
@@ -167,6 +169,17 @@ def _baseline(value: Any) -> tuple[float, float]:
     if base is None:
         raise PredicateError("baseline is not numeric")
     return base, tolerance
+
+
+def _has_baseline(value: Any) -> bool:
+    """012: a baseline is a number (or a built one-row table of one); anything else fails."""
+    if is_empty(value):
+        return False
+    try:
+        _baseline(value)
+    except PredicateError:
+        return False
+    return True
 
 
 @predicate("below_baseline", 2)
@@ -228,8 +241,8 @@ def all_monitors_reporting() -> Any:
 
 @predicate("regression_within_baseline", 2)
 def regression_within_baseline(report: Any, baseline: Any) -> Any:
-    if is_empty(baseline):
-        return fail("baseline is not available")
+    if not _has_baseline(baseline):
+        return fail(f"{name_of(baseline)} is not a measured baseline")
     for i, row in enumerate(rows(report), start=1):
         if text(row.get("status")).lower() in BAD:
             return fail(

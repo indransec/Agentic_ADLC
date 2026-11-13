@@ -292,6 +292,7 @@ class PostgresTerminalRun:
             required_plus_roles=required_plus,
             approvals=approvals,
             controls_pending=run.controls_pending,
+            awaiting=awaiting(run.control_results),
         )
 
     def apply_in(
@@ -797,6 +798,7 @@ class PostgresTerminalRun:
                 "blocking": check.blocking,
                 "reason": result.reason,
                 "synthetic": result.synthetic,
+                **({"awaits": check.awaits} if check.awaits else {}),
             }
             for check in spec_view.controls(spec)
             for result in (
@@ -911,12 +913,23 @@ class PostgresTerminalRun:
             )
         with span("policy", "controls", **ids_):
             control_results = self._control_results(run, spec)
-        failed = [c["id"] for c in control_results if not c["passed"] and c["blocking"]]
+        failed = [
+            c["id"]
+            for c in control_results
+            if not c["passed"] and c["blocking"] and not c.get("awaits")
+        ]
         return Signal(
             SignalKind.CONTROLS_RESULT,
             ActorType.ORCHESTRATOR,
             ORCHESTRATOR_ID,
-            {"passed": not failed, "failed_blocking_ids": failed, "results": control_results},
+            {
+                # 012: a control waiting for a person's action does not send the agent back;
+                # the run goes on to sign-off, where pass waits for it (states._decide)
+                "passed": not failed,
+                "failed_blocking_ids": failed,
+                "awaiting_ids": list(awaiting(control_results)),
+                "results": control_results,
+            },
         )
 
     def _eval(self, run: RunRow, check_id: str, attempt: int | None = None) -> EvalContext:
@@ -1027,3 +1040,12 @@ def _detail(signal: Signal) -> dict[str, Any]:
         "edited",
     )
     return json_dict({k: signal.payload[k] for k in keep if k in signal.payload})
+
+
+def awaiting(control_results: Any) -> tuple[str, ...]:
+    """012: blocking controls that failed and wait for a person's action outside the run."""
+    return tuple(
+        str(c["id"])
+        for c in control_results or []
+        if isinstance(c, Mapping) and c.get("blocking") and not c.get("passed") and c.get("awaits")
+    )

@@ -250,7 +250,7 @@ def test_agent_runtime_defaults(orchestrator_env: None) -> None:
         "tokens": 400_000,
         "timeout_s": 240.0,
     }
-    assert s.agent_limits["standard"].timeout_s == 120.0
+    assert s.agent_limits["standard"].timeout_s == 240.0
     assert s.model_outage_limit.total_seconds() == 1800
     assert s.cost_alert_levels == (Decimal("5"), Decimal("20"), Decimal("50"))
     assert s.agent_limit_overrides == {}

@@ -150,9 +150,14 @@ def validate_artifacts(
     ]
     for aid, decl in declared.items():
         rows = artifacts.get(aid)
-        if decl.format == SIGNED:  # 011 FR-003: people sign; agents never write it
+        if decl.built:  # 011 FR-003, 012 R-09: built from records; agents never write it
             if rows is not None:
-                problems.append(f"artifact {aid} is signed by people at sign-off; leave it out")
+                what = (
+                    "signed by people at sign-off"
+                    if decl.format == SIGNED
+                    else "built by the platform from records"
+                )
+                problems.append(f"artifact {aid} is {what}; leave it out")
             continue
         if rows is None:
             if required(decl):

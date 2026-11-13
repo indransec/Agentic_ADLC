@@ -112,13 +112,13 @@ def emitted_values(
     """
     values: dict[str, Any] = {}
     missing: list[str] = []
-    signed = {a.id for a in spec_view.artifacts(spec) if a.format == "signed_record"}
+    built = {a.id for a in spec_view.artifacts(spec) if a.built}
     for name in spec_view.emits(spec):
         artifact, _, column = name.partition(".")
         if name in provided and provided[name] not in (None, ""):
             values[name] = provided[name]
-        elif not column and (artifact in artifacts or artifact in signed):
-            # 011: a signed record is the sign-off itself (built from the sign-off records)
+        elif not column and (artifact in artifacts or artifact in built):
+            # 011, 012: a built artifact (sign-offs, baseline, gate summary) comes from records
             values[name] = {"artifact": artifact}
         elif column and isinstance(artifacts.get(artifact), list) and artifacts[artifact]:
             values[name] = artifacts[artifact][0].get(column)

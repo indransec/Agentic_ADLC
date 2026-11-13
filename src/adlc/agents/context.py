@@ -128,7 +128,13 @@ def build_pack(
             "version": spec_version,
             "content_hash": spec_hash,
             "artifacts": [
-                {"id": a.id, "columns": list(a.columns), "condition": a.condition}
+                {
+                    "id": a.id,
+                    "columns": list(a.columns),
+                    "condition": a.condition,
+                    # 012: the platform builds it from records; leave it out
+                    **({"built_by_platform": True} if a.built else {}),
+                }
                 for a in spec_view.artifacts(spec)
             ],
             "controls": [

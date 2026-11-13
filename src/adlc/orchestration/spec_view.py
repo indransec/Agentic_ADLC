@@ -55,6 +55,7 @@ class Check:
     id: str
     expression: str
     blocking: bool
+    awaits: str | None = None  # 012: a person's action outside the run this control waits for
 
 
 def prerequisites(spec: Spec) -> tuple[Check, ...]:
@@ -79,7 +80,12 @@ def prerequisite_entries(spec: Spec) -> tuple[dict[str, Any], ...]:
 
 def controls(spec: Spec) -> tuple[Check, ...]:
     return tuple(
-        Check(str(c["id"]), str(c.get("rule", "")), c.get("severity", "blocking") == "blocking")
+        Check(
+            str(c["id"]),
+            str(c.get("rule", "")),
+            c.get("severity", "blocking") == "blocking",
+            str(c["awaits"]) if c.get("awaits") else None,
+        )
         for c in _list(_section(spec, "controls", "automated"))
     )
 
@@ -88,12 +94,21 @@ def checklist_items(spec: Spec) -> tuple[str, ...]:
     return tuple(str(i) for i in _list(_section(spec, "controls", "checklist", "items")))
 
 
+# Artifacts the platform builds from records; an agent never writes them (011 FR-003, 012 R-09).
+BUILT_FORMATS = ("signed_record", "baseline", "gate_summary")
+
+
 @dataclass(frozen=True)
 class ArtifactSpec:
     id: str
     columns: tuple[str, ...]
     condition: str | None
-    format: str = "table"  # 011: a ``signed_record`` is written by people at sign-off, not agents
+    format: str = "table"
+    built_from: Mapping[str, Any] | None = None  # 012: what a ``baseline`` is built from
+
+    @property
+    def built(self) -> bool:
+        return self.format in BUILT_FORMATS
 
 
 def artifacts(spec: Spec) -> tuple[ArtifactSpec, ...]:
@@ -109,6 +124,7 @@ def artifacts(spec: Spec) -> tuple[ArtifactSpec, ...]:
                 tuple(str(c) for c in _list(a.get("columns"))),
                 condition,
                 str(a.get("format") or "table"),
+                dict(a["built_from"]) if isinstance(a.get("built_from"), Mapping) else None,
             )
         )
     return tuple(out)
@@ -228,6 +244,27 @@ def reentry_terminals(spec: Spec) -> frozenset[str]:
     return frozenset(
         str(c["reentry"]) for c in classes.values() if isinstance(c, Mapping) and c.get("reentry")
     )
+
+
+def tool_scopes(spec: Spec, mode: str | None = None) -> tuple[str, ...]:
+    """012: the terminal's tool scopes; with a mode, plus the scopes granted in that mode; with
+    ``mode="*"``, plus every mode's (what the terminal may ever use)."""
+    authorities = _section(spec, "authorities") or {}
+    found = [str(s) for s in _list(authorities.get("tool_scopes"))]
+    by_mode = authorities.get("tool_scopes_by_mode") or {}
+    if isinstance(by_mode, Mapping):
+        for name, scopes in by_mode.items():
+            if mode == "*" or name == mode:
+                found += [str(s) for s in _list(scopes) if str(s) not in found]
+    return tuple(found)
+
+
+def modes_granting(spec: Spec, scope: str) -> tuple[str, ...]:
+    """012: the modes whose extra tool scopes include ``scope``."""
+    by_mode = (_section(spec, "authorities") or {}).get("tool_scopes_by_mode") or {}
+    if not isinstance(by_mode, Mapping):
+        return ()
+    return tuple(sorted(m for m, scopes in by_mode.items() if scope in _list(scopes)))
 
 
 def raised_events(spec: Spec) -> frozenset[str]:

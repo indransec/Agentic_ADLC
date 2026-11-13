@@ -60,6 +60,7 @@ class SignalKind(StrEnum):
     LIFECYCLE_ENDED = "lifecycle_ended"
     ARTIFACT_EDITED = "artifact_edited"  # 005: a person edited an artifact
     CONTROLS_RECHECKED = "controls_rechecked"  # 005: controls re-run on edited content
+    EVIDENCE_CHANGED = "evidence_changed"  # 012: an awaited action happened; re-run the controls
 
 
 ALLOWED_ACTOR: Mapping[SignalKind, ActorType] = {
@@ -80,6 +81,7 @@ ALLOWED_ACTOR: Mapping[SignalKind, ActorType] = {
     SignalKind.LIFECYCLE_ENDED: ActorType.HUMAN,
     SignalKind.ARTIFACT_EDITED: ActorType.HUMAN,
     SignalKind.CONTROLS_RECHECKED: ActorType.ORCHESTRATOR,
+    SignalKind.EVIDENCE_CHANGED: ActorType.HUMAN,  # the person whose action it was
 }
 
 DECISIONS = frozenset({"pass", "rework", "exception", "terminate"})
@@ -109,6 +111,7 @@ class TransitionContext:
     required_plus_roles: frozenset[str] = frozenset()
     approvals: tuple[tuple[str, str], ...] = ()  # (person, role) of pass sign-offs so far
     controls_pending: bool = False  # 005: an edit's controls have not been re-run yet
+    awaiting: tuple[str, ...] = ()  # 012: failed controls that wait for a person's action
 
 
 # ------------------------------------------------------------------ effects
@@ -374,6 +377,13 @@ def _edited(state: RunState) -> Callable[[Mapping[str, Any], TransitionContext],
     return handle
 
 
+def _evidence_changed(p: Mapping[str, Any], ctx: TransitionContext) -> Outcome | None:
+    """012: an awaited action happened (e.g. a change approved): re-run the controls."""
+    if not ctx.awaiting or ctx.controls_pending:
+        return None
+    return Outcome(RunState.AWAITING_SIGN_OFF, (SetControlsPending(True),))
+
+
 def _rechecked(state: RunState) -> Callable[[Mapping[str, Any], TransitionContext], Outcome]:
     def handle(p: Mapping[str, Any], ctx: TransitionContext) -> Outcome:
         return Outcome(state, (StoreControls(), SetControlsPending(False)))
@@ -396,6 +406,7 @@ _HANDLERS = {
         RunState.AWAITING_SIGN_OFF
     ),
     (RunState.ESCALATED, SignalKind.CONTROLS_RECHECKED): _rechecked(RunState.ESCALATED),
+    (RunState.AWAITING_SIGN_OFF, SignalKind.EVIDENCE_CHANGED): _evidence_changed,
 }
 
 
@@ -422,6 +433,11 @@ def _decide(state: RunState, signal: Signal, ctx: TransitionContext) -> Outcome 
         raise InvalidTransition("controls are being re-run after an edit; decide once they finish")
     if decision == "exception":
         return Outcome(RunState.AWAITING_SIGN_OFF, (RecordSignOff("exception"), ProposeWaiver()))
+    if ctx.awaiting:  # 012: e.g. the change is not approved yet
+        raise InvalidTransition(
+            f"controls {', '.join(ctx.awaiting)} wait for an action outside this run; "
+            "pass once they pass"
+        )
     role = str(signal.payload.get("role"))
     if role not in ctx.rule_roles | ctx.required_plus_roles:
         raise InvalidTransition(f"role {role} cannot sign off this run")

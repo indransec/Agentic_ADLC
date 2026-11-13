@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T9
     name: Evolve / Retire
-    version: "1.0.0"
+    version: "2.0.0"
     schema_version: "1.1.0"
     purpose: How do we continuously improve or retire the product?
     owner_role: adlc_coe
@@ -51,7 +51,9 @@ terminal:
       allow: ["disable:traffic", "revoke:agent_identity", "revoke:tool_scopes", "archive:data", "update:agent_registry"]
       requires: business_owner
     data_access: {max_class: confidential_masked}
-    tool_scopes: ["mcp:agent_registry:write", "mcp:iam:revoke", "mcp:cmdb:write", "mcp:confluence:write", "mcp:servicenow:change_create"]
+    tool_scopes: ["mcp:agent_registry:read", "mcp:agent_registry:write", "mcp:cmdb:read", "mcp:iam:read", "mcp:servicenow:change_create"]
+    tool_scopes_by_mode:  # 012: revocation and disposal only when retiring (FR-009, US5)
+      retire: ["mcp:iam:revoke", "mcp:cmdb:write"]
     sign_off:
       by_mode:
         evolve: {roles: [product_owner], min_approvers: 1}
@@ -59,9 +61,9 @@ terminal:
     status_rights: {reviewer: [recommend], human: [pass, rework, exception, terminate], orchestrator: [escalate]}
   playbooks:
     procedures:
-      - {id: PB-T9-01, ref: playbooks/t9-change-impact.md, version: "1.0.0"}
+      - {id: PB-T9-01, ref: playbooks/t9-change-impact.md, version: "1.1.0"}
       - {id: PB-T9-02, ref: playbooks/version-lifecycle.md, version: "1.0.0"}
-      - {id: PB-T9-03, ref: playbooks/retirement.md, version: "1.0.0"}
+      - {id: PB-T9-03, ref: playbooks/retirement.md, version: "1.1.0"}
     grounding:
       - {mcp: confluence, scope: /adlc/lessons-learned}
       - {mcp: agent_registry, scope: dependent agents and consumers}

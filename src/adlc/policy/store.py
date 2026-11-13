@@ -128,4 +128,8 @@ def approved_waivers(conn: Any, usecase_id: str) -> list[dict[str, Any]]:
         ),
         {"u": usecase_id},
     ).mappings()
-    return [dict(r) for r in rows]
+    # 012: dates as ISO text, as every other evidence value (the policy engine reads text)
+    return [
+        {**dict(r), "expiry": r["expiry"].isoformat() if r["expiry"] is not None else None}
+        for r in rows
+    ]
