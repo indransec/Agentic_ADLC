@@ -46,11 +46,11 @@ unfinished task.
 
 ## Phase 4: User Story 2 – Every demo moment has a scenario test (P1)
 
-- [ ] T011 [P] [US2] `tests/scenario/test_d1_agent_reviewer_human.py`: over the reference replay, every terminal has an agent attempt, a reviewer recommendation and a person's decision recorded (D-1).
-- [ ] T012 [P] [US2] `tests/scenario/test_d6_hash_integrity.py`: the deployed hash equals T3's candidate, T4's and T5's bound hash and T6's deployment package (D-6).
-- [ ] T013 [P] [US2] `tests/scenario/test_d8_dashboard.py`: the dashboard's journey (lanes, arrows), activity and KPIs reflect the replayed lifecycle (D-8).
-- [ ] T014 [P] [US2] `tests/scenario/test_negative_agents.py`: an agent cannot decide a run, cannot deploy an unauthorised hash, cannot raise an operational event for another use case, cannot approve a change or a waiver (SC-005).
-- [ ] T015 [US2] `tests/scenario/README.md`: D-1..D-9 each mapped to its test.
+- [X] T011 [P] [US2] `tests/scenario/test_d1_agent_reviewer_human.py`: over the reference replay, every terminal has an agent attempt, a reviewer recommendation and a person's decision recorded (D-1).
+- [X] T012 [P] [US2] `tests/scenario/test_d6_hash_integrity.py`: the deployed hash equals T3's candidate, T4's and T5's bound hash and T6's deployment package (D-6).
+- [X] T013 [P] [US2] `tests/scenario/test_d8_dashboard.py`: the dashboard's journey (lanes, arrows), activity and KPIs reflect the replayed lifecycle (D-8).
+- [X] T014 [P] [US2] `tests/scenario/test_negative_agents.py`: an agent cannot decide a run, cannot deploy an unauthorised hash, cannot raise an operational event for another use case, cannot approve a change or a waiver (SC-005).
+- [X] T015 [US2] `tests/scenario/README.md`: D-1..D-9 each mapped to its test.
 
 ---
 
