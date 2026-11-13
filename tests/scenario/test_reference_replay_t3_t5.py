@@ -3,6 +3,7 @@ replays from T0 to T5 sign-off: T0-T2 from their recordings, T3-T5 acting throug
 over the fake pilot; the report counts tool calls; the T5 kill-switch gap is completed by a person
 and left for the approvers to decide."""
 
+from dataclasses import replace
 from pathlib import Path
 
 from adlc.agents.replay import Replayer, Report, load_references, markdown, read_recording
@@ -11,8 +12,14 @@ from tests.support.acting_scripts import Assurance, Evaluation, t3_build
 from tests.support.orchestration import person
 from tests.support.pg import REPO_ROOT, PlatformDatabase
 
-REFERENCE = next(
-    r for r in load_references(REPO_ROOT / "data" / "reference_usecases") if r.until == "T5"
+# 012: the reference now runs to T9; this test keeps the 011 scope (to T5's sign-off)
+REFERENCE = replace(
+    next(
+        r
+        for r in load_references(REPO_ROOT / "data" / "reference_usecases")
+        if r.id == "it-service-desk"
+    ),
+    until="T5",
 )
 RECORDINGS = REPO_ROOT / "tests" / "fixtures" / "replays" / REFERENCE.id
 AGENTS = (

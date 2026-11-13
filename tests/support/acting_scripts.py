@@ -529,6 +529,7 @@ class Operations:
         ("routing_accuracy", 0.85, ">="),
         ("latency_p95_ms", 2000, "<="),
         ("cost", 10.0, "<="),
+        ("tokens", 10_000_000, "<="),
     )
     BASELINE = 0.94
 

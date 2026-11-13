@@ -24,7 +24,8 @@ users, from measured readings; and surface the signals that call for a lifecycle
 
 1. **operating_health_report** (`metric, threshold, actual, trend, status`): one row per metric
    of the reading that has a threshold (T4 baseline, T1 non-functional requirements, budget),
-   `actual` copied from the reading; `status` `ok` or `breach`.
+   `actual` copied from the reading; `status` `ok` or `breach`. Always include the `cost` and
+   `tokens` rows (against the T2 budget): the cost report's values are checked through them.
 2. **incident_problem_log** (`incident_id, severity, opened, closed, root_cause, linked_event`):
    this use case's incidents (severity `sev<n>`), or one row `none`.
 3. **drift_report** (`metric, slice, baseline, current, delta`): per PB-T8-03; `current` copied

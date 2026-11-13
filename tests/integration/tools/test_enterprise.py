@@ -6,7 +6,7 @@ from typing import Any
 
 from sqlalchemy import text
 
-from adlc.agents.tools import ToolOutput
+from adlc.agents.tools import ToolOutput, ToolRefused
 from tests.support.tools import call, token
 
 from .conftest import Tools
@@ -84,7 +84,10 @@ def test_itsm_registry_cmdb_and_iam(tools: Tools) -> None:
     )
     entry = read(tools, "agent_registry", "read", {"agent_id": "AG-1"})["records"][0]
     assert (entry["record_version"], entry["status"], entry["version"]) == (2, "retired", "2")
-    t9 = tools.gate("T9", "iam_revoke")
+    evolving = tools.gate("T9", "iam_revoke", mode="evolve")  # 012: revocation is for retiring
+    refused = evolving("iam_revoke", {"what": "tool_scopes", "reason": "not retiring"})
+    assert isinstance(refused, ToolRefused) and "granted only in mode retire" in refused.reason
+    t9 = tools.gate("T9", "iam_revoke", mode="retire")
     revoked = output(t9("iam_revoke", {"what": "tool_scopes", "reason": "retired"}))
     assert revoked == {"revocation_id": "REV-1", "identities": ["agent:AG-1"]}
     iam = read(tools, "iam", "read", {})

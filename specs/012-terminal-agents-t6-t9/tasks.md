@@ -95,7 +95,15 @@ unfinished task.
 
 ## Phase 8: Polish & cross-cutting
 
-- [ ] T028 Reference replay: `data/reference_usecases/it-service-desk.yaml` through T9 (`until: T9`, change approval and T8 period in the script, model swap → drift); `tests/scenario/test_reference_replay_t6_t9.py` offline with scripted replies (SC-005); `src/adlc/agents/replay.py` handles the change approval and the monitor evaluator.
-- [ ] T029 [P] Pinned counts and fixtures: rules count in `tests/unit/policy/test_compiler.py` and `tests/integration/policy/test_all_rules.py`, register totals, grant tests, `scripts/make_synthetic.py` (new T7 `key` column, T6 monitoring evidence) and regenerated `data/synthetic/evidence.yaml`.
-- [ ] T030 [P] Docs: `src/adlc/inbox/README.md` (change requests, proposed events), `src/adlc/orchestration/README.md` (monitor evaluator), `CONVERSION.md` notes; `data-model.md` versions as released.
+- [X] T028 Reference replay: `data/reference_usecases/it-service-desk.yaml` through T9 (`until: T9`, change approval and T8 period in the script, model swap → drift); `tests/scenario/test_reference_replay_t6_t9.py` offline with scripted replies (SC-005); `src/adlc/agents/replay.py` handles the change approval and the monitor evaluator.
+- [X] T029 [P] Pinned counts and fixtures: rules count in `tests/unit/policy/test_compiler.py` and `tests/integration/policy/test_all_rules.py`, register totals, grant tests, `scripts/make_synthetic.py` (new T7 `key` column, T6 monitoring evidence) and regenerated `data/synthetic/evidence.yaml`.
+- [X] T030 [P] Docs: `src/adlc/inbox/README.md` (change requests, proposed events), `src/adlc/orchestration/README.md` (monitor evaluator), `CONVERSION.md` notes; `data-model.md` versions as released.
 - [ ] T031 Targeted suites locally (unit, agents, policy, inbox/API, scenario); push after the user's approval and let CI run `make check` (SC-007). SC-002's 10 minutes is measured only at the test time scale (live runs are not in scope, per the dev-model decision).
+
+---
+
+## Phase 9: Convergence
+
+- [X] T032 Wire the change approver and the monitor evaluator into `adlc-replay` (`src/adlc/agents/replay_cli.py`), so a replay to T9 does not stop at T6's awaited approval per FR-011 (partial)
+- [X] T033 Record deliberate deviations per FR-003 and research R-06 (contradicts, accepted): `cost_report` is checked through the health report's `cost` and `tokens` rows (CTL-T8-05; the spec language has no literal maps, so a per-period key would put a metric name in code); `drift_report` is checked against the recorded reading (CTL-T8-06), not the monitor decisions; the engine does not act on T7's `auto_rollback_on` (the agent rolls back, the stage control escalates, people decide the rework)
+- [X] T034 Approved waivers reach the policy engine with ISO-text expiry (`src/adlc/policy/store.py`): a real waiver made CTL-T6-02 an evaluation error per US1/AC2 (contradicts)

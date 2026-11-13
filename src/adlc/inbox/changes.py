@@ -48,6 +48,10 @@ class ChangeService:
             clock,
         )
 
+    def approver(self) -> str | None:
+        """The role that decides changes (the ITSM server's owner in the MCP registry)."""
+        return self._role()
+
     def _role(self) -> str | None:
         entry = self.registry.catalogue("mcp_servers")
         return approver_role(entry.content if entry else None)

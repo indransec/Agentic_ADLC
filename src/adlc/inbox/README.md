@@ -39,3 +39,18 @@ recommendation with the checklist item text and scores, prior rework comments (t
 earlier runs in the use case that closed as rework, newest first), clarifications, approvals that
 still count, the pending waiver, the timer, the cost, the activity timeline, checks, checklist
 results, the ledger record and `form`.
+
+## Change requests and proposed events (feature 012)
+
+- **Change requests** (`inbox/changes.py`, `GET /changes`, `POST /changes/{id}/decision`): an
+  agent raises a change in the ITSM mock; the role that owns the ITSM server in the MCP registry
+  approves or rejects it. A decision is a new version of the change record (state, who, when,
+  comment); a second decision is refused. Runs whose controls await the decision (a control with
+  `awaits`) re-run their controls (`OrchestratorService.awaited_action_done`).
+- **Proposed events** (`inbox/proposed_events.py`, `GET /events/proposed`,
+  `POST /events/proposed/{run_id}/{event_id}`): rows with status `proposed` in any artifact with
+  the columns `event_id`, `event_type`, `status` wait for an accountable role of that terminal.
+  Confirming raises the operational event (its route runs, e.g. T9 opens); dismissing records it.
+  Both are run activity (step `sign_off`, outcome `event_confirmed` or `event_dismissed`).
+
+Both appear as sections of the inbox page.

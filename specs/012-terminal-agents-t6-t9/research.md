@@ -31,8 +31,8 @@ inbox of T8's accountable role; a person confirms (raises) or dismisses each (ne
 **Decision.** The pilot evidence source (feature 010) answers `telemetry` from the bridge's
 observability (service token with the use case): `online_eval_score` = routing accuracy,
 `pii_leak_count`, `availability_pct` (answered / sent), `cost_per_task_usd`, and `monitors`
-(`{<signal>: reporting}` for each signal T6 configured in `monitoring_readiness`, reporting = the
-signal has data in the period; CTL-T8-01 therefore checks what was configured, and CTL-T6-06
+(`{<metric>: reporting}` for each monitor configured through the monitoring tool, reporting =
+the metric has a reading; CTL-T8-01 therefore checks what was configured, and CTL-T6-06
 already requires that to cover T1's KPIs and T2's observability design). Fields the pilot does
 not measure (policy violations, KPI values, autonomy breaches, upstream notices) are absent, so
 their monitors cannot be evaluated and do not fire. `online_eval_score` is the same metric as

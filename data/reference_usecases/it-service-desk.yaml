@@ -10,11 +10,19 @@ intake_text: >-
   security tickets must never be closed automatically. Success means fewer than 10% reassignments
   and first assignment within 15 minutes.
 # The terminal whose review ends the replay (it is not passed). 011: this reference matches the
-# pilot's golden template (incident triage), so it runs through the acting terminals T3-T5.
-until: T5
+# pilot's golden template (incident triage), so it runs through the acting terminals; 012: to T9.
+until: T9
 # 011: the kill switch cannot be tested in test, so T5 escalates by design; a person completes the
-# escalation and the gap is decided at sign-off (an exception with a waiver in the demo).
+# escalation and the gap is decided at sign-off: an exception with a waiver (012).
 complete_escalations: [T5]
+exceptions:
+  T5:
+    risk_acceptance: accepted
+    expiry: "2099-12-31"
+    compensating_control: kill switch checked at release (T7)
+# 012 (D-7): after the first operations review, the model swap; the drift monitor opens T9.
+faults_after:
+  T8: model_swap
 answers:
   business_owner:
     - "Tickets are internal data owned by the IT operations director; personal data is masked."
@@ -26,4 +34,4 @@ approver_fields:
   T0: {risk_tier: low}
 expected:
   risk_tier: low
-  minimum_outcome: "T5 sign-off reached; every mandatory artifact present; the only failed blocking control is the kill-switch scenario at T5"
+  minimum_outcome: "T9 sign-off reached after a drift event; every mandatory artifact present; the only failed blocking control is the kill-switch scenario at T5 (accepted with a waiver)"
