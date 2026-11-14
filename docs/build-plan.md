@@ -289,6 +289,14 @@ No platform code may contain terminal-specific branching (constitution I).
 - Section 5.5 and Annex A.6: terminal specs live in `adlc-specs/` because Spec Kit owns `specs/`.
 - Section 20: add ADR for Spec Kit and the coding agent used with it.
 
+## 11. Phase 2 (proposed): tracker engagement and work plans
+
+Proposed 2026-11-15 as Amendment 1 of the solution architecture (SA §22); not approved. The fourteen MVP features above are unchanged. Seven further platform features (015–021) and three simulator features (S-001 to S-003, in the separate `ado-board-simulator` repository with its own Spec Kit setup and constitution) follow the same per-feature flow and gates. The feature table, order and what each supersedes are in SA §22.10.
+
+- The MVP is tagged before 015 starts, so the working demo on the inbox is kept.
+- 007 (inbox) and 013 (dashboard) are not removed; 019 reduces them to the operations console once the board can drive every human action.
+- The 014 recordings and rehearsed replies are re-recorded in 020, because the planning step changes every terminal's run.
+
 ## Sources
 
 - [Spec Kit installation guide](https://github.github.com/spec-kit/installation.html) — install commands, `specify init` options, supported agents, command list

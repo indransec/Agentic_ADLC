@@ -506,7 +506,7 @@ Choices below are **proposed** for the MVP and need confirmation (ADR status). E
 | Packaging and runtime | Docker Compose on one host | Kubernetes | Fast to stand up | Container images unchanged |
 | CI | Git host CI (e.g. GitHub Actions) | GitLab CI, Jenkins | Spec validation and release jobs | `adlc-spec` CLI |
 
-**Decisions to record as ADRs:** ADR-01 workflow engine; ADR-02 agent framework and model provider (model provider decided 2026-11-10: LiteLLM gateway, Anthropic primary; agent framework: own bounded loop until subagents); ADR-03 policy language; ADR-04 single Postgres vs split stores; ADR-05 web stack; ADR-06 tracing tool; ADR-07 hosting target.
+**Decisions to record as ADRs:** ADR-01 workflow engine; ADR-02 agent framework and model provider (model provider decided 2026-11-10: LiteLLM gateway, Anthropic primary; agent framework: own bounded loop until subagents); ADR-03 policy language; ADR-04 single Postgres vs split stores; ADR-05 web stack; ADR-06 tracing tool; ADR-07 hosting target. Proposed by Amendment 1 (section 22): ADR-08 tracker as the user interface; ADR-09 work plans; ADR-10 increments and the ledger key; ADR-11 role subagents.
 
 ## 18. Extensibility and roadmap
 
@@ -578,6 +578,7 @@ Editable source: page 5 of `adlc-solution-architecture.drawio`.
 - [ ] Ledger retention per risk tier
 - [ ] Hosting target (ADR-07) and the ADR-01 to ADR-06 technology choices
 - [ ] Spec bundles vs per-terminal pinning
+- [ ] Amendment 1 (section 22): approval, and the open decision listed in 22.10
 
 ## 21. Validation and demo plan
 
@@ -610,6 +611,165 @@ Editable source: page 5 of `adlc-solution-architecture.drawio`.
 | Resilience | Restart orchestrator mid-run; duplicate event delivery; dead-letter handling |
 
 **MVP acceptance criteria:** demo moments D-1 to D-9 shown live; every decision traceable in the ledger to spec version, actor and evidence hash; all scripted scenarios pass; no agent able to set an outcome or deploy an unauthorised hash in negative tests.
+
+## 22. Amendment 1 (proposed): tracker engagement and work plans
+
+**Status:** proposed 2026-11-15; not approved, not built. Sections 1–21 describe the MVP as built (features 001–014) and stay valid until the feature named in 22.10 lands; that feature then updates the section it supersedes. Approval follows the constitution's amendment rule (CoE lead and architect).
+
+### 22.1 What changes and what does not
+
+| Change | Summary |
+| --- | --- |
+| Tracker as the user interface | People drive the lifecycle from a work-item tracker (Azure DevOps Boards or similar) instead of the platform's inbox. For the MVP the tracker is a simulator with an ADO-compatible REST API |
+| Engagement layer | A board-neutral port in the platform with one adapter per tracker; outbound projection, inbound sync and reconciliation |
+| Work plans | In each terminal the agent proposes a plan of Features, Stories and Tasks; a person approves it before any item runs; later changes are amendments approved the same way |
+| Increments | An Epic can be delivered in increments; refinement to deployment runs per increment |
+
+Unchanged: the terminal-run state machine (ADR-01), policy engine, ledger and hash chain, outbox and router, agent runtime pattern, MCP servers and the pilot. They are extended, not replaced. The platform remains the only source of truth for lifecycle state; the tracker is a view and an input channel.
+
+### 22.2 Tracker simulator (separate repository)
+
+The simulator stands in for Azure DevOps and lives in its own repository (`ado-board-simulator`), with its own database and no shared code, specs or tables with the platform. It holds no lifecycle, policy or decision-rights logic.
+
+| Aspect | Design |
+| --- | --- |
+| Contract | An ADO-compatible REST subset: work items create, get and update (JSON Patch with `test /rev`), relations (parent, predecessor and successor), a WIQL subset, work item updates and revisions, comments, classification nodes (Area Paths), identities. Webhooks optional |
+| Screens | Epic board with terminal columns and hold points (columns set by the platform, not by drag and drop); backlog tree Epic → Feature → Story → Task with Proposed items and Bugs; work item form with plan decision, decision and clarification fields, comments and history; Area Path filter |
+| Users | Local sign-in with demo users mapped to platform roles through the tracker mapping |
+| Fidelity rule | Where the simulator and real ADO differ, real ADO wins. The adapter contract suite is run against a real ADO organisation at least once before the simulator's API is declared stable |
+
+The contract (OpenAPI file and the adapter contract tests' fixtures) is owned by the simulator repository; the platform pins a simulator image version in its Compose file and runs the contract suite against it in CI.
+
+### 22.3 Engagement layer
+
+| Component | Responsibility |
+| --- | --- |
+| Board model and port | Board-neutral types and the `BoardAdapter` interface (constitution VII) |
+| ADO adapter | Translates the port into ADO REST calls, driven only by `tracker_mapping.yaml`; no tracker-specific value in platform code |
+| Outbound projector | Subscribes to platform events and updates the board (Epic column and sub-stage, plan items, gate fields, comments). Delivered through the outbox, with retries and dead-lettering |
+| Inbound sync | Reads board changes from a watermark, excluding the platform's service account, and turns each change into a command, idempotent by work item id and revision |
+| Reconciliation | Compares board and platform state on a schedule and corrects the board; the platform wins |
+| Contract tests | One suite every adapter must pass |
+
+Rules:
+
+- A board change is a **request**. It takes effect only when the platform accepts the command; a refused command is reverted on the board with a comment giving the policy engine's reason.
+- People decide through decision fields on the work item (plan decision, decision, clarification answer). The Epic's column and sub-stage are written only by the platform's service account, so the board never shows a stage the platform has not accepted; a column moved by a person is reverted.
+- Inbound mode for the MVP is polling of revisions. Webhooks can be added later as a faster path, with polling kept as catch-up.
+- Inbound sync must not lose intermediate changes between two reads; it reads revisions, not only current state.
+- The board user is mapped to a platform identity and role before any decision right is checked. An unmapped user's change is refused and reverted.
+
+### 22.4 Commands and the operations console
+
+The platform API accepts these commands from the inbound sync (and from tests): `RegisterUseCase` (emits the existing `usecase.submitted`), `PullCard` (hold point), `ApprovePlan`, `RejectPlan`, `EditPlan`, `DecideAmendment`, `AcceptStory`, `RejectStory`, `AnswerClarification`, `SignOff`, `Decide` (rework, exception, escalate completion, terminate). Each is checked for decision rights, recorded in `run_activity`, and applied by the existing services.
+
+The web app becomes an operations console that keeps what a work item form cannot show:
+
+- evidence viewer: artifacts with agent and human versions, artifact editing before sign-off, control results, reviewer findings, prerequisites with result and reason (deep-linked from the card);
+- dead letters, sync status and reconciliation results;
+- KPIs and the journey view.
+
+Section 8.2 still holds: a sign-off needs the artifacts, control results and reviewer recommendation in front of the person; the card links to them. A decision that needs a comment, root cause or reason (rework, exception, terminate, disagreeing with the reviewer) is refused without it.
+
+### 22.5 Run states and work plans
+
+New run states in the existing state machine (no workflow engine change):
+
+| State | Entered when | Leaves when |
+| --- | --- | --- |
+| ready | A run's trigger arrived for a terminal marked as a hold point | A person pulls the card (`PullCard`); then opened |
+| planning | Prerequisites met and the terminal has a work plan | The agent returns a schema-valid plan that passes the plan policy checks |
+| awaiting\_plan\_approval | Plan proposed | A person approves (to building), rejects with comment (back to planning) or edits and approves |
+
+| Element | Design |
+| --- | --- |
+| Work plan service | Stores proposals, plan versions, amendments and item status; an approved plan version is frozen |
+| Plan source | Set per terminal spec: a fixed template plan, or a plan the agent proposes from the template within the spec's limits. Initial setting: agent planning in T1–T3, template plans in the other terminals. Both kinds are approved by a person |
+| Dispatcher | Runs approved items in `depends_on` order within `max_parallel`. Agent items go to the lead agent or a role subagent; human items wait for their board state |
+| Amendments | An agent's change to an approved plan is stored as Proposed and applied only after approval; Task-level changes are approved by the Story's reviewer |
+| Role subagents | A lead agent plus role subagents declared in the spec, each with the artifacts it `owns`. This replaces the limit of two subagents in section 7.1; every subagent runs under the run's permissions (per-subagent tokens stay post-MVP) |
+| Increments | One increment record per Epic delivery slice. T0 and T1 discovery run per use case; T1 refinement to T7 run per increment; T8 and T9 run per use case. Scope per terminal comes from `lifecycle.yaml` |
+
+Constitution III extends to plans: agents propose plans and amendments; only people approve them.
+
+### 22.6 Policy
+
+- Plan predicates: coverage at Story level (requirements, design decisions, artifacts), `max_stories` and `max_depth`, valid roles and reviewers, acyclic dependencies.
+- Decision rights from the role catalogue, using the identity mapped from the board user.
+- Sign-off rule: every plan item is Closed or Removed, in addition to the existing controls.
+- New T0 checks: risk envelope and increment risk.
+- Every result is written to the decision log and included in the ledger record.
+
+### 22.7 Specs and configuration (schema 1.2.0)
+
+| File | Holds |
+| --- | --- |
+| `shared/work_plan_defaults.yaml` | Locked rules, defaults and guidance for plans |
+| `shared/roles.yaml` | One role catalogue for agents and people |
+| `shared/change_classes.yaml` | Change classes and their re-entry points |
+| `lifecycle.yaml` | Terminal order, hold points, use-case or increment scope |
+| `tracker_mapping.yaml` | Item types, states, columns, sub-stage, fields, decisions, links, identity mapping, inbound mode |
+| `terminals/T0–T9.yaml` | `scope`, `work_plan` (template, `max_depth`, limits), actors with role and `owns`; `gate_fields` removed; extra published values in `emits` |
+
+Validation gains: locked keys not overridden, exactly one owner per artifact, template references resolve, and `validate_mapping` against the pinned simulator. All ten terminal specs and the agents catalogue take a major version (V-24).
+
+### 22.8 Data, identifiers and events
+
+| Table | Purpose |
+| --- | --- |
+| `increment` | Increment per Epic, linked to the use case |
+| `work_plan`, `plan_item`, `plan_item_dependency`, `plan_amendment` | Plans, Features, Stories, Tasks, dependencies, changes |
+| `board_link` | Platform id ↔ tracker work item id and revision |
+| `board_sync_state`, `inbound_command` | Watermark, delivery status, idempotency |
+
+- Ledger key and run id for increment-scoped terminals: `<usecase_id>/inc-<k>/T<n>/<run_version>` (e.g. `UC-0042/inc-1/T3/run-2`). Use-case-scoped terminals keep the Annex A.2 form. Existing ledger records are not rewritten; the hash chain stays per use case.
+- Run records also store the plan template version and the plan version they ran.
+- Plan approval, plan item status and the terminal's close stay inside the platform's transaction rules (constitution V); the board is updated afterwards from the outbox.
+- New events: `increment.created`, `run.state_changed`, `T<n>.plan.proposed`, `T<n>.plan.approved`, `T<n>.plan.amended`, `plan_item.status_changed`, `clarification.requested`, `clarification.answered`.
+
+### 22.9 Demo moments added
+
+| # | The audience must see |
+| --- | --- |
+| D-10 | An agent proposes a work plan; a person edits and approves it on the board; only then do items run |
+| D-11 | An agent proposes an amendment to an approved plan; it applies only after approval |
+| D-12 | A board change by a person without the decision right is reverted with the reason as a comment |
+| D-13 | The board is changed out of step with the platform and reconciliation corrects it |
+| D-14 | A card waits at a hold point until a person pulls it |
+
+D-1 to D-9 must still be shown, now driven from the board.
+
+### 22.10 Decisions and delivery
+
+**ADRs to record:** ADR-08 tracker as the user interface behind `BoardAdapter`, simulator in a separate repository; ADR-09 agent-proposed, human-approved work plans; ADR-10 increments and the ledger key; ADR-11 role subagents replace the two-subagent limit.
+
+| Feature | Repository | Delivers | Supersedes |
+| --- | --- | --- | --- |
+| 015 work-plan-specs | platform | Schema 1.2.0, new shared files, toolkit checks | §5, Annex A additions |
+| 016 work-plan-service | platform | Plan tables, planning states, plan predicates, plan commands, approval through the existing inbox | §6.2, §9, §10 |
+| 017 plan-dispatch | platform | Dispatcher, role subagents, amendments | §7.1 |
+| 018 engagement-layer | platform | Port, ADO adapter, projector, inbound sync, reconciliation, contract suite | §8, §13 |
+| 019 operations-console | platform | Inbox reduced to the console in 22.4 | §8, §12.2 |
+| 020 e2e-demo-on-board | platform | D-1 to D-14 on the simulator, with one implicit increment per use case | §21 |
+| 021 increments | platform | Increment record, scope, ledger key; after the demo | §10, Annex A.2, A.5 |
+| S-001 ado-rest-subset, S-002 board, S-003 backlog-and-form | simulator | 22.2 | — |
+
+Order: 015 → 016 → 017 on the platform while S-001 is built; then 018 against S-001; S-002, S-003 and 019; 020 (demo); 021 after the demo. Work plans come before the board so that every step keeps a working demo through the existing inbox.
+
+**Decided 2026-11-15 (by the architect; CoE lead to confirm with the amendment)**
+
+| Decision | Answer |
+| --- | --- |
+| Sign-off gesture | Decision field; the column is written only by the platform |
+| `usecase.registered` | Not added; `RegisterUseCase` emits `usecase.submitted` |
+| Inbound mode | Polling of revisions for the MVP; webhooks later with polling as catch-up |
+| Agent planning | T1–T3; template plans elsewhere; set per spec |
+| Increments | After the demo (feature 021); the demo runs with one implicit increment |
+| Identity for decisions | The simulator's sign-in is accepted for the MVP |
+
+**Open decision**
+
+- [ ] Before a real tracker is connected: whether the tracker's sign-in is enough for decisions, or the enterprise IdP identity must be matched to the board user.
 
 ## Annex A – Naming conventions
 
