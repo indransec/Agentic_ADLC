@@ -32,6 +32,10 @@ only the orchestrator sets escalate.
 
 - Rules: no code path may let an agent or the reviewer set an outcome status; outcome rights
   MUST be checked against `status_rights` on every decision.
+  Agents propose work plans and plan amendments; only a person approves, edits or rejects
+  them, and no plan item runs before its plan version is approved (SA §22.5). A change made
+  in a tracker is a request: it takes effect only when the platform accepts the command
+  under the mapped person's decision rights (SA §22.3).
 - Rationale: accountability for every lifecycle decision stays with named people (SA P-3).
 
 ### IV. Separation of duties by permission
@@ -70,6 +74,8 @@ sit behind an interface; mocks implement the same interface as the real system.
 - Rules: platform modules MUST depend on the interface, not on the concrete library or
   service; every mock MUST implement the same interface (and for MCP, the same tool names and
   schemas) as the real system.
+  A tracker is reached only through the `BoardAdapter` interface and the tracker mapping;
+  the tracker simulator shares no code, database or specs with the platform (SA §22.2).
 - Rationale: swapping a mock or an engine changes configuration or an adapter, not platform
   code (SA P-9, §18.1).
 
@@ -116,6 +122,7 @@ post-MVP, not built.
 
 - Rules: each plan MUST map its scope to the demo moments it supports; work that supports none
   MUST be listed as post-MVP in the plan instead of being built.
+  Features 015 onward map to D-1 to D-14 (SA §22.9).
 - Rationale: the MVP has a fixed mid-December 2026 demo date (SA C-1).
 
 ### XIII. Naming
@@ -168,4 +175,4 @@ deviation MUST be justified in the plan's Complexity Tracking section or rejecte
   `/speckit-analyze` treats constitution conflicts as critical findings.
 - Runtime development guidance for the coding agent lives in `claude.md`.
 
-**Version**: 1.0.0 | **Ratified**: 2026-11-09 | **Last Amended**: 2026-11-09
+**Version**: 1.1.0 (proposed, pending CoE lead and architect approval) | **Ratified**: 2026-11-09 | **Last Amended**: 2026-11-15
