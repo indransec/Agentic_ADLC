@@ -3,7 +3,7 @@
 import pytest
 from sqlalchemy import text
 
-from adlc.ui.pages import journey
+from adlc.ui.views import journey
 from tests.support.api import Api
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness

@@ -37,6 +37,8 @@ def rendered(at: AppTest) -> list[str]:
     ):
         found += [str(e.value) for e in group]
     found += [str(getattr(e, "body", "")) for e in at.get("html")]
+    found += [t.label for t in at.tabs]  # tab and metric labels are Markdown too
+    found += [m.label for m in at.metric]
     for kind in (
         "button",
         "download_button",

@@ -129,7 +129,9 @@ services:
       - --server.address=0.0.0.0
       - --server.headless=true
       - --browser.gatherUsageStats=false
+      - --client.showErrorDetails=none
     environment:
+      ADLC_ENV: ${ADLC_ENV:-}
       ADLC_API_URL: http://api:8000
       ADLC_UI_DASHBOARD_REFRESH: ${ADLC_UI_DASHBOARD_REFRESH:-10s}
     ports:

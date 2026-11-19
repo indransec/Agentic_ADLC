@@ -496,3 +496,5 @@ class UiSettings(BaseSettings):
     ui_dashboard_refresh: Duration = Field(
         default=timedelta(seconds=10), json_schema_extra=_meta(DURATION_FORM)
     )
+    # The environment's name, shown as a badge so nobody mistakes a dev stack for the demo
+    env: Literal["dev", "demo"] | None = Field(default=None, json_schema_extra=_meta("dev or demo"))

@@ -1,8 +1,21 @@
 # adlc.ui
 
 The web application (feature 007; SA §8): Streamlit, in its own container (`ui`), started with
-`streamlit run src/adlc/ui/app.py`. Settings: `ADLC_API_URL` (default `http://api:8000`) and the
-host port `ADLC_UI_PORT` (default 8501).
+`streamlit run src/adlc/ui/app.py`. Settings: `ADLC_API_URL` (default `http://api:8000`), the
+host port `ADLC_UI_PORT` (default 8501) and `ADLC_ENV` (shown as a badge when set).
+
+## Look and layout
+
+- Theme: `.streamlit/config.toml` at the repository root (Streamlit reads it from the working
+  directory; the image copies it). A neutral light theme, system fonts, one accent colour.
+- Navigation: `st.navigation` with the sidebar drawn by `app.py` in sections (Work, Delivery,
+  Insights, Operations). Run, Clarification, Escalation and Waiver are opened from other pages,
+  never from the sidebar. A page opens another with `render.navigate(title, ...)`.
+- The page modules live in `views/`, not `pages/`: Streamlit treats a `pages/` folder beside the
+  main script as file pages of its own.
+- Shared pieces are in `render.py` (page header, status badges, tables, the open control, errors)
+  and `format.py` (times in UTC, durations, money, column names). Status colours are defined once
+  (`render.STATUS`, `render.STATUS_COLOURS`) and match the theme and the charts.
 
 ## Boundary
 
@@ -19,7 +32,7 @@ the person may not take is a convenience; the API enforces every rule.
 | Inbox | Items waiting for the person, refreshed every 30 s and on demand; opens each on its page. |
 | New use case | The intake form. |
 | Use cases | "Only mine" or all, the journey (runs with times and cost), ledger verification. |
-| Run | Every SA §8.2 section and the prerequisites (a blocked run says so and why), the artifact editor (up to 1,000 rows; above that read-only with upload offered), spreadsheet upload, attachments, downloads, history, evidence and the decision form. |
+| Run | A summary bar (run, terminal, state, due, cost); the artifacts beside the reviewer recommendation, control results and decision form; the other SA §8.2 sections as tabs (prerequisites, citations, prior rework, clarifications, approvals, waiver, activity, timeline, evidence). A blocked run says so and why; the artifact editor takes up to 1,000 rows (above that read-only with upload offered). The run is kept in the address (`?run=`). |
 | Clarification, Escalation, Waiver | The forms for each request. |
 | Dead letters | List with attempts, error and re-queue count; payload and re-queue history on request; re-queue (the API allows the CoE role only). |
 | Journey | 013: lanes per terminal, a bar per run, arrows for reworks, reroutes, exceptions, events and re-entry; KPI strip; escalations and exceptions. Refreshes every `ADLC_UI_DASHBOARD_REFRESH`. |
@@ -31,7 +44,9 @@ the person may not take is a convenience; the API enforces every rule.
 - Text written by agents or people (intake, comments, reasons, findings, questions, answers, file
   names, artifact cells) is shown only with `st.text`, `st.dataframe` or `st.data_editor`, never
   as Markdown or HTML, and never in a widget label (`tests/integration/ui/test_rendering.py`).
-- Markdown is used only for labels the platform writes itself.
+- Markdown is used only for labels the platform writes itself. A status badge shows the
+  platform's own word for a known state, outcome, status or risk tier; any other value is plain
+  text.
 - Attachments are offered for download only, never shown inline.
 - Every action sends the run version shown on the page; a stale answer reloads the page with a
   message.

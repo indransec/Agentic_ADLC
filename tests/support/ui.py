@@ -26,7 +26,8 @@ def sign_in(at: AppTest, role: str) -> AppTest:
 
 
 def go(at: AppTest, page: str) -> AppTest:
-    at.radio(key="page").set_value(page)
+    """Open a page by its title, as the sidebar (or another page) does."""
+    at.session_state["goto"] = page
     return at.run()
 
 

@@ -95,7 +95,7 @@ def test_dead_letters_for_the_coe(h: Harness, api: Api) -> None:
             )
         )
     other = go(sign_in(open_ui(api), "sre"), "Dead letters")
-    assert any("CoE" in c.value for c in other.caption) and not other.exception
+    assert any("CoE" in i.value for i in other.info) and not other.exception
     at = go(sign_in(open_ui(api), "adlc_coe"), "Dead letters")
     assert not at.exception, at.exception
     at.button(key="dead_requeue").click()

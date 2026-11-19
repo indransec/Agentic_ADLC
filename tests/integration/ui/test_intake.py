@@ -11,7 +11,8 @@ def test_sign_in_submit_and_follow(h: Harness, api: Api) -> None:
     at = open_ui(api)
     assert at.text_input(key="account") is not None and not at.exception
     at = sign_in(at, "business_owner")
-    assert "business_owner" in " ".join(texts(at))
+    assert "Business Owner" in texts(at)  # the person, with their roles beside the name
+    assert "business owner" in " ".join(c.value for c in at.caption)
     at = go(at, "New use case")
     at.text_input(key="intake_name").input("Claims triage")
     at.text_area(key="intake_text").input(INTAKE)
@@ -24,7 +25,7 @@ def test_sign_in_submit_and_follow(h: Harness, api: Api) -> None:
     h.drain()
     at = at.run()  # refresh the journey once the worker has opened T0
     runs = frame(at, "terminal")
-    assert list(runs["terminal"]) == ["T0"] and list(runs["state"]) == ["awaiting_sign_off"]
+    assert list(runs["terminal"]) == ["T0"] and list(runs["state"]) == ["Awaiting sign-off"]
     assert at.selectbox(key="journey_usecase").value == usecase
 
 

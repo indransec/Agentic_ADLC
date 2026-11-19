@@ -8,21 +8,25 @@ from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness
 from tests.support.ui import frame, go, open_item, open_ui, sign_in, texts
 
-SECTIONS = [
-    "Artifacts",
-    "Citations",
+# Beside the decision: what a sign-off rests on (SA 8.2)
+SECTIONS = ["Artifacts", "Reviewer recommendation", "Control results", "Decision"]
+# Below it, one tab per remaining section, shown whether or not it has content
+TABS = [
     "Prerequisites",
-    "Control results",
-    "Reviewer recommendation",
-    "Prior rework comments",
+    "Citations",
+    "Prior rework",
     "Clarifications",
-    "Approvals so far",
+    "Approvals",
     "Waiver",
-    "Cost",
     "Activity",
+    "Timeline",
     "Evidence",
-    "Decision",
 ]
+
+
+def tab_names(at: AppTest) -> list[str]:
+    """Tab labels without their counts: "Prerequisites (3)" reads "Prerequisites"."""
+    return [t.label.split(" (")[0] for t in at.tabs]
 
 
 def open_run(at: AppTest, run_id: str) -> AppTest:
@@ -34,6 +38,7 @@ def test_inbox_detail_and_pass(h: Harness, api: Api) -> None:
     at = open_run(sign_in(open_ui(api), "product_owner"), run)
     assert not at.exception, at.exception
     assert [s.value for s in at.subheader] == SECTIONS
+    assert tab_names(at) == TABS
     assert at.radio(key=f"decision:{run}").options == ["pass", "rework", "exception", "terminate"]
     at.button(key=f"submit:{run}").click()
     at = at.run()

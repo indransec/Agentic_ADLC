@@ -12,7 +12,7 @@ def test_evidence_and_verify(h: Harness, api: Api) -> None:
     at.session_state["run_id"] = f"{usecase}/T1/run-1"
     at = go(at, "Run")
     assert not at.exception, at.exception
-    assert "Evidence" in [s.value for s in at.subheader]
+    assert "Evidence" in [t.label for t in at.tabs]
     assert [c.value for c in at.caption if c.value in ("Checks", "Ledger record")] == [
         "Checks",
         "Ledger record",

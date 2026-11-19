@@ -2,7 +2,7 @@
 
 Read-only views over the records the platform already writes; nothing here writes, and no
 lifecycle instrumentation is added. `DashboardService` (`service.py`) serves the `/dashboard` API
-routes (`src/adlc/api/routes/dashboard.py`); the web application draws them (`ui/pages/journey.py`,
+routes (`src/adlc/api/routes/dashboard.py`); the web application draws them (`ui/views/journey.py`,
 `activity.py`, `portfolio.py`, the run page's Timeline, Dead letters). Every signed-in person may
 read every use case; dead letters are for the CoE role.
 
