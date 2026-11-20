@@ -4,6 +4,7 @@
 API and the orchestrator. The platform database is one SQLite file on the `adlc-db` volume
 (`/var/lib/adlc/db/adlc.db`), shared by `migrate`, `register`, `api`, `orchestrator` and `tools`;
 SQLite allows one writer at a time and the file must stay on this host's local disk.
+To run the same processes without Docker, see `docs/run-without-docker.md` (`make local`).
 
 ## Backups
 

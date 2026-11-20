@@ -32,7 +32,7 @@ curl -s localhost:${ADLC_API_PORT:-8000}/health
 
 The Phoenix trace UI is at `http://localhost:6006` (project `adlc-platform`; each pilot environment has its own project). If a port is already taken, change `ADLC_API_PORT` or `ADLC_PHOENIX_UI_PORT` in `.env`.
 
-The platform's infrastructure is Python only: the database is a SQLite file and the trace collector is Arize Phoenix (`deploy/phoenix`). Without Docker, run `make phoenix`, then the platform processes with `uv run` (`adlc-api`, `adlc-orchestrator run`, ...).
+The platform's infrastructure is Python only: the database is a SQLite file and the trace collector is Arize Phoenix (`deploy/phoenix`). **Without Docker:** fill in `.env`, then `make local` starts every process in one terminal; see [docs/run-without-docker.md](docs/run-without-docker.md) for settings, ports and the step-by-step route.
 
 ## Commands
 

@@ -141,6 +141,9 @@ class RuntimeSettings(DatabaseSettings):
 class Settings(RuntimeSettings):
     """Settings for the platform API and the account CLI."""
 
+    # The port adlc-api listens on; in compose the container keeps 8000 and this is the host port
+    api_port: int = Field(default=8000, gt=0, lt=65536, json_schema_extra=_meta("port"))
+
     session_secret: SecretStr = Field(
         min_length=32, json_schema_extra=_meta("at least 32 characters", secret=True)
     )
