@@ -19,6 +19,11 @@ services:
     build:
       context: ..
       dockerfile: deploy/phoenix.Dockerfile
+    environment:
+      # Phoenix 21 turns authentication on by itself when it listens on a non-loopback address
+      # (here 0.0.0.0), and then refuses every OTLP export without a token. The platform and the
+      # pilot send no token, so keep it off; the UI port is for the host operator.
+      PHOENIX_ENABLE_AUTH: "false"
     ports:
       - "${ADLC_PHOENIX_UI_PORT:-6006}:6006"
     volumes:

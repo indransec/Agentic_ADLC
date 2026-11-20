@@ -2,49 +2,48 @@
 
 | | |
 | --- | --- |
-| **Status** | As built, 2026-11-20 (branch `015-ado-sim-api`: `main` plus the Phase 2 documentation and the 015 work in progress) |
-| **Audience** | Engineers who build, run, review or extend the platform |
-| **Companion documents** | [Solution architecture](solution-architecture.md) (SA, the intended design), [Terminal design spec](terminal-design-spec.md) (TDS, the lifecycle content), [Build plan](build-plan.md), [Running without Docker](run-without-docker.md), `.specify/memory/constitution.md` |
+| **Status** | Draft for development start; to be approved by the architect and the CoE lead |
+| **Audience** | Engineers who will build, review, test and operate the platform |
+| **Inputs** | [Solution architecture](solution-architecture.md) (SA), [Terminal design spec](terminal-design-spec.md) (TDS), [Build plan](build-plan.md), the constitution (`.specify/memory/constitution.md`) |
+| **Outputs** | One Spec Kit feature per build-plan step (`specs/NNN-*/`), each refining the part of this design it delivers |
 
-The SA says what the platform should be and why. This document describes how the code in this
-repository actually implements it: the processes, modules, data, interfaces and rules. Where the
-build departs from the SA, section 17 lists the difference. Each package's README goes deeper;
-each feature's design lives in `specs/NNN-*/`.
+The SA says what the platform must do and why. This document turns it into a buildable
+technical design: the components to develop, their responsibilities and interfaces, the data to
+keep, the rules each part must enforce, how it will be tested and deployed, and the decisions and
+risks to settle along the way. Details are deliberately left to the feature specs where they
+depend on what earlier features learn; those places are marked **To decide in feature NNN**.
 
 ---
 
 ## Contents
 
-1. [What the platform does](#1-what-the-platform-does)
-2. [Design principles](#2-design-principles)
-3. [Repository layout](#3-repository-layout)
-4. [Runtime architecture](#4-runtime-architecture)
-5. [Technology stack](#5-technology-stack)
-6. [Spec and configuration layer](#6-spec-and-configuration-layer)
-7. [Lifecycle orchestration](#7-lifecycle-orchestration)
-8. [Policy engine](#8-policy-engine)
-9. [Agent runtime](#9-agent-runtime)
-10. [Evidence ledger](#10-evidence-ledger)
-11. [Tools and knowledge (MCP)](#11-tools-and-knowledge-mcp)
-12. [API, inbox, dashboard and web application](#12-api-inbox-dashboard-and-web-application)
-13. [Data architecture](#13-data-architecture)
-14. [Security design](#14-security-design)
-15. [Observability](#15-observability)
-16. [Pilot use case and the ADO simulator](#16-pilot-use-case-and-the-ado-simulator)
-17. [Deployment and configuration](#17-deployment-and-configuration)
-18. [Build, test and quality](#18-build-test-and-quality)
-19. [Demo and operations](#19-demo-and-operations)
-20. [Decisions, differences from the SA and known limits](#20-decisions-differences-from-the-sa-and-known-limits)
-21. [Glossary](#21-glossary)
-- [Annex A: Settings reference](#annex-a-settings-reference)
-- [Annex B: Ports and processes](#annex-b-ports-and-processes)
+1. [Purpose, scope and goals](#1-purpose-scope-and-goals)
+2. [Requirements to design for](#2-requirements-to-design-for)
+3. [Design principles](#3-design-principles)
+4. [Proposed architecture](#4-proposed-architecture)
+5. [Technology choices to confirm](#5-technology-choices-to-confirm)
+6. [Repository and project structure](#6-repository-and-project-structure)
+7. [Component designs](#7-component-designs)
+8. [Data design](#8-data-design)
+9. [Interfaces and contracts](#9-interfaces-and-contracts)
+10. [Security design](#10-security-design)
+11. [Observability design](#11-observability-design)
+12. [Pilot use case environment](#12-pilot-use-case-environment)
+13. [Deployment and configuration](#13-deployment-and-configuration)
+14. [Quality and test strategy](#14-quality-and-test-strategy)
+15. [Development approach and plan](#15-development-approach-and-plan)
+16. [Phase 2: board as the user interface](#16-phase-2-board-as-the-user-interface)
+17. [Risks, assumptions and open decisions](#17-risks-assumptions-and-open-decisions)
+18. [Glossary](#18-glossary)
 
 ---
 
-## 1. What the platform does
+## 1. Purpose, scope and goals
 
-The platform runs the **Agentic Development Lifecycle (ADLC)** for AI use cases. A use case moves
-through ten **terminals**, each a lifecycle stage with its own agents, controls and approvers:
+### 1.1 What will be built
+
+A platform that runs the **Agentic Development Lifecycle (ADLC)** for AI use cases. A use case
+will move through ten **terminals** (lifecycle stages), each defined by a versioned spec:
 
 | Terminal | Stage | Terminal | Stage |
 | --- | --- | --- | --- |
@@ -54,261 +53,139 @@ through ten **terminals**, each a lifecycle stage with its own agents, controls 
 | T3 | Build & Integration | T8 | Operate & Observe |
 | T4 | Evaluation | T9 | Evolve / Retire |
 
-In each terminal run:
+In every terminal run, an **agent will build** the terminal's artifacts, **deterministic
+controls** will check them, an **independent reviewer agent** will recommend an outcome, **people
+will decide**, and the decision will be **recorded as immutable evidence** and routed as an event
+to the next terminal.
 
-1. **An agent builds** the terminal's artifacts from a context pack (intake, earlier evidence,
-   grounding documents, tools).
-2. **Deterministic controls** check the artifacts (policy engine, no model involved).
-3. **An independent reviewer agent** scores them against the terminal's checklist and recommends
-   an outcome.
-4. **People decide**: the roles the spec names sign off with an outcome (pass, rework, exception,
-   escalate, terminate, ...).
-5. **The outcome is recorded** in a hash-chained ledger record, and its event routes the use case
-   to the next terminal (or back, for rework).
+### 1.2 MVP scope
 
-What a terminal does (prerequisites, controls, routing, approvers, timelines) comes entirely from
-versioned YAML specs in `adlc-specs/`. The code holds the mechanism and no terminal-specific values.
+- The lifecycle engine, driven only by specs.
+- Lifecycle agents for T0–T9 and a common reviewer.
+- A policy engine for prerequisites, controls and agent permissions.
+- An evidence ledger with tamper detection.
+- A web application for intake, the human inbox, decisions and the lifecycle dashboard.
+- Tool access for agents through MCP servers, mocked where enterprise systems are not available.
+- A pilot use case (an incident triage assistant) that the lifecycle builds, evaluates, deploys
+  and operates, in simulated environments.
+- One-host deployment, plus a scripted end-to-end demo.
 
-The pilot use case, an **Incident Triage Assistant** (`pilot/`), is built, evaluated, deployed and
-operated by the lifecycle in the demo.
+### 1.3 Non-goals for the MVP
 
----
+- Multi-tenant or multi-host scale, high availability, horizontal scaling.
+- Real enterprise integrations (ITSM, CMDB, IAM, GRC): mocks with the real tool shapes instead.
+- Single sign-on: local accounts behind an interface that SSO can replace.
+- Spec authoring UI: specs are edited as files and reviewed in Git.
+- Real production deployment of the pilot: simulated environments only.
 
-## 2. Design principles
+### 1.4 Goals and success measures
 
-The constitution (`.specify/memory/constitution.md`, version 1.2.0 proposed) governs every
-feature. The articles and how the code enforces them:
-
-| Article | Rule | Enforced by |
-| --- | --- | --- |
-| I Spec-driven lifecycle | Lifecycle behaviour comes from specs only | `tests/unit/test_no_hardcoded_values.py` scans the code for terminal ids, events, roles and routes |
-| II Superset, not values | Specs declare the superset; values come from catalogues and profiles | Catalogues in `adlc-specs/shared/`; parameter resolution within guardrails |
-| III Agents build, humans decide | Only human decisions close a run with an outcome | State machine property tests (`orchestration/states.py`) |
-| IV Separation of duties | Agents act through scoped permissions | `policy.authorize` before every tool call; run tokens |
-| V Evidence-first | Append-only history, hash-chained ledger | Database triggers; `adlc-ledger verify` |
-| VI Deterministic before judgement | Computable rules never go to a model | Policy engine (CEL and predicates) |
-| VII Interfaces at every boundary | Components meet through protocols, APIs and MCP | Boundary tests (UI, knowledge, tools, pilot, ADO simulator) |
-| VIII Open source, Python first | Python 3.12, OSI licences, recorded dependencies | Reviews; licence tables in each feature's research |
-| IX Test first for the core | Core logic is written test first | `make check`, coverage gates |
-| X Observable by default | Logs, traces, run activity | `adlc.observability`; `run_activity` rows |
-| XI Secure by default | Least privilege, secrets from the environment, fail closed | Settings, sessions, policy, tokens, secret scan |
-| XII Simplicity for the MVP | One host, one data store, no extra brokers | SQLite, outbox polling, one compose file |
-| XIII Naming | SA Annex A conventions | Reviews; validation rules |
-
----
-
-## 3. Repository layout
-
-| Path | Contents |
+| Goal | Measure at the end of the MVP |
 | --- | --- |
-| `src/adlc/` | The platform: 17 packages, about 27,800 lines of Python (section 4.2) |
-| `adlc-specs/` | Runtime specs: `terminals/T0..T9.yaml`, `checklists/`, `playbooks/`, `prompts/`, `shared/` catalogues, `schema/` (JSON Schemas). Never in `specs/` |
-| `db/migrations/` | Alembic environment and the baseline revision `0001_baseline.py` |
-| `tests/` | `unit/` (103 files), `integration/` (115 files), `scenario/`, `support/`, `fixtures/` (about 22,500 lines) |
-| `pilot/` | The pilot use case: its own uv project (feature 009) |
-| `ado_sim/` | The ADO simulator: its own uv project (feature 015, in progress) |
-| `deploy/` | `compose.yaml`, Dockerfiles, `Procfile.local`, `local.env`, `phoenix/` (Phoenix as its own uv project), helper scripts |
-| `scripts/` | Demo driver, resilience drill, synthetic data, migration check |
-| `data/` | Synthetic evidence (`data/synthetic/`), knowledge documents; `data/local/` is the git-ignored store when running without Docker |
-| `docs/` | SA, TDS, build plan, this document, run-without-docker, draw.io diagrams |
-| `specs/NNN-*/` | Spec Kit feature folders (spec, plan, research, data model, contracts, tasks), features 001–015 |
-| `.specify/` | Spec Kit configuration, templates, the constitution |
-| `Makefile` | The single entry point for developers and CI |
+| The lifecycle is defined by specs, not code | Changing a terminal's controls, routes or approvers needs a spec change only; a test proves no terminal value appears in code |
+| People decide every outcome | No run closes with an outcome without a human decision (property-tested) |
+| Evidence is complete and tamper-evident | Every closed run has a chained ledger record; a verification command detects any change |
+| The demo runs end to end | The pilot goes T0 → T9 on one host, including a rework, an exception and an operational event |
+| Lifecycle is visible | Journey, activity and the SA §12.3 KPIs are shown from recorded data |
 
 ---
 
-## 4. Runtime architecture
+## 2. Requirements to design for
 
-### 4.1 Processes
+### 2.1 Functional
+
+| Area | The design must provide |
+| --- | --- |
+| Specs | Validation (syntax, schema, single-spec and cross-spec rules, versioning), registration of immutable versions, pinning per use case |
+| Orchestration | Opening runs from events, a run state machine, automatic steps, timers and SLAs, rework and reroute, escalation, clarifications, waivers, reliable event delivery |
+| Policy | Evaluating prerequisites, controls and conditions; authorising agent and tool actions; resolving parameters within guardrails |
+| Agents | Building artifacts from a context pack; an independent review; model access through one gateway; bounded cost and steps |
+| Humans | Intake; an inbox per person; decisions, clarification answers, waivers, artifact edits; escalation handling |
+| Evidence | Versioned artifacts and attachments; ledger records at close; a versioned use-case profile; verification |
+| Tools | Knowledge grounding; enterprise and pilot tools through MCP, scoped per run |
+| Visibility | Journey, activity, time split, KPIs, portfolio |
+
+### 2.2 Non-functional
+
+| Quality | Target |
+| --- | --- |
+| Correctness under concurrency | No two workers process the same event, timer or run step; every state change is atomic |
+| Restart safety | Killing any process mid-run loses nothing and duplicates nothing |
+| Security | Least privilege for people and agents; secrets from the environment only; fail closed |
+| Auditability | Every decision, model call, tool call and policy decision recorded with its inputs |
+| Determinism | Computable rules never depend on a model; the same evidence gives the same decision |
+| Portability | Runs on one host with or without containers; all hosted infrastructure in Python |
+| Maintainability | Typed Python, small modules behind interfaces, one entry point for all checks |
+| Demo timing | Lifecycle timers can be compressed so a multi-week flow runs in minutes |
+
+---
+
+## 3. Design principles
+
+The constitution governs every feature. Each article will be backed by a concrete mechanism, so
+that it is enforced rather than remembered:
+
+| Article | Rule | Mechanism to build |
+| --- | --- | --- |
+| I Spec-driven lifecycle | Behaviour comes from specs | A test that scans the code for terminal ids, event names, roles and routes |
+| II Superset, not values | Specs declare the superset; values come from catalogues and profiles | Shared catalogues; parameter resolution within guardrails |
+| III Agents build, humans decide | Only people close runs with an outcome | Allowed actors per signal in the state machine; property tests |
+| IV Separation of duties | Agents act only within granted scopes | Default-deny authorisation before every action; run-scoped tokens |
+| V Evidence-first | History is append-only and verifiable | Database guards against update and delete; hash-chained records |
+| VI Deterministic before judgement | Rules that can be computed are computed | A policy engine outside the models |
+| VII Interfaces at every boundary | Components meet only through declared interfaces | Protocols, APIs, MCP; import-boundary tests |
+| VIII Open source, Python first | OSI licences, Python 3.12 | Dependency and licence table in every feature's research |
+| IX Test first for the core | Core logic written test first | Gate on tests and coverage in `make check` |
+| X Observable by default | Every step leaves a trace | Structured logs, traces, run activity rows |
+| XI Secure by default | Fail closed, no secrets in code | Typed settings, secret scanning, redaction |
+| XII Simplicity for the MVP | No component without a need | One data store, one host, no broker |
+| XIII Naming | SA Annex A | Review checklist; validation rules |
+
+---
+
+## 4. Proposed architecture
+
+### 4.1 Layers
+
+| Layer | Components to build | Responsibility |
+| --- | --- | --- |
+| Experience | Web application, platform API | Intake, inbox, decisions, dashboards; the only way in for people |
+| Orchestration | Event router, run engine, outbox, timers, monitors, worker | Open and drive runs from events; apply routing and timers |
+| Agents | Agent runtime, model gateway, reviewer, context builder, tool gate | Produce artifacts and recommendations within limits |
+| Policy | Policy engine, predicate catalogue, parameter resolver | Decide every computable rule; authorise agent actions |
+| Specs | Spec toolkit, spec registry | Validate, version and serve the lifecycle definition |
+| Evidence | Ledger, content store, profile | Immutable evidence and its verification |
+| Integration | MCP servers: knowledge, enterprise mocks, pilot bridge | Governed tool access |
+| Cross-cutting | Configuration, identity, logging, tracing | Shared foundations |
+
+### 4.2 Processes (target topology)
 
 ```mermaid
 flowchart LR
-  subgraph People
-    U[Browser]
-  end
-  subgraph Platform network
-    UI[ui<br/>Streamlit :8501]
-    API[api<br/>FastAPI :8000]
-    ORCH[orchestrator<br/>worker loop]
-    KN[knowledge<br/>MCP :8020]
-    TO[tools<br/>MCP :8030]
-    DB[(SQLite file<br/>ADLC_DB_PATH)]
-    FS[(file store<br/>ADLC_FILE_STORE_DIR)]
-    PX[phoenix<br/>OTLP + UI :6006]
-  end
-  subgraph Both networks
-    BR[pilot-bridge<br/>MCP :8040]
-  end
-  subgraph Pilot network
-    PD[pilot-dev :8101]
-    PT[pilot-test :8102]
-    PP[pilot-prodsim :8103]
-    TR[pilot-traffic :8200]
-    LAB[pilot-lab :8300]
-  end
-  LLM[(Model providers<br/>Anthropic, OpenAI, Gemini)]
-
-  U --> UI --> API
-  API --> DB
-  API --> FS
-  ORCH --> DB
-  ORCH --> FS
-  ORCH -- MCP + run token --> KN
-  ORCH -- MCP + run token --> TO
-  ORCH -- MCP + run token --> BR
-  ORCH -- LiteLLM --> LLM
-  TO --> DB
-  BR --> PD & PT & PP & TR & LAB
-  BR --> PX
-  API & ORCH & KN & TO & BR -. OTLP .-> PX
-  PD & PT & PP -. OTLP .-> PX
+  U[Browser] --> UI[Web application]
+  UI --> API[Platform API]
+  API --> DB[(Platform data store)]
+  ORCH[Orchestrator worker] --> DB
+  ORCH -- models --> GW[Model gateway] --> LLM[(Model providers)]
+  ORCH -- MCP, run token --> KN[Knowledge MCP]
+  ORCH -- MCP, run token --> TO[Enterprise tools MCP]
+  ORCH -- MCP, run token --> BR[Pilot bridge MCP]
+  BR --> PILOT[Pilot environments<br/>dev, test, prod-sim]
+  API & ORCH & KN & TO & BR -. traces .-> TR[Trace collector]
+  PILOT -. traces .-> TR
 ```
 
-| Process | Command | Role |
-| --- | --- | --- |
-| `api` | `adlc-api` | The only way people (and the UI) reach the platform: sign-in, inbox, decisions, edits, dashboards. Never advances runs |
-| `orchestrator` | `adlc-orchestrator run` | Polls the outbox, timers and monitors; advances runs (prerequisites, build, controls, review) |
-| `ui` | `streamlit run src/adlc/ui/app.py` | Web application; talks only to the API |
-| `knowledge` | `adlc-knowledge` | Read-only grounding documents as MCP servers |
-| `tools` | `adlc-tools` | Enterprise MCP mocks (ITSM, CMDB, IAM, GRC, eval store, ...) |
-| `pilot-bridge` | `adlc-pilot-bridge` | MCP servers that act on the pilot (environments, git, CI, deploy, traffic, kill switch, monitoring) |
-| `phoenix` | `phoenix serve` | Trace collector and viewer |
-| `migrate`, `register` | `alembic upgrade head`, `adlc-spec register adlc-specs` | One-shot set-up (compose); `make local-setup` without Docker |
-| pilot processes | `pilot-host`, `pilot-traffic`, `pilot-lab` | The pilot's environments, traffic and lab (section 16) |
+Design rules for the topology:
 
-### 4.2 Packages (`src/adlc/`)
+- **The API never advances runs**; the orchestrator worker does. The API records people's
+  signals; the worker performs automatic steps.
+- **The web application never touches the data store**; it calls the API only.
+- **Tool servers are separate processes** that import nothing from orchestration, ledger,
+  policy, agents or API. The pilot is reachable only through the bridge.
+- **One data store** holds specs, runs, evidence and events, so that closing a run, writing its
+  ledger record and emitting its event can be one transaction.
 
-| Package | Feature | Lines | Responsibility |
-| --- | --- | --- | --- |
-| `config` | 001 | 580 | Typed settings from the environment |
-| `db` | 001 | 280 | SQLite engine, transactions, value adapters |
-| `identity` | 001 | 430 | Local accounts, password hashing, sessions, roles |
-| `observability` | 001 | 140 | Logging with redaction, OpenTelemetry tracing |
-| `spec_toolkit` | 002 | 3,840 | Spec validation (L1–L5), registration, `SpecRegistry` |
-| `orchestration` | 003 | 4,540 | Run state machine, engine, router, outbox, timers, monitors |
-| `policy` | 004 | 3,170 | CEL evaluation, predicates, evidence, authorization, parameters |
-| `ledger` | 005 | 1,540 | Content store, artifact versions, ledger records, verification, profiles |
-| `agents` | 006, 008 | 4,530 | Model gateway, builder and reviewer loops, context, tools, cost |
-| `api` | 001, 007 | 940 | FastAPI app, sessions, routes, errors |
-| `inbox` | 007, 012 | 940 | Inbox items, run detail, decision forms, role rules, change requests |
-| `knowledge` | 008 | 460 | Knowledge MCP server (documents, BM25 search, scope, data class) |
-| `tools` | 010 | 2,940 | MCP tool servers, run tokens, tool catalogue, pilot bridge, probe |
-| `dashboard` | 013 | 930 | Read-only journey, activity, KPIs, portfolio |
-| `ui` | 007, 013 | 1,900 | Streamlit pages, API client, rendering rules |
-| `demo` | 014 | 620 | `adlc-demo`: scripted end-to-end demo |
-| `cli` | 001 | 40 | `adlc-account` (account file helper) |
-
-Dependencies point one way: `ui` depends only on `config` and the API; `knowledge` and `tools`
-servers import nothing from orchestration, ledger, policy, agents, API or inbox; the
-orchestration engine depends on the `PolicyEngine`, `AgentRunner`, `Reviewer` and `Clock`
-protocols, wired to the real implementations in `orchestration/__main__.py`.
-
----
-
-## 5. Technology stack
-
-| Concern | As built | Notes |
-| --- | --- | --- |
-| Language | Python 3.12, uv, ruff, mypy strict, pytest | Separate uv projects: platform, `pilot/`, `ado_sim/`, `deploy/phoenix/` |
-| Spec format | YAML + JSON Schema + CEL | `ruamel.yaml`, `jsonschema`, `cel-python` |
-| Data store | SQLite (one file, WAL) through SQLAlchemy 2 Core | Alembic migrations; changed from PostgreSQL (section 20) |
-| Workflow | Own state machine in the database, one transaction per signal | ADR-01 |
-| Events | Transactional outbox polled by the orchestrator | No broker |
-| Models | LiteLLM gateway; Anthropic primary, then OpenAI, then Gemini | ADR-02; `ADLC_MODEL_PROFILE` |
-| Policy | CEL evaluator plus 60 catalogued predicates | `cel-python` |
-| Tools | MCP (`mcp` SDK 1.30.0), streamable HTTP, stateless | Run tokens (HMAC-SHA256) |
-| API | FastAPI 0.162, uvicorn, pydantic 2, itsdangerous sessions | |
-| Web app | Streamlit 1.66, Plotly | Calls only the API |
-| Files | Content-addressed file store on disk | `ADLC_FILE_STORE_DIR` |
-| Tracing | OpenTelemetry → Arize Phoenix 21 (OTLP/HTTP, port 6006) | Replaced Jaeger; all hosted infrastructure is Python |
-| Packaging | Docker Compose on one host, or `make local` (honcho) without Docker | |
-| CI | GitHub Actions running `make check` | |
-
----
-
-## 6. Spec and configuration layer
-
-### 6.1 Spec folder (`adlc-specs/`)
-
-| Path | Contents |
-| --- | --- |
-| `terminals/T0..T9.yaml` | One spec per terminal: `metadata`, `trigger`, `prerequisites`, `actors`, `authorities`, `playbooks`, `controls`, `evidence`, `outcome_model`, `timeline`, and for continuous terminals `monitors` |
-| `checklists/t0..t9.yaml` | The reviewer's scored checklist items per terminal |
-| `playbooks/*.md`, `prompts/*` | Agent instructions with front matter (validated against `schema/*-front-matter.schema.json`), hashed at registration |
-| `shared/*.yaml` | Catalogues: `roles`, `agents`, `model_catalogue`, `model_tiers`, `permissions`, `predicates`, `risk_tiers`, `data_classes`, `change_classes`, `events`, `route_destinations`, `root_causes`, `evidence_sources`, `guardrails`, `metrics`, `mcp_servers` |
-| `schema/` | JSON Schemas (`terminal.schema.json`, checklist, front matter) |
-
-### 6.2 Validation and registration (`spec_toolkit`)
-
-`adlc-spec validate` runs five levels and reports each finding with file, line and rule id:
-
-| Level | Checks |
-| --- | --- |
-| L1 | Parse and layout |
-| L2 | JSON Schema |
-| L3 | Single-spec rules |
-| L4 | Cross-spec and catalogue rules, including the event and route graph (networkx) |
-| L5 | Version bumps against git `main`, and against the registry at registration |
-
-`adlc-spec register` validates and then writes new versions into the registry tables
-(`spec_registry`, `spec_catalogue`, `spec_trigger`, `spec_outcome_route`, `spec_event_route`,
-`spec_change_class`, `spec_timeline`, `playbook_registry`, `prompt_registry`) in one locked
-transaction. Rule ids are documented in `specs/002-terminal-spec-toolkit/contracts/validation-rules.md`,
-and a test keeps code and table in step.
-
-### 6.3 Reading specs at run time
-
-Code never reads YAML at run time. It reads the registry through `SpecRegistry`
-(`SqlSpecRegistry`, or `InMemorySpecRegistry` in tests); both share `projections.py`, so they
-agree. A use case **pins** spec versions when it is submitted (`usecase_spec_pin`); its runs use
-those versions even if newer ones are registered.
-
-### 6.4 Parameters
-
-Values a spec leaves open (thresholds, limits) are resolved by `policy/parameters.py` within the
-guardrails catalogue when a run opens, and frozen in `run_parameter_set`.
-
----
-
-## 7. Lifecycle orchestration
-
-### 7.1 Run state machine
-
-```text
-opened ─► building ─► checking ─► reviewing ─► awaiting_sign_off ─► closed
-  │           │  ▲         │                         │  ▲
-  ▼           ▼  └─retry───┘                         │  └─ waiver rejected
-blocked   awaiting_clarification                      ▼
-                                        escalated ─► awaiting_sign_off (completed by A role)
-```
-
-- `states.py` is a pure transition table: states, signals, the actors allowed to send each
-  signal, and the effects. Hypothesis property tests prove that only human decisions close a run
-  with an outcome and that only the orchestrator's rules escalate.
-- `engine.py` (`SqlTerminalRun`) applies **one signal per transaction**: lock the run row, run
-  `transition()`, execute the effects, write `run_transition` and `run_activity`. A closing signal
-  writes the sign-offs, the chained ledger record and the outcome event in the same transaction.
-- **Automatic steps** (prerequisites, build, controls, review) go through `advance()`: lease the
-  run, call the policy engine, agent or reviewer **outside** any transaction, then apply the
-  result with a version check. A result for a run that has moved on is recorded as `stale`. An
-  expired lease counts as an automatic retry.
-- Every run carries a **version**. Human operations send the version they saw; a different one
-  is refused as stale (409).
-
-### 7.2 Events, routing and delivery
-
-| Module | Behaviour |
-| --- | --- |
-| `router.py` | An event opens runs in the terminals whose trigger matches it, or signals waiting runs; outcome routes and event routes come from the pinned specs |
-| `outbox.py` | Ordered delivery per use case, idempotent (`processed_event`), retries at 10 s, 1 min, 5 min, 15 min, dead letter after 5 attempts (`dead_letter_action`, re-queued by the CoE role) |
-| `timers.py` | `escalate_after`, `clarification_sla`, `review_due` (continuous terminals) |
-| `monitors.py` | For terminals that declare `monitors`: each threshold is evaluated by the policy engine every `ADLC_MONITOR_INTERVAL`; a breach raises `<terminal>.event.<name>` once per episode |
-| `worker.py` | The loop: poll every `ADLC_POLL_INTERVAL`, lease work, write a heartbeat (`orchestrator_heartbeat`) |
-
-Event names follow SA Annex A: `<terminal>.<outcome>[.<root cause>]`, for example
-`T4.rework.implementation` or `T8.event.<name>`.
-
-### 7.3 One terminal run, end to end
+### 4.3 A terminal run (target flow)
 
 ```mermaid
 sequenceDiagram
@@ -318,528 +195,751 @@ sequenceDiagram
   participant A as Builder agent
   participant R as Reviewer agent
   participant L as Ledger
-  O->>O: event in outbox → router opens run (opened)
-  O->>PE: evaluate prerequisites
+  O->>O: event → router opens run
+  O->>PE: prerequisites
   alt unmet
-    O-->>P: run blocked (inbox: blocked)
+    O-->>P: blocked (inbox)
   else met
-    O->>A: build(context pack) (building)
-    A-->>O: artifacts (or clarification → awaiting_clarification)
-    O->>PE: evaluate controls (checking)
-    alt control fails
-      O->>A: rebuild with findings (auto-retry)
-    else pass
-      O->>R: review (reviewing)
-      R-->>O: scores + recommendation (awaiting_sign_off)
-      P->>O: decision with expected_version
-      O->>L: sign-offs + chained record + outcome event (closed)
-      O->>O: outcome event routes to next terminal
+    O->>A: build(context pack)
+    A-->>O: artifacts, or questions (clarification)
+    O->>PE: controls
+    alt a blocking control fails
+      O->>A: rebuild with findings (auto-retry, bounded)
+    else all pass
+      O->>R: review (independent input)
+      R-->>O: scores and recommendation
+      P->>O: decision (with the version seen)
+      O->>L: sign-offs, chained record, outcome event (one transaction)
+      O->>O: outcome event routes onward
     end
   end
 ```
 
 ---
 
-## 8. Policy engine
+## 5. Technology choices to confirm
 
-`adlc.policy` implements the orchestrator's `PolicyEngine` protocol.
+Each choice will sit behind an interface so it can change without touching callers. Each will be
+recorded as an ADR and confirmed by the CoE.
 
-| Call | Used for |
+| Concern | Proposed | Alternatives considered | Rationale | Swap boundary |
+| --- | --- | --- | --- | --- |
+| Language and tooling | Python 3.12, uv, ruff, mypy strict, pytest | — | Constitution VIII; one language for platform, agents and tools | — |
+| Spec format | YAML + JSON Schema + CEL | CUE, Pkl, BPMN | Readable by owners, reviewable in Git, validatable | The registry stores parsed JSON |
+| Workflow (ADR-01) | Own state machine in the data store, one transaction per signal | LangGraph checkpointer, Temporal, Camunda | One copy of run state; atomic close; restart safety from the store | `TerminalRun` interface |
+| Data store (ADR-04) | One SQLite file (WAL), SQLAlchemy Core, Alembic | PostgreSQL; separate stores per concern | One host, no server to run, transactional; all-Python hosting | Engine factory; table prefixes per area |
+| Events | Transactional outbox, polled | Kafka, LISTEN/NOTIFY, cloud bus | No broker for the MVP; atomic with state changes | Router interface |
+| Models (ADR-02) | One gateway on LiteLLM; tiers mapped to models per profile; Anthropic primary, then OpenAI, then Gemini | Direct provider SDKs | Central model swap, fallback, cost tracking | Tier names |
+| Agent framework (ADR-02) | Own bounded loop | Agent SDKs, LangGraph | Few needs; full control of limits and records | `AgentRunner`, `Reviewer` |
+| Policy (ADR-03) | CEL plus a catalogue of predicates | OPA/Rego, Cedar | Simple to embed; expressive enough; explainable failures | `evaluate`, `authorize` |
+| Tools | MCP servers (streamable HTTP) | Direct API clients | One protocol for every tool; real servers can replace mocks | MCP registry |
+| API | FastAPI, pydantic | Flask, Django | Typed, fast to build, OpenAPI | HTTP contract |
+| Web application (ADR-05) | Streamlit | React | Speed of delivery for an MVP | API only |
+| Files | Content-addressed store on disk | S3 / MinIO | One host, no extra service | Storage adapter |
+| Tracing (ADR-06) | OpenTelemetry to Arize Phoenix | Jaeger, Langfuse, LangSmith | Python-native, OTLP, agent-aware views | OTLP export |
+| Hosting (ADR-07) | Docker Compose on one host; a process runner without Docker | Kubernetes | Fast to stand up; same processes either way | Container images |
+| CI | GitHub Actions calling `make check` | GitLab CI, Jenkins | No check lives only in CI | Make targets |
+
+**Known consequence of SQLite** (to accept in ADR-04): there are no database identities, so the
+data store cannot stop a process with file access from removing a guard. The design compensates
+with guards for every connection and a hash chain that detects any change (section 8.4).
+
+---
+
+## 6. Repository and project structure
+
+| Path | Will contain |
 | --- | --- |
-| `evaluate(expression, context)` | Prerequisites, controls, approver and external-body conditions, event follow-on conditions, monitor thresholds |
-| `authorize(actor, action, resource, context)` | Agent and tool actions: run scope, then deny, then allow, then default deny |
+| `src/adlc/<package>/` | The platform, one package per component (section 7), each with a README |
+| `adlc-specs/` | Runtime specs: terminals, checklists, playbooks, prompts, shared catalogues, JSON Schemas. Never under `specs/` |
+| `db/migrations/` | Alembic environment and revisions |
+| `tests/` | `unit/`, `integration/`, `scenario/`, `fixtures/`, `support/` |
+| `pilot/` | The pilot use case as its own project (no platform imports) |
+| `deploy/` | Compose file, Dockerfiles, process file for running without Docker, helper scripts |
+| `scripts/` | Demo driver, resilience drill, synthetic data, migration check |
+| `data/` | Synthetic evidence, knowledge documents; a git-ignored local data folder |
+| `docs/` | SA, TDS, build plan, this design, operating guides, diagrams |
+| `specs/NNN-*/` | Spec Kit feature folders |
+| `Makefile` | The single entry point for developers and CI |
 
-- **Evaluation.** The CEL expression is compiled once and cached. Each referenced path is
-  resolved in the **evidence** (`activation.py`), and the 60 catalogued predicates explain any
-  failure (table, row, column or missing path).
-- **Fail closed.** Anything but `true` is *not passed*, with a reason. Errors, missing evidence,
-  non-boolean results, more than 1 s, 10,000 rows or 100,000 characters all fail closed.
-  Approval conditions that cannot be evaluated require the approval; follow-on conditions that
-  cannot be evaluated do not fire.
-- **Evidence sources.** The latest closed run of each terminal, the run, intake, trigger,
-  timeline, tier, waivers, parameters, the directory (account file), and the pilot's real
-  evidence (`pilot_evidence.py`). Sources not yet provided by a real system come from
-  `data/synthetic/`, and every decision that reads them is labelled `synthetic`.
-- **Audit.** Each call writes one append-only row in `policy_decision` (inputs and reason) and
-  runs in the span `adlc.policy.<evaluate|authorize>`.
+Separate projects (own `pyproject.toml` and lock file) will be used wherever a component must
+share nothing with the platform: the pilot, and later the board simulator (section 16).
 
 ---
 
-## 9. Agent runtime
+## 7. Component designs
 
-`adlc.agents` implements the `AgentRunner` and `Reviewer` protocols.
+Each component below lists its responsibility, what it will expose, the rules it must enforce,
+and what is left to its feature.
 
-- **Model selection.** A terminal spec asks for a **tier** (`reasoning`, `coding`, `standard`),
-  never a model. `shared/model_catalogue.yaml` maps each tier to an ordered list per profile
-  (`default`: Anthropic Claude Opus 5.5 and Sonnet 5.5, then OpenAI, then Gemini; `dev`: small
-  models first). `ADLC_MODEL_PROFILE` picks the profile.
-- **Gateway rules** (`gateway.py`). Walk the tier's models in order and skip an entry without a
-  key, whose approved data class ranks below the run's ceiling (an unresolved ceiling counts as
-  the highest, failing closed), or whose context window is too small. Fall back to the next entry
-  **only on outages** (rate limit, unavailable). `LiteLLMTransport` is the only code that calls a
-  provider; keys are passed per call and never logged or stored.
-- **Bounded loop** (`runner.py`). Step, token and time limits per tier (`ADLC_AGENT_LIMITS`, with
-  terminal overrides); output validated against the artifact schema, with up to
-  `ADLC_AGENT_CORRECTIONS` correction messages.
-- **Context pack** (`context.py`). Intake, prerequisite evidence, earlier artifacts and the
-  playbooks and prompts, whose hashes must match the registry. Untrusted text is wrapped in
-  `<data>` blocks. The pack is hashed for the record.
-- **Independent reviewer** (`reviewer.py`). Gets the artifacts and checklist, never the builder's
-  reasoning, and returns scores, findings and a recommendation.
-- **Tools** (`tools.py`, `mcp_tools.py`, `knowledge.py`). Every tool call passes `ToolGate`, which
-  calls `policy.authorize` first; MCP calls carry a run token.
-- **Records.** `model_call` (tokens, cost, outcome), `agent_attempt`, `knowledge_retrieval`,
-  `artifact_citation`, `cost_alert` (`ADLC_COST_ALERT_LEVELS`). `startup.py` refuses to start
-  when a needed tier has no keyed model.
-- **Replay.** `adlc-replay` runs reference use cases through the grounded terminals, from
-  recordings or live, with a quality report.
+### 7.1 Foundations (feature 001)
 
----
+**Configuration (`config`).**
+- Typed settings read **only from the environment**. No configuration files, no defaults for
+  secrets.
+- A missing or invalid setting stops start-up with one line per setting: its name, missing or
+  invalid, and the expected form. The value is never printed.
+- Secrets will be typed as secret values, and `.env.example` will be kept in step with the
+  settings model by a test.
+- Durations will use `<int><unit>`. Avoid `m`, which the TDS uses for months.
 
-## 10. Evidence ledger
+**Data store (`db`).**
+- One engine factory used by every process.
+- Write transactions take the write lock at their start, so two workers can never claim the same
+  work. Reads never wait for writers.
+- Times stored in UTC with microseconds.
+- Services never create the store; only migrations do.
+- **To decide in 001:** value adapters for JSON, UUID and timestamps; the guard mechanism for
+  append-only tables.
 
-`adlc.ledger` stores what each run produced, who produced each version, the use-case profile, and
-the proof that none of it changed.
+**Identity (`identity`).**
+- An `IdentityProvider` protocol (sign in, current person, roles, sign out), so SSO can replace
+  local accounts later.
+- **Local accounts** live in a file outside the repository, with password hashes only.
+- **Roles** must exist in the role catalogue (`adlc-specs/shared/roles.yaml`). No role names in
+  code.
+- **Sessions** are signed tokens with an expiry.
 
-- **Content store.** Structured content goes in `content_blob`, keyed by the sha256 of its
-  normalised JSON. Files go to the file store at `<root>/<aa>/<bb>/<hex>`, written to a temporary
-  file and renamed, after checks on size (`ADLC_ATTACHMENT_MAX`), type (`ADLC_ATTACHMENT_TYPES`)
-  and content. Office files with macros are refused.
-- **Artifact versions.** A new `artifact_version` is written only when content changes or
-  attachments are added, with its producer (agent attempt or person). People edit artifacts
-  through the API: an edit commits a new version, voids earlier pass approvals, withdraws a
-  pending waiver and bumps the run version.
-- **Ledger records.** Closing a run writes a version-2 record: each artifact's id, version,
-  content hash, producer and attachments; emitted references; the profile version; `bound_to`
-  (the package hash the record is bound to). Each record holds the hash of the previous one in
-  the use case: a hash chain.
-- **Profile.** The use case's values are versioned (`profile_version`); a run reads the version
-  current when it opened. A passing close that emits values writes the next version.
-- **Verification.** `adlc-ledger verify [--usecase UC-nnnn] [--json]` recomputes the chain and
-  content hashes and records each check in `verification_run`. It detects any changed or removed
-  record, including one made by bypassing the database triggers.
+**Observability (`observability`).**
+- Logging with redaction of credential-like fields.
+- OpenTelemetry tracing per process. Exporter failures must never affect requests.
 
----
+**Migrations.**
+- Numbered, repeatable and reversible.
+- A check that upgrades, downgrades and upgrades again on a scratch store.
 
-## 11. Tools and knowledge (MCP)
+### 7.2 Spec toolkit and registry (feature 002)
 
-| Server process | Servers | Notes |
-| --- | --- | --- |
-| `knowledge` | One MCP endpoint per source folder at `/mcp/<source>/`, tools `search` (BM25) and `read` | Read-only. Scope (path prefixes or collection labels from the pinned spec) and data class enforced server-side; bearer `ADLC_KNOWLEDGE_TOKEN`; host allow-list |
-| `tools` | `eval_store`, `servicenow`, `cmdb`, `agent_registry`, `iam`, `grc`, `control_library` | Enterprise mocks; records in `enterprise_record` |
-| `pilot-bridge` | `pilot_env`, `git`, `ci`, `artifact_store`, `prompt_registry`, `dataset_registry`, `harness`, `redteam_harness`, `dlp_scanner`, `cd`, `traffic_manager`, `kill_switch`, `observability`, `monitoring`, `feedback` | On both networks; holds no database, model or session settings |
+**Validation levels:**
 
-Which process serves a server is the `host` field of `shared/mcp_servers.yaml`. Rules:
-
-- **Checked twice.** The tool gate authorises the call against the terminal's tool scopes
-  (policy engine), then the server verifies the **run token**: HMAC-SHA256 over canonical JSON,
-  valid five minutes, carrying the scopes and **bound values**.
-- **Bound values.** Branch (`uc/<run id>`), environment, candidate hash and authorised hash come
-  from the run and the real ledger evidence, never from the model. Synthetic or ambiguous
-  evidence binds nothing and the call is refused.
-- **Records.** Every call, including refusals, in `tool_call`; evidence results in
-  `tool_result`. Both append-only.
-- **Probe.** `adlc-tools-probe` calls a tool as a terminal through the real gate, token and
-  records (development and demo).
-
----
-
-## 12. API, inbox, dashboard and web application
-
-### 12.1 API (`adlc.api`)
-
-Every path needs a session except `PUBLIC_PATHS` (`/health`, `/auth/sign-in`).
-
-| Area | Routes |
+| Level | Checks |
 | --- | --- |
-| Auth | `POST /auth/sign-in`, `POST /auth/sign-out`, `GET /auth/me` |
-| Use cases | submit, list, `GET /usecases/{id}`, `POST /usecases/{id}/verify` |
-| Inbox | `GET /inbox` |
-| Runs | `POST /runs/{run_id}/decisions`, `POST /runs/{run_id}/escalation`, artifacts (`PUT`, spreadsheet, attachments, history), `GET /runs/{run_id}/attachments/{hash}` |
-| Requests | `POST /clarifications/{id}/answers`, `POST /waivers/{id}/decision`, dead letters (list, detail, re-queue) |
-| Changes and events | `GET /changes`, `POST /changes/{id}/decision`, `GET /events/proposed`, `POST /events/proposed/...` |
-| Dashboard | `GET /dashboard/usecases/{id}/journey`, `/kpis`, `/portfolio`, `/activity`, `/runs/{run_id}/timeline` |
+| L1 | Parse and layout |
+| L2 | JSON Schema |
+| L3 | Rules within one spec |
+| L4 | Rules across specs and catalogues, including the event and route graph (no unreachable terminals, no dangling routes) |
+| L5 | Version bumps against `main` and against the registry |
 
-Rules for every operation:
+**Rules:**
+- Every finding names the file, line and rule id.
+- Rule ids are documented in a contract table, and a test keeps the table and the code equal.
 
-- **Who acts** is always the signed-in person; a body naming an actor, account or role is refused
-  (`extra="forbid"`). Role checks live in the services (`inbox/rules.py`), shared with the inbox,
-  so an item never offers an action the operation would refuse.
-- **Versions.** Decisions, edits, uploads and escalation completion carry `expected_version`; a
-  mismatch answers `409 stale`.
-- **One error body** `{"kind", "detail", "field"?}`: 401 `not_signed_in`, 403 `not_allowed`, 404
-  `not_found`, 409 `stale` or `wrong_state`, 422 `invalid`. No stack traces.
-- **Downloads** carry `Content-Disposition: attachment`, `nosniff`, a sandboxing CSP and
-  `no-store`.
+**Registration:**
+- Writes new versions in one transaction. Registered versions are never changed.
+- Playbooks and prompts are hashed, so the runtime can prove it uses the registered text.
 
-### 12.2 Inbox (`adlc.inbox`)
+**Run-time reads:**
+- Through a `SpecRegistry` interface with two implementations, SQL and in-memory, sharing one
+  set of projection functions.
+- No code reads YAML at run time.
+- A use case **pins** spec versions at submission and keeps them for its whole life.
 
-Nothing is stored: items are derived from orchestration, ledger and agent tables. Item kinds:
-`sign_off`, `clarification`, `escalation`, `waiver`, `blocked`, `dead_letter` (CoE only), ordered
-soonest due first. `forms.py` builds the decision form from the pinned spec (allowed outcomes,
-required fields, root causes, the reviewer's recommendation). Feature 012 adds change requests
-(approved by the role owning the ITSM server) and proposed operational events.
+**To decide in 002:** the full rule list; how validation finds the baseline in CI.
 
-### 12.3 Dashboard (`adlc.dashboard`)
+### 7.3 Lifecycle orchestration (feature 003)
 
-Read-only views: the **journey** (one lane per terminal, a bar per run, arrows for rework,
-reroute, exception, event and re-entry), the **activity** feed, the **time split** per state, and
-the SA §12.3 **KPIs** (lifecycle elapsed, time per terminal, reworks by root cause,
-clarifications, first-pass yield, escalations, reviewer–human agreement, human edit rate, control
-first-time pass rate, SLA adherence). A KPI with nothing measured is `null`, never zero.
+**State machine.** A pure transition table holds the states, the signals, who may send each
+signal, and the effects:
 
-### 12.4 Web application (`adlc.ui`)
-
-Streamlit, calling only the API through `client.ApiClient`; the bearer token stays in server-side
-session state. Pages: Sign-in, Inbox, New use case, Use cases, Run, Clarification, Escalation,
-Waiver, Dead letters, Journey, Activity, Portfolio. Text written by agents or people is shown
-only as plain text or data (never Markdown, HTML or widget labels); attachments are download
-only. A boundary test allows imports of only `adlc.ui` and `adlc.config`.
-
----
-
-## 13. Data architecture
-
-### 13.1 Store
-
-One SQLite file (`ADLC_DB_PATH`) shared by every platform process on the host, opened through
-`adlc.db`:
-
-- write-ahead log, foreign keys on, busy timeout `ADLC_DB_BUSY_TIMEOUT`;
-- `engine.begin()` starts `BEGIN IMMEDIATE` and holds the single write lock, so two workers can
-  never claim the same event, timer or run; `engine.connect()` reads without waiting for writers;
-- `write_independently(engine, fn)` defers a write until the outer transaction ends (no second
-  writing connection inside a transaction);
-- times are ISO 8601 text in UTC with microseconds (text order is time order); typed columns
-  (`timestamptz`, `jsonb`, `uuid`, ...) are converted by registered adapters; `now()` and `regexp`
-  SQL functions are provided.
-
-Services never create the file; only migrations do (`open_engine(create=True)`).
-
-### 13.2 Areas and tables
-
-The four owned areas of SA §10 are table-name prefixes in one file (formerly PostgreSQL schemas):
-
-| Area | Tables |
-| --- | --- |
-| `spec` | `spec_registry`, `spec_catalogue`, `spec_trigger`, `spec_outcome_route`, `spec_event_route`, `spec_change_class`, `spec_timeline`, `playbook_registry`, `prompt_registry` |
-| `run` | `usecase`, `usecase_spec_pin`, `terminal_run`, `run_transition`, `run_activity`, `sign_off`, `clarification_round`, `clarification_answer`, `waiver`, `timer`, `run_parameter_set`, `policy_decision`, `agent_attempt`, `model_call`, `cost_alert`, `knowledge_retrieval`, `artifact_citation`, `orchestrator_heartbeat`, `sequence_counter` |
-| `ledger` | `ledger_record`, `content_blob`, `file_object`, `artifact_version`, `artifact_attachment`, `checklist_result`, `profile_version`, `verification_run` |
-| `events` | `outbox_event`, `processed_event`, `dead_letter_action` |
-| tools | `tool_call`, `tool_result`, `enterprise_record` |
-
-Views (`v_run_step`, `v_usecase_terminal_summary`, `v_run_cost`, `v_terminal_cost`,
-`v_usecase_cost`, ...) serve the inbox and dashboard. Identifiers: use cases `UC-0001`, waivers
-`WVR-0001` (sequence counters), runs and events UUID v7.
-
-### 13.3 Append-only history
-
-Triggers refuse UPDATE and DELETE, for every connection, on 31 tables: the ledger, the spec
-history, run transitions and activity, sign-offs, clarifications, dead-letter actions, policy
-decisions, parameter sets, content, files, profiles, verifications, artifact versions,
-attachments, checklist results, prompts, agent attempts, model calls, cost alerts, retrievals,
-citations, and tool calls, results and records. The hash chain detects any bypass (section 10).
-
-### 13.4 Migrations
-
-Alembic, one baseline revision (`db/migrations/versions/0001_baseline.py`). `make migrate`,
-`make migrate-down`, and `make migration-check` (upgrade, downgrade, upgrade again on a scratch
-file). Applying twice changes nothing.
-
----
-
-## 14. Security design
-
-| Concern | Design |
-| --- | --- |
-| Authentication | Local accounts in `ADLC_ACCOUNTS_FILE` (outside the repo), stdlib scrypt hashes (`scrypt$n$r$p$salt$hash`); a placeholder never signs in and stops start-up in `demo`. Behind the `IdentityProvider` protocol, so OIDC can replace it |
-| Sessions | itsdangerous signed tokens (`ADLC_SESSION_SECRET`), expire after `ADLC_SESSION_TTL`; sign-out revocations kept in memory |
-| Authorisation (people) | Roles from `adlc-specs/shared/roles.yaml`; who may act is computed from the pinned spec (`inbox/rules.py`); the API enforces, the UI only hides |
-| Authorisation (agents) | `policy.authorize` before every agent action and tool call (default deny); run tokens bound to scopes and values, verified again by each MCP server |
-| Data classes | Model choice and knowledge results limited by the run's data-class ceiling; unknown ceilings fail closed |
-| Secrets | Environment only (`.env`, git-ignored; `.env.example` holds `REPLACE_ME` placeholders, kept in step with the settings by a test); `SecretStr`; never logged, traced or stored; `make secret-scan` (gitleaks) in `make check` |
-| Logging | A filter drops credential-like attributes; request bodies are never logged or traced |
-| Untrusted content | Agent and person text rendered as plain text; uploads checked by size, type and content, macros refused; downloads sandboxed; prompts wrap untrusted text in `<data>` blocks |
-| Evidence integrity | Append-only triggers plus the hash chain and `adlc-ledger verify` |
-| Network | Compose: the pilot on its own network, reached only through the bridge; MCP servers check host headers |
-
-Accepted limits: SQLite has no database identities (any process with write access to the file
-could drop a trigger; verification detects the change); session revocations are lost on API
-restart; no sign-in lockout in the MVP.
-
----
-
-## 15. Observability
-
-- **Logs.** Plain stdlib logging to stderr (`ADLC_LOG_LEVEL`), with credential redaction; sign-in
-  attempts are logged by outcome only.
-- **Traces.** OpenTelemetry, batch-exported over OTLP/HTTP to `ADLC_OTLP_ENDPOINT` (Phoenix).
-  Projects are set with `OTEL_RESOURCE_ATTRIBUTES=openinference.project.name=...`
-  (`adlc-platform`, `pilot-triage-dev`, `pilot-triage-test`, `pilot-triage-prod-sim`). `/health`
-  is not traced; headers are never captured; span attributes follow allow lists; exporter
-  failures become rate-limited warnings and never affect requests.
-- **Run activity.** Every step writes `run_activity` (who, what, outcome), the source of the
-  journey, activity feed and KPIs.
-- **Pilot telemetry.** The bridge reads the pilot's spans from Phoenix's REST API
-  (`/v1/projects/{project}/spans`) for the observability and monitoring tools.
-- **Health.** Each service has `/health`; the orchestrator writes heartbeats
-  (`ADLC_HEARTBEAT_MAX_AGE`).
-
----
-
-## 16. Pilot use case and the ADO simulator
-
-### 16.1 Pilot: Incident Triage Assistant (`pilot/`, feature 009)
-
-A separate uv project that never imports the platform. For an incident it returns a category,
-priority, resolver team and reason, using two mocked tools (service catalogue, team directory).
-
-- **Golden template** (`pilot/template/`): agent code, reference data, infrastructure definitions
-  for `dev`, `test`, `prod-sim`. T3 writes the **fill** (instructions, routing rules, tool bindings,
-  thresholds, settings).
-- **Packages.** `pilot-build` validates a fill and writes a deterministic archive; its sha256 is
-  the package hash. The registry is `PILOT_REGISTRY` (`/packages` in compose,
-  `data/local/pilot/packages` without Docker).
-- **Environments.** `pilot-host --env dev|test|prod-sim` runs packages as worker processes;
-  prod-sim adds deployments (stable, candidate), traffic split (shadow, canary, full) and faults
-  (`model_swap`, `pii_leak`). Every operation is appended to JSON Lines records.
-- **Traffic and data.** `pilot-traffic` sends a steady stream to prod-sim and reports accuracy and
-  leak rate; `pilot-incidents` makes reproducible synthetic incidents.
-- **Models.** A deterministic simulated model by default; an OpenAI-compatible model can be
-  switched on in dev and test (`PILOT_MODEL_*`).
-
-### 16.2 ADO simulator (`ado_sim/`, feature 015, in progress)
-
-Phase 2, Option A (SA §22) makes an Azure DevOps board the people's interface while the backend
-stays as built. As there is no real ADO organisation, the simulator is the contract reference.
-
-- **What it is.** A separate uv project (no imports to or from `adlc`): FastAPI, its own SQLite
-  file through stdlib `sqlite3`, an ADO REST API 7.1 subset: work items (create, get, list, batch,
-  JSON Patch update with `test /rev` → 412), updates and revisions, a WIQL subset (flat and
-  one-hop link queries; everything else refused by name), links (parent/child,
-  predecessor/successor), comments (`7.1-preview.4`), work item types, states, fields, areas, and
-  identities.
-- **Board model.** A seed file (`ado_sim/seed/demo.yaml`) defines the Agile process with the
-  Epic's states as the ten terminal stages, the `Custom.Adlc*` fields and one identity per role
-  plus the platform's service account. Data only.
-- **Access.** Personal access tokens issued by `ado-sim token issue`, stored only as HMAC-SHA256
-  (`ADO_SIM_TOKEN_KEY`); every failure is the same empty 401.
-- **Fidelity.** Behaviour follows the Microsoft Learn 7.1 reference: a link added from item B
-  records an update on item A without a new revision; a comment creates a revision; date
-  comparisons in WIQL need `timePrecision=true` to include times.
-- **Contract.** `ado_sim/contract/openapi.json` (generated, checked by
-  `ado-sim export-openapi --check`); request and response fixtures and the list of known
-  differences are still to come.
-- **Status.** Tasks T001–T039 done (182 tests, 96% coverage); fixtures, property tests,
-  deployment (compose service, `Procfile.local`, `ado-sim-check` in `make check`) and
-  documentation remain. Features 016–020 (engagement layer, board, backlog and form, operations
-  console, end-to-end demo on the board) follow.
-
----
-
-## 17. Deployment and configuration
-
-### 17.1 Docker Compose (`deploy/compose.yaml`)
-
-Services: `phoenix`, `migrate`, `register` (one-shot), `api`, `ui`, `knowledge`, `orchestrator`,
-`tools`, `pilot-bridge`, `pilot-dev`, `pilot-test`, `pilot-prodsim`, `pilot-traffic`, `pilot-lab`,
-and `pilot-tools` (profile `tools`, for the pilot's command-line tools).
-
-| Networks | Volumes |
-| --- | --- |
-| `adlc-platform` (platform services), `adlc-pilot` (pilot); only `pilot-bridge` joins both | `adlc-db` (SQLite file), `adlc-files` (file store), `phoenix-data`, `pilot-packages`, `pilot-records`, `pilot-data`, `bridge-data` |
-
-`make up`, `make down`, `make status`, `make reset` (confirmation required).
-
-### 17.2 Without Docker
-
-`make local` runs `local-setup` (migrate, register specs, sync the pilot and Phoenix
-environments) and then all processes of `deploy/Procfile.local` under honcho, with `.env` then
-`deploy/local.env` (localhost addresses, data under `data/local/`). Without `make`:
-
-```bash
-set -a; source .env; source deploy/local.env; set +a
-uv run alembic upgrade head && uv run adlc-spec register adlc-specs
-(cd pilot && uv sync --locked) && (cd deploy/phoenix && uv sync --locked)
-uvx honcho==2.0.0 -f deploy/Procfile.local -e .env,deploy/local.env -d . start
+```text
+opened ─► building ─► checking ─► reviewing ─► awaiting_sign_off ─► closed
+  │           │  ▲         │                         │  ▲
+  ▼           ▼  └─retry───┘                         │  └─ waiver rejected
+blocked   awaiting_clarification                      ▼
+                                        escalated ─► awaiting_sign_off
 ```
 
-See [run-without-docker.md](run-without-docker.md).
+Property tests will prove two things: only human decisions close a run with an outcome, and
+only the orchestrator's rules escalate.
 
-### 17.3 Settings
+**Engine.** It will apply **one signal per transaction**:
+1. lock the run;
+2. compute the transition;
+3. execute the effects;
+4. append the transition and the activity.
 
-- From the environment only: `.env` (copied from `.env.example`), typed by `adlc.config`.
-  A problem prints `adlc: configuration error` with one line per setting (name, missing or invalid,
-  expected form, never the value) and exits with code 2.
-- `ADLC_ENV` is `dev` or `demo`; `demo` refuses placeholder passwords and guards destructive
-  targets.
-- Durations use `<int><unit>` with `s`, `min`, `h`, `d` (a bare `m` is refused: TDS uses it for
-  months). `ADLC_TIME_SCALE` multiplies every timer and retry delay (0.0001 turns a 7-day timer into about a minute for demos).
-- Annex A lists every setting.
+Closing a run will write the sign-offs, the chained ledger record and the outcome event in the
+same transaction.
+
+**Automatic steps** (prerequisites, build, controls, review):
+- The worker leases the run.
+- It calls the policy engine, agent or reviewer **outside** any transaction, because these calls
+  may take minutes.
+- It applies the result with a version check. A result for a run that has moved on is recorded
+  as stale, and an expired lease counts as a retry.
+
+**Versions.** Every run has a version. Human operations must send the version they saw, and a
+mismatch is refused as stale.
+
+**Events and routing:**
+- Event names follow SA Annex A: `<terminal>.<outcome>[.<root cause>]`.
+- The router opens runs where a pinned spec's trigger matches, and signals waiting runs.
+- Outcome routes and event routes come only from specs.
+
+**Outbox:**
+- Delivery is ordered per use case and idempotent (processed events are recorded).
+- Retries use increasing delays, then a **dead letter** that the CoE role can inspect and
+  re-queue.
+
+**Timers:**
+- Escalation after a deadline, clarification SLA, and periodic review for continuous terminals.
+- All delays are multiplied by a time scale, for demos.
+
+**Monitors** (for continuous terminals):
+- Thresholds declared in specs are evaluated periodically by the policy engine.
+- A breach raises an operational event once per episode.
+
+**Worker.** A polling loop that leases work and writes a heartbeat.
+
+**Interfaces it depends on:** `PolicyEngine`, `AgentRunner`, `Reviewer`, `Clock`, with
+scriptable stubs, so 003 can be built and tested before 004 and 006 exist.
+
+**To decide in 003:**
+- retry delays and the dead-letter threshold;
+- lease length;
+- the escalation rules (rework limit, SLA breach, clarification limits, budget).
+
+### 7.4 Policy engine (feature 004)
+
+| Operation | Used for |
+| --- | --- |
+| `evaluate(expression, context)` | Prerequisites, controls, approver and follow-on conditions, monitor thresholds |
+| `authorize(actor, action, resource, context)` | Agent and tool actions: run scope, then deny, then allow, then **default deny** |
+
+**Evaluation:**
+- CEL expressions are compiled once.
+- Paths are resolved against **evidence**: earlier terminals' closed runs, the run, intake,
+  timeline, tier, waivers, parameters and the directory.
+- Catalogued predicates explain each failure: the table, row and column, or the missing path.
+
+**Fail closed.** Anything but `true` is *not passed*, with a reason. Errors, missing evidence,
+wrong result types and resource limits (time, rows, characters) all fail closed.
+
+**Evidence providers:**
+- One interface per source.
+- A **synthetic** provider supplies sources not yet integrated, and every decision that reads it
+  is labelled synthetic.
+
+**Parameters.** Values left open by specs are resolved within guardrails when a run opens, then
+frozen.
+
+**Audit.** Every call appends one decision record with its inputs and reason.
+
+**To decide in 004:** the predicate catalogue; resource limits; how real providers replace
+synthetic ones.
+
+### 7.5 Evidence ledger (feature 005)
+
+- **Content store.**
+  - Structured content is addressed by the hash of its normalised JSON.
+  - Files go to a content-addressed store, written atomically.
+  - Uploads are checked for size, type and content. Office files with macros are refused.
+- **Artifact versions.** A new version is written only when content changes. It names its
+  producer: an agent attempt or a person.
+- **Person edits:**
+  - An edit creates a version.
+  - It voids earlier pass approvals and withdraws a pending waiver.
+  - It bumps the run version.
+- **Ledger record at close.** It holds:
+  - each artifact's id, version, content hash, producer and attachments;
+  - emitted values;
+  - the profile version;
+  - the package the evidence is bound to;
+  - the hash of the previous record of the use case (the chain).
+- **Use-case profile.** Versioned values that later terminals read. A passing close that emits
+  values writes the next version.
+- **Verification.** A command will recompute the chain and the content hashes for one use case
+  or for all, and record each verification.
+
+**To decide in 005:** the record content format and its version; the binding rule; the file type
+allow-list.
+
+### 7.6 Agent runtime (feature 006)
+
+- **Model gateway:**
+  - An agent asks for a **tier** (`reasoning`, `coding`, `standard`), never a model.
+  - A model catalogue maps each tier to an ordered list of models per **profile** (for example
+    `default`, `dev`).
+  - The gateway will skip models without a key, models not approved for the run's data class
+    (an unknown class fails closed), and models whose context is too small.
+  - It falls back to the next model **only on outages**, not on bad answers.
+  - Only one transport module will call providers. Keys are passed per call and never logged.
+- **Builder loop:**
+  - Bounded steps, tokens and time per tier, with per-terminal overrides.
+  - Output validated against each artifact's schema, with a limited number of correction rounds.
+- **Context pack:**
+  - Intake, prerequisite evidence, earlier artifacts, playbooks and prompts (hash-checked against
+    the registry), and grounding.
+  - Untrusted text is fenced as data.
+  - The pack is hashed for the record.
+- **Reviewer.** It gets the artifacts and the checklist but **never the builder's reasoning**.
+  It returns scores, findings and a recommendation.
+- **Tool gate.** Every tool call is authorised by the policy engine first.
+- **Records:** model calls (tokens, cost, outcome), attempts, retrievals, citations, cost alerts.
+- **Start-up check.** Refuse to start when a needed tier has no usable model.
+
+**To decide in 006:** limits per tier; the cost alert levels; the reviewer's output schema; the
+replay and quality report for regression testing of agents.
+
+### 7.7 Human inbox and web application (feature 007)
+
+**API rules:**
+- **Who acts is always the signed-in person.** A request naming an actor or role is refused.
+- **Role rules are shared:** the inbox and the operations use the same functions, so the inbox
+  never offers an action the operation would refuse.
+- **One error format:** not signed in, not allowed, not found, stale, wrong state, invalid.
+
+**Inbox.** Derived, never stored. It will show:
+- sign-offs still needed from the person's roles;
+- clarifications addressed to them;
+- escalations;
+- waivers to approve;
+- blocked runs;
+- dead letters (CoE only).
+
+The list is ordered soonest due first.
+
+**Decision form.** Built from the pinned spec:
+- the allowed outcomes and the fields each one requires;
+- root causes for rework;
+- the reviewer's recommendation (deciding differently needs a reason).
+
+**Web application:**
+- Calls only the API. The session token stays on the server.
+- Text written by people or agents is shown only as plain text, never as Markdown or HTML.
+- Attachments are offered for download only, with safe headers.
+
+**To decide in 007:** the page list and navigation; refresh behaviour; the spreadsheet import for
+table artifacts.
+
+### 7.8 Knowledge and tools (features 008 and 010)
+
+**Knowledge server:**
+- Read-only MCP servers, one per source folder, with `search` and `read`.
+- Scope (from the pinned spec) and the data-class limit are enforced by the server as well as by
+  the platform.
+- A bearer token is required, and host headers are checked.
+
+**Enterprise mocks:**
+- ITSM, CMDB, IAM, GRC, eval store, agent registry, control library.
+- They have the tool names and shapes a real server would have, so a real system can be swapped
+  in by configuration.
+
+**Pilot bridge:**
+- The only component on both networks.
+- Its tools act on the pilot: environments, git, CI, artifact and prompt stores, datasets,
+  evaluation harness, red team, personal-data scan, deploy, traffic, kill switch, monitoring,
+  feedback.
+
+**Run tokens:**
+- Short-lived, signed, carrying the run's tool scopes and **bound values**: branch, environment,
+  candidate and authorised package.
+- Bound values are fixed by the platform from evidence, never by the model.
+- Synthetic or ambiguous evidence binds nothing, and the call is refused.
+
+**Checked twice:** the tool gate authorises the call, then the server verifies the token.
+
+**Records:** every call, including refusals, and every evidence result.
+
+**To decide in 010:** the tool catalogue and its contract; time limits; the registry format
+(which process serves which server).
+
+### 7.9 Terminal agents (features 008, 011, 012)
+
+- Each terminal's builder will be configured by its spec, playbooks and prompts. There is no
+  terminal-specific code.
+- Delivery order: T0–T2 (grounded in knowledge), then T3–T5 (build, evaluate, assure the pilot),
+  then T6–T9 (release, deploy, operate, evolve).
+- Continuous terminals (T8) add monitors, change requests and proposed operational events.
+
+### 7.10 Lifecycle dashboard (feature 013)
+
+Read-only views over recorded data. No new instrumentation.
+
+| View | Shows |
+| --- | --- |
+| Journey | A lane per terminal, a bar per run, and arrows for rework, reroute, exception, events and re-entry |
+| Activity | The activity feed with filters |
+| Time split | Time per state: agent, reviewer, clarification, people, blocked |
+| KPIs (SA §12.3) | Elapsed time, reworks, first-pass yield, reviewer–human agreement, edit rate, control pass rate, SLA adherence |
+| Portfolio | The KPIs across use cases |
+
+A KPI with no data shows "no data", never zero.
+
+### 7.11 End-to-end demo (feature 014)
+
+- A scripted driver that acts as the people, can resume from a step, and can run with simulated
+  or live models.
+- A resilience drill covering three cases:
+  1. kill the worker mid-run: the run continues once;
+  2. duplicate event delivery: the run opens once;
+  3. a faulted event: it is dead-lettered, re-queued and delivered.
 
 ---
 
-## 18. Build, test and quality
+## 8. Data design
 
-### 18.1 Make targets
+### 8.1 Areas
 
-| Target | Does |
-| --- | --- |
-| `install` | `uv sync` |
-| `lint`, `typecheck` | ruff (check and format), mypy strict |
-| `test` | pytest (unit, integration, scenario) with coverage |
-| `spec-validate`, `spec-register` | `adlc-spec validate` / `register` |
-| `pilot-check` | The pilot project's lint, types, tests, 80% coverage gate |
-| `migration-check` | Upgrade, downgrade, upgrade on a scratch file |
-| `secret-scan` | gitleaks (container image) |
-| `check` | All of the above, in that order; what CI runs |
-| `up`, `down`, `status`, `reset`, `local`, `local-setup`, `phoenix`, `migrate`, `migrate-down` | Running (section 17) |
-| `demo`, `demo-auto`, `demo-live`, `demo-reset`, `resilience`, `trace` | Demo and operations (section 19) |
+One data store, divided into four owned areas (SA §10):
 
-### 18.2 CI
-
-`.github/workflows/ci.yml` runs on every pull request and every push to `main`: checkout with full
-history (L5 compares with `origin/main`), uv with Python 3.12, `make install`, `make check`.
-No check lives only in CI.
-
-### 18.3 Tests
-
-| Suite | Contents |
-| --- | --- |
-| `tests/unit` | Pure logic: state machine (with Hypothesis properties), policy, spec rules, gateway, context, tokens, settings, boundaries, no-hard-coded-values scan |
-| `tests/integration` | Against a real SQLite file: engine, outbox, ledger, API routes, UI rendering (Streamlit AppTest), MCP servers |
-| `tests/scenario` | Multi-terminal flows |
-| `tests/fixtures` | Spec bundles (a valid bundle and one patch per validation rule) |
-| `pilot/tests`, `ado_sim/tests` | Each project's own suites |
-
-At the last full run (SQLite and Phoenix merge): 2,413 platform tests, 95% coverage of the core.
-Boundary tests: UI imports, knowledge server, tool servers, pilot, ADO simulator (both
-directions), and `.env.example` against the settings model.
-
-### 18.4 Development workflow
-
-Spec Kit, one feature at a time: specify → clarify → **Gate 1** (spec) → plan → checklist →
-**Gate 2** (plan) → tasks → analyze → **Gate 3** (tasks) → implement → converge → pull request.
-Features: 001 platform foundation, 002 terminal spec toolkit, 003 lifecycle orchestration, 004
-policy engine, 005 evidence ledger, 006 agent runtime, 007 human inbox, 008 terminal agents
-T0–T2, 009 pilot environments, 010 MCP servers, 011 agents T3–T5, 012 agents T6–T9, 013
-lifecycle dashboard, 014 end-to-end demo, 015 ADO simulator API (in progress).
-
----
-
-## 19. Demo and operations
-
-| Task | How |
-| --- | --- |
-| Run the demo | `make demo` (step by step), `make demo-auto`, `make demo-live` (real models); `FROM_STEP=n` resumes; `adlc-demo` |
-| Reset demo data | `make demo-reset` (`ADLC_ENV=demo`, confirmation) |
-| Resilience drill | `make resilience` (demo only): the orchestrator is killed mid-run and the run continues once; a duplicate event is skipped; a faulted event is dead-lettered, re-queued and delivered |
-| Verify evidence | `adlc-ledger verify [--usecase UC-nnnn]` |
-| Accounts | `adlc-account`: hash a password (prompted, no echo) and check the account file |
-| Dead letters | Web application (CoE role): inspect and re-queue |
-| Traces | Phoenix UI on port 6006; `make trace USECASE=UC-nnnn` runs `adlc-ledger trace` for one use case |
-| Probe a tool | `adlc-tools-probe` |
-| Replay agents | `adlc-replay` |
-
----
-
-## 20. Decisions, differences from the SA and known limits
-
-### 20.1 Decisions
-
-| ADR | Decision | Status |
+| Area | Will hold | Owner |
 | --- | --- | --- |
-| ADR-01 Workflow engine | Own state machine in the database, one transaction per signal | Built (CoE to confirm) |
-| ADR-02 Models and agent framework | LiteLLM gateway, Anthropic primary, fallback on outages only; own bounded loop | Decided 2026-11-10 |
-| ADR-03 Policy language | CEL plus catalogued predicates | Built |
-| ADR-04 Data store | One SQLite file (was one PostgreSQL database) | Built (`feature/sqlite`) |
-| ADR-05 Web stack | FastAPI API plus Streamlit | Built |
-| ADR-06 Tracing | OpenTelemetry → Arize Phoenix | Built (replaced Jaeger) |
-| ADR-07 Hosting | Docker Compose on one host, or processes without Docker | Built |
-| ADR-08 to ADR-11 | Tracker as user interface, work plans, increments, role subagents | Proposed (SA §22); Option A in progress |
+| `spec` | Registered specs, catalogues, routes, triggers, timelines, playbooks, prompts | 002 |
+| `run` | Use cases, pins, runs, transitions, activity, sign-offs, clarifications, waivers, timers, parameters, policy decisions, agent attempts, model calls, retrievals, citations | 003, 004, 006, 008 |
+| `ledger` | Ledger records, content, files, artifact versions, attachments, checklist results, profiles, verifications | 005 |
+| `events` | Outbox, processed events, dead-letter actions | 003 |
+| `tools` | Tool calls, results, mock records | 010 |
 
-### 20.2 Where the build differs from SA §17
+With SQLite, areas will be table-name prefixes. Each feature's data model will define its tables.
 
-| SA (proposed) | As built | Why |
-| --- | --- | --- |
-| PostgreSQL, schema per concern | SQLite, table prefixes per area | All-Python, no database server; one host |
-| Database identities protect the ledger | Triggers for every connection, plus the hash chain | SQLite has no identities |
-| S3-compatible object store (MinIO) | Content-addressed file store on disk | One host, no extra service |
-| Outbox with LISTEN/NOTIFY | Outbox polled every `ADLC_POLL_INTERVAL` | No PostgreSQL |
-| React front end | Streamlit | Speed of delivery (ADR-05) |
-| Langfuse or LangSmith tracing | OpenTelemetry → Phoenix | Python-native, OTLP |
+### 8.2 Rules for all data
 
-### 20.3 Known limits and open items
+- **Append-only history.** Transitions, activity, sign-offs, decisions, model and tool calls,
+  content, artifact versions and ledger records will never be updated or deleted. Database
+  guards will refuse it for every connection.
+- **Mutable state is minimal:** current run state and version, leases, timers, outbox status.
+- **Identifiers:**
+  - use cases `UC-nnnn`, waivers `WVR-nnnn`;
+  - runs and events time-ordered UUIDs (v7);
+  - content by sha256.
+- **Times:** UTC with microseconds, stored so that text order is time order.
+- **JSON:** stored as text, normalised before hashing.
 
-- **SQLite trust model:** a process with write access to the file could drop a trigger; detected
-  by verification, not prevented.
-- **Sessions:** revocations are in memory; no lockout.
-- **Spec loader:** playbook and prompt locations are reported one line short, and CRLF front
-  matter is missed (deferred).
-- **Registration:** playbooks and prompts have no version-order check at registration, and
-  registration skips the git baseline (deferred).
-- **Models:** the `dev` profile's small OpenAI model is retired on 2027-01-14; the `default`
-  profile's OpenAI and Gemini entries await CoE confirmation.
-- **Synthetic evidence:** sources not yet backed by real systems come from `data/synthetic/` and
-  are labelled `synthetic` in every decision that reads them.
-- **Governance:** constitution 1.2.0 and SA §22 (Phase 2) are proposed, pending approval.
-- **ADO fidelity:** the simulator is the only contract reference until a real ADO organisation is
-  connected; its differences list must be confirmed against real ADO first.
+### 8.3 Migrations
+
+- One baseline revision per release before the first deployment; incremental revisions after.
+- Every revision reversible, checked in CI by upgrade, downgrade and upgrade again.
+
+### 8.4 Integrity
+
+- Ledger records will form a **hash chain** per use case. Each record holds the hash of the
+  previous one, and the hashes of its content.
+- Verification will detect any changed, removed or reordered record, including changes made by
+  bypassing the database guards.
+
+### 8.5 Retention
+
+All MVP data is kept. **To decide:** retention and archiving after the MVP.
 
 ---
 
-## 21. Glossary
+## 9. Interfaces and contracts
+
+Each will be written as a contract in its feature's `contracts/` folder before it is built.
+
+| Interface | Between | Form |
+| --- | --- | --- |
+| `TerminalRun` | API and worker → engine | Python protocol |
+| `PolicyEngine` (`evaluate`, `authorize`) | Engine, agents, tools → policy | Python protocol |
+| `AgentRunner`, `Reviewer` | Engine → agents | Python protocols |
+| `SpecRegistry` | Everything → specs | Python protocol |
+| `IdentityProvider` | API → identity | Python protocol |
+| `EvidenceProvider`, `ProfileSource` | Policy → evidence sources | Python protocols |
+| Platform API | Web application, demo driver → platform | HTTP/JSON, sessions, versioned operations |
+| Knowledge MCP | Agents → knowledge | MCP tools `search`, `read` |
+| Tools MCP, pilot bridge MCP | Agents → tools | MCP tools with run tokens |
+| Pilot HTTP API | Bridge → pilot | HTTP/JSON |
+| Spec files | Spec owners → platform | YAML + JSON Schema + CEL; validation rules table |
+| Settings | Operators → every process | Environment variables, documented in `.env.example` |
+| Make targets | Developers and CI → repository | `make check`, `make up`, `make local`, `make demo`, ... |
+
+### 9.1 Planned API surface (refined in 007 and 013)
+
+| Area | Operations |
+| --- | --- |
+| Auth | sign in, sign out, who am I |
+| Use cases | submit, list, detail, journey, verify evidence |
+| Inbox | items for the signed-in person |
+| Runs | detail, decide, complete an escalation, edit artifacts, upload, attachment history and download |
+| Requests | answer clarifications, decide waivers, dead letters (list, detail, re-queue) |
+| Operations | change requests, proposed events |
+| Dashboard | journey, KPIs, activity, portfolio, run timeline |
+
+Every operation that changes a run will carry the expected version.
+
+---
+
+## 10. Security design
+
+| Threat or need | Design |
+| --- | --- |
+| Impersonation | Signed, expiring sessions; password hashes only; the acting person always comes from the session |
+| Privilege misuse by people | Roles from the catalogue; who may act is computed from the pinned spec and enforced by the API |
+| Agents exceeding their remit | Default-deny authorisation of every action; run tokens with scopes and bound values; checked again by every tool server |
+| Prompt injection | Untrusted text fenced as data; tools take bound values from evidence, not from the model; the reviewer is independent of the builder |
+| Data leakage to models | Models approved per data class; unknown class fails closed; knowledge filtered by data class |
+| Secret exposure | Environment only; never logged, traced or stored; secret scanning in `make check`; `.env` git-ignored |
+| Unsafe content in the UI | Plain-text rendering of user and agent text; download-only attachments with sandboxing headers; upload checks |
+| Evidence tampering | Append-only guards; hash chain; verification command |
+| Lateral movement | The pilot on its own network, reached only through the bridge; host-header checks on MCP servers |
+
+**Accepted for the MVP** (to record):
+- no single sign-on and no lockout;
+- session revocations may not survive restarts;
+- the data store cannot prevent a process with file access from tampering, but verification
+  detects it.
+
+---
+
+## 11. Observability design
+
+- **Logs:**
+  - Structured, to standard error, with the level set by the environment.
+  - Credential-like fields are redacted.
+  - Request bodies are never logged.
+- **Traces:**
+  - OpenTelemetry in every process, exported over OTLP to the trace collector.
+  - Platform and pilot traces go to separate projects.
+  - Span attributes come from an allow list; headers are never captured.
+- **Run activity.** Every step writes an activity row: who, what step, and the outcome. The
+  dashboard is built only from these rows and the run history.
+- **Health:**
+  - Every service has a health endpoint.
+  - The worker writes heartbeats, and a stale heartbeat means the worker is down.
+- **Pilot telemetry.** The bridge reads the pilot's spans from the trace collector for the
+  monitoring tools that T8 uses.
+
+---
+
+## 12. Pilot use case environment
+
+- **Use case.** An **incident triage assistant**: for an incident it returns a category, a
+  priority, a resolver team and a reason, using two mocked tools (a service catalogue and a team
+  directory).
+- **Its own project.** It shares no code with the platform.
+- **Golden template:**
+  - Fixed agent code, reference data and environment definitions.
+  - T3 writes only the **fill**: instructions, routing rules, tool bindings, thresholds and
+    settings.
+- **Packages:**
+  - A build validates the fill and writes a deterministic archive.
+  - Its hash identifies what gets evaluated, assured and deployed, and evidence is bound to it.
+- **Environments.** `dev`, `test` and `prod-sim`, as local processes.
+  - prod-sim supports stable and candidate deployments, traffic splits (shadow, canary, full) and
+    fault injection (model swap, personal-data leak).
+  - Every operation is appended to records.
+- **Traffic and data.**
+  - Reproducible synthetic incidents, optionally with planted personal data.
+  - A steady traffic generator that reports accuracy and leak rate.
+- **Models.** A deterministic simulated model by default; a real model can be switched on in dev
+  and test.
+
+**To decide in 009:** the fill schema; the environment API; the fault behaviours; the record
+format.
+
+---
+
+## 13. Deployment and configuration
+
+### 13.1 With containers
+
+One compose file with:
+- **set-up jobs:** migrate, and register specs;
+- **platform services:** API, web application, worker, knowledge, tools, trace collector;
+- **the pilot bridge**, on both networks;
+- **pilot services:** three environments, traffic and lab.
+
+Networks: `platform` and `pilot`. Named volumes hold the data store, files, traces and pilot data.
+
+### 13.2 Without containers
+
+The same processes, run by a Python process runner from a process file. Settings are layered:
+`.env`, then a local overlay with localhost addresses. Data goes in a git-ignored local folder.
+A set-up step will migrate the store and register the specs.
+
+### 13.3 Configuration
+
+- **Source:** environment variables only; `.env` for local use.
+- **Environment:** `ADLC_ENV` is `dev` or `demo`. `demo` refuses placeholder credentials and
+  requires confirmation before destructive targets.
+- **Time scale:** compresses lifecycle timers for demos.
+- **Secrets:**
+
+  | Group | Secrets |
+  | --- | --- |
+  | Sessions | session secret |
+  | Models | provider keys |
+  | Tools | knowledge token, tool token key |
+  | Pilot | pilot model key |
+
+### 13.4 Ports (proposed)
+
+| Port | Process | Port | Process |
+| --- | --- | --- | --- |
+| 8000 | Platform API | 8101–8103 | Pilot dev, test, prod-sim |
+| 8501 | Web application | 8200 | Pilot traffic |
+| 8020 | Knowledge MCP | 8300 | Pilot lab |
+| 8030 | Tools MCP | 6006 | Trace collector |
+| 8040 | Pilot bridge MCP | | |
+
+---
+
+## 14. Quality and test strategy
+
+### 14.1 Test levels
+
+| Level | Scope | Examples |
+| --- | --- | --- |
+| Unit | Pure logic | Transition table, CEL evaluation, validation rules, gateway rules, token signing, settings |
+| Property | Invariants | Only humans close with an outcome; only rules escalate; idempotent delivery |
+| Integration | Against a real data store and real processes in-process | Engine, outbox, ledger, API routes, MCP servers, UI rendering |
+| Scenario | Multi-terminal flows | Rework, reroute, exception, escalation, re-entry |
+| Contract | Interfaces | Tool catalogue equals its contract; validation rule table equals the code |
+| Boundary | Architecture rules | Import boundaries; no terminal values in code; `.env.example` equals the settings model |
+| Resilience | Restart and failure | Worker killed mid-run; duplicate delivery; dead letter |
+| Agent quality | Model behaviour | Replay of reference use cases with a quality report |
+
+### 14.2 Gates
+
+`make check` will run, in order:
+1. lint and format check;
+2. strict type check;
+3. spec validation;
+4. tests with coverage;
+5. the pilot's checks;
+6. the migration check;
+7. secret scanning.
+
+CI will run exactly `make check` on every pull request and every push to `main`. Core modules
+will be written test first (constitution IX), with a coverage gate.
+
+### 14.3 Test data
+
+- Synthetic evidence for sources not yet integrated, always labelled.
+- Fixture spec bundles: one valid bundle, plus one patch per validation rule.
+- Fake model transports with scripted replies, so tests never call a provider.
+
+---
+
+## 15. Development approach and plan
+
+### 15.1 Workflow
+
+Spec Kit, one feature at a time, with three review gates:
+
+```text
+specify → clarify → Gate 1 (spec) → plan → checklist → Gate 2 (plan)
+        → tasks → analyze → Gate 3 (tasks) → implement → converge → pull request
+```
+
+Each feature will produce its spec, research (decisions and licences), data model, contracts,
+quickstart and tasks. Each feature will be merged before the next starts.
+
+### 15.2 Feature order (MVP)
+
+| # | Feature | Delivers | Depends on |
+| --- | --- | --- | --- |
+| 001 | Platform foundation | Settings, data store, migrations, identity, sessions, logging, tracing, compose skeleton, `make check` | — |
+| 002 | Terminal spec toolkit | Validation L1–L5, registration, registry | 001 |
+| 003 | Lifecycle orchestration | State machine, engine, router, outbox, timers, worker (with stubs) | 001, 002 |
+| 004 | Policy engine | `evaluate`, `authorize`, predicates, evidence, parameters | 003 |
+| 005 | Evidence ledger | Content store, artifact versions, chained records, profile, verification | 003, 004 |
+| 006 | Agent runtime | Gateway, builder and reviewer loops, context, limits, cost | 003, 004 |
+| 007 | Human inbox | API operations, inbox, forms, web application | 003–006 |
+| 008 | Terminal agents T0–T2 | Knowledge server, grounded agents | 006, 007 |
+| 009 | Pilot environments | Pilot project, template, packages, environments, traffic | — |
+| 010 | MCP servers | Tool servers, run tokens, pilot bridge | 004, 006, 009 |
+| 011 | Terminal agents T3–T5 | Build, evaluate, assure the pilot | 008–010 |
+| 012 | Terminal agents T6–T9 | Release, deploy, operate, evolve; monitors; change requests | 011 |
+| 013 | Lifecycle dashboard | Journey, activity, KPIs, portfolio | 007 |
+| 014 | End-to-end demo | Demo driver, resilience drill, demo reset | All |
+
+### 15.3 Definition of done (every feature)
+
+- All of the following pass `make check`: tests written first for core logic, lint, types,
+  coverage gate.
+- Contracts written and covered by tests.
+- No terminal-specific or use-case-specific values in code.
+- Every new step leaves run activity and traces.
+- Every new dependency recorded with its licence.
+- A README in every new package; operating documentation updated.
+- The feature's quickstart walked through and its outcome recorded.
+
+---
+
+## 16. Phase 2: board as the user interface
+
+After the MVP, people will work from an **Azure DevOps-style board** instead of the web
+application (SA §22, Option A first: the board as the interface, the backend unchanged).
+
+| # | Feature | Delivers |
+| --- | --- | --- |
+| 015 | Board simulator API | A separate project serving an ADO REST 7.1 subset: work items with JSON Patch and revision checks, history, a WIQL subset, links, comments, process and identities, tokens; a published contract with fixtures |
+| 016 | Engagement layer | The platform's adapter: outbound updates, inbound sync from revisions, mapping board changes to signals, refusing changes without decision rights |
+| 017 | Board view | The simulator's board: an Epic per use case, columns per terminal |
+| 018 | Backlog and form | Work item form for decisions, clarifications and comments |
+| 019 | Operations console | Reconciliation and operator commands |
+| 020 | End-to-end demo on the board | The MVP demo driven from the board |
+
+Design rules for Phase 2:
+- **The simulator is a separate project.** It shares no code with the platform; the published
+  contract is the only interface.
+- **The board is a view, not an authority.** The platform keeps the decision rights and the
+  evidence. A board change by someone without the right will be reverted, with a comment
+  explaining why.
+- **Sync reads revisions, not only the current state,** so no intermediate change is missed. It
+  excludes the platform's own service account.
+
+Option B (work plans, dispatch, increments; features 021–024) will follow if approved.
+
+---
+
+## 17. Risks, assumptions and open decisions
+
+### 17.1 Risks
+
+| Risk | Impact | Mitigation |
+| --- | --- | --- |
+| Spec complexity outgrows validation | Wrong routing found late | L4 graph checks; scenario tests per route |
+| Model behaviour varies | Flaky builds, cost overruns | Bounded loops, schema validation, deterministic controls, replay reports, cost alerts |
+| SQLite write contention | Slow steps under load | One writer by design; model and tool calls outside transactions; short transactions |
+| Synthetic evidence hides integration gaps | Demo passes, reality fails | Every synthetic decision labelled; real providers replace synthetic sources one by one |
+| Prompt injection through artifacts or documents | Agents misuse tools | Fencing, default-deny authorisation, bound values, independent reviewer |
+| Board fidelity | The adapter breaks on real ADO | Contract from the published reference; a recorded list of differences to confirm before connecting a real tracker |
+| Scope creep | MVP late | Constitution XII; non-goals in section 1.3; gate reviews |
+
+### 17.2 Assumptions
+
+- One host is enough for the MVP demo and pilot.
+- Model providers' APIs and the model catalogue are available, with keys provided by the
+  environment.
+- Enterprise systems can be represented by mocks with the real tool shapes.
+- Spec owners maintain the terminal specs in Git.
+
+### 17.3 Open decisions
+
+| Decision | Owner | When |
+| --- | --- | --- |
+| ADR-01 to ADR-07 (section 5) | Architect, CoE | Before or during the feature that needs each |
+| Model catalogue entries and data-class approvals | CoE | 006 |
+| Escalation limits, retry delays, SLAs | Process owners | 003 |
+| Predicate catalogue | Policy owners | 004 |
+| File types allowed for upload | Security | 005 |
+| Retention and archiving | Data owner | After the MVP |
+| SSO provider | Security | After the MVP |
+| Phase 2 option and ADR-08 to ADR-11 | Architect, CoE | Before 015 |
+
+---
+
+## 18. Glossary
 
 | Term | Meaning |
 | --- | --- |
 | Terminal | One lifecycle stage (T0–T9), defined by a terminal spec |
-| Run | One pass of a use case through a terminal; has a state, version and attempts |
-| Signal | An input to the run state machine (agent result, decision, timer, ...) |
-| Outcome | A human decision that closes a run (pass, rework, exception, escalate, terminate, ...) |
+| Run | One pass of a use case through a terminal, with a state and a version |
+| Signal | An input to the run state machine (agent result, decision, timer, event) |
+| Outcome | The human decision that closes a run: pass, rework, exception, escalate, terminate, ... |
 | Pin | The spec versions a use case uses for its whole life |
-| Control | A deterministic check on a run's artifacts (policy engine) |
 | Prerequisite | A condition that must hold before a run builds |
+| Control | A deterministic check on a run's artifacts |
 | Waiver | An approved exception to a failed control, with an expiry |
-| Context pack | The hashed bundle of inputs given to an agent |
+| Context pack | The hashed inputs given to an agent |
 | Tier | A model class (`reasoning`, `coding`, `standard`) mapped to models by the catalogue |
-| Run token | A short-lived HMAC token scoping an agent's MCP calls |
+| Run token | A short-lived signed token that scopes an agent's tool calls |
 | Bound value | A tool argument fixed by the platform from evidence, never by the model |
 | Ledger record | The hash-chained record written when a run closes |
-| Package hash | The sha256 of a pilot build: what gets evaluated, assured and deployed |
-| Synthetic evidence | Stand-in evidence for sources not yet integrated, always labelled |
-| Fill | The parts of the pilot's golden template that T3 writes |
-
----
-
-## Annex A: Settings reference
-
-All from the environment (`.env`; `deploy/local.env` overrides for running without Docker).
-Secrets are marked †.
-
-| Group | Settings |
-| --- | --- |
-| Environment and data | `ADLC_ENV`, `ADLC_DB_PATH`, `ADLC_DB_CONNECT_TIMEOUT`, `ADLC_DB_BUSY_TIMEOUT`, `ADLC_FILE_STORE_DIR`, `ADLC_SYNTHETIC_DIR`, `ADLC_SPEC_DIR` |
-| Identity and API | `ADLC_SESSION_SECRET` †, `ADLC_SESSION_TTL`, `ADLC_ACCOUNTS_FILE`, `ADLC_ROLE_CATALOGUE`, `ADLC_API_PORT`, `ADLC_ATTACHMENT_MAX`, `ADLC_ATTACHMENT_TYPES` |
-| Observability | `ADLC_OTLP_ENDPOINT`, `ADLC_LOG_LEVEL`, `ADLC_PHOENIX_UI_PORT` |
-| Orchestration | `ADLC_TIME_SCALE`, `ADLC_POLL_INTERVAL`, `ADLC_LEASE`, `ADLC_HEARTBEAT_MAX_AGE`, `ADLC_MONITOR_INTERVAL`, `ADLC_ROUTE_FAULT`, `ADLC_DEADLETTER_ROLE` |
-| Models and agents | `ADLC_MODEL_PROFILE`, `ADLC_REVIEWER_MODE`, `ADLC_ANTHROPIC_API_KEY` †, `ADLC_OPENAI_API_KEY` †, `ADLC_GEMINI_API_KEY` †, `ADLC_AGENT_CORRECTIONS`, `ADLC_MODEL_OUTAGE_LIMIT`, `ADLC_COST_ALERT_LEVELS`, `ADLC_AGENT_LIMITS`, `ADLC_AGENT_LIMIT_OVERRIDES` |
-| Knowledge | `ADLC_KNOWLEDGE_URL`, `ADLC_KNOWLEDGE_TOKEN` †, `ADLC_KNOWLEDGE_DIR`, `ADLC_KNOWLEDGE_PORT`, `ADLC_KNOWLEDGE_ALLOWED_HOSTS` |
-| Tools | `ADLC_TOOLS_URL`, `ADLC_TOOLS_TOKEN_KEY` †, `ADLC_TOOLS_TIMEOUT_S`, `ADLC_TOOLS_PORT`, `ADLC_TOOLS_ALLOWED_HOSTS`, `ADLC_CONTROLS_FILE` |
-| Pilot bridge | `ADLC_PILOT_BRIDGE_URL`, `ADLC_BRIDGE_PORT`, `ADLC_BRIDGE_ALLOWED_HOSTS`, `ADLC_BRIDGE_DATA_DIR`, `ADLC_BRIDGE_PILOT_DEV_URL`, `ADLC_BRIDGE_PILOT_TEST_URL`, `ADLC_BRIDGE_PILOT_PRODSIM_URL`, `ADLC_BRIDGE_PILOT_LAB_URL`, `ADLC_BRIDGE_PILOT_TRAFFIC_URL`, `ADLC_BRIDGE_PHOENIX_URL`, `ADLC_BRIDGE_PILOT_SERVICE`, `ADLC_BRIDGE_MONITOR_INTERVAL_S`, `ADLC_REDTEAM_SUITE` |
-| Web application | `ADLC_API_URL`, `ADLC_UI_PORT`, `ADLC_UI_DASHBOARD_REFRESH` |
-| Pilot | `PILOT_MODEL_URL`, `PILOT_MODEL_NAME`, `PILOT_MODEL_API_KEY` †, `PILOT_TRAFFIC_RATE`, `PILOT_TRAFFIC_SEED`, `PILOT_TRAFFIC_PII_SHARE` |
-| ADO simulator (015) | `ADO_SIM_DB_PATH`, `ADO_SIM_TOKEN_KEY` †, `ADO_SIM_HOST`, `ADO_SIM_PORT`, `ADO_SIM_SEED_FILE`, `ADO_SIM_BUSY_TIMEOUT`, `ADO_SIM_LOG_LEVEL`, `ADO_SIM_OTLP_ENDPOINT` (not yet in `.env.example`) |
-
-## Annex B: Ports and processes
-
-| Port | Process | Port | Process |
-| --- | --- | --- | --- |
-| 6006 | Phoenix (UI, OTLP, REST) | 8101 | pilot dev |
-| 8000 | API | 8102 | pilot test |
-| 8501 | Web application | 8103 | pilot prod-sim |
-| 8020 | Knowledge MCP | 8200 | pilot traffic |
-| 8030 | Tools MCP | 8300 | pilot lab |
-| 8040 | Pilot bridge MCP | 8600 | ADO simulator (015) |
-
-In compose each pilot host listens on 8100 on its own address; the ports above are the
-without-Docker layout (`deploy/local.env`).
+| Package | A built version of the pilot, identified by its hash |
+| Fill | The parts of the pilot's template that T3 writes |
+| Synthetic evidence | Stand-in evidence for a source not yet integrated, always labelled |
+| Outbox | The table from which events are delivered reliably after a transaction commits |
