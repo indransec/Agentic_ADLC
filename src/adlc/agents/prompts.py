@@ -1,7 +1,7 @@
 """Prompts, playbooks and checklists as agents read them (006 research R-04, R-06).
 
-Prompts and playbooks are registered with a hash (``spec.prompt_registry``,
-``spec.playbook_registry``). At run time the text is read from the spec folder and checked against
+Prompts and playbooks are registered with a hash (``prompt_registry``,
+``playbook_registry``). At run time the text is read from the spec folder and checked against
 that hash; a file that changed after registration is refused rather than used silently.
 """
 
@@ -61,17 +61,16 @@ def _checklist(raw: str, ref: str, version: str) -> tuple[ChecklistItem, ...]:
 class SqlSpecTexts:
     """Registered hashes from the database; text from the spec folder (production)."""
 
-    TABLES: Mapping[str, tuple[str, str]] = {
-        "prompt": ("spec.prompt_registry", "prompt_id"),
-        "playbook": ("spec.playbook_registry", "playbook_id"),
-    }
+    KINDS = frozenset({"prompt", "playbook"})  # tables <kind>_registry, keyed by <kind>_id
 
     def __init__(self, engine: Engine, spec_dir: Path) -> None:
         self.engine = engine
         self.spec_dir = spec_dir
 
     def _load(self, kind: str, item_id: str, version: str) -> SpecText:
-        table, column = self.TABLES[kind]
+        if kind not in self.KINDS:
+            raise KeyError(kind)
+        table, column = f"{kind}_registry", f"{kind}_id"
         with self.engine.connect() as conn:
             row = conn.execute(
                 text(

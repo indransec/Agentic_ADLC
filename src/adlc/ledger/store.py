@@ -14,8 +14,8 @@ def insert_blob(conn: Connection, digest: str, value: Any) -> None:
     body = normalise(value)
     conn.execute(
         text(
-            "INSERT INTO ledger.content_blob (content_hash, body, size) "
-            "VALUES (:h, CAST(:b AS jsonb), :s) ON CONFLICT (content_hash) DO NOTHING"
+            "INSERT INTO content_blob (content_hash, body, size) "
+            "VALUES (:h, :b, :s) ON CONFLICT (content_hash) DO NOTHING"
         ),
         {"h": digest, "b": body, "s": len(body.encode("utf-8"))},
     )
@@ -23,7 +23,7 @@ def insert_blob(conn: Connection, digest: str, value: Any) -> None:
 
 def load_blob(conn: Connection, digest: str) -> Any | None:
     row = conn.execute(
-        text("SELECT body FROM ledger.content_blob WHERE content_hash = :h"), {"h": digest}
+        text("SELECT body FROM content_blob WHERE content_hash = :h"), {"h": digest}
     ).first()
     return None if row is None else row[0]
 
@@ -31,7 +31,7 @@ def load_blob(conn: Connection, digest: str) -> Any | None:
 def insert_file_object(conn: Connection, digest: str, size: int, media_type: str) -> None:
     conn.execute(
         text(
-            "INSERT INTO ledger.file_object (content_hash, size, media_type) VALUES (:h, :s, :m) "
+            "INSERT INTO file_object (content_hash, size, media_type) VALUES (:h, :s, :m) "
             "ON CONFLICT (content_hash) DO NOTHING"
         ),
         {"h": digest, "s": size, "m": media_type},
@@ -41,7 +41,7 @@ def insert_file_object(conn: Connection, digest: str, size: int, media_type: str
 def file_object_exists(conn: Connection, digest: str) -> bool:
     return (
         conn.execute(
-            text("SELECT 1 FROM ledger.file_object WHERE content_hash = :h"), {"h": digest}
+            text("SELECT 1 FROM file_object WHERE content_hash = :h"), {"h": digest}
         ).first()
         is not None
     )
@@ -57,9 +57,10 @@ def as_json(value: Any) -> str:
 def latest_versions(conn: Connection, run_id: str) -> list[dict[str, Any]]:
     rows = conn.execute(
         text(
-            "SELECT DISTINCT ON (artifact_id) run_id, artifact_id, version, content_hash, "
-            "producer_type, producer_id, attempt, derived_from_version, schema_valid, created_at "
-            "FROM run.artifact_version WHERE run_id = :r ORDER BY artifact_id, version DESC"
+            "SELECT run_id, artifact_id, version, content_hash, producer_type, producer_id, "
+            "attempt, derived_from_version, schema_valid, created_at FROM ("
+            "SELECT *, row_number() OVER (PARTITION BY artifact_id ORDER BY version DESC) AS rank "
+            "FROM artifact_version WHERE run_id = :r) WHERE rank = 1 ORDER BY artifact_id"
         ),
         {"r": run_id},
     ).mappings()
@@ -70,7 +71,7 @@ def version_history(conn: Connection, run_id: str, artifact_id: str) -> list[dic
     rows = conn.execute(
         text(
             "SELECT run_id, artifact_id, version, content_hash, producer_type, producer_id, "
-            "attempt, derived_from_version, schema_valid, created_at FROM run.artifact_version "
+            "attempt, derived_from_version, schema_valid, created_at FROM artifact_version "
             "WHERE run_id = :r AND artifact_id = :a ORDER BY version"
         ),
         {"r": run_id, "a": artifact_id},
@@ -81,7 +82,7 @@ def version_history(conn: Connection, run_id: str, artifact_id: str) -> list[dic
 def insert_version(conn: Connection, row: dict[str, Any]) -> None:
     conn.execute(
         text(
-            "INSERT INTO run.artifact_version (run_id, artifact_id, version, content_hash, "
+            "INSERT INTO artifact_version (run_id, artifact_id, version, content_hash, "
             "producer_type, producer_id, attempt, derived_from_version, schema_valid) VALUES "
             "(:run_id, :artifact_id, :version, :content_hash, :producer_type, :producer_id, "
             ":attempt, :derived_from_version, :schema_valid)"
@@ -96,7 +97,7 @@ def attachments(
     rows = conn.execute(
         text(
             "SELECT content_hash, file_name AS name, media_type, size "
-            "FROM run.artifact_attachment WHERE run_id = :r AND artifact_id = :a "
+            "FROM artifact_attachment WHERE run_id = :r AND artifact_id = :a "
             "AND version = :v ORDER BY file_name, content_hash"
         ),
         {"r": run_id, "a": artifact_id, "v": version},
@@ -111,7 +112,7 @@ def insert_citation(
     retrieval id were taken from the retrieval record when the output was validated."""
     conn.execute(
         text(
-            "INSERT INTO run.artifact_citation (run_id, artifact_id, version, row_index, source, "
+            "INSERT INTO artifact_citation (run_id, artifact_id, version, row_index, source, "
             "document, section, content_hash, knowledge_retrieval_id, cited_at) VALUES (:r, :a, "
             ":v, :row, :source, :document, :section, :hash, :retrieval, :at)"
         ),
@@ -134,7 +135,7 @@ def citations(conn: Connection, run_id: str) -> list[dict[str, Any]]:
     rows = conn.execute(
         text(
             "SELECT artifact_id, version, row_index, source, document, section, content_hash "
-            "FROM run.artifact_citation WHERE run_id = :r ORDER BY artifact_citation_id"
+            "FROM artifact_citation WHERE run_id = :r ORDER BY artifact_citation_id"
         ),
         {"r": run_id},
     ).mappings()
@@ -144,7 +145,7 @@ def citations(conn: Connection, run_id: str) -> list[dict[str, Any]]:
 def insert_attachment(conn: Connection, row: dict[str, Any]) -> None:
     conn.execute(
         text(
-            "INSERT INTO run.artifact_attachment (run_id, artifact_id, version, content_hash, "
+            "INSERT INTO artifact_attachment (run_id, artifact_id, version, content_hash, "
             "file_name, media_type, size) VALUES (:run_id, :artifact_id, :version, :content_hash, "
             ":file_name, :media_type, :size)"
         ),
@@ -158,7 +159,7 @@ def insert_checklist_results(
     for row in rows:
         conn.execute(
             text(
-                "INSERT INTO run.checklist_result (run_id, attempt, item_id, score, finding) "
+                "INSERT INTO checklist_result (run_id, attempt, item_id, score, finding) "
                 "VALUES (:r, :a, :item_id, :score, :finding)"
             ),
             {"r": run_id, "a": attempt, **row},

@@ -7,9 +7,9 @@ import pytest
 from adlc.orchestration.interfaces import Clarification
 from adlc.orchestration.service import AlreadyAnswered, NotAuthorised
 from adlc.orchestration.stubs import StubAgent, StubReviewer
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import harness, person
-from tests.support.pg import PlatformDatabase
 
 ASK = Clarification(("Which channels are in scope?",), looked_in=("intake", "T1.user_experience"))
 
@@ -24,7 +24,7 @@ def test_agent_clarification_round_trip(orch_template: PlatformDatabase) -> None
             1,
         )
         row = h.sql(
-            "SELECT clarification_id, addressed_role, questions, looked_in FROM run.clarification_round"
+            "SELECT clarification_id, addressed_role, questions, looked_in FROM clarification_round"
         )[0]
         assert row[0] == f"{run_id}/clar-1"
         assert row[1] == "engineering_lead"  # T2's first R role (FR-023a)
@@ -45,7 +45,7 @@ def test_named_role_is_used(orch_template: PlatformDatabase) -> None:
     ask = Clarification(("Data class?",), addressed_role="data_owner")
     with harness(orch_template, agent=StubAgent({"T2": {1: ask}})) as h:
         walk_to(h, "T2")
-        assert h.sql("SELECT addressed_role FROM run.clarification_round")[0][0] == "data_owner"
+        assert h.sql("SELECT addressed_role FROM clarification_round")[0][0] == "data_owner"
 
 
 def test_round_limit_escalates(orch_template: PlatformDatabase) -> None:

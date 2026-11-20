@@ -15,10 +15,10 @@ from adlc.orchestration.engine import StaleRun
 from adlc.orchestration.service import NotAuthorised
 from adlc.orchestration.states import InvalidTransition
 from adlc.orchestration.stubs import StubAgent
+from tests.support.db import PlatformDatabase
 from tests.support.ledger import ledger_service
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 PO = person("product_owner")
 
@@ -49,12 +49,12 @@ def test_agent_versions_per_attempt(orch_template: PlatformDatabase) -> None:
     with harness(orch_template, agent=StubAgent({"T1": {1: bad}})) as h:
         usecase, t1 = walk_to(h, "T1")
         rows = h.sql(
-            "SELECT version, producer_type, attempt FROM run.artifact_version WHERE run_id = :r AND artifact_id = 'kpis' ORDER BY version",
+            "SELECT version, producer_type, attempt FROM artifact_version WHERE run_id = :r AND artifact_id = 'kpis' ORDER BY version",
             r=t1,
         )
         assert [tuple(r) for r in rows] == [(1, "agent", 1), (2, "agent", 2)]
         unchanged = h.sql(
-            "SELECT count(*) FROM run.artifact_version WHERE run_id = :r AND artifact_id = 'eval_thresholds'",
+            "SELECT count(*) FROM artifact_version WHERE run_id = :r AND artifact_id = 'eval_thresholds'",
             r=t1,
         )
         assert unchanged[0][0] == 1  # same content on attempt 2: no new version
@@ -74,14 +74,14 @@ def test_person_edit_creates_a_derived_version(h: Harness, ledger: LedgerService
     assert ledger.edit_artifact(PO, t1, "kpis", rows).version == run.version  # unchanged: no-op
     assert len(ledger.artifact_history(t1, "kpis")) == 2
     activity = h.sql(
-        "SELECT actor_id, detail FROM run.run_activity WHERE run_id = :r AND step = 'sign_off'",
+        "SELECT actor_id, detail FROM run_activity WHERE run_id = :r AND step = 'sign_off'",
         r=t1,
     )
     assert [tuple(a) for a in activity] == [
         ("product_owner-person", {"edited": {"artifact_id": "kpis", "attachments": []}})
     ]
     h.pass_run(t1)
-    record = h.sql("SELECT content_json FROM ledger.ledger_record WHERE run_id = :r", r=t1)[0][0]
+    record = h.sql("SELECT content_json FROM ledger_record WHERE run_id = :r", r=t1)[0][0]
     kpis = [a for a in record["artifacts"] if a["id"] == "kpis"][0]
     assert (kpis["version"], kpis["producer"]) == (
         2,
@@ -145,7 +145,7 @@ def test_edit_withdraws_a_pending_waiver(orch_template: PlatformDatabase, tmp_pa
         rows[0]["rating"] = "medium"
         run = ledger.edit_artifact(so, t5, "residual_risk_register", rows)
         assert run.pending_waiver_id is None
-        waiver = h.sql("SELECT status, decided_by, decision_comment FROM run.waiver")[0]
+        waiver = h.sql("SELECT status, decided_by, decision_comment FROM waiver")[0]
         assert tuple(waiver) == ("rejected", "system:artifact-edited", "withdrawn: artifact edited")
 
 
@@ -164,7 +164,7 @@ def test_attachments_and_dedupe(h: Harness, ledger: LedgerService) -> None:
     note = b"# KPI source\nfinance extract 2026-10"
     ledger.attach_file(PO, t1, "kpis", note, "kpi-notes.md", "text/markdown")
     ledger.attach_file(PO, t1, "eval_thresholds", note, "same-notes.md", "text/markdown")
-    assert h.sql("SELECT count(*) FROM ledger.file_object")[0][0] == 1
+    assert h.sql("SELECT count(*) FROM file_object")[0][0] == 1
     latest = ledger.artifact_history(t1, "kpis")[-1]
     assert [a["name"] for a in latest["attachments"]] == ["kpi-notes.md"]
     assert ledger.open_attachment(latest["attachments"][0]["content_hash"]) == note
@@ -188,12 +188,12 @@ def test_identical_content_is_stored_once(h: Harness) -> None:
     a = h.submit("first")
     b = h.submit("second")
     hashes = h.sql(
-        "SELECT DISTINCT content_hash FROM run.artifact_version WHERE run_id IN (:a, :b)",
+        "SELECT DISTINCT content_hash FROM artifact_version WHERE run_id IN (:a, :b)",
         a=f"{a}/T0/run-1",
         b=f"{b}/T0/run-1",
     )
     blobs = h.sql(
-        "SELECT count(*) FROM ledger.content_blob WHERE content_hash IN (SELECT content_hash FROM run.artifact_version)"
+        "SELECT count(*) FROM content_blob WHERE content_hash IN (SELECT content_hash FROM artifact_version)"
     )
     assert len(hashes) == blobs[0][0]
 
@@ -204,8 +204,8 @@ def test_human_edit_share(h: Harness, ledger: LedgerService) -> None:
     rows[0]["target"] = 6
     ledger.edit_artifact(PO, t1, "kpis", rows)
     share = h.sql(
-        "SELECT count(DISTINCT artifact_id) FILTER (WHERE producer_type = 'person')::float / count(DISTINCT artifact_id) "
-        "FROM run.artifact_version WHERE run_id = :r",
+        "SELECT count(DISTINCT artifact_id) FILTER (WHERE producer_type = 'person') * 1.0 / count(DISTINCT artifact_id) "
+        "FROM artifact_version WHERE run_id = :r",
         r=t1,
     )[0][0]
     assert share == pytest.approx(1 / 9)
@@ -229,7 +229,7 @@ def test_no_pass_until_the_controls_are_re_run(h: Harness, ledger: LedgerService
         h.service.decide(PO, t1, "exception", reason="r", fields=waiver)
     h.drain()
     h.service.decide(PO, t1, "pass")
-    assert h.sql("SELECT count(*) FROM run.sign_off WHERE run_id = :r", r=t1)[0][0] == 1
+    assert h.sql("SELECT count(*) FROM sign_off WHERE run_id = :r", r=t1)[0][0] == 1
 
 
 def test_a_lost_re_check_is_picked_up_again(h: Harness, ledger: LedgerService) -> None:
@@ -240,7 +240,7 @@ def test_a_lost_re_check_is_picked_up_again(h: Harness, ledger: LedgerService) -
     ledger.edit_artifact(PO, t1, "kpis", rows)
     with h.app.begin() as conn:  # the crashed worker's lease, still running
         conn.execute(
-            text("UPDATE run.terminal_run SET lease_until = :l WHERE run_id = :r"),
+            text("UPDATE terminal_run SET lease_until = :l WHERE run_id = :r"),
             {"l": h.clock.now() + timedelta(minutes=5), "r": t1},
         )
     h.drain()
@@ -251,7 +251,7 @@ def test_a_lost_re_check_is_picked_up_again(h: Harness, ledger: LedgerService) -
     assert not run.controls_pending and run.state == "awaiting_sign_off"
     assert any(not c["passed"] for c in run.control_results)
     steps = h.sql(
-        "SELECT step, outcome FROM run.run_activity WHERE run_id = :r ORDER BY run_activity_id",
+        "SELECT step, outcome FROM run_activity WHERE run_id = :r ORDER BY run_activity_id",
         r=t1,
     )
     assert ("controls", "awaiting_sign_off") in [tuple(x) for x in steps][-2:]

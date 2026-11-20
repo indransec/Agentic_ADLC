@@ -41,9 +41,7 @@ def _settings(tmp_path: Path) -> Settings:
     return Settings.model_validate(
         {
             "env": "dev",
-            "db_host": "127.0.0.1",
-            "db_port": 1,
-            "db_app_password": "tracing-app-password",
+            "db_path": "/nonexistent/adlc.db",
             "session_secret": "tracing-session-secret-" + "t" * 16,
             "accounts_file": accounts,
             "role_catalogue": ROOT / "adlc-specs" / "shared" / "roles.yaml",

@@ -9,8 +9,8 @@ from pathlib import Path
 from adlc.agents.replay import Replayer, Report, load_references, markdown, read_recording
 from tests.support.acting import acting
 from tests.support.acting_scripts import Assurance, Evaluation, t3_build
+from tests.support.db import REPO_ROOT, PlatformDatabase
 from tests.support.orchestration import person
-from tests.support.pg import REPO_ROOT, PlatformDatabase
 
 # 012: the reference now runs to T9; this test keeps the 011 scope (to T5's sign-off)
 REFERENCE = replace(

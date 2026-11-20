@@ -2,9 +2,9 @@
 
 from adlc.orchestration.interfaces import Clarification
 from adlc.orchestration.stubs import StubAgent
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import harness, person
-from tests.support.pg import PlatformDatabase
 
 
 def test_d9(orch_template: PlatformDatabase) -> None:

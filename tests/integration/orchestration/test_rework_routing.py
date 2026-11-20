@@ -20,7 +20,7 @@ def test_root_cause_routes_and_carries_evidence(h: Harness) -> None:
     )
     h.drain()
     event = h.sql(
-        "SELECT event_type, payload FROM events.outbox_event WHERE causation_run_id = :r", r=run_id
+        "SELECT event_type, payload FROM outbox_event WHERE causation_run_id = :r", r=run_id
     )
     assert event[0][0] == "T4.rework.implementation"
     t3 = h.active(usecase, "T3")

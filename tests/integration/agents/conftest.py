@@ -5,8 +5,8 @@ from typing import Any
 
 import pytest
 
+from tests.support.db import PlatformDatabase
 from tests.support.orchestration import Harness
-from tests.support.pg import PlatformDatabase
 
 from .support import _run
 

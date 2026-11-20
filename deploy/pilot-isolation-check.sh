@@ -23,7 +23,7 @@ expect() {  # expected service host port
 }
 
 for svc in api orchestrator knowledge; do expect closed "$svc" pilot-prodsim 8100; done
-for target in "postgres 5432" "api 8000" "knowledge 8020"; do
+for target in "api 8000" "knowledge 8020"; do
   # shellcheck disable=SC2086
   expect closed pilot-prodsim $target
 done

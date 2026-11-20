@@ -14,9 +14,9 @@ from adlc.tools.token import Claims
 from tests.integration.agents.test_t8_agent import _pilot
 from tests.support.acting import acting
 from tests.support.acting_scripts import Evolution
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, person
-from tests.support.pg import PlatformDatabase
 
 AGENT = "t9-evolution-agent"
 
@@ -52,7 +52,7 @@ def _decisions(h: Harness, run_id: str) -> dict[str, bool]:
     with h.app.connect() as conn:
         rows = conn.execute(
             text(
-                "SELECT check_id, synthetic FROM run.policy_decision WHERE run_id = :r AND check_id LIKE 'CTL-T9-%'"
+                "SELECT check_id, synthetic FROM policy_decision WHERE run_id = :r AND check_id LIKE 'CTL-T9-%'"
             ),
             {"r": run_id},
         ).all()
@@ -76,12 +76,12 @@ def test_drift_is_classified_and_reenters_at_t2(
         with a.h.app.connect() as conn:
             refused = conn.execute(
                 text(
-                    "SELECT outcome, reason FROM tools.tool_call WHERE run_id = :r AND tool = 'iam_revoke'"
+                    "SELECT outcome, reason FROM tool_call WHERE run_id = :r AND tool = 'iam_revoke'"
                 ),
                 {"r": run.run_id},
             ).all()
             revocations = conn.execute(
-                text("SELECT count(*) FROM tools.enterprise_record WHERE system = 'iam'")
+                text("SELECT count(*) FROM enterprise_record WHERE system = 'iam'")
             ).scalar_one()
         assert [o for o, _ in refused] == ["refused"] and "retire" in refused[0][1]  # SC-006
         assert revocations == 0

@@ -21,7 +21,7 @@ from adlc.agents.startup import MissingKnowledgeToken, MissingModelKey, MissingT
 from adlc.agents.wiring import build_runtime
 from adlc.config.errors import load_settings_or_exit
 from adlc.config.settings import OrchestratorSettings
-from adlc.db.engine import DatabaseUnavailable, app_engine, wait_for_database
+from adlc.db.engine import DatabaseUnavailable, open_engine, wait_for_database
 from adlc.observability.logging import configure_logging
 from adlc.observability.tracing import setup_process_tracing
 from adlc.orchestration import store
@@ -47,7 +47,7 @@ def run() -> None:
     """Deliver events, advance runs and fire timers until stopped (SIGTERM or Ctrl-C)."""
     settings = load_settings_or_exit(OrchestratorSettings)
     configure_logging(settings.log_level)
-    engine = app_engine(settings)
+    engine = open_engine(settings)
     try:
         wait_for_database(engine, settings.db_connect_timeout)
     except DatabaseUnavailable as exc:
@@ -140,7 +140,7 @@ def run() -> None:
 def health() -> None:
     """Exit 0 when the heartbeat is fresh, 1 otherwise."""
     settings = load_settings_or_exit(OrchestratorSettings)
-    engine = app_engine(settings)
+    engine = open_engine(settings)
     try:
         with engine.connect() as conn:
             beat = store.last_beat(conn)

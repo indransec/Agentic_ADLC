@@ -87,7 +87,7 @@ spec-validate:
 	@echo "==> spec-validate"
 	$(UV) adlc-spec validate adlc-specs --baseline-ref $(ADLC_SPEC_BASELINE_REF)
 
-# Registers adlc-specs into the ADLC_DB_* data store (schema-owner identity), host side.
+# Registers adlc-specs into the ADLC_DB_PATH data store, host side.
 spec-register: .env
 	@echo "==> spec-register"
 	$(UV) adlc-spec register adlc-specs

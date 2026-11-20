@@ -14,7 +14,7 @@ def test_redelivery_is_skipped(h: Harness) -> None:
     with h.owner.begin() as conn:  # make every event look undelivered again
         from sqlalchemy import text
 
-        conn.execute(text("UPDATE events.outbox_event SET processed_at = NULL"))
+        conn.execute(text("UPDATE outbox_event SET processed_at = NULL"))
     h.drain()
     assert [r.run_id for r in h.runs(usecase)] == runs_before
 

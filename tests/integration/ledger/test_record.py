@@ -33,7 +33,7 @@ KEYS = {
 
 def _records(h: Harness, usecase: str) -> list[tuple[str, str, str | None, dict]]:  # type: ignore[type-arg]
     rows = h.sql(
-        "SELECT ledger_key, content_hash, previous_record_hash, content_json FROM ledger.ledger_record "
+        "SELECT ledger_key, content_hash, previous_record_hash, content_json FROM ledger_record "
         "WHERE usecase_id = :u ORDER BY ledger_record_id",
         u=usecase,
     )
@@ -88,10 +88,10 @@ def test_records_and_content_are_immutable(h: Harness) -> None:
     for engine in (h.app, h.owner):
         with engine.connect() as conn:
             for sql in (
-                "UPDATE ledger.ledger_record SET content_json = '{}'",
-                "DELETE FROM ledger.ledger_record",
-                "UPDATE ledger.content_blob SET size = 1",
-                "DELETE FROM ledger.content_blob",
+                "UPDATE ledger_record SET content_json = '{}'",
+                "DELETE FROM ledger_record",
+                "UPDATE content_blob SET size = 1",
+                "DELETE FROM content_blob",
             ):
                 with pytest.raises(DBAPIError), conn.begin_nested():
                     conn.execute(text(sql))

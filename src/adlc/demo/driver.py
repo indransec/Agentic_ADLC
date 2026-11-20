@@ -180,7 +180,7 @@ class DemoDriver:
             for key in self.script.usecases:
                 found = conn.execute(
                     text(
-                        "SELECT usecase_id FROM run.usecase WHERE name = :n "
+                        "SELECT usecase_id FROM usecase WHERE name = :n "
                         "ORDER BY created_at DESC LIMIT 1"
                     ),
                     {"n": self._name(key)},

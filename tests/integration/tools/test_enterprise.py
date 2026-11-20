@@ -99,7 +99,7 @@ def test_itsm_registry_cmdb_and_iam(tools: Tools) -> None:
     assert read(tools, "servicenow", "read", {"kind": "change"}, usecase="UC-0002")["records"] == []
     assert read(tools, "agent_registry", "read", {}, usecase="UC-0002")["records"] == []
     with tools.engine.connect() as conn:
-        assert conn.execute(text("SELECT count(*) FROM tools.enterprise_record")).scalar_one() == 6
+        assert conn.execute(text("SELECT count(*) FROM enterprise_record")).scalar_one() == 6
 
 
 def test_grc_controls_and_eval_store(tools: Tools) -> None:

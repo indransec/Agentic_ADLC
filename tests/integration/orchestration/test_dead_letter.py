@@ -6,8 +6,8 @@ import pytest
 
 from adlc.orchestration.service import NotAuthorised, NotDeadLettered
 from adlc.orchestration.store import EventRow
+from tests.support.db import PlatformDatabase
 from tests.support.orchestration import harness, person
-from tests.support.pg import PlatformDatabase
 
 COE = person("adlc_coe")
 
@@ -29,7 +29,7 @@ def test_retries_then_dead_letter_then_requeue(orch_template: PlatformDatabase) 
         for attempt in range(1, 6):
             h.drain()
             row = h.sql(
-                "SELECT attempts, next_attempt_at, dead_lettered_at, last_error FROM events.outbox_event"
+                "SELECT attempts, next_attempt_at, dead_lettered_at, last_error FROM outbox_event"
             )[0]
             assert row[0] == attempt
             if attempt < 5:
@@ -58,7 +58,7 @@ def test_retries_then_dead_letter_then_requeue(orch_template: PlatformDatabase) 
             h.service.requeue(COE, dead["event_id"])
         h.drain()
         assert [r.terminal_id for r in h.runs(usecase)] == ["T0"]
-        action = h.sql("SELECT action, actor FROM events.dead_letter_action")[0]
+        action = h.sql("SELECT action, actor FROM dead_letter_action")[0]
         assert tuple(action) == ("requeue", "adlc_coe-person")
 
 
@@ -66,5 +66,5 @@ def test_retry_delays_are_time_scaled(orch_template: PlatformDatabase) -> None:
     with harness(orch_template, fault=Fault(), time_scale=0.01) as h:
         h.service.submit_usecase(person("business_owner"), "case", "x" * 250)
         h.drain()
-        row = h.sql("SELECT next_attempt_at FROM events.outbox_event")[0]
+        row = h.sql("SELECT next_attempt_at FROM outbox_event")[0]
         assert row[0] - h.clock.now() == timedelta(seconds=0.1)

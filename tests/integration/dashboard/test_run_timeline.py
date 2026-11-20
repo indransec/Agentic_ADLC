@@ -6,8 +6,8 @@ from adlc.dashboard.service import DashboardService
 from tests.integration.agents.test_t7_agent import to_t7
 from tests.support.acting import acting
 from tests.support.acting_scripts import Deployment
+from tests.support.db import PlatformDatabase
 from tests.support.fake_pilot import FakePilot, with_candidate
-from tests.support.pg import PlatformDatabase
 
 AGENT = "t7-deployment-agent"
 

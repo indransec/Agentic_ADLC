@@ -11,13 +11,13 @@ from fastapi.testclient import TestClient
 from adlc.api.app import create_app
 from adlc.identity.hashing import hash_password
 from tests.integration.conftest import settings_for
-from tests.support.pg import PlatformDatabase
+from tests.support.db import PlatformDatabase
 
 PASSWORD = "correct-password-for-tests"
 
 
 @pytest.fixture
-def app(platform_db: PlatformDatabase, tmp_path: Path) -> FastAPI:
+def app(migrated_db: PlatformDatabase, tmp_path: Path) -> FastAPI:
     accounts = tmp_path / "accounts.yaml"
     accounts.write_text(
         "accounts:\n"
@@ -30,7 +30,7 @@ def app(platform_db: PlatformDatabase, tmp_path: Path) -> FastAPI:
         "    roles: [adlc_coe]\n"
         "    credential_hash: REPLACE_WITH_HASH\n"
     )
-    application = create_app(settings_for(platform_db, accounts))
+    application = create_app(settings_for(migrated_db, accounts))
 
     @application.get("/test-only/protected")
     def protected() -> dict[str, str]:
@@ -134,11 +134,11 @@ def test_many_failures_do_not_lock(client: TestClient) -> None:
     assert status == 200
 
 
-def test_bad_account_file_stops_app(platform_db: PlatformDatabase, tmp_path: Path) -> None:
+def test_bad_account_file_stops_app(migrated_db: PlatformDatabase, tmp_path: Path) -> None:
     accounts = tmp_path / "accounts.yaml"
     accounts.write_text(
         "accounts:\n  - {account_name: a.b, display_name: A, roles: [no_such_role], "
         "credential_hash: REPLACE_WITH_HASH}\n"
     )
     with pytest.raises(Exception, match=r"a\.b.*no_such_role"):
-        create_app(settings_for(platform_db, accounts))
+        create_app(settings_for(migrated_db, accounts))

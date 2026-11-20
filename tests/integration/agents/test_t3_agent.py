@@ -10,8 +10,8 @@ from sqlalchemy import text
 
 from tests.support.acting import acting, tool
 from tests.support.acting_scripts import FILL, create_dev, output_of, t3_artifacts, t3_build
+from tests.support.db import PlatformDatabase
 from tests.support.orchestration import Harness
-from tests.support.pg import PlatformDatabase
 
 AGENT = "t3-builder-agent"
 BUILD = t3_build()[:-1]  # every step before the final answer
@@ -30,7 +30,7 @@ def decisions(h: Harness, run_id: str) -> dict[str, tuple[bool, bool]]:
     with h.app.connect() as conn:
         rows = conn.execute(
             text(
-                "SELECT check_id, passed, synthetic FROM run.policy_decision WHERE run_id = :r AND check_id LIKE 'CTL-T3-%' ORDER BY policy_decision_id"
+                "SELECT check_id, passed, synthetic FROM policy_decision WHERE run_id = :r AND check_id LIKE 'CTL-T3-%' ORDER BY policy_decision_id"
             ),
             {"r": run_id},
         ).all()
@@ -63,9 +63,7 @@ def test_t3_builds_the_candidate_from_real_ci_evidence(
         assert not [c for c in run.control_results if not c["passed"]]
         with a.h.app.connect() as conn:
             calls = conn.execute(
-                text(
-                    "SELECT tool, outcome FROM tools.tool_call WHERE run_id = :r ORDER BY tool_call_id"
-                ),
+                text("SELECT tool, outcome FROM tool_call WHERE run_id = :r ORDER BY tool_call_id"),
                 {"r": run.run_id},
             ).all()
         assert [c[0] for c in calls] == [
@@ -126,7 +124,7 @@ def test_a_copied_value_that_differs_fails_its_control(
         with a.h.app.connect() as conn:
             first = conn.execute(
                 text(
-                    "SELECT passed, reason FROM run.policy_decision WHERE run_id = :r AND check_id = 'CTL-T3-09' ORDER BY policy_decision_id LIMIT 1"
+                    "SELECT passed, reason FROM policy_decision WHERE run_id = :r AND check_id = 'CTL-T3-09' ORDER BY policy_decision_id LIMIT 1"
                 ),
                 {"r": run.run_id},
             ).one()

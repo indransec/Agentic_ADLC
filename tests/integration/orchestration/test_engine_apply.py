@@ -9,9 +9,9 @@ from adlc.orchestration.engine import StaleRun
 from adlc.orchestration.service import Actor
 from adlc.orchestration.states import ActorType, InvalidTransition, Signal, SignalKind
 from adlc.orchestration.stubs import StubAgent
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 
 def _at_sign_off(h: Harness, terminal: str = "T0") -> tuple[str, str]:
@@ -25,7 +25,7 @@ def test_apply_writes_transition_activity_and_version(h: Harness) -> None:
     usecase, run_id = _at_sign_off(h)
     run = h.run(run_id)
     transitions = h.sql(
-        "SELECT from_state, to_state FROM run.run_transition WHERE run_id = :r ORDER BY run_transition_id",
+        "SELECT from_state, to_state FROM run_transition WHERE run_id = :r ORDER BY run_transition_id",
         r=run_id,
     )
     assert [tuple(t) for t in transitions] == [
@@ -38,7 +38,7 @@ def test_apply_writes_transition_activity_and_version(h: Harness) -> None:
     steps = [
         r[0]
         for r in h.sql(
-            "SELECT step FROM run.run_activity WHERE run_id = :r ORDER BY run_activity_id", r=run_id
+            "SELECT step FROM run_activity WHERE run_id = :r ORDER BY run_activity_id", r=run_id
         )
     ]
     assert steps == ["route", "prerequisites", "build", "controls", "review"]
@@ -57,7 +57,7 @@ def test_stale_version_writes_nothing(h: Harness) -> None:
             expected_version=before.version - 1,
         )
     assert h.run(run_id) == before
-    assert h.sql("SELECT count(*) FROM run.sign_off")[0][0] == 0
+    assert h.sql("SELECT count(*) FROM sign_off")[0][0] == 0
 
 
 def test_invalid_transition_writes_nothing(h: Harness) -> None:
@@ -75,17 +75,17 @@ def test_close_writes_everything_together(h: Harness) -> None:
     h.service.decide(person("business_owner"), run_id, "pass", fields={"risk_tier": "high"})
     run = h.run(run_id)
     assert (run.state, run.final_status) == ("closed", "pass")
-    assert h.sql("SELECT count(*) FROM ledger.ledger_record WHERE run_id = :r", r=run_id)[0][0] == 1
+    assert h.sql("SELECT count(*) FROM ledger_record WHERE run_id = :r", r=run_id)[0][0] == 1
     assert (
         h.sql(
-            "SELECT count(*) FROM events.outbox_event WHERE causation_run_id = :r AND event_type = 'T0.pass'",
+            "SELECT count(*) FROM outbox_event WHERE causation_run_id = :r AND event_type = 'T0.pass'",
             r=run_id,
         )[0][0]
         == 1
     )
-    assert h.sql("SELECT count(*) FROM run.sign_off WHERE run_id = :r", r=run_id)[0][0] == 1
+    assert h.sql("SELECT count(*) FROM sign_off WHERE run_id = :r", r=run_id)[0][0] == 1
     open_timers = h.sql(
-        "SELECT count(*) FROM run.timer WHERE run_id = :r AND fired_at IS NULL AND cancelled_at IS NULL",
+        "SELECT count(*) FROM timer WHERE run_id = :r AND fired_at IS NULL AND cancelled_at IS NULL",
         r=run_id,
     )
     assert open_timers[0][0] == 0
@@ -103,8 +103,8 @@ def test_failure_mid_close_leaves_nothing(h: Harness, monkeypatch: pytest.Monkey
     with pytest.raises(RuntimeError):
         h.service.decide(person("business_owner"), run_id, "pass", fields={"risk_tier": "low"})
     assert h.run(run_id) == before
-    assert h.sql("SELECT count(*) FROM ledger.ledger_record")[0][0] == 0
-    assert h.sql("SELECT count(*) FROM run.sign_off")[0][0] == 0
+    assert h.sql("SELECT count(*) FROM ledger_record")[0][0] == 0
+    assert h.sql("SELECT count(*) FROM sign_off")[0][0] == 0
 
 
 def test_concurrent_closes_keep_one_chain(orch_template: PlatformDatabase) -> None:
@@ -132,7 +132,7 @@ def test_concurrent_closes_keep_one_chain(orch_template: PlatformDatabase) -> No
             t.join()
         assert errors == []
         chain = h.sql(
-            "SELECT content_hash, previous_record_hash FROM ledger.ledger_record "
+            "SELECT content_hash, previous_record_hash FROM ledger_record "
             "WHERE usecase_id = :u ORDER BY ledger_record_id",
             u=usecase,
         )

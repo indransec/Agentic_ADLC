@@ -6,9 +6,9 @@ from pathlib import Path
 from adlc.agents.replay import UseCaseResult
 from adlc.dashboard.service import DashboardService
 from tests.scenario.test_reference_replay_t6_t9 import replay_to_t9
+from tests.support.db import PlatformDatabase
 from tests.support.fake_pilot import FakePilot
 from tests.support.orchestration import Harness
-from tests.support.pg import PlatformDatabase
 
 
 def _journey_arrows(h: Harness, result: UseCaseResult, fake: FakePilot) -> None:

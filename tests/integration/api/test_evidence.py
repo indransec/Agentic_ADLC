@@ -20,6 +20,6 @@ def test_verify_returns_the_report_and_records_the_account(h: Harness, api: Api)
     assert report.status_code == 200, report.text
     body = report.json()
     assert body["verified"] and body["scope"] == usecase and body["records_checked"] >= 2
-    rows = h.sql("SELECT actor, scope FROM ledger.verification_run")
+    rows = h.sql("SELECT actor, scope FROM verification_run")
     assert [tuple(r) for r in rows] == [("sre-person", usecase)]
     assert api.post("sre", "/usecases/UC-9999/verify").status_code == 404

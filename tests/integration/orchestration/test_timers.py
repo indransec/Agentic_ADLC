@@ -3,16 +3,16 @@
 from datetime import timedelta
 from typing import Any
 
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness
-from tests.support.pg import PlatformDatabase
 
 
 def _timers(h: Harness, run_id: str) -> list[tuple[Any, ...]]:
     return [
         tuple(r)
         for r in h.sql(
-            "SELECT kind, due_at, fired_at, cancelled_at FROM run.timer WHERE run_id = :r ORDER BY timer_id",
+            "SELECT kind, due_at, fired_at, cancelled_at FROM timer WHERE run_id = :r ORDER BY timer_id",
             r=run_id,
         )
     ]

@@ -10,8 +10,7 @@ wait for that decision then re-run them (research R-11).
 from collections.abc import Mapping
 from typing import Any
 
-from sqlalchemy import Engine, bindparam, text
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import Engine, text
 from sqlalchemy.exc import IntegrityError
 
 from adlc.api.errors import NotFound
@@ -64,10 +63,11 @@ class ChangeService:
         with self.engine.connect() as conn:
             rows = conn.execute(
                 text(
-                    "SELECT DISTINCT ON (record_id) record_id, version, usecase_id, run_id, "
-                    "terminal_id, body, at FROM tools.enterprise_record WHERE system = :s "
-                    "AND kind = :k AND (CAST(:r AS text) IS NULL OR record_id = :r) "
-                    "ORDER BY record_id, version DESC"
+                    "SELECT record_id, version, usecase_id, run_id, terminal_id, body, at FROM ("
+                    "SELECT *, row_number() OVER (PARTITION BY record_id ORDER BY version DESC) "
+                    "AS rank FROM enterprise_record WHERE system = :s "
+                    "AND kind = :k AND (CAST(:r AS text) IS NULL OR record_id = :r)) "
+                    "WHERE rank = 1 ORDER BY record_id"
                 ),
                 {"s": SYSTEM, "k": KIND, "r": record_id},
             ).mappings()
@@ -114,10 +114,10 @@ class ChangeService:
             with self.engine.begin() as conn:
                 conn.execute(
                     text(
-                        "INSERT INTO tools.enterprise_record (system, kind, record_id, version, "
+                        "INSERT INTO enterprise_record (system, kind, record_id, version, "
                         "usecase_id, run_id, terminal_id, body, at) VALUES (:s, :k, :r, :v, :u, "
                         ":run, :t, :b, now())"
-                    ).bindparams(bindparam("b", type_=JSONB)),
+                    ),
                     {
                         "s": SYSTEM,
                         "k": KIND,

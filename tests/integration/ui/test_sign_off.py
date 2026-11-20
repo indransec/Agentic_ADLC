@@ -43,7 +43,7 @@ def test_inbox_detail_and_pass(h: Harness, api: Api) -> None:
     at.button(key=f"submit:{run}").click()
     at = at.run()
     assert [s.value for s in at.success] == ["Decision recorded"], [e.value for e in at.error]
-    rows = h.sql("SELECT person FROM run.sign_off WHERE run_id = :r", r=run)
+    rows = h.sql("SELECT person FROM sign_off WHERE run_id = :r", r=run)
     assert [r[0] for r in rows] == ["product_owner-person"]
 
 

@@ -29,9 +29,9 @@ from tests.support.acting_scripts import (
     Readiness,
     t3_build,
 )
+from tests.support.db import REPO_ROOT, PlatformDatabase
 from tests.support.fake_pilot import FakePilot
 from tests.support.orchestration import Harness, person
-from tests.support.pg import REPO_ROOT, PlatformDatabase
 
 REFERENCE = next(
     r for r in load_references(REPO_ROOT / "data" / "reference_usecases") if r.until == "T9"

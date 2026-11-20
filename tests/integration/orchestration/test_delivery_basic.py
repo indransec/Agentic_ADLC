@@ -22,7 +22,7 @@ def test_processed_with_idempotency_row(h: Harness) -> None:
     h.submit()
     rows = h.sql(
         "SELECT e.event_type, e.processed_at IS NOT NULL, p.event_id IS NOT NULL "
-        "FROM events.outbox_event e LEFT JOIN events.processed_event p USING (event_id)"
+        "FROM outbox_event e LEFT JOIN processed_event p USING (event_id)"
     )
     assert [tuple(r) for r in rows] == [("usecase.submitted", True, True)]
 
@@ -44,7 +44,7 @@ def test_order_per_usecase(h: Harness) -> None:
     opened = [r.terminal_id for r in h.runs(usecase)]
     assert opened == ["T0", "T6", "T7", "T8"]
     processed = h.sql(
-        "SELECT event_type FROM events.outbox_event WHERE usecase_id = :u ORDER BY processed_at, created_at",
+        "SELECT event_type FROM outbox_event WHERE usecase_id = :u ORDER BY processed_at, created_at",
         u=usecase,
     )
     assert [r[0] for r in processed][:4] == ["usecase.submitted", "T5.pass", "T6.pass", "T7.pass"]

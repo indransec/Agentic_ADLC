@@ -2,7 +2,7 @@
 
 from adlc.dashboard.service import DashboardService
 from tests.integration.dashboard.walk import walked
-from tests.support.pg import PlatformDatabase
+from tests.support.db import PlatformDatabase
 
 
 def test_feed_order_and_filters(orch_template: PlatformDatabase) -> None:

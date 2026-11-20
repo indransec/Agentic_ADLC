@@ -7,9 +7,9 @@ from typing import Any
 
 from adlc.agents.replay import Planned
 from adlc.policy.synthetic import load_synthetic_artifacts
+from tests.support.db import PlatformDatabase
 from tests.support.grounded import grounded
 from tests.support.orchestration import SYNTHETIC
-from tests.support.pg import PlatformDatabase
 
 SYN = load_synthetic_artifacts(SYNTHETIC)
 REFERENCE = "ra-tool-using-agent.md"
@@ -64,7 +64,7 @@ def test_t2_designs_cites_and_passes_its_controls(orch_template: PlatformDatabas
         assert run.state == "awaiting_sign_off", run.state
         assert [c["id"] for c in run.control_results if not c["passed"]] == []
         (cited,) = h.sql(
-            "SELECT source, document, section FROM run.artifact_citation WHERE run_id = :r",
+            "SELECT source, document, section FROM artifact_citation WHERE run_id = :r",
             r=run.run_id,
         )
         assert tuple(cited) == ("arch_repo", REFERENCE, "Pattern")

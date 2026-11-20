@@ -9,14 +9,14 @@ from fastapi.testclient import TestClient
 from adlc.api.app import create_app
 from adlc.identity.hashing import hash_password
 from tests.integration.conftest import settings_for
-from tests.support.pg import PlatformDatabase
+from tests.support.db import PlatformDatabase
 
 PASSWORD = "cycle-password-distinctive-123"
 SESSION_SECRET = "cycle-session-secret-distinctive-" + "k" * 8
 
 
 def test_full_cycle_logs_no_secrets(
-    platform_db: PlatformDatabase,
+    migrated_db: PlatformDatabase,
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
     capsys: pytest.CaptureFixture[str],
@@ -27,7 +27,7 @@ def test_full_cycle_logs_no_secrets(
         "accounts:\n  - {account_name: owner.business, display_name: O, "
         f"roles: [business_owner], credential_hash: '{credential_hash}'}}\n"
     )
-    settings = settings_for(platform_db, accounts, session_secret=SESSION_SECRET, log_level="DEBUG")
+    settings = settings_for(migrated_db, accounts, session_secret=SESSION_SECRET, log_level="DEBUG")
     caplog.set_level(logging.DEBUG)
 
     with TestClient(create_app(settings)) as client:
@@ -46,8 +46,6 @@ def test_full_cycle_logs_no_secrets(
         + [repr(vars(record)) for record in caplog.records]
     )
     secrets = {
-        "app password": platform_db.app_password,
-        "owner password": platform_db.owner_password,
         "session secret": SESSION_SECRET,
         "user password": PASSWORD,
         "credential hash": credential_hash,

@@ -289,8 +289,8 @@ class SqlSpecRegistry:
 
     def terminals_opened_by(self, event_type: str) -> tuple[TerminalRef, ...]:
         rows = self._all(
-            "SELECT r.terminal_id, r.version FROM spec.spec_trigger t "
-            "JOIN spec.spec_registry r USING (spec_registry_id) "
+            "SELECT r.terminal_id, r.version FROM spec_trigger t "
+            "JOIN spec_registry r USING (spec_registry_id) "
             "WHERE t.event_type = :e AND r.status = 'active' ORDER BY r.terminal_id",
             e=event_type,
         )
@@ -304,8 +304,8 @@ class SqlSpecRegistry:
         version: str | None = None,
     ) -> RouteTarget | None:
         rows = self._all(
-            "SELECT o.* FROM spec.spec_outcome_route o "
-            "JOIN spec.spec_registry r USING (spec_registry_id) "
+            "SELECT o.* FROM spec_outcome_route o "
+            "JOIN spec_registry r USING (spec_registry_id) "
             "WHERE r.terminal_id = :t AND o.outcome_status = :s "
             "AND (CAST(:v AS text) IS NULL AND r.status = 'active' OR r.version = :v)",
             t=terminal_id,
@@ -333,8 +333,8 @@ class SqlSpecRegistry:
         self, terminal_id: str, event_type: str, version: str | None = None
     ) -> EventRouteTarget | None:
         rows = self._all(
-            "SELECT e.* FROM spec.spec_event_route e "
-            "JOIN spec.spec_registry r USING (spec_registry_id) "
+            "SELECT e.* FROM spec_event_route e "
+            "JOIN spec_registry r USING (spec_registry_id) "
             "WHERE r.terminal_id = :t AND e.event_type = :e "
             "AND (CAST(:v AS text) IS NULL AND r.status = 'active' OR r.version = :v)",
             t=terminal_id,
@@ -357,8 +357,8 @@ class SqlSpecRegistry:
         self, terminal_id: str, change_class: str, version: str | None = None
     ) -> ChangeClassRoute | None:
         rows = self._all(
-            "SELECT c.* FROM spec.spec_change_class c "
-            "JOIN spec.spec_registry r USING (spec_registry_id) "
+            "SELECT c.* FROM spec_change_class c "
+            "JOIN spec_registry r USING (spec_registry_id) "
             "WHERE r.terminal_id = :t AND c.change_class = :c "
             "AND (CAST(:v AS text) IS NULL AND r.status = 'active' OR r.version = :v)",
             t=terminal_id,
@@ -380,8 +380,8 @@ class SqlSpecRegistry:
         self, terminal_id: str, risk_tier: str, version: str | None = None
     ) -> TimelinePolicy | None:
         rows = self._all(
-            "SELECT t.* FROM spec.spec_timeline t "
-            "JOIN spec.spec_registry r USING (spec_registry_id) "
+            "SELECT t.* FROM spec_timeline t "
+            "JOIN spec_registry r USING (spec_registry_id) "
             "WHERE r.terminal_id = :t AND t.risk_tier = :tier "
             "AND (CAST(:v AS text) IS NULL AND r.status = 'active' OR r.version = :v)",
             t=terminal_id,
@@ -407,7 +407,7 @@ class SqlSpecRegistry:
 
     def entry(self, terminal_id: str, version: str | None = None) -> RegistryEntry | None:
         rows = self._all(
-            "SELECT r.* FROM spec.spec_registry r WHERE r.terminal_id = :t "
+            "SELECT r.* FROM spec_registry r WHERE r.terminal_id = :t "
             "AND (CAST(:v AS text) IS NULL AND r.status = 'active' OR r.version = :v)",
             t=terminal_id,
             v=version,
@@ -426,7 +426,7 @@ class SqlSpecRegistry:
 
     def catalogue(self, name: str) -> CatalogueEntry | None:
         rows = self._all(
-            "SELECT catalogue_name, version, content_json FROM spec.spec_catalogue "
+            "SELECT catalogue_name, version, content_json FROM spec_catalogue "
             "WHERE catalogue_name = :n AND status = 'active'",
             n=name,
         )

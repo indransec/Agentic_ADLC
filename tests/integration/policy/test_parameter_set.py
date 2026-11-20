@@ -7,9 +7,9 @@ from adlc.orchestration.interfaces import EvalContext
 from adlc.orchestration.stubs import StubAgent, StubPolicy
 from adlc.policy.factory import build_policy_engine
 from adlc.spec_toolkit.registry import SqlSpecRegistry
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 
 class Profile:
@@ -22,7 +22,7 @@ class Profile:
 
 def _set(h: Harness, run_id: str) -> tuple[Any, ...]:
     row = h.sql(
-        "SELECT risk_tier, parameters, rejected FROM run.run_parameter_set WHERE run_id = :r",
+        "SELECT risk_tier, parameters, rejected FROM run_parameter_set WHERE run_id = :r",
         r=run_id,
     )
     assert len(row) == 1
@@ -35,13 +35,10 @@ def test_frozen_at_run_open_and_reused(h: Harness) -> None:
     assert tier == "high"
     assert parameters["autonomy_level_max"] == {"value": 4, "source": "guardrail"}
     assert rejected == []
-    first = h.sql("SELECT resolved_at FROM run.run_parameter_set WHERE run_id = :r", r=t1)[0][0]
+    first = h.sql("SELECT resolved_at FROM run_parameter_set WHERE run_id = :r", r=t1)[0][0]
     engine = build_policy_engine(h.app, SqlSpecRegistry(h.app), h.clock)
     engine.evaluate("param.autonomy_level_max == 4", EvalContext("T1", "x", t1, usecase))
-    assert (
-        h.sql("SELECT resolved_at FROM run.run_parameter_set WHERE run_id = :r", r=t1)[0][0]
-        == first
-    )
+    assert h.sql("SELECT resolved_at FROM run_parameter_set WHERE run_id = :r", r=t1)[0][0] == first
 
 
 def test_rework_run_resolves_its_own_set(h: Harness) -> None:
@@ -53,9 +50,9 @@ def test_rework_run_resolves_its_own_set(h: Harness) -> None:
     run2 = h.active(usecase, "T1").run_id
     assert _set(h, run2)[1]["test_scenarios_min"]["value"] == 30
     assert (
-        h.sql(
-            "SELECT count(*) FROM run.run_parameter_set WHERE run_id LIKE :p", p=f"{usecase}/T1/%"
-        )[0][0]
+        h.sql("SELECT count(*) FROM run_parameter_set WHERE run_id LIKE :p", p=f"{usecase}/T1/%")[
+            0
+        ][0]
         == 2
     )
 
@@ -122,7 +119,7 @@ def test_no_self_deadlock_when_a_decision_freezes_parameters(
             )
             h.drain()
             run_id = h.active(usecase, "T1").run_id
-        assert not h.sql("SELECT 1 FROM run.run_parameter_set WHERE run_id = :r", r=run_id)
+        assert not h.sql("SELECT 1 FROM run_parameter_set WHERE run_id = :r", r=run_id)
         engine = build_policy_engine(h.app, SqlSpecRegistry(h.app), h.clock)
         done = threading.Event()
 
@@ -138,4 +135,4 @@ def test_no_self_deadlock_when_a_decision_freezes_parameters(
         worker.start()
         worker.join(timeout=20)
         assert done.is_set(), "freezing parameters blocked on the locked run row"
-        assert h.sql("SELECT 1 FROM run.run_parameter_set WHERE run_id = :r", r=run_id)
+        assert h.sql("SELECT 1 FROM run_parameter_set WHERE run_id = :r", r=run_id)

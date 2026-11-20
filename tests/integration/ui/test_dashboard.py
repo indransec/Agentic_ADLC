@@ -59,7 +59,7 @@ def test_dead_letter_payload_for_the_coe(h: Harness, api: Api) -> None:
     with h.owner.begin() as conn:
         conn.execute(
             text(
-                "UPDATE events.outbox_event SET dead_lettered_at = now(), last_error = 'x' "
+                "UPDATE outbox_event SET dead_lettered_at = now(), last_error = 'x' "
                 "WHERE event_type = 'usecase.submitted'"
             )
         )

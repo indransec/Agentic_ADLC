@@ -20,7 +20,6 @@ dependencies = [
     "opentelemetry-instrumentation-fastapi>=0.66b2",
     "opentelemetry-sdk>=1.45.2",
     "plotly==6.5.0",
-    "psycopg[binary]>=3.3.8",
     "pydantic>=2.14.3",
     "pydantic-settings>=2.16.2",
     "python-multipart==0.0.32",
@@ -89,7 +88,7 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
-    "integration: needs Docker (testcontainers PostgreSQL)",
+    "integration: runs against a real SQLite platform database",
     "litellm_contract: LiteLLM request/response mapping over mocked HTTP (respx)",
 ]
 addopts = "-ra --cov=adlc --cov-report=term:skip-covered"
@@ -103,7 +102,6 @@ dev = [
     "pytest-cov>=7.1.0",
     "respx>=0.23.1",
     "ruff>=0.17.4",
-    "testcontainers[postgres]>=4.15.0",
     "types-jsonschema>=4.26.0.20261006",
     "types-networkx>=3.6.1.20261108",
     "types-openpyxl>=3.1.5.20261017",

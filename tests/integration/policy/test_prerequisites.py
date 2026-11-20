@@ -6,16 +6,16 @@ from pathlib import Path
 from ruamel.yaml import YAML
 
 from adlc.orchestration.stubs import StubAgent
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import SYNTHETIC, Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 
 def test_t1_prerequisites_pass_after_t0(h: Harness) -> None:
     usecase, t1 = walk_to(h, "T1")
     assert h.run(t1).state == "awaiting_sign_off"
     checks = h.sql(
-        "SELECT check_id, passed FROM run.policy_decision WHERE run_id = :r AND check_id LIKE 'PRE-%' ORDER BY policy_decision_id",
+        "SELECT check_id, passed FROM policy_decision WHERE run_id = :r AND check_id LIKE 'PRE-%' ORDER BY policy_decision_id",
         r=t1,
     )
     assert [tuple(c) for c in checks] == [
@@ -38,7 +38,7 @@ def test_missing_evidence_blocks_with_its_path(orch_template: PlatformDatabase) 
         t1 = h.active(usecase, "T1")
         assert t1.state == "blocked"
         reason = h.sql(
-            "SELECT reason FROM run.policy_decision WHERE run_id = :r AND check_id = 'PRE-T1-03'",
+            "SELECT reason FROM policy_decision WHERE run_id = :r AND check_id = 'PRE-T1-03'",
             r=t1.run_id,
         )[0][0]
         assert reason == "evidence not available: T0.value_hypothesis"
@@ -58,7 +58,7 @@ def test_warn_prerequisite_is_recorded_and_the_run_proceeds(
         usecase, t6 = walk_to(h, "T6")
         assert h.run(t6).state == "awaiting_sign_off"  # warn does not block (US1/AC3)
         row = h.sql(
-            "SELECT passed, reason FROM run.policy_decision WHERE run_id = :r AND check_id = 'PRE-T6-03'",
+            "SELECT passed, reason FROM policy_decision WHERE run_id = :r AND check_id = 'PRE-T6-03'",
             r=t6,
         )[0]
         assert tuple(row) == (False, "evidence not available: change.window_requested")

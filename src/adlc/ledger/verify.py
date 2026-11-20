@@ -178,7 +178,7 @@ class Verifier:
             rows = conn.execute(
                 text(
                     "SELECT ledger_key, usecase_id, content_hash, previous_record_hash, "
-                    "content_json FROM ledger.ledger_record WHERE usecase_id IS NOT NULL "
+                    "content_json FROM ledger_record WHERE usecase_id IS NOT NULL "
                     "AND (:scope = 'all' OR usecase_id = :scope) "
                     "ORDER BY usecase_id, ledger_record_id"
                 ),
@@ -189,7 +189,7 @@ class Verifier:
                     str(k)
                     for k in conn.execute(
                         text(
-                            "SELECT ledger_key FROM ledger.ledger_record "
+                            "SELECT ledger_key FROM ledger_record "
                             "WHERE usecase_id IS NULL ORDER BY ledger_record_id"
                         )
                     ).scalars()
@@ -199,7 +199,7 @@ class Verifier:
             def blob(digest: str) -> Any | None:
                 if digest not in blobs:
                     row = conn.execute(
-                        text("SELECT body FROM ledger.content_blob WHERE content_hash = :h"),
+                        text("SELECT body FROM content_blob WHERE content_hash = :h"),
                         {"h": digest},
                     ).first()
                     blobs[digest] = None if row is None else row[0]
@@ -224,9 +224,9 @@ class Verifier:
         with self.engine.begin() as conn:
             conn.execute(
                 text(
-                    "INSERT INTO ledger.verification_run (actor, scope, started_at, finished_at, "
+                    "INSERT INTO verification_run (actor, scope, started_at, finished_at, "
                     "records_checked, breaks, verified) VALUES (:a, :s, :st, :fi, :n, "
-                    "CAST(:b AS jsonb), :v)"
+                    ":b, :v)"
                 ),
                 {
                     "a": actor,

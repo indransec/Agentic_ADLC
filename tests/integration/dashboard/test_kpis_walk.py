@@ -6,7 +6,7 @@ from sqlalchemy import text
 
 from adlc.dashboard.service import DashboardService
 from tests.integration.dashboard.walk import walked
-from tests.support.pg import PlatformDatabase
+from tests.support.db import PlatformDatabase
 
 
 def test_kpis_of_the_walk(orch_template: PlatformDatabase) -> None:
@@ -25,7 +25,7 @@ def test_kpis_of_the_walk(orch_template: PlatformDatabase) -> None:
         # first runs closed: T0-T9 except T2 run 2 (open); first runs of T4 (rework) and T5
         # (exception counts as signed) -> every first run but T4's passed or excepted
         firsts = w.h.sql(
-            "SELECT count(*) FROM run.terminal_run WHERE usecase_id = :u AND run_number = 1 "
+            "SELECT count(*) FROM terminal_run WHERE usecase_id = :u AND run_number = 1 "
             "AND state = 'closed'",
             u=w.usecase,
         )[0][0]
@@ -34,10 +34,11 @@ def test_kpis_of_the_walk(orch_template: PlatformDatabase) -> None:
         with w.h.app.connect() as conn:
             passed = conn.execute(
                 text(
-                    "SELECT count(*) FILTER (WHERE passed), count(*) FROM (SELECT DISTINCT ON "
-                    "(run_id, check_id) run_id, check_id, passed FROM run.policy_decision "
+                    "SELECT count(*) FILTER (WHERE passed), count(*) FROM (SELECT passed, "
+                    "row_number() OVER (PARTITION BY run_id, check_id "
+                    "ORDER BY policy_decision_id) AS rank FROM policy_decision "
                     "WHERE usecase_id = :u AND kind = 'evaluate' AND check_id LIKE 'CTL-%' "
-                    "AND attempt = 1 ORDER BY run_id, check_id, policy_decision_id) d"
+                    "AND attempt = 1) d WHERE rank = 1"
                 ),
                 {"u": w.usecase},
             ).one()

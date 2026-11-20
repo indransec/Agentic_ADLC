@@ -9,9 +9,9 @@ from typing import Any
 
 from adlc.agents.replay import Planned
 from adlc.policy.synthetic import load_synthetic_artifacts
+from tests.support.db import PlatformDatabase
 from tests.support.grounded import KNOWLEDGE, grounded
 from tests.support.orchestration import SYNTHETIC, person
-from tests.support.pg import PlatformDatabase
 
 T0 = "t0-intake-agent"
 DRAFT = load_synthetic_artifacts(SYNTHETIC)["T0"]  # rows in T0's declared columns
@@ -50,7 +50,7 @@ def test_t0_builds_grounded_artifacts_with_citations(orch_template: PlatformData
         run = h.active(usecase, "T0")
         assert run.state == "awaiting_sign_off", run.state
         attempt = h.sql(
-            "SELECT implementation, prompt_hash, playbook_hashes, outcome FROM run.agent_attempt "
+            "SELECT implementation, prompt_hash, playbook_hashes, outcome FROM agent_attempt "
             "WHERE run_id = :r AND kind = 'build'",
             r=run.run_id,
         )[-1]
@@ -58,14 +58,14 @@ def test_t0_builds_grounded_artifacts_with_citations(orch_template: PlatformData
         assert set(attempt[2]) == {"PB-T0-01", "PB-T0-02", "PB-T0-03"} and attempt[3] == "artifacts"
         retrieved = h.sql(
             "SELECT source, operation, document, section, content_hash, synthetic "
-            "FROM run.knowledge_retrieval WHERE run_id = :r ORDER BY knowledge_retrieval_id",
+            "FROM knowledge_retrieval WHERE run_id = :r ORDER BY knowledge_retrieval_id",
             r=run.run_id,
         )
         assert retrieved and all(r[0] == "sharepoint" and r[5] for r in retrieved)
         read = next(r for r in retrieved if r[1] == "read")
         (cited,) = h.sql(
             "SELECT artifact_id, version, row_index, document, section, content_hash "
-            "FROM run.artifact_citation WHERE run_id = :r",
+            "FROM artifact_citation WHERE run_id = :r",
             r=run.run_id,
         )
         assert tuple(cited) == ("data_access", 1, 0, POLICY, "Claims data", read[4])
@@ -89,7 +89,7 @@ def test_a_missing_fact_asks_the_business_owner(orch_template: PlatformDatabase)
         assert run.state == "awaiting_clarification"
         (round_,) = h.sql(
             "SELECT clarification_id, addressed_role, looked_in "
-            "FROM run.clarification_round WHERE run_id = :r",
+            "FROM clarification_round WHERE run_id = :r",
             r=run.run_id,
         )
         assert round_[1] == "business_owner" and "sharepoint:/policies" in round_[2]
@@ -109,9 +109,7 @@ def test_citation_keeps_the_hash_of_what_was_read(
         run_id = g.h.active(usecase, "T0").run_id
         text = (folder / "sharepoint" / POLICY).read_text()
         (folder / "sharepoint" / POLICY).write_text(text.replace("masked copies", "full copies"))
-        (cited,) = g.h.sql(
-            "SELECT content_hash FROM run.artifact_citation WHERE run_id = :r", r=run_id
-        )
+        (cited,) = g.h.sql("SELECT content_hash FROM artifact_citation WHERE run_id = :r", r=run_id)
         section = text.split("## Claims data", 1)[1].split("\n## ", 1)[0]
         expected = (
             "sha256:" + hashlib.sha256(("## Claims data" + section).strip().encode()).hexdigest()

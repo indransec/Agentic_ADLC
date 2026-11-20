@@ -5,4 +5,4 @@
 - Never hard-code terminal-specific or use-case-specific values in code.
 - Naming: SA Annex A. Python 3.12, typed, uv. CI runs `make check` on every push; run the relevant test suites locally while working.
 - Settings: environment only (`.env`, see `.env.example`); `ADLC_ENV` is `dev` or `demo`. Local accounts live in the file at `ADLC_ACCOUNTS_FILE`, outside the repo; roles come from `adlc-specs/shared/roles.yaml`.
-- Every endpoint needs a session except those in `PUBLIC_PATHS` (`src/adlc/api/auth.py`); ledger rows are append-only for every DB identity.
+- Every endpoint needs a session except those in `PUBLIC_PATHS` (`src/adlc/api/auth.py`); ledger rows are append-only: triggers refuse UPDATE and DELETE for every connection, and `adlc-ledger verify` detects any bypass.

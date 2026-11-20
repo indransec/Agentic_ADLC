@@ -128,14 +128,14 @@ def test_exception_creates_a_pending_waiver(h: Harness, api: Api) -> None:
 def test_stale_decision_changes_nothing(h: Harness, api: Api) -> None:
     _, run = walk_to(h, "T1")
     version = detail(api, "product_owner", run)["run"]["version"]
-    before = h.sql("SELECT count(*) FROM run.sign_off WHERE run_id = :r", r=run)[0][0]
+    before = h.sql("SELECT count(*) FROM sign_off WHERE run_id = :r", r=run)[0][0]
     stale = api.post(
         "product_owner",
         f"/runs/{run}/decisions",
         json={"decision": "pass", "expected_version": version - 1},
     )
     assert stale.status_code == 409 and stale.json()["kind"] == "stale"
-    after = h.sql("SELECT count(*) FROM run.sign_off WHERE run_id = :r", r=run)[0][0]
+    after = h.sql("SELECT count(*) FROM sign_off WHERE run_id = :r", r=run)[0][0]
     assert before == after and h.run(run).version == version
 
 
@@ -145,7 +145,7 @@ def test_a_body_cannot_name_another_actor(h: Harness, api: Api) -> None:
         refused = decide(api, "product_owner", run, {"decision": "pass", **extra})
         assert refused.status_code == 422 and refused.json()["kind"] == "invalid"
     assert decide(api, "product_owner", run, {"decision": "pass"}).status_code == 200
-    rows = h.sql("SELECT person, role FROM run.sign_off WHERE run_id = :r", r=run)
+    rows = h.sql("SELECT person, role FROM sign_off WHERE run_id = :r", r=run)
     assert [tuple(r) for r in rows] == [("product_owner-person", "product_owner")]
 
 

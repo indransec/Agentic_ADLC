@@ -16,7 +16,7 @@ from sqlalchemy import text
 from adlc.api.errors import NotFound
 from adlc.orchestration import spec_view
 from adlc.orchestration import store as run_store
-from adlc.orchestration.engine import PostgresTerminalRun
+from adlc.orchestration.engine import SqlTerminalRun
 from adlc.orchestration.service import Actor, NotAuthorised, OrchestratorService
 from adlc.orchestration.states import InvalidTransition
 from adlc.orchestration.store import RunRow
@@ -34,7 +34,7 @@ def event_name(event_type: str) -> str:
 
 
 class ProposedEventService:
-    def __init__(self, runs: PostgresTerminalRun, orchestration: OrchestratorService) -> None:
+    def __init__(self, runs: SqlTerminalRun, orchestration: OrchestratorService) -> None:
         self.runs, self.orchestration = runs, orchestration
 
     def _spec(self, run: RunRow) -> Any:
@@ -50,7 +50,7 @@ class ProposedEventService:
     def _decided(self, conn: Any, run_id: str) -> set[str]:
         rows = conn.execute(
             text(
-                "SELECT detail -> 'event_confirmation' ->> 'event_id' FROM run.run_activity "
+                "SELECT detail -> 'event_confirmation' ->> 'event_id' FROM run_activity "
                 "WHERE run_id = :r AND outcome IN ('event_confirmed', 'event_dismissed')"
             ),
             {"r": run_id},
@@ -76,7 +76,7 @@ class ProposedEventService:
         found: list[dict[str, Any]] = []
         with self.runs.engine.connect() as conn:
             usecases = conn.execute(
-                text("SELECT usecase_id FROM run.usecase WHERE status = 'active'")
+                text("SELECT usecase_id FROM usecase WHERE status = 'active'")
             ).scalars()
             for usecase in list(usecases):
                 for run in run_store.runs_of_usecase(conn, str(usecase)):

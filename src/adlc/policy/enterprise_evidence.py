@@ -1,7 +1,7 @@
 """Evidence from the enterprise mocks' records (feature 012, research R-04,
 contracts/telemetry-evidence.md): ``change``, ``release``, ``retirement`` and ``registry``.
 
-The records are the ones the agents' tools wrote (feature 010, ``tools.enterprise_record``, the
+The records are the ones the agents' tools wrote (feature 010, ``enterprise_record``, the
 latest version of each). The release package is the one the MCP registry's
 ``bound_values.authorised_hash`` reference names (spec content, never code). A source with no
 record is "not available", so the composite provider falls back to synthetic evidence, labelled.
@@ -24,10 +24,11 @@ def _records(
     """Current records of a system and kind (one use case, or all), oldest id first."""
     rows = conn.execute(
         text(
-            "SELECT DISTINCT ON (record_id) record_id, usecase_id, body "
-            "FROM tools.enterprise_record WHERE system = :s AND kind = :k "
-            "AND (CAST(:u AS text) IS NULL OR usecase_id = :u) "
-            "ORDER BY record_id, version DESC"
+            "SELECT record_id, usecase_id, body FROM ("
+            "SELECT *, row_number() OVER (PARTITION BY record_id ORDER BY version DESC) AS rank "
+            "FROM enterprise_record WHERE system = :s AND kind = :k "
+            "AND (CAST(:u AS text) IS NULL OR usecase_id = :u)) "
+            "WHERE rank = 1 ORDER BY record_id"
         ),
         {"s": system, "k": kind, "u": usecase_id},
     ).mappings()

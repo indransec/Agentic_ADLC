@@ -9,12 +9,11 @@ from pydantic import ValidationError
 from adlc.config.errors import format_settings_error
 from adlc.config.settings import Settings
 
-APP_PW = "app-password-value-0001"
+DB_PATH = "/var/lib/adlc/db/adlc.db"
 SESSION = "session-secret-value-0000000000000001"
 REQUIRED = (
     "ADLC_ENV",
-    "ADLC_DB_HOST",
-    "ADLC_DB_APP_PASSWORD",
+    "ADLC_DB_PATH",
     "ADLC_SESSION_SECRET",
     "ADLC_ACCOUNTS_FILE",
 )
@@ -29,8 +28,7 @@ def valid_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[str, str]
             monkeypatch.delenv(key)
     env = {
         "ADLC_ENV": "dev",
-        "ADLC_DB_HOST": "localhost",
-        "ADLC_DB_APP_PASSWORD": APP_PW,
+        "ADLC_DB_PATH": DB_PATH,
         "ADLC_SESSION_SECRET": SESSION,
         "ADLC_ACCOUNTS_FILE": str(accounts),
         "ADLC_DEADLETTER_ROLE": "adlc_coe",  # 007: shared by the API and the orchestrator
@@ -52,7 +50,8 @@ def test_valid_settings_load(valid_env: dict[str, str]) -> None:
     settings = Settings()  # type: ignore[call-arg]
     assert settings.env == "dev"
     assert settings.session_ttl.total_seconds() == 8 * 3600
-    assert settings.db_port == 5432
+    assert str(settings.db_path) == DB_PATH
+    assert settings.db_busy_timeout.total_seconds() == 30
 
 
 @pytest.mark.parametrize("name", REQUIRED)
@@ -76,8 +75,7 @@ def test_empty_value_counts_as_missing(
 @pytest.mark.parametrize(
     ("name", "value", "expected"),
     [
-        ("ADLC_DB_PORT", "abc", "ADLC_DB_PORT: invalid; expected integer 1-65535"),
-        ("ADLC_DB_PORT", "70000", "ADLC_DB_PORT: invalid; expected integer 1-65535"),
+        ("ADLC_DB_BUSY_TIMEOUT", "abc", "ADLC_DB_BUSY_TIMEOUT: invalid; expected <int><unit>"),
         ("ADLC_ENV", "prod", "ADLC_ENV: invalid; expected dev or demo"),
         (
             "ADLC_SESSION_SECRET",
@@ -103,17 +101,16 @@ def test_error_output_never_contains_values(
     valid_env: dict[str, str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("ADLC_SESSION_SECRET", "tiny-secret-value")
-    monkeypatch.setenv("ADLC_DB_PORT", "port-value-xyz")
+    monkeypatch.setenv("ADLC_DB_BUSY_TIMEOUT", "timeout-value-xyz")
     monkeypatch.setenv("ADLC_ENV", "env-value-xyz")
     output = _error()
-    for value in ("tiny-secret-value", "port-value-xyz", "env-value-xyz", APP_PW):
+    for value in ("tiny-secret-value", "timeout-value-xyz", "env-value-xyz"):
         assert value not in output
 
 
 def test_repr_and_dump_hide_secrets(valid_env: dict[str, str]) -> None:
     settings = Settings()  # type: ignore[call-arg]
     for text in (repr(settings), str(settings), settings.model_dump_json()):
-        assert APP_PW not in text
         assert SESSION not in text
 
 
@@ -160,7 +157,7 @@ def test_orchestrator_needs_deadletter_role(
 def test_orchestrator_needs_no_session_or_accounts(orchestrator_env: None) -> None:
     from adlc.config.settings import OrchestratorSettings
 
-    assert OrchestratorSettings().db_app_password.get_secret_value() == APP_PW  # type: ignore[call-arg]
+    assert str(OrchestratorSettings().db_path) == DB_PATH  # type: ignore[call-arg]
 
 
 @pytest.mark.parametrize(

@@ -13,9 +13,9 @@ from adlc.policy.evidence import SqlEvidenceProvider
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 from tests.support.acting import acting
 from tests.support.acting_scripts import Assurance
+from tests.support.db import PlatformDatabase
 from tests.support.fake_pilot import FakePilot, with_candidate
 from tests.support.orchestration import Harness, person
-from tests.support.pg import PlatformDatabase
 
 AGENT = "t5-assurance-agent"
 CANDIDATE = "sha256:" + "5a" * 32
@@ -49,12 +49,12 @@ def test_t5_assures_from_results_and_the_gap_needs_a_waiver(
         with a.h.app.connect() as conn:
             rows = conn.execute(
                 text(
-                    "SELECT check_id, passed, synthetic FROM run.policy_decision WHERE run_id = :r AND check_id IN ('CTL-T5-01', 'CTL-T5-02', 'CTL-T5-03')"
+                    "SELECT check_id, passed, synthetic FROM policy_decision WHERE run_id = :r AND check_id IN ('CTL-T5-01', 'CTL-T5-02', 'CTL-T5-03')"
                 ),
                 {"r": run.run_id},
             ).all()
             reports = conn.execute(
-                text("SELECT count(*) FROM tools.enterprise_record WHERE system = 'grc'")
+                text("SELECT count(*) FROM enterprise_record WHERE system = 'grc'")
             ).scalar_one()
         assert rows and all(p and not s for _, p, s in rows)  # red team and scan: real results
         assert reports == 1

@@ -13,8 +13,7 @@ def test_missing_session_secret_exits_2(tmp_path: Path) -> None:
     env.update(
         {
             "ADLC_ENV": "dev",
-            "ADLC_DB_HOST": "localhost",
-            "ADLC_DB_APP_PASSWORD": "app-password-value-0001",
+            "ADLC_DB_PATH": str(tmp_path / "adlc.db"),
             "ADLC_ACCOUNTS_FILE": str(accounts),
         }
     )

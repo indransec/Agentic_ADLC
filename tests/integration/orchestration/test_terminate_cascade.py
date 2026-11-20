@@ -16,27 +16,21 @@ def test_terminate_closes_every_active_run(h: Harness) -> None:
     assert h.run(run_id).final_status == "terminate"
     assert h.run(t9.run_id).final_status == "terminate"
     reasons = h.sql(
-        "SELECT reason FROM run.run_transition WHERE run_id = :r AND to_state = 'closed'",
+        "SELECT reason FROM run_transition WHERE run_id = :r AND to_state = 'closed'",
         r=t9.run_id,
     )
     assert reasons[0][0] == "lifecycle terminated"
     assert (
-        h.sql("SELECT count(*) FROM run.timer WHERE fired_at IS NULL AND cancelled_at IS NULL")[0][
-            0
-        ]
+        h.sql("SELECT count(*) FROM timer WHERE fired_at IS NULL AND cancelled_at IS NULL")[0][0]
         == 0
     )
     assert h.service.get_usecase(usecase).status == "terminated"
     # only the deciding run emits an outcome event; cascade closes write ledger records only
     assert [
         r[0]
-        for r in h.sql(
-            "SELECT event_type FROM events.outbox_event WHERE event_type LIKE '%.terminate'"
-        )
+        for r in h.sql("SELECT event_type FROM outbox_event WHERE event_type LIKE '%.terminate'")
     ] == ["T1.terminate"]
-    assert (
-        h.sql("SELECT count(*) FROM ledger.ledger_record WHERE run_id = :r", r=t9.run_id)[0][0] == 1
-    )
+    assert h.sql("SELECT count(*) FROM ledger_record WHERE run_id = :r", r=t9.run_id)[0][0] == 1
 
 
 def test_later_events_are_ignored(h: Harness) -> None:
@@ -56,7 +50,7 @@ def test_later_events_are_ignored(h: Harness) -> None:
         )
     h.drain()
     assert all(r.state == "closed" for r in h.runs(usecase))
-    assert h.sql("SELECT count(*) FROM events.outbox_event WHERE processed_at IS NULL")[0][0] == 0
+    assert h.sql("SELECT count(*) FROM outbox_event WHERE processed_at IS NULL")[0][0] == 0
 
 
 def test_terminate_with_retirement_subscribers(h: Harness) -> None:
@@ -78,5 +72,5 @@ def test_terminate_records_notify_roles(h: Harness) -> None:
     usecase = h.submit()
     t0 = h.active(usecase, "T0").run_id
     h.service.decide(person("business_owner"), t0, "terminate", comment="out of scope")
-    payload = h.sql("SELECT payload FROM events.outbox_event WHERE event_type = 'T0.terminate'")
+    payload = h.sql("SELECT payload FROM outbox_event WHERE event_type = 'T0.terminate'")
     assert payload[0][0]["notify"] == ["adlc_coe"]

@@ -1,9 +1,10 @@
-"""T017: gateway records land in run.model_call, one row per request, with tried and cost."""
+"""T017: gateway records land in model_call, one row per request, with tried and cost."""
 
 from datetime import UTC, datetime
 from decimal import Decimal
 
 from adlc.agents.catalogue import ModelCatalogue
+from adlc.agents.cost import money
 from adlc.agents.fake import FakeGateway, reply
 from adlc.agents.gateway import CallIds, ModelRequest
 from adlc.agents.store import SqlCallRecorder, insert_attempt, model_calls
@@ -91,6 +92,7 @@ def test_rows_with_tried_and_cost(h: Harness) -> None:
         },
     )
     view = h.sql(
-        "SELECT calls, fallback_answers, cost_usd FROM run.v_run_cost WHERE run_id = :r", r=run_id
+        "SELECT calls, fallback_answers, cost_usd FROM v_run_cost WHERE run_id = :r", r=run_id
     )
-    assert tuple(view[0]) == (1, 1, Decimal("0.002000"))
+    calls, fallbacks, cost = view[0]
+    assert (calls, fallbacks, money(cost)) == (1, 1, Decimal("0.002000"))  # SQLite sums floats

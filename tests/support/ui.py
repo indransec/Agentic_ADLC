@@ -7,7 +7,7 @@ from streamlit.testing.v1 import AppTest
 
 from adlc.ui.client import ApiClient
 from tests.support.api import PASSWORD, Api
-from tests.support.pg import REPO_ROOT
+from tests.support.db import REPO_ROOT
 
 APP = REPO_ROOT / "src" / "adlc" / "ui" / "app.py"
 

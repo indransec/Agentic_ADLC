@@ -1,11 +1,13 @@
 """Shared wiring for orchestration integration and scenario tests (T007).
 
 A template database is migrated and the real ``adlc-specs/`` registered once per session; each
-test gets a fresh copy (``CREATE DATABASE ... TEMPLATE``), so append-only tables never need
-cleaning. ``Harness`` wires the orchestrator with stubs and a controllable clock.
+test gets a fresh copy of the file, so append-only tables never need cleaning. ``Harness``
+wires the orchestrator with stubs and a controllable clock.
 """
 
 import itertools
+import shutil
+import tempfile
 from collections.abc import Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import dataclass, field, replace
@@ -13,7 +15,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import Engine, text
 
 from adlc.agents.catalogue import AgentCatalogue, load_catalogues
 from adlc.agents.gateway import ModelGateway
@@ -34,56 +36,32 @@ from adlc.policy.factory import build_policy_engine
 from adlc.policy.synthetic import load_synthetic_artifacts
 from adlc.spec_toolkit.register import register
 from adlc.spec_toolkit.registry import SqlSpecRegistry
-from tests.support.pg import REPO_ROOT, PlatformDatabase, alembic
+from tests.support.db import REPO_ROOT, PlatformDatabase, alembic
 
 SPECS = REPO_ROOT / "adlc-specs"
 SYNTHETIC = REPO_ROOT / "data" / "synthetic"
-TEMPLATE = "orch_template"
 DEADLETTER_ROLE = "adlc_coe"
 _counter = itertools.count(1)
 
 
-def _superuser(db: PlatformDatabase) -> Engine:
-    return create_engine(
-        db.url("postgres", db.superuser_password).rsplit("/", 1)[0] + "/postgres",
-        isolation_level="AUTOCOMMIT",
-    )
-
-
-def _create_database(su: Engine, db: PlatformDatabase, name: str, template: str | None) -> None:
-    with su.connect() as conn:
-        clause = f" TEMPLATE {template}" if template else ""
-        conn.execute(text(f"CREATE DATABASE {name} OWNER {db.owner_user}{clause}"))
-        conn.execute(text(f"REVOKE ALL ON DATABASE {name} FROM PUBLIC"))
-        conn.execute(text(f"GRANT CONNECT ON DATABASE {name} TO {db.app_user}"))
-
-
-def build_template(db: PlatformDatabase) -> None:
-    su = _superuser(db)
+def build_template(db: PlatformDatabase) -> PlatformDatabase:
+    alembic(db, "upgrade", "head")
+    engine = db.engine()
     try:
-        _create_database(su, db, TEMPLATE, None)
-        tpl = replace(db, name=TEMPLATE)
-        owner = create_engine(tpl.owner_url, isolation_level="AUTOCOMMIT")
-        with owner.connect() as conn:
-            conn.execute(text("REVOKE CREATE ON SCHEMA public FROM PUBLIC"))
-        alembic(tpl, "upgrade", "head")
-        register(SPECS, owner)
-        owner.dispose()
+        register(SPECS, engine)
     finally:
-        su.dispose()
+        engine.dispose()
+    return db
 
 
 @contextmanager
 def fresh_database(db: PlatformDatabase) -> Iterator[PlatformDatabase]:
-    name = f"orch_{next(_counter)}"
-    su = _superuser(db)
-    _create_database(su, db, name, TEMPLATE)
+    """A copy of the template for one test; its folder is removed afterwards."""
+    folder = Path(tempfile.mkdtemp(prefix=f"orch_{next(_counter)}_"))
     try:
-        yield replace(db, name=name)
+        yield db.copy_to(folder / "adlc.db")
     finally:
-        with su.connect() as conn:
-            conn.execute(text(f"DROP DATABASE {name} WITH (FORCE)"))
-        su.dispose()
+        shutil.rmtree(folder, ignore_errors=True)
 
 
 class FakeClock:
@@ -210,8 +188,8 @@ def harness(
     pilot_evidence: Any = None,
 ) -> Iterator[Harness]:
     with fresh_database(db) as fresh:
-        app = create_engine(fresh.app_url)
-        owner = create_engine(fresh.owner_url)
+        app = fresh.engine()
+        owner = app  # one database identity
         clock = FakeClock()
         registry = SqlSpecRegistry(app)
         agent = agent or StubAgent()
@@ -269,4 +247,3 @@ def harness(
             yield Harness(fresh, app, owner, clock, agent, reviewer, engine_policy, orch, runtime)
         finally:
             app.dispose()
-            owner.dispose()

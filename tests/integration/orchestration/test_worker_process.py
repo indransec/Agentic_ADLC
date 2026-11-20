@@ -1,13 +1,14 @@
-"""T068: heartbeat, health command, LISTEN wake-up, routing latency (SC-003, research R-11)."""
+"""T068: heartbeat, health command, polling, routing latency (SC-003, research R-11)."""
 
 import os
 import statistics
 import threading
 import time
+import uuid
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
 from typer.testing import CliRunner
 
 from adlc.orchestration.__main__ import app
@@ -16,9 +17,9 @@ from adlc.orchestration.interfaces import SystemClock
 from adlc.orchestration.stubs import StubAgent, StubPolicy, StubReviewer
 from adlc.orchestration.worker import build_orchestrator
 from adlc.spec_toolkit.registry import SqlSpecRegistry
+from tests.support.db import patched_env
 from tests.support.lifecycle import ORDER
 from tests.support.orchestration import DEADLETTER_ROLE, Harness, person
-from tests.support.pg import patched_env
 
 runner = CliRunner()
 
@@ -41,15 +42,17 @@ def test_heartbeat_and_health(h: Harness) -> None:
         assert result.exit_code == 0, result.output
     with h.owner.begin() as conn:
         conn.execute(
-            text("UPDATE events.orchestrator_heartbeat SET beat_at = now() - interval '1 hour'")
+            text("UPDATE orchestrator_heartbeat SET beat_at = :t"),
+            {"t": datetime.now(UTC) - timedelta(hours=1)},
         )
     with patched_env(_env(h)):
         assert runner.invoke(app, ["health"]).exit_code == 1
 
 
-def test_listen_wakes_the_loop_and_routing_is_fast(h: Harness) -> None:
-    """A live loop over a real clock: close-to-next-open gap p95 ≤ 2 s (≤ 5 s on CI)."""
-    engine = create_engine(h.db.app_url)
+def test_polling_loop_routing_is_fast(h: Harness) -> None:
+    """A live loop over a real clock, polling every second (the ``ADLC_POLL_INTERVAL``
+    default): close-to-next-open gap p95 ≤ 2 s (≤ 5 s on CI)."""
+    engine = h.db.engine()
     orch = build_orchestrator(
         engine,
         SqlSpecRegistry(engine),
@@ -62,9 +65,7 @@ def test_listen_wakes_the_loop_and_routing_is_fast(h: Harness) -> None:
         worker_id="live",
     )
     stop = threading.Event()
-    loop = threading.Thread(
-        target=orch.run_forever, args=(timedelta(seconds=30), stop), daemon=True
-    )
+    loop = threading.Thread(target=orch.run_forever, args=(timedelta(seconds=1), stop), daemon=True)
     loop.start()
     try:
         gaps: list[float] = []
@@ -132,9 +133,9 @@ def test_now_is_aware() -> None:
     assert datetime.now(UTC) - SystemClock().now() < timedelta(seconds=1)
 
 
-def test_poll_fallback_without_notification(h: Harness) -> None:
-    """T082: an event written without NOTIFY is still delivered within the poll interval."""
-    engine = create_engine(h.db.app_url)
+def test_event_from_another_process_is_polled(h: Harness) -> None:
+    """T082: an event another process writes is delivered within the poll interval."""
+    engine = h.db.engine()
     orch = build_orchestrator(
         engine,
         SqlSpecRegistry(engine),
@@ -154,14 +155,14 @@ def test_poll_fallback_without_notification(h: Harness) -> None:
     loop.start()
     try:
         _wait_for(orch, usecase, "T0")
-        with h.owner.begin() as conn:  # no pg_notify: only polling can find this event
+        with h.owner.begin() as conn:  # written outside the loop: only polling can find it
             conn.execute(
                 text(
-                    "INSERT INTO events.outbox_event (event_id, event_type, usecase_id, "
-                    "correlation_id, payload, next_attempt_at) VALUES (gen_random_uuid(), "
+                    "INSERT INTO outbox_event (event_id, event_type, usecase_id, "
+                    "correlation_id, payload, next_attempt_at) VALUES (:e, "
                     "'T0.exception', :u, :c, '{}', now())"
                 ),
-                {"u": usecase, "c": f"{usecase}/lifecycle"},
+                {"e": uuid.uuid4(), "u": usecase, "c": f"{usecase}/lifecycle"},
             )
         started = time.monotonic()
         _wait_for(orch, usecase, "T1")

@@ -18,13 +18,13 @@ def test_t0_to_t9(h: Harness) -> None:
     closed = [r for r in h.runs(usecase) if r.state == "closed"]
     assert [r.terminal_id for r in closed] == LIFECYCLE
     chain = h.sql(
-        "SELECT ledger_key, content_hash, previous_record_hash FROM ledger.ledger_record "
+        "SELECT ledger_key, content_hash, previous_record_hash FROM ledger_record "
         "WHERE usecase_id = :u ORDER BY ledger_record_id",
         u=usecase,
     )
     assert [row[0] for row in chain] == [r.run_id for r in closed]
     assert chain[0][2] is None
     assert all(chain[i][2] == chain[i - 1][1] for i in range(1, len(chain)))
-    events = {row[0] for row in h.sql("SELECT event_type FROM events.outbox_event")}
+    events = {row[0] for row in h.sql("SELECT event_type FROM outbox_event")}
     assert {f"{t}.pass" for t in LIFECYCLE} <= events
     assert h.service.get_usecase(usecase).risk_tier == "medium"

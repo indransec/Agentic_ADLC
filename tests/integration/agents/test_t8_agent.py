@@ -13,9 +13,9 @@ from adlc.orchestration.monitors import MonitorEvaluator
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 from tests.support.acting import acting
 from tests.support.acting_scripts import Operations
+from tests.support.db import PlatformDatabase
 from tests.support.fake_pilot import SYNTHETIC_CANDIDATE, FakePilot, with_candidate
 from tests.support.orchestration import Harness
-from tests.support.pg import PlatformDatabase
 
 T8 = "t8-operations-agent"
 
@@ -44,7 +44,7 @@ def record_t4_harness(h: Harness, usecase: str, accuracy: float = 0.97) -> None:
     with h.app.begin() as conn:
         call = conn.execute(
             text(
-                "INSERT INTO tools.tool_call (run_id, usecase_id, terminal_id, attempt, step, "
+                "INSERT INTO tool_call (run_id, usecase_id, terminal_id, attempt, step, "
                 "tool, server, scope, arguments_sha256, outcome, reason, duration_ms, at) VALUES "
                 "(:r, :u, 'T4', 1, 1, 'harness_run', 'harness', 'run', :h, 'ok', '', 5, now()) "
                 "RETURNING tool_call_id"
@@ -53,9 +53,9 @@ def record_t4_harness(h: Harness, usecase: str, accuracy: float = 0.97) -> None:
         ).scalar_one()
         conn.execute(
             text(
-                "INSERT INTO tools.tool_result (tool_call_id, run_id, usecase_id, terminal_id, kind, "
+                "INSERT INTO tool_result (tool_call_id, run_id, usecase_id, terminal_id, kind, "
                 "package_hash, result, result_sha256, at) VALUES (:c, :r, :u, 'T4', 'harness', :p, "
-                "CAST(:res AS jsonb), :h, now())"
+                ":res, :h, now())"
             ),
             {
                 "c": call,
@@ -72,7 +72,7 @@ def _events(h: Harness, usecase: str) -> list[tuple[str, Any]]:
     with h.app.connect() as conn:
         rows = conn.execute(
             text(
-                "SELECT event_type, payload FROM events.outbox_event WHERE usecase_id = :u "
+                "SELECT event_type, payload FROM outbox_event WHERE usecase_id = :u "
                 "AND event_type LIKE '%.event.%' ORDER BY next_attempt_at"
             ),
             {"u": usecase},

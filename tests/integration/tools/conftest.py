@@ -25,8 +25,8 @@ from adlc.tools.catalogue import CATALOGUE
 from adlc.tools.client import McpClient
 from adlc.tools.enterprise.app import build_tools
 from adlc.tools.registry import Registry
+from tests.support.db import REPO_ROOT
 from tests.support.fake_pilot import FakePilot, urls
-from tests.support.pg import REPO_ROOT
 from tests.support.tools import ALLOWED, KEY, serve
 
 SPECS = REPO_ROOT / "adlc-specs"
@@ -129,18 +129,14 @@ class Tools:
     def calls(self) -> list[dict[str, Any]]:
         with self.engine.connect() as conn:
             rows = conn.execute(
-                text(
-                    "SELECT tool, scope, outcome, reason FROM tools.tool_call ORDER BY tool_call_id"
-                )
+                text("SELECT tool, scope, outcome, reason FROM tool_call ORDER BY tool_call_id")
             ).mappings()
             return [dict(r) for r in rows]
 
     def results(self) -> list[dict[str, Any]]:
         with self.engine.connect() as conn:
             rows = conn.execute(
-                text(
-                    "SELECT kind, package_hash, result FROM tools.tool_result ORDER BY tool_result_id"
-                )
+                text("SELECT kind, package_hash, result FROM tool_result ORDER BY tool_result_id")
             ).mappings()
             return [dict(r) for r in rows]
 
@@ -177,8 +173,7 @@ def tools(app_engine: Engine, tmp_path: Path) -> Iterator[Tools]:
         settings = bridge_settings(pilot_url, tmp_path / "bridge")
         enterprise = ToolsSettings(
             env="dev",
-            db_host="unused",
-            db_app_password=SecretStr("unused-password-0001"),
+            db_path=Path("unused.db"),
             tools_token_key=SecretStr(KEY),
             tools_allowed_hosts=",".join(ALLOWED),
             spec_dir=SPECS,

@@ -10,8 +10,8 @@ from adlc.agents.store import SqlCallRecorder
 from adlc.policy.synthetic import load_synthetic_artifacts
 from adlc.spec_toolkit.loader import load_bundle
 from adlc.spec_toolkit.registry import InMemorySpecRegistry
+from tests.support.db import PlatformDatabase
 from tests.support.orchestration import SPECS, SYNTHETIC, harness
-from tests.support.pg import PlatformDatabase
 
 BUNDLE = load_bundle(SPECS)
 MODELS, AGENTS = load_catalogues(InMemorySpecRegistry.from_bundle(BUNDLE), "default")

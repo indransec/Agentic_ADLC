@@ -38,7 +38,7 @@ def _meta(form: str, *, secret: bool = False) -> dict[str, Any]:
 
 
 class DatabaseSettings(BaseSettings):
-    """Settings for the data store identities (migrations, migration-check, API)."""
+    """Settings for the data store: one SQLite file shared by every platform process."""
 
     model_config = SettingsConfigDict(
         env_prefix=ENV_PREFIX,
@@ -48,31 +48,20 @@ class DatabaseSettings(BaseSettings):
     )
 
     env: Literal["dev", "demo"] = Field(json_schema_extra=_meta("dev or demo"))
-    db_host: str = Field(min_length=1, json_schema_extra=_meta("hostname"))
-    db_port: int = Field(default=5432, ge=1, le=65535, json_schema_extra=_meta("integer 1-65535"))
-    db_name: str = Field(
-        default="adlc", pattern=r"^[a-z_][a-z0-9_]*$", json_schema_extra=_meta("identifier")
-    )
-    db_app_user: str = Field(
-        default="adlc_app", pattern=r"^[a-z_][a-z0-9_]*$", json_schema_extra=_meta("identifier")
-    )
-    db_owner_user: str = Field(
-        default="adlc_owner", pattern=r"^[a-z_][a-z0-9_]*$", json_schema_extra=_meta("identifier")
-    )
-    db_owner_password: SecretStr | None = Field(
-        default=None, min_length=16, json_schema_extra=_meta("at least 16 characters", secret=True)
-    )
+    db_path: Path = Field(json_schema_extra=_meta("path to the SQLite database file"))
+    # How long a process waits for the file to exist (created by the migrations) at startup.
     db_connect_timeout: Duration = Field(
         default=timedelta(seconds=60), json_schema_extra=_meta(DURATION_FORM)
+    )
+    # How long a write waits for another process's write to finish before giving up.
+    db_busy_timeout: Duration = Field(
+        default=timedelta(seconds=30), json_schema_extra=_meta(DURATION_FORM)
     )
 
 
 class RuntimeSettings(DatabaseSettings):
     """Settings shared by the long-running processes (API and orchestrator)."""
 
-    db_app_password: SecretStr = Field(
-        min_length=16, json_schema_extra=_meta("at least 16 characters", secret=True)
-    )
     role_catalogue: Path = Field(
         default=Path("adlc-specs/shared/roles.yaml"),
         json_schema_extra=_meta("path to a readable file"),
@@ -410,11 +399,8 @@ def _allowed_hosts(default: str) -> Any:
 
 class ToolsSettings(DatabaseSettings):
     """Settings for the ``adlc-tools`` MCP server (feature 010, research R-01): the eval store and
-    the enterprise mocks, on the platform network with the app database role."""
+    the enterprise mocks, on the platform network with the platform database."""
 
-    db_app_password: SecretStr = Field(
-        min_length=16, json_schema_extra=_meta("at least 16 characters", secret=True)
-    )
     tools_token_key: SecretStr = Field(
         min_length=32, json_schema_extra=_meta("at least 32 characters", secret=True)
     )

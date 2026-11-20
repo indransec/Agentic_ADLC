@@ -1,4 +1,4 @@
-"""PostgreSQL terminal-run engine (research R-01, R-02; contracts/state-machine.md).
+"""SQL terminal-run engine (research R-01, R-02; contracts/state-machine.md).
 
 * ``apply`` changes a run only through :func:`states.transition`, in one transaction that locks
   the run row and writes the state, its transition and activity rows, and every effect. A
@@ -136,7 +136,7 @@ def json_dict(value: Mapping[str, Any]) -> dict[str, Any]:
     return dict(json_safe(value))
 
 
-class PostgresTerminalRun:
+class SqlTerminalRun:
     def __init__(
         self,
         engine: Engine,

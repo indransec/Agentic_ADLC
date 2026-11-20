@@ -30,7 +30,7 @@ def proposed_parameter(value: Any) -> Any:
 def current_version(conn: Connection, usecase_id: str) -> tuple[int, dict[str, Any]]:
     row = conn.execute(
         text(
-            "SELECT version, profile_values FROM ledger.profile_version WHERE usecase_id = :u "
+            "SELECT version, profile_values FROM profile_version WHERE usecase_id = :u "
             "ORDER BY version DESC LIMIT 1"
         ),
         {"u": usecase_id},
@@ -42,10 +42,7 @@ def version_values(conn: Connection, usecase_id: str, version: int) -> dict[str,
     if version <= 0:
         return {}
     row = conn.execute(
-        text(
-            "SELECT profile_values FROM ledger.profile_version WHERE usecase_id = :u "
-            "AND version = :v"
-        ),
+        text("SELECT profile_values FROM profile_version WHERE usecase_id = :u AND version = :v"),
         {"u": usecase_id, "v": version},
     ).first()
     return {} if row is None else dict(row[0])
@@ -61,8 +58,8 @@ def on_close(
         number, values = current_version(conn, usecase_id)
         conn.execute(
             text(
-                "INSERT INTO ledger.profile_version (usecase_id, version, profile_values, "
-                "source_run_id) VALUES (:u, :v, CAST(:p AS jsonb), :r)"
+                "INSERT INTO profile_version (usecase_id, version, profile_values, "
+                "source_run_id) VALUES (:u, :v, :p, :r)"
             ),
             {
                 "u": usecase_id,
@@ -77,7 +74,7 @@ def on_close(
 def history(conn: Connection, usecase_id: str) -> list[dict[str, Any]]:
     rows = conn.execute(
         text(
-            "SELECT version, profile_values, source_run_id, created_at FROM ledger.profile_version "
+            "SELECT version, profile_values, source_run_id, created_at FROM profile_version "
             "WHERE usecase_id = :u ORDER BY version"
         ),
         {"u": usecase_id},
@@ -96,7 +93,7 @@ class SqlProfileSource:
             if run_id is None:
                 return current_version(conn, usecase_id)[1]
             version = conn.execute(
-                text("SELECT profile_version FROM run.terminal_run WHERE run_id = :r"),
+                text("SELECT profile_version FROM terminal_run WHERE run_id = :r"),
                 {"r": run_id},
             ).scalar()
             if version is None:

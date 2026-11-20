@@ -1,5 +1,5 @@
-"""The enterprise mocks' records in ``tools.enterprise_record`` and the evidence results the eval
-store reads from ``tools.tool_result`` (feature 010, data-model.md). Append-only: a change is a new
+"""The enterprise mocks' records in ``enterprise_record`` and the evidence results the eval
+store reads from ``tool_result`` (feature 010, data-model.md). Append-only: a change is a new
 version; the highest version is current. Every record belongs to the use case of the run token."""
 
 import json
@@ -7,9 +7,7 @@ from collections.abc import Mapping
 from typing import Any
 
 from sqlalchemy import Engine, text
-from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.sql.expression import bindparam
 
 from adlc.tools.mcp_app import ToolFailure
 from adlc.tools.token import Claims
@@ -31,7 +29,7 @@ class EnterpriseStore:
                 with self.engine.begin() as conn:
                     count = conn.execute(
                         text(
-                            "SELECT count(DISTINCT record_id) FROM tools.enterprise_record "
+                            "SELECT count(DISTINCT record_id) FROM enterprise_record "
                             "WHERE system = :s AND record_id LIKE :p"
                         ),
                         {"s": system, "p": f"{prefix}-%"},
@@ -72,10 +70,10 @@ class EnterpriseStore:
     ) -> None:
         conn.execute(
             text(
-                "INSERT INTO tools.enterprise_record (system, kind, record_id, version, "
+                "INSERT INTO enterprise_record (system, kind, record_id, version, "
                 "usecase_id, run_id, terminal_id, body, at) VALUES (:s, :k, :r, :v, :u, :run, "
                 ":t, :b, now())"
-            ).bindparams(bindparam("b", type_=JSONB)),
+            ),
             {
                 "s": system,
                 "k": kind,
@@ -94,12 +92,12 @@ class EnterpriseStore:
         with self.engine.connect() as conn:
             rows = conn.execute(
                 text(
-                    "SELECT DISTINCT ON (record_id) record_id, version, kind, body, at, "
-                    "terminal_id FROM tools.enterprise_record "
-                    "WHERE system = :s AND usecase_id = :u "
+                    "SELECT record_id, version, kind, body, at, terminal_id FROM ("
+                    "SELECT *, row_number() OVER (PARTITION BY record_id ORDER BY version DESC) "
+                    "AS rank FROM enterprise_record WHERE system = :s AND usecase_id = :u "
                     "AND (CAST(:k AS text) IS NULL OR kind = :k) "
-                    "AND (CAST(:r AS text) IS NULL OR record_id = :r) "
-                    "ORDER BY record_id, version DESC"
+                    "AND (CAST(:r AS text) IS NULL OR record_id = :r)) "
+                    "WHERE rank = 1 ORDER BY record_id"
                 ),
                 {"s": system, "u": usecase_id, "k": kind, "r": record_id},
             ).mappings()
@@ -126,8 +124,8 @@ class EnterpriseStore:
             rows = conn.execute(
                 text(
                     "SELECT tool_result_id, terminal_id, kind, package_hash, result, "
-                    "result_sha256, at FROM tools.tool_result WHERE usecase_id = :u "
-                    "AND kind = ANY(:k) ORDER BY tool_result_id"
+                    "result_sha256, at FROM tool_result WHERE usecase_id = :u "
+                    "AND kind IN (SELECT value FROM json_each(:k)) ORDER BY tool_result_id"
                 ),
                 {"u": usecase_id, "k": kinds},
             ).mappings()

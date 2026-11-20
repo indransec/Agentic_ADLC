@@ -11,10 +11,10 @@ from adlc.agents.knowledge import McpCaller
 from adlc.agents.replay import Planned
 from adlc.policy.synthetic import load_synthetic_artifacts
 from adlc.spec_toolkit.registry import InMemorySpecRegistry
+from tests.support.db import PlatformDatabase
 from tests.support.grounded import BUNDLE, grounded
 from tests.support.knowledge import FIXTURES, TOKEN, free_port
 from tests.support.orchestration import SYNTHETIC
-from tests.support.pg import PlatformDatabase
 
 T0 = "t0-intake-agent"
 DRAFT = json.dumps({"artifacts": load_synthetic_artifacts(SYNTHETIC)["T0"]})
@@ -62,8 +62,7 @@ def test_out_of_scope_calls_are_refused_and_logged(orch_template: PlatformDataba
         assert "Tool arch_repo_search was refused" in text and "tool not in scope" in text
         assert "Tool jira_search was refused" in text  # not bound at all
         refused = g.h.sql(
-            "SELECT passed, reason FROM run.policy_decision WHERE run_id = :r "
-            "AND kind = 'authorize'",
+            "SELECT passed, reason FROM policy_decision WHERE run_id = :r AND kind = 'authorize'",
             r=run.run_id,
         )
         assert [r[0] for r in refused] == [False] and "tool not in scope" in refused[0][1]
@@ -87,7 +86,7 @@ def run_reading(orch_template: PlatformDatabase, document: str) -> tuple[Any, li
         states = [
             r[0]
             for r in g.h.sql(
-                "SELECT to_state FROM run.run_transition WHERE run_id = :r ORDER BY at, to_state",
+                "SELECT to_state FROM run_transition WHERE run_id = :r ORDER BY at, to_state",
                 r=run.run_id,
             )
         ]
@@ -123,8 +122,7 @@ def test_over_class_documents_are_never_returned(orch_template: PlatformDatabase
         assert "out of scope: policies/board-only.md" in text
         assert (
             g.h.sql(
-                "SELECT count(*) FROM run.knowledge_retrieval "
-                "WHERE document = 'policies/board-only.md'"
+                "SELECT count(*) FROM knowledge_retrieval WHERE document = 'policies/board-only.md'"
             )[0][0]
             == 0
         )
@@ -154,11 +152,11 @@ def test_unretrieved_citations_and_status_keys_are_corrected(
         run = g.h.active(usecase, "T0")
         assert run.state == "awaiting_sign_off"
         corrections = g.h.sql(
-            "SELECT corrections FROM run.agent_attempt WHERE run_id = :r AND kind = 'build'",
+            "SELECT corrections FROM agent_attempt WHERE run_id = :r AND kind = 'build'",
             r=run.run_id,
         )[-1][0]
         assert corrections == 2
-        assert g.h.sql("SELECT count(*) FROM run.artifact_citation")[0][0] == 0
+        assert g.h.sql("SELECT count(*) FROM artifact_citation")[0][0] == 0
 
 
 def test_an_unavailable_server_reaches_the_agent(orch_template: PlatformDatabase) -> None:

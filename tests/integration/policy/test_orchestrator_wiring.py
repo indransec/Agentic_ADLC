@@ -2,9 +2,9 @@
 
 from adlc.orchestration.stubs import StubAgent
 from adlc.policy.engine import CelPolicyEngine
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import ORDER
 from tests.support.orchestration import Harness, harness
-from tests.support.pg import PlatformDatabase
 
 
 def test_real_engine_passes_t0_to_t8(h: Harness) -> None:
@@ -15,7 +15,7 @@ def test_real_engine_passes_t0_to_t8(h: Harness) -> None:
         assert run.state == "awaiting_sign_off", (terminal, run.control_results)
         assert all("synthetic" in c for c in run.control_results)
         h.pass_run(run.run_id, {"risk_tier": "medium"})
-    assert h.sql("SELECT count(*) FROM run.policy_decision WHERE synthetic")[0][0] > 0
+    assert h.sql("SELECT count(*) FROM policy_decision WHERE synthetic")[0][0] > 0
 
 
 def test_bad_artifact_retries_then_escalates(orch_template: PlatformDatabase) -> None:
@@ -39,7 +39,7 @@ def test_agent_actor_id_is_run_scoped(h: Harness) -> None:
     actors = {
         r[0]
         for r in h.sql(
-            "SELECT actor_id FROM run.run_transition WHERE run_id = :r AND actor_type IN ('agent', 'reviewer')",
+            "SELECT actor_id FROM run_transition WHERE run_id = :r AND actor_type IN ('agent', 'reviewer')",
             r=run_id,
         )
     }

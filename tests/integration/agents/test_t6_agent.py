@@ -16,9 +16,9 @@ from adlc.policy.evidence import Evidence, SqlEvidenceProvider
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 from tests.support.acting import acting
 from tests.support.acting_scripts import Readiness
+from tests.support.db import PlatformDatabase
 from tests.support.fake_pilot import FakePilot, with_candidate
 from tests.support.orchestration import Harness, person
-from tests.support.pg import PlatformDatabase
 
 AGENT = "t6-readiness-agent"
 CANDIDATE = "sha256:" + "5a" * 32

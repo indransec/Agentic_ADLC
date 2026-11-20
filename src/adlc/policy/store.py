@@ -11,6 +11,8 @@ from typing import Any, Protocol
 
 from sqlalchemy import Engine, text
 
+from adlc.db.engine import write_independently
+
 REASON_MAX = 2000
 
 
@@ -55,14 +57,18 @@ class SqlDecisionSink:
         self.engine = engine
 
     def record(self, decision: PolicyDecision) -> None:
+        """Logged on its own, so a refusal stays logged when the caller's action fails."""
+        write_independently(self.engine, lambda: self._insert(decision))
+
+    def _insert(self, decision: PolicyDecision) -> None:
         with self.engine.begin() as conn:
             conn.execute(
                 text(
-                    "INSERT INTO run.policy_decision (kind, run_id, usecase_id, terminal_id, "
+                    "INSERT INTO policy_decision (kind, run_id, usecase_id, terminal_id, "
                     "check_id, rule, actor, passed, value, reason, inputs, synthetic, fail_safe, "
                     "duration_ms, attempt) VALUES (:kind, :run_id, :usecase_id, :terminal_id, "
-                    ":check_id, :rule, :actor, :passed, CAST(:value AS jsonb), :reason, "
-                    "CAST(:inputs AS jsonb), :synthetic, :fail_safe, :duration_ms, :attempt)"
+                    ":check_id, :rule, :actor, :passed, :value, :reason, "
+                    ":inputs, :synthetic, :fail_safe, :duration_ms, :attempt)"
                 ),
                 {
                     "kind": decision.kind,
@@ -89,7 +95,7 @@ def decisions_for_run(engine: Engine, run_id: str) -> list[dict[str, Any]]:
         rows = conn.execute(
             text(
                 "SELECT kind, check_id, rule, actor, passed, value, reason, inputs, synthetic, "
-                "fail_safe, duration_ms, decided_at FROM run.policy_decision WHERE run_id = :r "
+                "fail_safe, duration_ms, decided_at FROM policy_decision WHERE run_id = :r "
                 "ORDER BY decided_at, policy_decision_id"
             ),
             {"r": run_id},
@@ -103,7 +109,7 @@ def decisions_for_run(engine: Engine, run_id: str) -> list[dict[str, Any]]:
 def latest_closed_run_id(conn: Any, usecase_id: str, terminal_id: str) -> str | None:
     value = conn.execute(
         text(
-            "SELECT run_id FROM run.terminal_run WHERE usecase_id = :u AND terminal_id = :t "
+            "SELECT run_id FROM terminal_run WHERE usecase_id = :u AND terminal_id = :t "
             "AND state = 'closed' ORDER BY run_number DESC LIMIT 1"
         ),
         {"u": usecase_id, "t": terminal_id},
@@ -113,7 +119,10 @@ def latest_closed_run_id(conn: Any, usecase_id: str, terminal_id: str) -> str | 
 
 def emitted_values(conn: Any, run_id: str) -> dict[str, Any]:
     value = conn.execute(
-        text("SELECT content_json -> 'emitted' FROM ledger.ledger_record WHERE run_id = :r"),
+        text(
+            "SELECT content_json -> 'emitted' AS \"emitted [jsonb]\" FROM ledger_record "
+            "WHERE run_id = :r"
+        ),
         {"r": run_id},
     ).scalar()
     return dict(value) if isinstance(value, dict) else {}
@@ -122,8 +131,8 @@ def emitted_values(conn: Any, run_id: str) -> dict[str, Any]:
 def approved_waivers(conn: Any, usecase_id: str) -> list[dict[str, Any]]:
     rows = conn.execute(
         text(
-            "SELECT w.waiver_id, w.run_id, w.expiry, w.status FROM run.waiver w "
-            "JOIN run.terminal_run r USING (run_id) WHERE r.usecase_id = :u "
+            "SELECT w.waiver_id, w.run_id, w.expiry, w.status FROM waiver w "
+            "JOIN terminal_run r USING (run_id) WHERE r.usecase_id = :u "
             "AND w.status = 'approved' ORDER BY w.waiver_id"
         ),
         {"u": usecase_id},

@@ -5,7 +5,6 @@ from collections.abc import Callable
 from datetime import timedelta
 
 import pytest
-from sqlalchemy import create_engine
 
 from adlc.orchestration.engine import EngineConfig
 from adlc.orchestration.interfaces import AgentResult, BuildContext, Clarification
@@ -13,16 +12,16 @@ from adlc.orchestration.states import ActorType, Signal, SignalKind
 from adlc.orchestration.stubs import StubAgent, StubPolicy, StubReviewer
 from adlc.orchestration.worker import Orchestrator, build_orchestrator
 from adlc.spec_toolkit.registry import SqlSpecRegistry
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import DEADLETTER_ROLE, Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 
 def restarted(
     h: Harness, agent: StubAgent | None = None, policy: StubPolicy | None = None
 ) -> Orchestrator:
     """A new orchestrator process over the same database: new engine, no shared memory."""
-    engine = create_engine(h.db.app_url)
+    engine = h.db.engine()
     return build_orchestrator(
         engine,
         SqlSpecRegistry(engine),
@@ -133,7 +132,7 @@ def test_stale_result_is_discarded(orch_template: PlatformDatabase) -> None:
         assert run.final_status == "terminate"
         assert run.artifacts == {}
         stale = h.sql(
-            "SELECT step, outcome FROM run.run_activity WHERE run_id = :r AND outcome = 'stale'",
+            "SELECT step, outcome FROM run_activity WHERE run_id = :r AND outcome = 'stale'",
             r=run.run_id,
         )
         assert [tuple(s) for s in stale] == [("build", "stale")]
@@ -148,7 +147,4 @@ def test_overdue_timers_fire_once_after_restart(
     orch = restarted(h)
     orch.drain()
     orch.drain()
-    assert (
-        h.sql("SELECT count(*) FROM events.outbox_event WHERE event_type = 'T1.escalate'")[0][0]
-        == 1
-    )
+    assert h.sql("SELECT count(*) FROM outbox_event WHERE event_type = 'T1.escalate'")[0][0] == 1

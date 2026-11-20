@@ -67,10 +67,10 @@ def register_command(
     path: Annotated[Path, typer.Argument(help="Spec folder")] = Path("adlc-specs"),
     dry_run: Annotated[bool, typer.Option("--dry-run", help="Plan, then roll back")] = False,
 ) -> None:
-    """Validate, then register specs into the ADLC_DB_* data store (schema-owner identity)."""
+    """Validate, then register specs into the ADLC_DB_PATH data store."""
     from adlc.config.errors import load_settings_or_exit
     from adlc.config.settings import DatabaseSettings
-    from adlc.db.engine import ConfigurationError, owner_engine
+    from adlc.db.engine import ConfigurationError, open_engine
     from adlc.spec_toolkit.register import RegistrationRefused, register
 
     if not path.is_dir():
@@ -78,7 +78,7 @@ def register_command(
         raise typer.Exit(2)
     settings = load_settings_or_exit(DatabaseSettings)
     try:
-        engine = owner_engine(settings)
+        engine = open_engine(settings)
     except ConfigurationError as exc:
         typer.echo(f"adlc: configuration error\n  {exc}", err=True)
         raise typer.Exit(2) from None

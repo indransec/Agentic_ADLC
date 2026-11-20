@@ -23,16 +23,16 @@ def record(
     with h.app.begin() as conn:
         call = conn.execute(
             text(
-                "INSERT INTO tools.tool_call (run_id, usecase_id, terminal_id, attempt, step, tool, server, scope, "
+                "INSERT INTO tool_call (run_id, usecase_id, terminal_id, attempt, step, tool, server, scope, "
                 "arguments_sha256, outcome, reason, duration_ms, at) VALUES (:r, :u, 'T0', 1, 1, 'x_y', 'x', 'y', "
-                "'sha256:' || repeat('0', 64), 'ok', '', 1, now()) RETURNING tool_call_id"
+                "'sha256:' || '0000000000000000000000000000000000000000000000000000000000000000', 'ok', '', 1, now()) RETURNING tool_call_id"
             ),
             {"r": run_id, "u": usecase},
         ).scalar_one()
         conn.execute(
             text(
-                "INSERT INTO tools.tool_result (tool_call_id, run_id, usecase_id, terminal_id, kind, package_hash, result, "
-                "result_sha256, at) VALUES (:c, :r, :u, 'T0', :k, :p, CAST(:res AS jsonb), 'sha256:' || repeat('0', 64), now())"
+                "INSERT INTO tool_result (tool_call_id, run_id, usecase_id, terminal_id, kind, package_hash, result, "
+                "result_sha256, at) VALUES (:c, :r, :u, 'T0', :k, :p, :res, 'sha256:' || '0000000000000000000000000000000000000000000000000000000000000000', now())"
             ),
             {
                 "c": call,

@@ -45,7 +45,7 @@ def call(
     from adlc.agents.mcp_tools import BoundValues, McpTool, scope_for  # noqa: PLC0415
     from adlc.agents.tool_records import SqlToolRecords  # noqa: PLC0415
     from adlc.agents.tools import ToolGate, ToolOutput  # noqa: PLC0415
-    from adlc.db.engine import app_engine  # noqa: PLC0415
+    from adlc.db.engine import open_engine  # noqa: PLC0415
     from adlc.orchestration.interfaces import EvalContext, SystemClock  # noqa: PLC0415
     from adlc.policy import authorization  # noqa: PLC0415
     from adlc.policy.evidence import SqlEvidenceProvider  # noqa: PLC0415
@@ -64,7 +64,7 @@ def call(
     if spec_tool is None:
         print(f"adlc: unknown tool {tool}", file=sys.stderr)
         raise typer.Exit(2)
-    engine = app_engine(settings)
+    engine = open_engine(settings)
     registry = SqlSpecRegistry(engine)
     entry = registry.entry(terminal)
     servers_entry = registry.catalogue("mcp_servers")

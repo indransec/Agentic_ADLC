@@ -16,7 +16,7 @@ from sqlalchemy import Connection
 from adlc.identity.protocol import Person
 from adlc.inbox import rules
 from adlc.orchestration import ids, routing, spec_view, store
-from adlc.orchestration.engine import PostgresTerminalRun, StaleRun, UnknownRun, awaiting
+from adlc.orchestration.engine import SqlTerminalRun, StaleRun, UnknownRun, awaiting
 from adlc.orchestration.states import (
     DECISIONS,
     ActorType,
@@ -89,7 +89,7 @@ class Actor:
 
 
 class OrchestratorService:
-    def __init__(self, runs: PostgresTerminalRun, deadletter_role: str) -> None:
+    def __init__(self, runs: SqlTerminalRun, deadletter_role: str) -> None:
         self.runs = runs
         self.deadletter_role = deadletter_role
 

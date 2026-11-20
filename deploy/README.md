@@ -1,13 +1,16 @@
 # Deployment notes
 
-`compose.yaml` runs the demo host: Postgres, Jaeger, the one-shot `migrate` and `register`
-services, the API and the orchestrator.
+`compose.yaml` runs the demo host: Jaeger, the one-shot `migrate` and `register` services, the
+API and the orchestrator. The platform database is one SQLite file on the `adlc-db` volume
+(`/var/lib/adlc/db/adlc.db`), shared by `migrate`, `register`, `api`, `orchestrator` and `tools`;
+SQLite allows one writer at a time and the file must stay on this host's local disk.
 
 ## Backups
 
 Back up two things together, at the same point in time:
 
-- the Postgres data volume (`adlc-pgdata`);
+- the database volume (`adlc-db`); copy the file with `sqlite3 adlc.db ".backup ..."` or stop the
+  services first, so the copy is consistent;
 - the evidence file store volume (`adlc-files`), mounted at `/var/lib/adlc/files`.
 
 The ledger records the content hash of every attached file (feature 005), so a file store
@@ -37,7 +40,7 @@ is part of the image. It is reachable only inside the Compose network.
 ## MCP tool servers (feature 010)
 
 - `tools`: the eval store and the enterprise mocks (ITSM, CMDB, agent registry, IAM, GRC, control
-  library), platform network, app database role.
+  library), platform network, the platform database.
 - `pilot-bridge`: the pilot-facing servers (environments, Git, CI, artifact store, prompt registry,
   datasets, harness, red-team, personal-data scan, deploy, traffic, kill switch, observability,
   monitors, feedback). The only service on both networks; it holds no database, model, knowledge or
@@ -75,3 +78,4 @@ deploy/pilot-isolation-check.sh                # both directions closed (SC-007)
 
 Pilot settings use the `PILOT_` prefix (see `.env.example`); `PILOT_MODEL_API_KEY` is only for the
 optional real model in dev and test, and is empty by default.
+

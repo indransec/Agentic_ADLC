@@ -93,7 +93,7 @@ def test_waiver_for_approvers_other_than_the_proposer(h: Harness, api: Api) -> N
     )
     assert decided.status_code == 200, decided.text
     row = h.sql(
-        "SELECT status, decided_by, decision_comment FROM run.waiver WHERE waiver_id = :w", w=waiver
+        "SELECT status, decided_by, decision_comment FROM waiver WHERE waiver_id = :w", w=waiver
     )[0]
     assert tuple(row) == ("rejected", "product_owner-person", "no control owner yet")
     assert (
@@ -120,7 +120,7 @@ def test_dead_letters_for_the_coe_only(h: Harness, api: Api) -> None:
     with h.owner.begin() as conn:
         conn.execute(
             text(
-                "UPDATE events.outbox_event SET dead_lettered_at = now(), "
+                "UPDATE outbox_event SET dead_lettered_at = now(), "
                 "last_error = 'test' WHERE event_type = 'usecase.submitted'"
             )
         )

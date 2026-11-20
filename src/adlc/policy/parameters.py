@@ -13,6 +13,7 @@ from typing import Any, Protocol
 
 from sqlalchemy import Engine, text
 
+from adlc.db.engine import write_independently
 from adlc.orchestration.interfaces import EvalContext
 from adlc.policy.evidence import Answer, Evidence
 from adlc.policy.values import NOT_AVAILABLE, as_number
@@ -96,7 +97,7 @@ class NoProfile:
 
 
 class ParameterService:
-    """Resolves once per run, freezes it in ``run.run_parameter_set``, and reads it back."""
+    """Resolves once per run, freezes it in ``run_parameter_set``, and reads it back."""
 
     def __init__(
         self,
@@ -117,44 +118,51 @@ class ParameterService:
         return Evidence(self._cache[context.run_id], "guardrails")
 
     def _frozen(self, run_id: str, usecase_id: str) -> dict[str, Any]:
-        with self.engine.begin() as conn:
+        """The run's frozen parameters; resolved and frozen now when the run has none.
+
+        Freezing is written on its own (``write_independently``): the caller may hold the write
+        lock (a decision on the run), and the values are fixed here either way."""
+        with self.engine.connect() as conn:
             row = conn.execute(
-                text("SELECT parameters FROM run.run_parameter_set WHERE run_id = :r"),
+                text("SELECT parameters FROM run_parameter_set WHERE run_id = :r"),
                 {"r": run_id},
             ).scalar()
-            if row is None:
-                tier = conn.execute(
-                    text("SELECT risk_tier FROM run.usecase WHERE usecase_id = :u"),
-                    {"u": usecase_id},
-                ).scalar()
-                resolved = resolve(
-                    self.guardrails.get("guardrails", []),
-                    tier,
-                    _proposals(self.profile.values(usecase_id, run_id)),
-                )
-                parameters = {
-                    name: {"value": value, "source": resolved.sources[name]}
-                    for name, value in resolved.values.items()
-                }
+            if row is not None:
+                return {name: entry["value"] for name, entry in dict(row).items()}
+            tier = conn.execute(
+                text("SELECT risk_tier FROM usecase WHERE usecase_id = :u"),
+                {"u": usecase_id},
+            ).scalar()
+        resolved = resolve(
+            self.guardrails.get("guardrails", []),
+            tier,
+            _proposals(self.profile.values(usecase_id, run_id)),
+        )
+        parameters = {
+            name: {"value": value, "source": resolved.sources[name]}
+            for name, value in resolved.values.items()
+        }
+        values = {
+            "r": run_id,
+            "t": resolved.tier,
+            "v": str(self.guardrails.get("version", "")),
+            "p": json.dumps(parameters, default=str),
+            "x": json.dumps([asdict(r) for r in resolved.rejected], default=str),
+        }
+
+        def freeze() -> None:
+            with self.engine.begin() as conn:
                 conn.execute(
                     text(
-                        "INSERT INTO run.run_parameter_set (run_id, risk_tier, guardrail_version, "
-                        "parameters, rejected) VALUES (:r, :t, :v, CAST(:p AS jsonb), "
-                        "CAST(:x AS jsonb)) ON CONFLICT (run_id) DO NOTHING"
+                        "INSERT INTO run_parameter_set (run_id, risk_tier, guardrail_version, "
+                        "parameters, rejected) VALUES (:r, :t, :v, :p, :x) "
+                        "ON CONFLICT (run_id) DO NOTHING"
                     ),
-                    {
-                        "r": run_id,
-                        "t": resolved.tier,
-                        "v": str(self.guardrails.get("version", "")),
-                        "p": json.dumps(parameters, default=str),
-                        "x": json.dumps([asdict(r) for r in resolved.rejected], default=str),
-                    },
+                    values,
                 )
-                row = conn.execute(
-                    text("SELECT parameters FROM run.run_parameter_set WHERE run_id = :r"),
-                    {"r": run_id},
-                ).scalar_one()
-        return {name: entry["value"] for name, entry in dict(row).items()}
+
+        write_independently(self.engine, freeze)
+        return {name: entry["value"] for name, entry in parameters.items()}
 
 
 def _proposals(values: Mapping[str, Any]) -> dict[str, Any]:

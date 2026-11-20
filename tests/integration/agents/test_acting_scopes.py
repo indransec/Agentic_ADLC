@@ -8,9 +8,9 @@ from pathlib import Path
 from sqlalchemy import text
 
 from tests.support.acting import acting, tool
+from tests.support.db import PlatformDatabase
 from tests.support.fake_pilot import FakePilot, with_candidate
 from tests.support.orchestration import Harness
-from tests.support.pg import PlatformDatabase
 
 T3 = "t3-builder-agent"
 T4 = "t4-evaluation-agent"
@@ -39,7 +39,7 @@ def calls(h: Harness, run_id: str) -> list[tuple[str, str, str]]:
     with h.app.connect() as conn:
         rows = conn.execute(
             text(
-                "SELECT tool, outcome, reason FROM tools.tool_call WHERE run_id = :r ORDER BY tool_call_id"
+                "SELECT tool, outcome, reason FROM tool_call WHERE run_id = :r ORDER BY tool_call_id"
             ),
             {"r": run_id},
         ).all()
@@ -155,7 +155,7 @@ def test_t8_cannot_raise_a_change_or_deploy(
         assert fake.hosts["prod-sim"].calls == before
         with a.h.app.connect() as conn:
             changes = conn.execute(
-                text("SELECT count(*) FROM tools.enterprise_record WHERE system = 'servicenow'")
+                text("SELECT count(*) FROM enterprise_record WHERE system = 'servicenow'")
             ).scalar_one()
         assert changes == 0
         assert a.h.run(run_id).state == "awaiting_clarification"

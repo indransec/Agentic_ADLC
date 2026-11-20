@@ -10,9 +10,9 @@ from sqlalchemy import text
 
 from tests.support.acting import acting
 from tests.support.acting_scripts import REQS, Evaluation
+from tests.support.db import PlatformDatabase
 from tests.support.fake_pilot import FakePilot, with_candidate
 from tests.support.orchestration import Harness, person
-from tests.support.pg import PlatformDatabase
 
 AGENT = "t4-evaluation-agent"
 CANDIDATE = "sha256:" + "5a" * 32  # the synthetic T3 candidate package
@@ -43,7 +43,7 @@ def decisions(h: Harness, run_id: str) -> dict[str, tuple[bool, bool]]:
     with h.app.connect() as conn:
         rows = conn.execute(
             text(
-                "SELECT check_id, passed, synthetic FROM run.policy_decision WHERE run_id = :r AND check_id LIKE 'CTL-T4-%' ORDER BY policy_decision_id"
+                "SELECT check_id, passed, synthetic FROM policy_decision WHERE run_id = :r AND check_id LIKE 'CTL-T4-%' ORDER BY policy_decision_id"
             ),
             {"r": run_id},
         ).all()
@@ -71,7 +71,8 @@ def test_t4_evaluates_the_candidate_from_harness_evidence(
         with a.h.app.connect() as conn:
             detail = conn.execute(
                 text(
-                    "SELECT detail FROM run.run_activity WHERE run_id = :r AND detail ? 'imports'"
+                    "SELECT detail FROM run_activity WHERE run_id = :r "
+                    "AND json_type(detail, '$.imports') IS NOT NULL"
                 ),
                 {"r": run.run_id},
             ).scalar_one()

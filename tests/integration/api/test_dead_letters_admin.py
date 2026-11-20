@@ -13,7 +13,7 @@ def _dead_letter(h: Harness) -> None:
     with h.owner.begin() as conn:
         conn.execute(
             text(
-                "UPDATE events.outbox_event SET dead_lettered_at = now(), attempts = 5, "
+                "UPDATE outbox_event SET dead_lettered_at = now(), attempts = 5, "
                 "last_error = 'route failed: subscriber unavailable' "
                 "WHERE event_type = 'usecase.submitted'"
             )
