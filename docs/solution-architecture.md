@@ -614,7 +614,9 @@ Editable source: page 5 of `adlc-solution-architecture.drawio`.
 
 ## 22. Amendment 1 (proposed): tracker engagement and work plans
 
-**Status:** proposed 2026-11-15; not approved, not built. Sections 1–21 describe the MVP as built (features 001–014) and stay valid until the feature named in 22.10 lands; that feature then updates the section it supersedes. Approval follows the constitution's amendment rule (CoE lead and architect).
+**Status:** proposed 2026-11-15, updated 2026-11-20; not approved, not built. Sections 1–21 describe the MVP as built (features 001–014) and stay valid until the feature named in 22.10 lands; that feature then updates the section it supersedes. Approval follows the constitution's amendment rule (CoE lead and architect).
+
+**Delivery in two options (2026-11-20).** *Option A* comes first: the tracker becomes the user interface while the platform's lifecycle logic stays as built; the board drives the decisions the inbox drives today. *Option B* follows as its own decision: agent-proposed work plans, plan dispatch with role subagents, and increments (22.5, 22.8). Each subsection below says where it belongs to Option B only. Phase 2 builds on the platform stack of the `feature/sqlite` branch (one SQLite database file, Arize Phoenix for traces).
 
 ### 22.1 What changes and what does not
 
@@ -627,18 +629,18 @@ Editable source: page 5 of `adlc-solution-architecture.drawio`.
 
 Unchanged: the terminal-run state machine (ADR-01), policy engine, ledger and hash chain, outbox and router, agent runtime pattern, MCP servers and the pilot. They are extended, not replaced. The platform remains the only source of truth for lifecycle state; the tracker is a view and an input channel.
 
-### 22.2 Tracker simulator (separate repository)
+### 22.2 Tracker simulator (`ado_sim/` in this repository)
 
-The simulator stands in for Azure DevOps and lives in its own repository (`ado-board-simulator`), with its own database and no shared code, specs or tables with the platform. It holds no lifecycle, policy or decision-rights logic.
+The simulator stands in for Azure DevOps. It lives in this repository as its own uv project, `ado_sim/` (as `pilot/` does), with its own SQLite database file and no shared code, specs or tables with the platform; a boundary test keeps it that way. It holds no lifecycle, policy or decision-rights logic. It is Python only: FastAPI serves the REST subset and a server-rendered UI (Jinja2 templates with HTMX).
 
 | Aspect | Design |
 | --- | --- |
 | Contract | An ADO-compatible REST subset: work items create, get and update (JSON Patch with `test /rev`), relations (parent, predecessor and successor), a WIQL subset, work item updates and revisions, comments, classification nodes (Area Paths), identities. Webhooks optional |
-| Screens | Epic board with terminal columns and hold points (columns set by the platform, not by drag and drop); backlog tree Epic → Feature → Story → Task with Proposed items and Bugs; work item form with plan decision, decision and clarification fields, comments and history; Area Path filter |
+| Screens | Epic board with terminal columns and hold points (columns set by the platform, not by drag and drop); backlog tree Epic → Feature → Story → Task with Proposed items and Bugs; work item form with plan decision, decision and clarification fields, comments and history; Area Path filter. Option A builds the board, the backlog of Epics, run items and clarifications, and the form with the decision and clarification fields; hold points, Proposed items and the plan decision come with Option B |
 | Users | Local sign-in with demo users mapped to platform roles through the tracker mapping |
-| Fidelity rule | Where the simulator and real ADO differ, real ADO wins. The adapter contract suite is run against a real ADO organisation at least once before the simulator's API is declared stable |
+| Fidelity rule | Where the simulator and real ADO differ, real ADO wins. For the MVP the simulator is the only reference (no ADO organisation is available); the adapter contract suite is run against a real ADO organisation before a real tracker is connected |
 
-The contract (OpenAPI file and the adapter contract tests' fixtures) is owned by the simulator repository; the platform pins a simulator image version in its Compose file and runs the contract suite against it in CI.
+The contract (OpenAPI file and the adapter contract tests' fixtures) is owned by `ado_sim/`; the platform's CI starts the simulator from this repository and runs the contract suite against it. The simulator runs as its own process: a Compose service, and a process in `deploy/Procfile.local` without Docker.
 
 ### 22.3 Engagement layer
 
@@ -648,25 +650,26 @@ The contract (OpenAPI file and the adapter contract tests' fixtures) is owned by
 | ADO adapter | Translates the port into ADO REST calls, driven only by `tracker_mapping.yaml`; no tracker-specific value in platform code |
 | Outbound projector | Subscribes to platform events and updates the board (Epic column and sub-stage, plan items, gate fields, comments). Delivered through the outbox, with retries and dead-lettering |
 | Inbound sync | Reads board changes from a watermark, excluding the platform's service account, and turns each change into a command, idempotent by work item id and revision |
-| Reconciliation | Compares board and platform state on a schedule and corrects the board; the platform wins |
+| Reconciliation | Compares board and platform state and corrects the board; the platform wins. Started by a person from the operations console or the CLI for the MVP; a schedule comes later |
 | Contract tests | One suite every adapter must pass |
 
 Rules:
 
 - A board change is a **request**. It takes effect only when the platform accepts the command; a refused command is reverted on the board with a comment giving the policy engine's reason.
-- People decide through decision fields on the work item (plan decision, decision, clarification answer). The Epic's column and sub-stage are written only by the platform's service account, so the board never shows a stage the platform has not accepted; a column moved by a person is reverted.
+- People decide through one decision field (`Custom.AdlcDecision`) on the work item, saved with its comment; its allowed values come from the run's decision form (pass, rework, exception, terminate, waiver and plan decisions). A clarification is answered in its own answer field. The Epic's column and sub-stage are written only by the platform's service account, so the board never shows a stage the platform has not accepted; a column moved by a person is reverted.
+- Board model in Option A (no work plans): one Epic per use case, in the column of its current terminal with the run state as sub-stage; one child item per terminal run carrying the decision field, the comment, the fields the run's decision form requires (root cause, reason, typed values) and a link to the run's evidence in the operations console; one child item per clarification. Item types, states and field names are set in `adlc-specs/tracker_mapping.yaml` by the engagement-layer feature; Features, Stories and Tasks from work plans arrive with Option B.
 - Inbound mode for the MVP is polling of revisions. Webhooks can be added later as a faster path, with polling kept as catch-up.
 - Inbound sync must not lose intermediate changes between two reads; it reads revisions, not only current state.
 - The board user is mapped to a platform identity and role before any decision right is checked. An unmapped user's change is refused and reverted.
 
 ### 22.4 Commands and the operations console
 
-The platform API accepts these commands from the inbound sync (and from tests): `RegisterUseCase` (emits the existing `usecase.submitted`), `PullCard` (hold point), `ApprovePlan`, `RejectPlan`, `EditPlan`, `DecideAmendment`, `AcceptStory`, `RejectStory`, `AnswerClarification`, `SignOff`, `Decide` (rework, exception, escalate completion, terminate). Each is checked for decision rights, recorded in `run_activity`, and applied by the existing services.
+The platform API accepts these commands from the inbound sync (and from tests): `RegisterUseCase` (emits the existing `usecase.submitted`), `PullCard` (hold point), `ApprovePlan`, `RejectPlan`, `EditPlan`, `DecideAmendment`, `AcceptStory`, `RejectStory`, `AnswerClarification`, `SignOff`, `Decide` (rework, exception, escalate completion, terminate). Each is checked for decision rights, recorded in `run_activity`, and applied by the existing services. Option A uses only the commands the existing services already implement: `RegisterUseCase`, `AnswerClarification`, `SignOff` and `Decide`, plus the waiver decision and escalation completion; `PullCard` and the plan and story commands arrive with Option B.
 
 The web app becomes an operations console that keeps what a work item form cannot show:
 
 - evidence viewer: artifacts with agent and human versions, artifact editing before sign-off, control results, reviewer findings, prerequisites with result and reason (deep-linked from the card);
-- dead letters, sync status and reconciliation results;
+- dead letters, sync status and reconciliation results, with sync health as metrics: outbound delay, inbound watermark age, refused and reverted commands, reconciliation drift, and a "reconcile now" action;
 - KPIs and the journey view.
 
 Section 8.2 still holds: a sign-off needs the artifacts, control results and reviewer recommendation in front of the person; the card links to them. A decision that needs a comment, root cause or reason (rework, exception, terminate, disagreeing with the reviewer) is refused without it.
@@ -687,7 +690,7 @@ New run states in the existing state machine (no workflow engine change):
 | Plan source | Set per terminal spec: a fixed template plan, or a plan the agent proposes from the template within the spec's limits. Initial setting: agent planning in T1–T3, template plans in the other terminals. Both kinds are approved by a person |
 | Dispatcher | Runs approved items in `depends_on` order within `max_parallel`. Agent items go to the lead agent or a role subagent; human items wait for their board state |
 | Amendments | An agent's change to an approved plan is stored as Proposed and applied only after approval; Task-level changes are approved by the Story's reviewer |
-| Role subagents | A lead agent plus role subagents declared in the spec, each with the artifacts it `owns`. This replaces the limit of two subagents in section 7.1; every subagent runs under the run's permissions (per-subagent tokens stay post-MVP) |
+| Role subagents | A lead agent plus role subagents declared in the spec, each with the artifacts it `owns`. This replaces the limit of two subagents in section 7.1 with at most three per terminal for the MVP (T1 and T3 must shrink); every subagent runs under the run's permissions (per-subagent tokens stay post-MVP) |
 | Increments | One increment record per Epic delivery slice. T0 and T1 discovery run per use case; T1 refinement to T7 run per increment; T8 and T9 run per use case. Scope per terminal comes from `lifecycle.yaml` |
 
 Constitution III extends to plans: agents propose plans and amendments; only people approve them.
@@ -737,24 +740,26 @@ Validation gains: locked keys not overridden, exactly one owner per artifact, te
 | D-13 | The board is changed out of step with the platform and reconciliation corrects it |
 | D-14 | A card waits at a hold point until a person pulls it |
 
-D-1 to D-9 must still be shown, now driven from the board.
+D-1 to D-9 must still be shown, now driven from the board. Option A delivers D-1 to D-9, D-12 and D-13 on the board; D-10, D-11 and D-14 (plans, amendments, hold points) arrive with Option B.
 
 ### 22.10 Decisions and delivery
 
-**ADRs to record:** ADR-08 tracker as the user interface behind `BoardAdapter`, simulator in a separate repository; ADR-09 agent-proposed, human-approved work plans; ADR-10 increments and the ledger key; ADR-11 role subagents replace the two-subagent limit.
+**ADRs to record:** ADR-08 tracker as the user interface behind `BoardAdapter`, simulator as its own project (`ado_sim/`) in this repository; ADR-09 agent-proposed, human-approved work plans; ADR-10 increments and the ledger key; ADR-11 role subagents replace the two-subagent limit.
 
-| Feature | Repository | Delivers | Supersedes |
+| Feature | Option | Delivers | Supersedes |
 | --- | --- | --- | --- |
-| 015 work-plan-specs | platform | Schema 1.2.0, new shared files, toolkit checks | §5, Annex A additions |
-| 016 work-plan-service | platform | Plan tables, planning states, plan predicates, plan commands, approval through the existing inbox | §6.2, §9, §10 |
-| 017 plan-dispatch | platform | Dispatcher, role subagents, amendments | §7.1 |
-| 018 engagement-layer | platform | Port, ADO adapter, projector, inbound sync, reconciliation, contract suite | §8, §13 |
-| 019 operations-console | platform | Inbox reduced to the console in 22.4 | §8, §12.2 |
-| 020 e2e-demo-on-board | platform | D-1 to D-14 on the simulator, with one implicit increment per use case | §21 |
-| 021 increments | platform | Increment record, scope, ledger key; after the demo | §10, Annex A.2, A.5 |
-| S-001 ado-rest-subset, S-002 board, S-003 backlog-and-form | simulator | 22.2 | — |
+| 015 ado-sim-api | A | `ado_sim/`: the ADO REST subset of 22.2 on its own SQLite file, OpenAPI contract, contract fixtures, demo users | — |
+| 016 engagement-layer | A | Port, ADO adapter, `tracker_mapping.yaml` and its validation, outbound projector, inbound sync, manual reconciliation, contract suite | §8, §13 |
+| 017 ado-sim-board | A | Epic board: terminal columns, sub-stage, sign-in | — |
+| 018 ado-sim-backlog-form | A | Backlog tree and work item form: decision field, clarification answer, comments, history, links to the console | — |
+| 019 operations-console | A | Inbox reduced to the console in 22.4 | §8, §12.2 |
+| 020 e2e-demo-on-board | A | D-1 to D-9, D-12 and D-13 driven from the simulator | §21 |
+| 021 work-plan-specs | B | Schema 1.2.0, new shared files, toolkit checks | §5, Annex A additions |
+| 022 work-plan-service | B | Plan tables, planning states, plan predicates, plan commands; D-10, D-14 | §6.2, §9, §10 |
+| 023 plan-dispatch | B | Dispatcher, role subagents, amendments; D-11 | §7.1 |
+| 024 increments | B | Increment record, scope, ledger key | §10, Annex A.2, A.5 |
 
-Order: 015 → 016 → 017 on the platform while S-001 is built; then 018 against S-001; S-002, S-003 and 019; 020 (demo); 021 after the demo. Work plans come before the board so that every step keeps a working demo through the existing inbox.
+Order: 015 → 016 → 017 → 018 → 019 → 020 (Option A), one feature at a time through the Spec Kit gates. The simulator's API comes first so the adapter is built against a real contract; the board UI after the sync works; the console is reduced only once the board drives every decision, and the inbox stays available until 020 passes. Option B (021 → 024) is decided after the Option A demo.
 
 **Decided 2026-11-15 (by the architect; CoE lead to confirm with the amendment)**
 
@@ -764,8 +769,22 @@ Order: 015 → 016 → 017 on the platform while S-001 is built; then 018 agains
 | `usecase.registered` | Not added; `RegisterUseCase` emits `usecase.submitted` |
 | Inbound mode | Polling of revisions for the MVP; webhooks later with polling as catch-up |
 | Agent planning | T1–T3; template plans elsewhere; set per spec |
-| Increments | After the demo (feature 021); the demo runs with one implicit increment |
+| Increments | Option B (feature 024); until then every run belongs to one implicit increment |
 | Identity for decisions | The simulator's sign-in is accepted for the MVP |
+
+**Decided 2026-11-20 (by the user; CoE lead to confirm with the amendment)**
+
+| Decision | Answer |
+| --- | --- |
+| Delivery order | Option A (the board as user interface, platform as built) first; Option B decided after its demo |
+| Simulator location | This repository, as its own uv project `ado_sim/`, own SQLite file, no shared code |
+| Simulator UI | FastAPI with server-rendered pages (Jinja2, HTMX); Python only |
+| Reference for the contract | The simulator only, until a real ADO organisation is available |
+| Decision field | One field, `Custom.AdlcDecision`, holding every decision value |
+| Column changes | Written only by the platform; a person's drag is reverted |
+| Reconciliation | Manual (operations console or CLI) for the MVP |
+| Board identities | The accounts file and `roles.yaml`; no separate user table |
+| Simulator features | Board and backlog/form are two features (017, 018) |
 
 **Open decision**
 
