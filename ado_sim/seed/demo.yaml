@@ -1,0 +1,65 @@
+# Seed for the demo board (feature 015). Data only: the simulator's code holds no stage, type or
+# field of the platform. No tokens here: issue them with `ado-sim token issue <unique-name>`.
+organization: adlc-demo
+project: Agentic ADLC
+areas:
+  - Use cases
+process:
+  agile_states:
+    - {name: New, category: Proposed, color: b2b2b2}
+    - {name: Active, category: InProgress, color: 007acc}
+    - {name: Resolved, category: Resolved, color: ff9d00}
+    - {name: Closed, category: Completed, color: 339933}
+    - {name: Removed, category: Removed, color: ffffff}
+  types:
+    Epic:
+      description: A use case; its state is its current terminal stage.
+      color: FF7B00
+      states:
+        - {name: "T0 Intake & Qualification", category: Proposed}
+        - {name: "T1 Requirements & Outcome", category: InProgress}
+        - {name: "T2 Architecture & Design", category: InProgress}
+        - {name: "T3 Build & Integration", category: InProgress}
+        - {name: "T4 Evaluation", category: InProgress}
+        - {name: "T5 Trust, Risk & Assurance", category: InProgress}
+        - {name: "T6 Release Readiness", category: InProgress}
+        - {name: "T7 Deployment & Transition", category: InProgress}
+        - {name: "T8 Operate & Observe", category: InProgress}
+        - {name: "T9 Evolve / Retire", category: InProgress}
+        - {name: Closed, category: Completed, color: 339933}
+        - {name: Removed, category: Removed, color: ffffff}
+      fields: &adlc_fields
+        - Custom.AdlcUseCaseId
+        - Custom.AdlcSubStage
+        - Custom.AdlcRunId
+        - Custom.AdlcDecision
+        - Custom.AdlcComment
+        - Custom.AdlcClarificationAnswer
+    Feature: {color: 773B93, states: agile, fields: *adlc_fields}
+    User Story: {color: 009CCC, states: agile, fields: *adlc_fields}
+    Task: {color: F2CB1D, states: agile, fields: *adlc_fields}
+    Bug: {color: CC293D, states: agile, fields: *adlc_fields}
+  custom_fields:
+    Custom.AdlcUseCaseId: {type: string, name: ADLC Use Case Id}
+    Custom.AdlcSubStage: {type: string, name: ADLC Sub-stage}
+    Custom.AdlcRunId: {type: string, name: ADLC Run Id}
+    Custom.AdlcDecision: {type: string, name: ADLC Decision}
+    Custom.AdlcComment: {type: plainText, name: ADLC Comment}
+    Custom.AdlcClarificationAnswer: {type: plainText, name: ADLC Clarification Answer}
+identities:
+  - {unique_name: adlc-platform@adlc.demo, display_name: ADLC Platform}
+  - {unique_name: business.owner@adlc.demo, display_name: Business Owner}
+  - {unique_name: product.owner@adlc.demo, display_name: Product Owner}
+  - {unique_name: solution.architect@adlc.demo, display_name: Solution Architect}
+  - {unique_name: engineering.lead@adlc.demo, display_name: Engineering Lead}
+  - {unique_name: qa.eval.lead@adlc.demo, display_name: QA and Evaluation Lead}
+  - {unique_name: security.officer@adlc.demo, display_name: Security Officer}
+  - {unique_name: privacy.officer@adlc.demo, display_name: Privacy Officer}
+  - {unique_name: rai.officer@adlc.demo, display_name: Responsible AI Officer}
+  - {unique_name: compliance.officer@adlc.demo, display_name: Compliance Officer}
+  - {unique_name: risk.owner@adlc.demo, display_name: Risk Owner}
+  - {unique_name: release.manager@adlc.demo, display_name: Release Manager}
+  - {unique_name: service.owner@adlc.demo, display_name: Service Owner}
+  - {unique_name: sre@adlc.demo, display_name: Site Reliability Engineer}
+  - {unique_name: data.owner@adlc.demo, display_name: Data Owner}
+  - {unique_name: adlc.coe@adlc.demo, display_name: ADLC CoE Lead}

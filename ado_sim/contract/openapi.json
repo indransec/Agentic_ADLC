@@ -1,0 +1,3542 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ADO simulator",
+    "description": "ADO simulator: a subset of the Azure DevOps Boards REST API 7.1 with its own data store. Authenticate with a personal access token (Basic auth with the token as password, or Bearer). Paths after /_apis/ are case-insensitive. Known differences from real ADO: contract/differences.md.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "simulator"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/{organization}/{project}/_apis/wit/workitems/${type}": {
+      "post": {
+        "tags": [
+          "work items"
+        ],
+        "summary": "Create a work item",
+        "operationId": "create_work_item__organization___project___apis_wit_workitems___type__post",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Type"
+            }
+          },
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "validateOnly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Validateonly"
+            }
+          },
+          {
+            "name": "bypassRules",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Bypassrules"
+            }
+          },
+          {
+            "name": "suppressNotifications",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Suppressnotifications"
+            }
+          },
+          {
+            "name": "$expand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "None, Relations, Fields, Links or All",
+              "title": "$Expand"
+            },
+            "description": "None, Relations, Fields, Links or All"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "A `test` operation failed (stale revision)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type is not application/json-patch+json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "type": "array",
+                "maxItems": 500,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "op",
+                    "path"
+                  ],
+                  "properties": {
+                    "op": {
+                      "type": "string",
+                      "enum": [
+                        "add",
+                        "replace",
+                        "remove",
+                        "test"
+                      ]
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "value": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/workitems/{id}": {
+      "get": {
+        "tags": [
+          "work items"
+        ],
+        "summary": "Get a work item",
+        "operationId": "get_work_item__organization___project___apis_wit_workitems__id__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated field reference names",
+              "title": "Fields"
+            },
+            "description": "Comma-separated field reference names"
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "UTC date and time",
+              "title": "Asof"
+            },
+            "description": "UTC date and time"
+          },
+          {
+            "name": "$expand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "None, Relations, Fields, Links or All",
+              "title": "$Expand"
+            },
+            "description": "None, Relations, Fields, Links or All"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "work items"
+        ],
+        "summary": "Update a work item with a JSON Patch document",
+        "operationId": "update_work_item__organization___project___apis_wit_workitems__id__patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "validateOnly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Validateonly"
+            }
+          },
+          {
+            "name": "bypassRules",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Bypassrules"
+            }
+          },
+          {
+            "name": "suppressNotifications",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Suppressnotifications"
+            }
+          },
+          {
+            "name": "$expand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "None, Relations, Fields, Links or All",
+              "title": "$Expand"
+            },
+            "description": "None, Relations, Fields, Links or All"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "A `test` operation failed (stale revision)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type is not application/json-patch+json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json-patch+json": {
+              "schema": {
+                "type": "array",
+                "maxItems": 500,
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "op",
+                    "path"
+                  ],
+                  "properties": {
+                    "op": {
+                      "type": "string",
+                      "enum": [
+                        "add",
+                        "replace",
+                        "remove",
+                        "test"
+                      ]
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "value": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/workitems": {
+      "get": {
+        "tags": [
+          "work items"
+        ],
+        "summary": "List work items by id (at most 200)",
+        "operationId": "list_work_items__organization___project___apis_wit_workitems_get",
+        "parameters": [
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "ids",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ids"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Comma-separated field reference names",
+              "title": "Fields"
+            },
+            "description": "Comma-separated field reference names"
+          },
+          {
+            "name": "asOf",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "UTC date and time",
+              "title": "Asof"
+            },
+            "description": "UTC date and time"
+          },
+          {
+            "name": "$expand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "None, Relations, Fields, Links or All",
+              "title": "$Expand"
+            },
+            "description": "None, Relations, Fields, Links or All"
+          },
+          {
+            "name": "errorPolicy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Fail or Omit",
+              "title": "Errorpolicy"
+            },
+            "description": "Fail or Omit"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItemList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/workitemsbatch": {
+      "post": {
+        "tags": [
+          "work items"
+        ],
+        "summary": "Get work items by id in a batch (at most 200)",
+        "operationId": "batch_work_items__organization___project___apis_wit_workitemsbatch_post",
+        "parameters": [
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItemList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ids"
+                ],
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "maxItems": 200
+                  },
+                  "fields": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "asOf": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "$expand": {
+                    "type": "string",
+                    "enum": [
+                      "None",
+                      "Relations",
+                      "Fields",
+                      "Links",
+                      "All"
+                    ]
+                  },
+                  "errorPolicy": {
+                    "type": "string",
+                    "enum": [
+                      "Fail",
+                      "Omit"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/workitems/{id}/updates": {
+      "get": {
+        "tags": [
+          "history"
+        ],
+        "summary": "List a work item's updates in order",
+        "operationId": "list_updates__organization___project___apis_wit_workitems__id__updates_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "$Top"
+            }
+          },
+          {
+            "name": "$skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "$Skip"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItemUpdateList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/workitems/{id}/updates/{updateNumber}": {
+      "get": {
+        "tags": [
+          "history"
+        ],
+        "summary": "Get one update of a work item",
+        "operationId": "get_update__organization___project___apis_wit_workitems__id__updates__updateNumber__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "updateNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Updatenumber"
+            }
+          },
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItemUpdate"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/workitems/{id}/revisions": {
+      "get": {
+        "tags": [
+          "history"
+        ],
+        "summary": "List a work item's revisions",
+        "operationId": "list_revisions__organization___project___apis_wit_workitems__id__revisions_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "$Top"
+            }
+          },
+          {
+            "name": "$skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "$Skip"
+            }
+          },
+          {
+            "name": "$expand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "None, Relations, Fields, Links or All",
+              "title": "$Expand"
+            },
+            "description": "None, Relations, Fields, Links or All"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItemList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/workitems/{id}/revisions/{revisionNumber}": {
+      "get": {
+        "tags": [
+          "history"
+        ],
+        "summary": "Get a work item as of one revision",
+        "operationId": "get_revision__organization___project___apis_wit_workitems__id__revisions__revisionNumber__get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "revisionNumber",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Revisionnumber"
+            }
+          },
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "$expand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "None, Relations, Fields, Links or All",
+              "title": "$Expand"
+            },
+            "description": "None, Relations, Fields, Links or All"
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/wiql": {
+      "post": {
+        "tags": [
+          "queries"
+        ],
+        "summary": "Query work items with the WIQL subset",
+        "operationId": "query_by_wiql__organization___project___apis_wit_wiql_post",
+        "parameters": [
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "$Top"
+            }
+          },
+          {
+            "name": "timePrecision",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Timeprecision"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "query"
+                ],
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "maxLength": 32768
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/workitems/{id}/comments": {
+      "post": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "Add a comment (api-version 7.1-preview.4)",
+        "operationId": "add_comment__organization___project___apis_wit_workitems__id__comments_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1-preview.4",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1-preview.4"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "text"
+                ],
+                "properties": {
+                  "text": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "comments"
+        ],
+        "summary": "List comments (api-version 7.1-preview.4)",
+        "operationId": "list_comments__organization___project___apis_wit_workitems__id__comments_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "$top",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "$Top"
+            }
+          },
+          {
+            "name": "continuationToken",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Continuationtoken"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "asc or desc (default desc)",
+              "default": "desc",
+              "title": "Order"
+            },
+            "description": "asc or desc (default desc)"
+          },
+          {
+            "name": "includeDeleted",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Includedeleted"
+            }
+          },
+          {
+            "name": "$expand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "$Expand"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1-preview.4",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1-preview.4"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommentList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/workitemtypes": {
+      "get": {
+        "tags": [
+          "process"
+        ],
+        "summary": "List work item types",
+        "operationId": "list_types__organization___project___apis_wit_workitemtypes_get",
+        "parameters": [
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItemTypeList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/workitemtypes/{type}": {
+      "get": {
+        "tags": [
+          "process"
+        ],
+        "summary": "Get a work item type",
+        "operationId": "get_type__organization___project___apis_wit_workitemtypes__type__get",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Type"
+            }
+          },
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItemType"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/workitemtypes/{type}/states": {
+      "get": {
+        "tags": [
+          "process"
+        ],
+        "summary": "List the states of a work item type",
+        "operationId": "list_states__organization___project___apis_wit_workitemtypes__type__states_get",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Type"
+            }
+          },
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StateList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/fields": {
+      "get": {
+        "tags": [
+          "process"
+        ],
+        "summary": "List fields",
+        "operationId": "list_fields__organization___project___apis_wit_fields_get",
+        "parameters": [
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItemFieldList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/{project}/_apis/wit/classificationnodes/areas": {
+      "get": {
+        "tags": [
+          "process"
+        ],
+        "summary": "Get the area tree",
+        "operationId": "get_areas__organization___project___apis_wit_classificationnodes_areas_get",
+        "parameters": [
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project"
+            }
+          },
+          {
+            "name": "$depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "$Depth"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassificationNode"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{organization}/_apis/identities": {
+      "get": {
+        "tags": [
+          "identities"
+        ],
+        "summary": "Read identities by unique or display name, or by id",
+        "operationId": "read_identities__organization___apis_identities_get",
+        "parameters": [
+          {
+            "name": "organization",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Organization"
+            }
+          },
+          {
+            "name": "searchFilter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Searchfilter"
+            }
+          },
+          {
+            "name": "filterValue",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Filtervalue"
+            }
+          },
+          {
+            "name": "identityIds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Identityids"
+            }
+          },
+          {
+            "name": "queryMembership",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Querymembership"
+            }
+          },
+          {
+            "name": "api-version",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Required: 7.1",
+              "title": "Api-Version"
+            },
+            "description": "Required: 7.1"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdentityList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request, refused whole",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid personal access token (empty body)"
+          },
+          "404": {
+            "description": "Unknown organisation, project or resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdoError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AdoError": {
+        "properties": {
+          "$id": {
+            "type": "string",
+            "title": "$Id"
+          },
+          "innerException": {
+            "title": "Innerexception"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "typeName": {
+            "type": "string",
+            "title": "Typename"
+          },
+          "typeKey": {
+            "type": "string",
+            "title": "Typekey"
+          },
+          "errorCode": {
+            "type": "integer",
+            "title": "Errorcode"
+          },
+          "eventId": {
+            "type": "integer",
+            "title": "Eventid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "$id",
+          "message",
+          "typeName",
+          "typeKey",
+          "errorCode",
+          "eventId"
+        ],
+        "title": "AdoError"
+      },
+      "ClassificationNode": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "identifier": {
+            "type": "string",
+            "title": "Identifier"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "structureType": {
+            "type": "string",
+            "title": "Structuretype"
+          },
+          "hasChildren": {
+            "type": "boolean",
+            "title": "Haschildren"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "children": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ClassificationNode"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Children"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "identifier",
+          "name",
+          "structureType",
+          "hasChildren",
+          "path",
+          "url"
+        ],
+        "title": "ClassificationNode"
+      },
+      "Comment": {
+        "properties": {
+          "workItemId": {
+            "type": "integer",
+            "title": "Workitemid"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/IdentityRef"
+          },
+          "createdDate": {
+            "type": "string",
+            "title": "Createddate"
+          },
+          "modifiedBy": {
+            "$ref": "#/components/schemas/IdentityRef"
+          },
+          "modifiedDate": {
+            "type": "string",
+            "title": "Modifieddate"
+          },
+          "isDeleted": {
+            "type": "boolean",
+            "title": "Isdeleted"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "workItemId",
+          "id",
+          "version",
+          "text",
+          "createdBy",
+          "createdDate",
+          "modifiedBy",
+          "modifiedDate",
+          "isDeleted",
+          "url"
+        ],
+        "title": "Comment"
+      },
+      "CommentList": {
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "title": "Totalcount"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "comments": {
+            "items": {
+              "$ref": "#/components/schemas/Comment"
+            },
+            "type": "array",
+            "title": "Comments"
+          },
+          "nextPage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextpage"
+          },
+          "continuationToken": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Continuationtoken"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "totalCount",
+          "count",
+          "comments"
+        ],
+        "title": "CommentList"
+      },
+      "FieldChange": {
+        "properties": {
+          "oldValue": {
+            "title": "Oldvalue"
+          },
+          "newValue": {
+            "title": "Newvalue"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "FieldChange"
+      },
+      "FieldReference": {
+        "properties": {
+          "referenceName": {
+            "type": "string",
+            "title": "Referencename"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "referenceName",
+          "name",
+          "url"
+        ],
+        "title": "FieldReference"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Health": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "Health"
+      },
+      "Identity": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "descriptor": {
+            "type": "string",
+            "title": "Descriptor"
+          },
+          "providerDisplayName": {
+            "type": "string",
+            "title": "Providerdisplayname"
+          },
+          "isActive": {
+            "type": "boolean",
+            "title": "Isactive"
+          },
+          "isContainer": {
+            "type": "boolean",
+            "title": "Iscontainer"
+          },
+          "properties": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Properties"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "descriptor",
+          "providerDisplayName",
+          "isActive",
+          "isContainer",
+          "properties"
+        ],
+        "title": "Identity"
+      },
+      "IdentityList": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "value": {
+            "items": {
+              "$ref": "#/components/schemas/Identity"
+            },
+            "type": "array",
+            "title": "Value"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "count",
+          "value"
+        ],
+        "title": "IdentityList"
+      },
+      "IdentityRef": {
+        "properties": {
+          "displayName": {
+            "type": "string",
+            "title": "Displayname"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "uniqueName": {
+            "type": "string",
+            "title": "Uniquename"
+          },
+          "imageUrl": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Imageurl"
+          },
+          "descriptor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descriptor"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "displayName",
+          "url",
+          "id",
+          "uniqueName"
+        ],
+        "title": "IdentityRef"
+      },
+      "Link": {
+        "properties": {
+          "href": {
+            "type": "string",
+            "title": "Href"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "href"
+        ],
+        "title": "Link"
+      },
+      "QueryResult": {
+        "properties": {
+          "queryType": {
+            "type": "string",
+            "title": "Querytype"
+          },
+          "queryResultType": {
+            "type": "string",
+            "title": "Queryresulttype"
+          },
+          "asOf": {
+            "type": "string",
+            "title": "Asof"
+          },
+          "columns": {
+            "items": {
+              "$ref": "#/components/schemas/FieldReference"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "sortColumns": {
+            "items": {
+              "$ref": "#/components/schemas/SortColumn"
+            },
+            "type": "array",
+            "title": "Sortcolumns"
+          },
+          "workItems": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/WorkItemReference"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workitems"
+          },
+          "workItemRelations": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/WorkItemLink"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workitemrelations"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "queryType",
+          "queryResultType",
+          "asOf",
+          "columns",
+          "sortColumns"
+        ],
+        "title": "QueryResult"
+      },
+      "Relation": {
+        "properties": {
+          "rel": {
+            "type": "string",
+            "title": "Rel"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "attributes": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Attributes"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "rel",
+          "url",
+          "attributes"
+        ],
+        "title": "Relation"
+      },
+      "RelationChanges": {
+        "properties": {
+          "added": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Relation"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Added"
+          },
+          "removed": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Relation"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Removed"
+          },
+          "updated": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Relation"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "RelationChanges"
+      },
+      "SortColumn": {
+        "properties": {
+          "field": {
+            "$ref": "#/components/schemas/FieldReference"
+          },
+          "descending": {
+            "type": "boolean",
+            "title": "Descending"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "field",
+          "descending"
+        ],
+        "title": "SortColumn"
+      },
+      "State": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "color": {
+            "type": "string",
+            "title": "Color"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "name",
+          "color",
+          "category"
+        ],
+        "title": "State"
+      },
+      "StateList": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "value": {
+            "items": {
+              "$ref": "#/components/schemas/State"
+            },
+            "type": "array",
+            "title": "Value"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "count",
+          "value"
+        ],
+        "title": "StateList"
+      },
+      "TypeField": {
+        "properties": {
+          "referenceName": {
+            "type": "string",
+            "title": "Referencename"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "alwaysRequired": {
+            "type": "boolean",
+            "title": "Alwaysrequired"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "referenceName",
+          "name",
+          "alwaysRequired",
+          "url"
+        ],
+        "title": "TypeField"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WorkItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "rev": {
+            "type": "integer",
+            "title": "Rev"
+          },
+          "fields": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Fields"
+          },
+          "relations": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Relation"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relations"
+          },
+          "_links": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/Link"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Links"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "rev",
+          "fields",
+          "url"
+        ],
+        "title": "WorkItem"
+      },
+      "WorkItemField": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "referenceName": {
+            "type": "string",
+            "title": "Referencename"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "readOnly": {
+            "type": "boolean",
+            "title": "Readonly"
+          },
+          "usage": {
+            "type": "string",
+            "title": "Usage"
+          },
+          "isIdentity": {
+            "type": "boolean",
+            "title": "Isidentity"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "name",
+          "referenceName",
+          "type",
+          "readOnly",
+          "usage",
+          "isIdentity",
+          "url"
+        ],
+        "title": "WorkItemField"
+      },
+      "WorkItemFieldList": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "value": {
+            "items": {
+              "$ref": "#/components/schemas/WorkItemField"
+            },
+            "type": "array",
+            "title": "Value"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "count",
+          "value"
+        ],
+        "title": "WorkItemFieldList"
+      },
+      "WorkItemLink": {
+        "properties": {
+          "rel": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rel"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkItemReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target": {
+            "$ref": "#/components/schemas/WorkItemReference"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "rel",
+          "source",
+          "target"
+        ],
+        "title": "WorkItemLink"
+      },
+      "WorkItemList": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "value": {
+            "items": {
+              "$ref": "#/components/schemas/WorkItem"
+            },
+            "type": "array",
+            "title": "Value"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "count",
+          "value"
+        ],
+        "title": "WorkItemList"
+      },
+      "WorkItemReference": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "url"
+        ],
+        "title": "WorkItemReference"
+      },
+      "WorkItemType": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "referenceName": {
+            "type": "string",
+            "title": "Referencename"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "color": {
+            "type": "string",
+            "title": "Color"
+          },
+          "isDisabled": {
+            "type": "boolean",
+            "title": "Isdisabled"
+          },
+          "states": {
+            "items": {
+              "$ref": "#/components/schemas/State"
+            },
+            "type": "array",
+            "title": "States"
+          },
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/TypeField"
+            },
+            "type": "array",
+            "title": "Fields"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "name",
+          "referenceName",
+          "description",
+          "color",
+          "isDisabled",
+          "states",
+          "fields",
+          "url"
+        ],
+        "title": "WorkItemType"
+      },
+      "WorkItemTypeList": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "value": {
+            "items": {
+              "$ref": "#/components/schemas/WorkItemType"
+            },
+            "type": "array",
+            "title": "Value"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "count",
+          "value"
+        ],
+        "title": "WorkItemTypeList"
+      },
+      "WorkItemUpdate": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "workItemId": {
+            "type": "integer",
+            "title": "Workitemid"
+          },
+          "rev": {
+            "type": "integer",
+            "title": "Rev"
+          },
+          "revisedBy": {
+            "$ref": "#/components/schemas/IdentityRef"
+          },
+          "revisedDate": {
+            "type": "string",
+            "title": "Reviseddate"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/FieldChange"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fields"
+          },
+          "relations": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RelationChanges"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "id",
+          "workItemId",
+          "rev",
+          "revisedBy",
+          "revisedDate",
+          "url"
+        ],
+        "title": "WorkItemUpdate"
+      },
+      "WorkItemUpdateList": {
+        "properties": {
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "value": {
+            "items": {
+              "$ref": "#/components/schemas/WorkItemUpdate"
+            },
+            "type": "array",
+            "title": "Value"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "count",
+          "value"
+        ],
+        "title": "WorkItemUpdateList"
+      }
+    },
+    "securitySchemes": {
+      "basic": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "Any user name; the personal access token as password"
+      },
+      "bearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "security": [
+    {
+      "basic": []
+    },
+    {
+      "bearer": []
+    }
+  ]
+}

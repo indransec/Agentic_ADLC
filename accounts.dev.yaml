@@ -1,0 +1,96 @@
+# Example local account file (contracts/files.md). Copy it OUTSIDE the repository, e.g.
+#   $HOME/.config/adlc/accounts.dev.yaml
+# set ADLC_ACCOUNTS_FILE to that absolute path, and replace each credential_hash with the
+# output of:  uv run adlc-account hash
+# Roles must be ids from adlc-specs/shared/roles.yaml. In ADLC_ENV=demo the platform refuses
+# to start while any placeholder remains.
+accounts:
+  # T0 submits and signs off; T1 second approver; T6 go/no-go
+  - account_name: amara.okafor
+    display_name: Amara Okafor (Business Owner)
+    roles: [business_owner, solution_architect, product_owner]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # T1 accountable and approver; T4 second approver; T9 evolve
+  - account_name: lucas.meyer
+    display_name: Lucas Meyer (Product Owner)
+    roles: [product_owner]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # T2 accountable and approver; T3 extra approver when the design deviates
+  - account_name: priya.nair
+    display_name: Priya Nair (Solution Architect)
+    roles: [solution_architect,product_owner]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # T3 accountable and approver; answers T2 clarifications (T2's first R role)
+  - account_name: tomas.silva
+    display_name: Tomas Silva (Engineering Lead)
+    roles: [engineering_lead]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # T4 accountable and approver
+  - account_name: hana.kim
+    display_name: Hana Kim (QA and Eval Lead)
+    roles: [qa_eval_lead]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # T2 second approver; T5 accountable and approver at every tier
+  - account_name: omar.haddad
+    display_name: Omar Haddad (Security Officer)
+    roles: [security_officer]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # T5 approver at medium and high tier
+  - account_name: elena.rossi
+    display_name: Elena Rossi (Privacy Officer)
+    roles: [privacy_officer]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # T5 approver at high tier
+  - account_name: kwame.mensah
+    display_name: Kwame Mensah (RAI Officer)
+    roles: [rai_officer]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # T5 approver at high tier
+  - account_name: ingrid.larsen
+    display_name: Ingrid Larsen (Compliance Officer)
+    roles: [compliance_officer]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # T5 residual-risk acceptance
+  - account_name: diego.ramirez
+    display_name: Diego Ramirez (Risk Owner)
+    roles: [risk_owner]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # T6 and T7 accountable and approver
+  - account_name: sofia.novak
+    display_name: Sofia Novak (Release Manager)
+    roles: [release_manager]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # T6 and T7 approver; T8 accountable and approver; T9 retire
+  - account_name: wei.chen
+    display_name: Wei Chen (Service Owner)
+    roles: [service_owner]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # Operations (T9 operational signals)
+  - account_name: noah.brooks
+    display_name: Noah Brooks (SRE)
+    roles: [sre]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # Answers data clarifications; T9 retire
+  - account_name: fatima.zahra
+    display_name: Fatima Zahra (Data Owner)
+    roles: [data_owner]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==
+
+  # Dead letters (ADLC_DEADLETTER_ROLE=adlc_coe)
+  - account_name: grace.adeyemi
+    display_name: Grace Adeyemi (ADLC CoE Lead)
+    roles: [adlc_coe]
+    credential_hash: scrypt$32768$8$1$dJ4RiCWEi8kUhqTC2D0XAg==$LQVmOYXOheQuYifD8jiB5PVZXI9I7tHrjQRaF65TVn23Bs0QzCEZ8551481/lRCw9ixWjEubOYaE//glvTLV6A==

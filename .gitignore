@@ -17,8 +17,8 @@ build/
 *.egg-info/
 
 # Secrets and local config
-.env
-.env.*
+#.env
+#.env.*
 !.env.example
 
 # Claude Code local settings (may hold personal or credential data)

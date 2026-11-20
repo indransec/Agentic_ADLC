@@ -1,0 +1,59 @@
+[project]
+name = "adlc-ado-sim"
+version = "0.1.0"
+description = "ADO simulator: an Azure DevOps Boards REST API 7.1 subset with its own data store (feature 015); shares no code with the platform"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.162.2",
+    "uvicorn>=0.54.0",
+    "pydantic>=2.14.3",
+    "ruamel-yaml>=0.19.1",
+    "opentelemetry-api>=1.45.2",
+    "opentelemetry-sdk>=1.45.2",
+    "opentelemetry-exporter-otlp-proto-http>=1.45.2",
+    "coverage==7.17.2",
+    "bandit==1.9.4",
+]
+
+[project.scripts]
+ado-sim = "ado_sim.cli:main"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.4",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ado_sim"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "N", "SIM"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "S603", "S607", "S608"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+files = ["src", "tests"]
+mypy_path = ["src"]
+explicit_package_bases = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra --cov=ado_sim --cov-report=term:skip-covered"
+filterwarnings = ["ignore:Using `httpx` with `starlette.testclient` is deprecated"]
