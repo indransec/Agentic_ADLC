@@ -89,7 +89,8 @@ T3's agent writes the filled configuration to a branch, opens a pull request, ru
 gets back a package hash with the test results; the package is in the artifact store, and the
 instructions are versioned in the prompt registry.
 
-**Why this priority**: Without a build there is no candidate package for T4–T7 (D-6).
+**Why this priority**: Without a build there is no candidate package for T4–T7 to test, release
+and deploy.
 
 **Independent Test**: As a T3 run, write a fill to a branch, run CI, and check the package hash is
 the one `pilot-build` gives for the same fill, the results name each check, and the package is
@@ -115,8 +116,8 @@ T4's agent runs the evaluation harness on an approved dataset against the candid
 test environment and stores the results; T5's agent runs the red-team suite and the personal-data
 scan and reads the control library.
 
-**Why this priority**: T4 and T5 decide whether a package is fit (D-3, D-5); their evidence must
-come from runs, not from the agent's say-so.
+**Why this priority**: T4 and T5 decide whether a package is fit, which drives rework and
+exceptions; their evidence must come from runs, not from the agent's say-so.
 
 **Independent Test**: As a T4 run, evaluate the default package and the degraded model on the
 golden set; as a T5 run, run the red-team suite and the scan with and without the leak fault.
@@ -141,7 +142,7 @@ golden set; as a T5 run, run the red-team suite and the scan with and without th
 T7's agent deploys the package hash authorised at T6 to prod-sim as a candidate, moves traffic
 through shadow, canary and full, and can roll back; T8 can stop the pilot with the kill switch.
 
-**Why this priority**: D-6 ("the deployed hash is the tested hash") is enforced here.
+**Why this priority**: "the deployed hash is the tested hash" is enforced here.
 
 **Independent Test**: As a T7 run, deploy the authorised hash and step through the split; try a
 different hash; as a T8 run, invoke the kill switch.
@@ -164,7 +165,8 @@ different hash; as a T8 run, invoke the kill switch.
 T8's agent reads the pilot's metrics and traces (masked), configures monitors with thresholds and
 reads which have fired, and reads synthetic user feedback.
 
-**Why this priority**: D-7 (drift → T9 → re-entry) needs T8 to see the model swap through data.
+**Why this priority**: drift leading to T9 and re-entry needs T8 to see the model swap through
+data.
 
 **Independent Test**: With traffic running, read metrics; trigger the model swap; read again and
 check the monitor on routing accuracy fires.

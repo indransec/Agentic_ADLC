@@ -68,8 +68,8 @@ The CoE has a runnable Incident Triage Assistant skeleton. It declares exactly w
 Built, it becomes a package with a content hash; the same package, unchanged, runs in dev, test and
 prod-sim and assigns incidents.
 
-**Why this priority**: every later terminal acts on this package; D-6 (what T4 tested is what T7
-deployed) depends on one package identified by one hash.
+**Why this priority**: every later terminal acts on this package; proving that what T4 tested
+is what T7 deployed depends on one package identified by one hash.
 
 **Independent Test**: Build the template with its default fill twice and compare hashes; run the
 package in each environment and send it a synthetic incident; it returns an assignment.
@@ -178,7 +178,8 @@ or a **planted personal-data leak** where the assistant's reason repeats the rep
 data, which a personal-data check detects (a safety event for T5). Every fault is recorded with its
 time, parameters and the package and replicas it affected, and can be reverted.
 
-**Why this priority**: D-7 depends on it, but the environments are useful without it; the build
+**Why this priority**: showing drift in operation depends on it, but the environments are useful
+without it; the build
 plan allows a single fault (the model swap) if time is short.
 
 **Independent Test**: Measure routing accuracy on traffic before and after a model swap; trigger

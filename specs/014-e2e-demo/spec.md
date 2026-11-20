@@ -36,10 +36,10 @@ resilience tests, demo script and data reset, rehearsal fixes. Must do; no simpl
 
 ## User Scenarios & Testing *(mandatory)*
 
-The MVP is accepted when D-1 to D-9 are shown live, every decision is traceable in the ledger to
-its spec version, actor and evidence hash, all scripted scenarios pass, and no agent can set an
-outcome or deploy an unauthorised hash (SA §21). This feature makes that demonstration repeatable
-and proves it in tests.
+The MVP is accepted when every demo moment is shown live, every decision is traceable in the
+ledger to its spec version, actor and evidence hash, all scripted scenarios pass, and no agent can
+set an outcome or deploy an unauthorised hash (SA §21). This feature makes that demonstration
+repeatable and proves it in tests.
 
 ### User Story 1 – The demo script runs end to end (Priority: P1)
 
@@ -59,7 +59,8 @@ reports each demo moment as shown, with the run ids that prove it.
 **Acceptance Scenarios**:
 
 1. **Given** a reset demo environment, **When** the driver runs, **Then** every step completes in
-   order and the final report lists D-1 to D-9 each with its evidence (runs, events, decisions).
+   order and the final report lists every demo moment with its evidence (runs, events,
+   decisions).
 2. **Given** a human step, **When** the presenter has not acted, **Then** the driver waits and
    says what to do, where, and as which role.
 3. **Given** a step fails (a control fails unexpectedly, a service is down), **Then** the driver
@@ -69,18 +70,19 @@ reports each demo moment as shown, with the run ids that prove it.
 
 ### User Story 2 – Every demo moment has a scenario test (Priority: P1)
 
-D-1 to D-9 each have an offline scenario test (no external model, no running stack), so CI proves
-the platform behaviour behind every moment.
+Every demo moment has an offline scenario test (no external model, no running stack), so CI
+proves the platform behaviour behind every moment.
 
 **Independent Test**: The scenario suite passes in CI; each test names the moment it proves.
 
 **Acceptance Scenarios**:
 
-1. **Given** D-1, **Then** at every terminal an agent built, the reviewer recommended, and a
-   person decided, each recorded.
-2. **Given** D-6, **Then** the deployed hash equals T3's candidate, T4's and T5's bound hash and
-   T6's authorised package.
-3. **Given** D-8, **Then** the dashboard's journey, activity and KPIs reflect a scripted lifecycle.
+1. **Given** a scripted lifecycle has run, **Then** at every terminal an agent built, the reviewer
+   recommended, and a person decided, each recorded.
+2. **Given** a released package, **Then** the deployed hash equals T3's candidate, T4's and T5's
+   bound hash and T6's authorised package.
+3. **Given** a scripted lifecycle has run, **Then** the dashboard's journey, activity and KPIs
+   reflect it.
 4. **Given** the negative tests, **Then** no agent sets an outcome or deploys an unauthorised hash.
 
 ---

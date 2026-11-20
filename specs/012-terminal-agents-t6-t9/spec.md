@@ -45,7 +45,7 @@ complete and consistent and prepares the release; T7 deploys exactly the authori
 hands it over; T8 operates it and turns signals into lifecycle events; T9 classifies a change and
 routes it back into the lifecycle, or retires the agent. With this feature these four terminals
 are real agents acting through feature 010's tools, and the release and operation of the pilot
-are visible end to end (D-6, D-7).
+are visible end to end.
 
 ### User Story 1 – T6 verifies the evidence chain and prepares the release (Priority: P1)
 
@@ -54,7 +54,8 @@ the bound package hash), raises the change request, configures the monitors the 
 operation need, writes the runbook, rollback strategy, rollout plan, ownership and readiness
 artifacts, and names the deployment package; people authorise the release.
 
-**Why this priority**: D-6 needs one hash bound from T3 to T7; T6 is where it is checked and fixed.
+**Why this priority**: package integrity needs one hash bound from T3 to T7; T6 is where it is
+checked and fixed.
 
 **Independent Test**: Run T6 after T5 for a use case; check the controls (statuses, waivers, hash
 consistency, change approval, monitor coverage) read real records, and that the release
@@ -81,7 +82,7 @@ steps through the rollout stages checking each stage's metrics, runs smoke cases
 agent in the agent registry and the CMDB, and records hypercare incidents; people accept the
 handover.
 
-**Why this priority**: D-6 (what T4 tested is what T7 deployed) and the demo's rollout moment.
+**Why this priority**: what T4 tested must be what T7 deploys, and the rollout is a demo moment.
 
 **Independent Test**: Run T7 after T6 with steady traffic; check the deployed hash, the stage
 metrics against the plan, the smoke results, the registry entry, and that a breach rolls back.
@@ -103,7 +104,7 @@ Each review period, the T8 agent reads metrics, monitors, incidents, cost and fe
 the operating health report, drift report, cost report, KPI scorecard and feedback themes, and
 lifecycle events are raised when signals call for a change.
 
-**Why this priority**: D-7 (a model swap shows up as drift, routed to T9).
+**Why this priority**: a model swap must show up as drift and be routed to T9.
 
 **Independent Test**: With traffic running, trigger the model swap; check that the routing-
 accuracy monitor fires, a drift event is raised, T9 opens, and T8's report shows the drop.
@@ -127,7 +128,7 @@ change or a review), classifies it with the change classes, names the terminal t
 the revalidation plan; in retire mode it revokes identities and tool scopes, archives, and
 checks that no dependent agent is left unowned.
 
-**Why this priority**: D-7 (re-entry at T2) and the lifecycle's end.
+**Why this priority**: re-entry at T2 and the end of the lifecycle depend on it.
 
 **Independent Test**: After a drift event, run T9 and check the classification and re-entry
 terminal; run a retirement and check the revocations and the retirement controls.

@@ -34,7 +34,7 @@ split)."
 ## User Scenarios & Testing *(mandatory)*
 
 People need to see, at a glance and live, where a use case is in its lifecycle, why it went
-backwards, who it is waiting for, and how much time and effort each step costs (D-8).
+backwards, who it is waiting for, and how much time and effort each step costs.
 
 ### User Story 1 – The journey with reroutes (Priority: P1)
 
@@ -42,7 +42,8 @@ A person opens a use case and sees T0–T9: every run per terminal with its stat
 owner (agent, reviewer, person), and arrows for rework, cross-terminal reroutes (e.g. a T4 defect
 back to T3), exceptions and T9 re-entry; a KPI strip; and a panel of escalations and exceptions.
 
-**Why this priority**: D-8, and it is how D-2 to D-7 are seen in the demo.
+**Why this priority**: the live view is a demo moment in itself, and it is how rework,
+escalations, exceptions and operational events are seen in the demo.
 
 **Independent Test**: Walk a use case with a rework, a cross-terminal reroute, an exception and a
 T9 re-entry; the journey shows each run and each arrow with its cause.

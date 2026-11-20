@@ -41,7 +41,7 @@ When the run closes with `pass`, the next terminal opens through the outcome eve
 T0→T9 path completes with stub agents.
 
 **Why this priority**: this is the engine every later feature plugs into. Without it there is
-no lifecycle to demonstrate (D-1, and the base for D-2 to D-9).
+no lifecycle to demonstrate, and every other demo moment builds on it.
 
 **Independent Test**: submit a use case with stub agents that always produce valid artifacts.
 Pass every terminal as its owner. Confirm one closed run per terminal T0–T8, each opened by
@@ -83,8 +83,8 @@ The lifecycle follows the pinned spec's outcome model. Rework goes to the root-c
 terminal, and the new run's context carries the comment, the defect evidence and the previous
 artifacts, so the agent fixes rather than rebuilds.
 
-**Why this priority**: D-2 (rejection with comment, then rework using it) and D-3 (a T4 defect
-returns to T3) are core demo moments.
+**Why this priority**: a rejection with a comment that the rework uses, and a defect found in T4
+that returns to T3, are core demo moments.
 
 **Independent Test**: at T1, reject with a comment and root cause `requirement`. A new T1 run
 opens whose context includes the comment, and the rework counter for T1 is 1. At T4, rework
@@ -128,8 +128,8 @@ The orchestrator moves a run to `escalated` when any of these happens:
 
 The accountable human completes the artifacts, and the run continues to sign-off.
 
-**Why this priority**: D-4 (escalation after 3 rework cycles). It also bounds every run, so
-none can loop forever.
+**Why this priority**: escalation after repeated rework is a core demo moment. It also bounds
+every run, so none can loop forever.
 
 **Independent Test**: rework T1 three times. On the fourth rework the new T1 run opens
 directly in `escalated`. A human completes the artifacts, and the run reaches
@@ -155,8 +155,8 @@ An agent (or the reviewer) that lacks information pauses its run with questions 
 a role, stating where it looked. A human of that role answers. The same run resumes with the
 answer in its context. Clarifications never count as rework and never change routing.
 
-**Why this priority**: D-9 (clarification asked, answered, same run resumes, not counted as
-rework).
+**Why this priority**: a clarification that is asked and answered, with the same run resuming
+and not counted as rework, is a core demo moment.
 
 **Independent Test**: let the stub agent raise one clarification at T2. The run waits in
 `awaiting_clarification`. Answer it as the addressed role. The same run id resumes to
@@ -184,7 +184,8 @@ routes: immediate actions are recorded, the run of the routed terminal opens (fo
 and T9's decision re-enters the lifecycle at the terminal named by the change class in its
 assessment (for example T2).
 
-**Why this priority**: D-7. It depends on US1 and US2 working.
+**Why this priority**: an operational event that re-enters the lifecycle is a core demo moment.
+It depends on US1 and US2 working.
 
 **Independent Test**: with a use case at T8, raise `T8.event.drift`. A T9 run opens. Pass it
 with a change impact assessment naming re-entry `T2`: the event `T9.reentry.T2` is emitted

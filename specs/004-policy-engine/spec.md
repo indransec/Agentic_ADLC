@@ -163,8 +163,9 @@ supply failing artifacts to see a gate refuse.
 **Why this priority**: the platform must be honest from here on. A gate that only passes
 because the policy is a stub proves nothing.
 
-**Independent Test**: run the feature 003 scenarios (happy path, D-2, D-3, D-4, D-5, D-7,
-D-9) with the real engine and the synthetic artifacts; all pass. Replace one synthetic artifact
+**Independent Test**: run the feature 003 scenarios (happy path, rework with a comment, rework
+by root cause, escalation, exception with a waiver, drift and re-entry, clarification) with the
+real engine and the synthetic artifacts; all pass. Replace one synthetic artifact
 with a bad one; the run retries and then escalates with the retry-limit trigger.
 
 **Acceptance Scenarios**:

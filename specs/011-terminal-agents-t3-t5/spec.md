@@ -54,8 +54,8 @@ After T2 passes, the T3 agent fills the golden template for the use case on its 
 runs CI, provisions the dev environment with the built package, checks that it emits telemetry,
 and produces the build artifacts with the candidate package hash.
 
-**Why this priority**: Every later terminal needs a candidate package (D-6); T3 is the first
-terminal that acts on systems.
+**Why this priority**: Every later terminal needs a candidate package, identified by one hash;
+T3 is the first terminal that acts on systems.
 
 **Independent Test**: Open T3 for a use case whose T2 passed (with recorded agent replies); check
 the branch, the CI evidence, the dev environment, the artifacts and that the candidate hash is
@@ -85,8 +85,8 @@ registered golden and regression datasets through the harness, compares the resu
 evaluation and RAI thresholds, the T2 token budget and the T1 latency requirement, logs defects
 with a root-cause terminal, and records the regression pack.
 
-**Why this priority**: D-3 (rework routed to the right terminal) and the pass decision for
-evaluation depend on it.
+**Why this priority**: rework routed to the right terminal and the pass decision for evaluation
+depend on it.
 
 **Independent Test**: Run T4 on a candidate that meets the thresholds and on one that does not
 (a weaker fill); check the artifacts, the controls and the recommended outcome.
@@ -115,7 +115,7 @@ privacy assessment, regulatory map, RAI assurance and residual risk register, fi
 assurance report, and, when a control gap remains, the reviewer recommends an exception that a
 person can accept with a waiver.
 
-**Why this priority**: D-5 (exception with waiver) and the T6 evidence chain depend on it.
+**Why this priority**: an exception with a waiver and the T6 evidence chain depend on it.
 
 **Independent Test**: Run T5 on a clean candidate and on one with a known gap; check that the
 controls read the red-team and scan evidence, and that the gap ends as an exception with a waiver
