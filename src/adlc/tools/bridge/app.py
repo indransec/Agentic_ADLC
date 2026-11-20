@@ -66,7 +66,7 @@ def all_handlers(
 
 
 def telemetry_of(pilot: Pilot, settings: BridgeSettings) -> Telemetry:
-    return Telemetry(pilot, settings.bridge_jaeger_url, settings.bridge_pilot_service)
+    return Telemetry(pilot, settings.bridge_phoenix_url, settings.bridge_pilot_service)
 
 
 def monitors_of(pilot: Pilot, settings: BridgeSettings, records: Records) -> Monitors:

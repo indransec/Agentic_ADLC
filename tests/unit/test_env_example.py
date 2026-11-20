@@ -13,7 +13,7 @@ from adlc.config.settings import (
 )
 
 ENV_EXAMPLE = Path(__file__).resolve().parents[2] / ".env.example"
-COMPOSE_ONLY = {"ADLC_API_PORT", "ADLC_JAEGER_UI_PORT", "ADLC_UI_PORT"}
+COMPOSE_ONLY = {"ADLC_API_PORT", "ADLC_PHOENIX_UI_PORT", "ADLC_UI_PORT"}
 
 
 def _entries() -> dict[str, str]:

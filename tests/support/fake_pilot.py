@@ -156,34 +156,37 @@ class FakePilot:
             app.include_router(self._host(self.hosts[environment]), prefix=prefix)
         app.include_router(self._lab(), prefix="/lab")
         app.include_router(self._traffic(), prefix="/traffic")
-        app.include_router(self._jaeger(), prefix="/jaeger")
+        app.include_router(self._phoenix(), prefix="/phoenix")
         return app
 
-    def _jaeger(self) -> APIRouter:
+    def _phoenix(self) -> APIRouter:
+        """Phoenix's span API for the prod-sim project; attributes include text that must not
+        leave (the bridge keeps only allowlisted keys)."""
         r = APIRouter()
 
-        @r.get("/api/v3/traces")
-        def traces() -> dict[str, Any]:
-            def attr(key: str, value: str) -> dict[str, Any]:
-                return {"key": key, "value": {"stringValue": value}}
-
-            spans = [
+        @r.get("/v1/projects/{project}/spans")
+        def spans(project: str) -> dict[str, Any]:
+            if project != "pilot-triage-prod-sim":
+                raise HTTPException(404, f"project {project} not found")
+            data = [
                 {
-                    "traceId": f"t{n}",
+                    "id": f"span-{n}",
                     "name": "triage.request",
-                    "startTimeUnixNano": "1000000",
-                    "endTimeUnixNano": "4000000",
-                    "status": {"code": "ok"},
-                    "attributes": [
-                        attr("request_id", f"INC-{n}"),
-                        attr("package_hash", "sha256:" + "a" * 64),
-                        attr("description", "Reach me at secret@example.com"),
-                        attr("reason", "Contact: secret@example.com"),
-                    ],
+                    "context": {"trace_id": f"t{n}", "span_id": f"s{n}"},
+                    "parent_id": None,
+                    "start_time": f"2026-11-19T10:00:0{n}.000000+00:00",
+                    "end_time": f"2026-11-19T10:00:0{n}.003000+00:00",
+                    "status_code": "OK",
+                    "attributes": {
+                        "request_id": f"INC-{n}",
+                        "package_hash": "sha256:" + "a" * 64,
+                        "description": "Reach me at secret@example.com",
+                        "reason": "Contact: secret@example.com",
+                    },
                 }
-                for n in (1, 2)
+                for n in (2, 1)  # newest first, as Phoenix answers
             ]
-            return {"result": {"resourceSpans": [{"scopeSpans": [{"spans": spans}]}]}}
+            return {"data": data, "next_cursor": None}
 
         return r
 

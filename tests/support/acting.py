@@ -91,7 +91,7 @@ def acting(
             bridge_pilot_prodsim_url=u.prodsim,
             bridge_pilot_lab_url=u.lab,
             bridge_pilot_traffic_url=u.traffic,
-            bridge_jaeger_url=f"{pilot_url}/jaeger",
+            bridge_phoenix_url=f"{pilot_url}/phoenix",
             spec_dir=SPECS,
             redteam_suite=REPO_ROOT / "data" / "redteam" / "suite.yaml",
         )

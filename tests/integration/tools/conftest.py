@@ -159,7 +159,7 @@ def bridge_settings(pilot_url: str, data_dir: Path) -> BridgeSettings:
         bridge_pilot_prodsim_url=u.prodsim,
         bridge_pilot_lab_url=u.lab,
         bridge_pilot_traffic_url=u.traffic,
-        bridge_jaeger_url=f"{pilot_url}/jaeger",
+        bridge_phoenix_url=f"{pilot_url}/phoenix",
         bridge_monitor_interval_s=0.2,
         spec_dir=SPECS,
         redteam_suite=REPO_ROOT / "data" / "redteam" / "suite.yaml",

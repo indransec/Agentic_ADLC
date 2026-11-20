@@ -13,7 +13,7 @@ COMPOSE := docker compose -f deploy/compose.yaml --env-file .env
 UV := uv run
 GITLEAKS_IMAGE := ghcr.io/gitleaks/gitleaks:v8.30.1
 
-.PHONY: help install up down status reset migrate migrate-down lint typecheck test \
+.PHONY: help install up down status reset migrate migrate-down phoenix lint typecheck test \
         migration-check secret-scan check spec-validate spec-register \
         demo demo-auto demo-live demo-reset resilience trace
 
@@ -47,6 +47,11 @@ reset: .env
 
 .env:
 	@echo "missing .env: copy .env.example to .env and fill in every REPLACE_ME" >&2; exit 1
+
+# The trace collector without Docker (deploy/phoenix, its own uv project): UI and OTLP on :6006.
+phoenix:
+	@echo "==> phoenix"
+	cd deploy/phoenix && env -u VIRTUAL_ENV PHOENIX_WORKING_DIR=$(CURDIR)/data/local/phoenix uv run phoenix serve
 
 migrate:
 	@echo "==> migrate"

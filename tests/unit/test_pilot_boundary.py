@@ -15,7 +15,7 @@ PILOT_CODE = sorted(
     p for folder in ("src", "template", "tests") for p in (ROOT / "pilot" / folder).rglob("*.py")
 )
 PILOT_MODULES = ("pilot_tools", "triage_agent")
-SHARED = {"jaeger", "pilot-bridge"}  # trace collector (009 R-09) and the MCP bridge (010 R-01)
+SHARED = {"phoenix", "pilot-bridge"}  # trace collector (009 R-09) and the MCP bridge (010 R-01)
 BRIDGE = "pilot-bridge"
 BRIDGE_MUST_NOT_HAVE = ("ADLC_DB_", "_API_KEY", "ADLC_KNOWLEDGE_TOKEN", "ADLC_SESSION_SECRET")
 

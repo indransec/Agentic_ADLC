@@ -108,7 +108,7 @@ Every platform component is open source and, except the database, the proxy and 
 | Agent tools | Official MCP Python SDK (FastMCP) for all MCP servers | MIT | MCP registry |
 | Artifact storage | Local content-addressed file store behind a storage interface | — (own code) | S3-compatible later (e.g. SeaweedFS, Apache-2.0); avoid MinIO unless AGPL-3.0 is acceptable |
 | UI (inbox + dashboard) | Streamlit (+ Plotly for charts; `st.data_editor` for artifact tables) | Apache-2.0; MIT | Approval and query APIs; React later if needed |
-| Tracing | OpenTelemetry SDK; Langfuse self-hosted | Apache-2.0; MIT (core) | OTel export; Jaeger (Apache-2.0) if Langfuse is too heavy |
+| Tracing | OpenTelemetry SDK; Arize Phoenix (Python, own SQLite store; replaced Jaeger on `feature/sqlite`) | Apache-2.0; Elastic License 2.0 | OTel export (any OTLP collector) |
 | Evaluation (T4, T8) | DeepEval, Ragas where retrieval applies | Apache-2.0 | Eval harness MCP |
 | Red-team (T5) | garak, PyRIT | Apache-2.0; MIT | Red-team harness MCP |
 | Synthetic data and traffic | Faker; Locust | MIT | Pilot tooling |

@@ -67,8 +67,9 @@ class RuntimeSettings(DatabaseSettings):
         json_schema_extra=_meta("path to a readable file"),
         validate_default=True,
     )
+    # The trace collector (Phoenix); the exporter posts to <endpoint>/v1/traces
     otlp_endpoint: str = Field(
-        default="http://jaeger:4318", pattern=r"^https?://", json_schema_extra=_meta("http(s) URL")
+        default="http://phoenix:6006", pattern=r"^https?://", json_schema_extra=_meta("http(s) URL")
     )
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(
         default="INFO", json_schema_extra=_meta("DEBUG, INFO, WARNING or ERROR")
@@ -446,13 +447,14 @@ class BridgeSettings(BaseSettings):
     bridge_pilot_traffic_url: str = Field(
         default="http://pilot-traffic:8200", pattern=r"^https?://", json_schema_extra=_meta("URL")
     )
-    bridge_jaeger_url: str = Field(
-        default="http://jaeger:16686", pattern=r"^https?://", json_schema_extra=_meta("URL")
+    # Phoenix's REST API (deploy/phoenix): the pilot's spans for observability_traces
+    bridge_phoenix_url: str = Field(
+        default="http://phoenix:6006", pattern=r"^https?://", json_schema_extra=_meta("URL")
     )
     bridge_pilot_service: str = Field(
         default="pilot-triage-prod-sim",
         min_length=1,
-        json_schema_extra=_meta("the pilot's service name in traces"),
+        json_schema_extra=_meta("the pilot's service name in traces (its Phoenix project)"),
     )
     bridge_monitor_interval_s: float = Field(
         default=30.0, gt=0, le=600, json_schema_extra=_meta("seconds")

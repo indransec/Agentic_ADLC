@@ -11,16 +11,28 @@ x-db-settings: &db-settings
   ADLC_DB_BUSY_TIMEOUT: ${ADLC_DB_BUSY_TIMEOUT:-30s}
 
 services:
-  jaeger:
+  # Trace collector and viewer (Arize Phoenix, Python): OTLP at :6006/v1/traces, UI and REST API
+  # on the same port. The only service besides the bridge on both networks: the pilot exports to it.
+  phoenix:
     networks: [platform, pilot]
-    image: jaegertracing/jaeger:2.22.0
+    image: adlc-phoenix:0.1.0
+    build:
+      context: ..
+      dockerfile: deploy/phoenix.Dockerfile
     ports:
-      - "${ADLC_JAEGER_UI_PORT:-16686}:16686"
+      - "${ADLC_PHOENIX_UI_PORT:-6006}:6006"
+    volumes:
+      - phoenix-data:/var/lib/phoenix
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:13133/status"]
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:6006/healthz', timeout=2).status == 200 else 1)"
       interval: 5s
       timeout: 3s
-      retries: 20
+      retries: 30
+      start_period: 20s
     restart: unless-stopped
 
   migrate:
@@ -62,7 +74,8 @@ services:
       ADLC_SESSION_TTL: ${ADLC_SESSION_TTL:-8h}
       ADLC_ACCOUNTS_FILE: /run/adlc/accounts.yaml
       ADLC_ROLE_CATALOGUE: adlc-specs/shared/roles.yaml
-      ADLC_OTLP_ENDPOINT: http://jaeger:4318
+      ADLC_OTLP_ENDPOINT: http://phoenix:6006
+      OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=adlc-platform
       ADLC_LOG_LEVEL: ${ADLC_LOG_LEVEL:-INFO}
       ADLC_FILE_STORE_DIR: /var/lib/adlc/files
       # Shared with the orchestrator (feature 007: the API runs the human operations).
@@ -78,8 +91,8 @@ services:
     depends_on:
       register:
         condition: service_completed_successfully
-      jaeger:
-        condition: service_started
+      phoenix:
+        condition: service_healthy
     healthcheck:
       test:
         - CMD
@@ -159,7 +172,8 @@ services:
       <<: *db-settings
       ADLC_DB_CONNECT_TIMEOUT: ${ADLC_DB_CONNECT_TIMEOUT:-60s}
       ADLC_ROLE_CATALOGUE: adlc-specs/shared/roles.yaml
-      ADLC_OTLP_ENDPOINT: http://jaeger:4318
+      ADLC_OTLP_ENDPOINT: http://phoenix:6006
+      OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=adlc-platform
       ADLC_LOG_LEVEL: ${ADLC_LOG_LEVEL:-INFO}
       ADLC_TIME_SCALE: ${ADLC_TIME_SCALE:-1.0}
       ADLC_POLL_INTERVAL: ${ADLC_POLL_INTERVAL:-1s}
@@ -200,8 +214,8 @@ services:
     depends_on:
       register:
         condition: service_completed_successfully
-      jaeger:
-        condition: service_started
+      phoenix:
+        condition: service_healthy
       knowledge:
         condition: service_started
     healthcheck:
@@ -257,7 +271,7 @@ services:
       ADLC_BRIDGE_PILOT_PRODSIM_URL: http://pilot-prodsim:8100
       ADLC_BRIDGE_PILOT_LAB_URL: http://pilot-lab:8300
       ADLC_BRIDGE_PILOT_TRAFFIC_URL: http://pilot-traffic:8200
-      ADLC_BRIDGE_JAEGER_URL: http://jaeger:16686
+      ADLC_BRIDGE_PHOENIX_URL: http://phoenix:6006
       ADLC_BRIDGE_PILOT_SERVICE: ${ADLC_BRIDGE_PILOT_SERVICE:-pilot-triage-prod-sim}
       ADLC_BRIDGE_MONITOR_INTERVAL_S: ${ADLC_BRIDGE_MONITOR_INTERVAL_S:-30}
       ADLC_SPEC_DIR: adlc-specs
@@ -291,7 +305,9 @@ services:
       PILOT_REGISTRY: /packages
       PILOT_RECORDS: /records
       PILOT_WORK: /tmp/pilot-work
-      PILOT_OTLP_ENDPOINT: http://jaeger:4318
+      PILOT_OTLP_ENDPOINT: http://phoenix:6006
+      # the Phoenix project of this environment's traces (the bridge reads prod-sim's)
+      OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=pilot-triage-dev
       PILOT_MODEL_URL: ${PILOT_MODEL_URL:-https://api.openai.com/v1}
       PILOT_MODEL_NAME: ${PILOT_MODEL_NAME:-gpt-4o-mini}
       PILOT_MODEL_API_KEY: ${PILOT_MODEL_API_KEY:-}
@@ -320,7 +336,9 @@ services:
       PILOT_REGISTRY: /packages
       PILOT_RECORDS: /records
       PILOT_WORK: /tmp/pilot-work
-      PILOT_OTLP_ENDPOINT: http://jaeger:4318
+      PILOT_OTLP_ENDPOINT: http://phoenix:6006
+      # the Phoenix project of this environment's traces (the bridge reads prod-sim's)
+      OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=pilot-triage-test
       PILOT_MODEL_URL: ${PILOT_MODEL_URL:-https://api.openai.com/v1}
       PILOT_MODEL_NAME: ${PILOT_MODEL_NAME:-gpt-4o-mini}
       PILOT_MODEL_API_KEY: ${PILOT_MODEL_API_KEY:-}
@@ -349,7 +367,9 @@ services:
       PILOT_REGISTRY: /packages
       PILOT_RECORDS: /records
       PILOT_WORK: /tmp/pilot-work
-      PILOT_OTLP_ENDPOINT: http://jaeger:4318
+      PILOT_OTLP_ENDPOINT: http://phoenix:6006
+      # the Phoenix project of this environment's traces (the bridge reads prod-sim's)
+      OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=pilot-triage-prod-sim
     volumes:
       - pilot-packages:/packages
       - pilot-records:/records
@@ -433,6 +453,7 @@ services:
 
 volumes:
   adlc-db:
+  phoenix-data:
   adlc-files:
   pilot-packages:
   pilot-records:

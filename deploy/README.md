@@ -1,6 +1,6 @@
 # Deployment notes
 
-`compose.yaml` runs the demo host: Jaeger, the one-shot `migrate` and `register` services, the
+`compose.yaml` runs the demo host: Phoenix (traces), the one-shot `migrate` and `register` services, the
 API and the orchestrator. The platform database is one SQLite file on the `adlc-db` volume
 (`/var/lib/adlc/db/adlc.db`), shared by `migrate`, `register`, `api`, `orchestrator` and `tools`;
 SQLite allows one writer at a time and the file must stay on this host's local disk.
@@ -63,8 +63,8 @@ Only a person releases the prod-sim kill switch: `pt pilot-kill release --reason
 
 The pilot, an Incident Triage Assistant, runs on its own network (`adlc-pilot`) in the
 `adlc-pilot:0.1.0` image: `pilot-dev`, `pilot-test` and `pilot-prodsim` (environment hosts) and
-`pilot-traffic`. It publishes no ports and mounts no Docker socket. Only Jaeger, and later feature
-010's MCP servers, join both networks.
+`pilot-traffic`. It publishes no ports and mounts no Docker socket. Only Phoenix (the trace
+collector), and feature 010's pilot bridge, join both networks.
 
 ```bash
 pt() { docker compose -f deploy/compose.yaml --env-file .env run --rm pilot-tools "$@"; }   # bash or zsh
@@ -78,4 +78,14 @@ deploy/pilot-isolation-check.sh                # both directions closed (SC-007)
 
 Pilot settings use the `PILOT_` prefix (see `.env.example`); `PILOT_MODEL_API_KEY` is only for the
 optional real model in dev and test, and is empty by default.
+
+## Traces (Arize Phoenix)
+
+The `phoenix` service (`deploy/phoenix`, its own locked uv project, image `adlc-phoenix:0.1.0`)
+receives OTLP over HTTP on `:6006/v1/traces` and serves the UI and REST API on the same port
+(`ADLC_PHOENIX_UI_PORT`). Its data is a SQLite file on the `phoenix-data` volume. Projects come
+from `OTEL_RESOURCE_ATTRIBUTES` (`openinference.project.name`): `adlc-platform` for the API and the
+orchestrator, `pilot-triage-<environment>` for each pilot host; the pilot bridge reads
+`pilot-triage-prod-sim` through `ADLC_BRIDGE_PHOENIX_URL`. A stopped Phoenix never fails a request:
+exports are batched and their failures logged.
 

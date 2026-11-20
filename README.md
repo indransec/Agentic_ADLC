@@ -30,7 +30,9 @@ make up                         # returns when every service is healthy
 curl -s localhost:${ADLC_API_PORT:-8000}/health
 ```
 
-The Jaeger UI is at `http://localhost:16686` (service `adlc-api`). If a port is already taken, change `ADLC_API_PORT` or `ADLC_JAEGER_UI_PORT` in `.env`.
+The Phoenix trace UI is at `http://localhost:6006` (project `adlc-platform`; each pilot environment has its own project). If a port is already taken, change `ADLC_API_PORT` or `ADLC_PHOENIX_UI_PORT` in `.env`.
+
+The platform's infrastructure is Python only: the database is a SQLite file and the trace collector is Arize Phoenix (`deploy/phoenix`). Without Docker, run `make phoenix`, then the platform processes with `uv run` (`adlc-api`, `adlc-orchestrator run`, ...).
 
 ## Commands
 

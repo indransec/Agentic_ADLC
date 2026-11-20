@@ -1,7 +1,8 @@
 """Worker processes: a package extracted to a folder, served by uvicorn on 127.0.0.1 (R-03).
 
 The worker imports the agent code from the package itself (``template/agent`` first on the path),
-so what runs is what was built. Only ``PILOT_*`` settings and a minimal environment are passed on.
+so what runs is what was built. Only ``PILOT_*`` settings, the trace project and a minimal
+environment are passed on.
 """
 
 import os
@@ -17,7 +18,8 @@ from typing import Any
 import httpx
 
 START_TIMEOUT_S = 30.0
-PASSED_ON = ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR")
+# OTEL_RESOURCE_ATTRIBUTES: the trace collector's project for this environment (deploy/phoenix)
+PASSED_ON = ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "OTEL_RESOURCE_ATTRIBUTES")
 
 
 def free_port() -> int:
@@ -74,13 +76,10 @@ class Worker:
                 self.process.wait(timeout=10)
 
 
-def start_worker(
-    worker_id: str,
-    root: Path,
-    package_hash: str,
-    environment: str,
-    settings: Mapping[str, str],
-) -> Worker:
+def worker_environment(
+    root: Path, package_hash: str, environment: str, settings: Mapping[str, str]
+) -> dict[str, str]:
+    """What a worker process sees: the passed-on variables and its own ``PILOT_*`` settings."""
     env = {k: v for k, v in os.environ.items() if k in PASSED_ON or k.startswith("PILOT_")}
     env.update(
         {
@@ -92,6 +91,17 @@ def start_worker(
     )
     if "model_mode" in settings:
         env["PILOT_MODEL_MODE"] = settings["model_mode"]
+    return env
+
+
+def start_worker(
+    worker_id: str,
+    root: Path,
+    package_hash: str,
+    environment: str,
+    settings: Mapping[str, str],
+) -> Worker:
+    env = worker_environment(root, package_hash, environment, settings)
     port = free_port()
     process = subprocess.Popen(  # noqa: S603 - fixed argv, no shell
         [
