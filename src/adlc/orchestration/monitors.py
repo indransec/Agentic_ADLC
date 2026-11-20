@@ -98,7 +98,7 @@ class MonitorEvaluator:
             usecases = [
                 str(u)
                 for u in conn.execute(
-                    text("SELECT usecase_id FROM run.usecase WHERE status = 'active'")
+                    text("SELECT usecase_id FROM usecase WHERE status = 'active'")
                 ).scalars()
                 if only is None or str(u) in only
             ]
@@ -144,7 +144,7 @@ class MonitorEvaluator:
         with self.engine.connect() as conn:
             return conn.execute(
                 text(
-                    "SELECT inputs FROM run.policy_decision WHERE run_id = :r AND check_id = :c "
+                    "SELECT inputs FROM policy_decision WHERE run_id = :r AND check_id = :c "
                     "ORDER BY policy_decision_id DESC LIMIT 1"
                 ),
                 {"r": run_id, "c": monitor_id},
@@ -154,7 +154,7 @@ class MonitorEvaluator:
     def _latest_run(conn: Any, usecase: str, terminal: str) -> str | None:
         found = conn.execute(
             text(
-                "SELECT run_id FROM run.terminal_run WHERE usecase_id = :u AND terminal_id = :t "
+                "SELECT run_id FROM terminal_run WHERE usecase_id = :u AND terminal_id = :t "
                 "ORDER BY run_number DESC LIMIT 1"
             ),
             {"u": usecase, "t": terminal},
@@ -165,7 +165,7 @@ class MonitorEvaluator:
     def _previous(conn: Any, usecase: str, monitor_id: str) -> str | None:
         row = conn.execute(
             text(
-                "SELECT passed, value FROM run.policy_decision WHERE usecase_id = :u "
+                "SELECT passed, value FROM policy_decision WHERE usecase_id = :u "
                 "AND check_id = :c ORDER BY policy_decision_id DESC LIMIT 1"
             ),
             {"u": usecase, "c": monitor_id},

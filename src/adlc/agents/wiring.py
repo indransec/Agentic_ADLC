@@ -32,7 +32,7 @@ def reviewer_ids(engine: Engine) -> set[str]:
         rows = conn.execute(
             text(
                 "SELECT DISTINCT spec_json->'terminal'->'actors'->>'reviewer' "
-                "FROM spec.spec_registry WHERE status = 'active'"
+                "FROM spec_registry WHERE status = 'active'"
             )
         ).scalars()
         return {str(r) for r in rows if r}

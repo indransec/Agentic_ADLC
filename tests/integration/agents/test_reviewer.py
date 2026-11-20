@@ -12,9 +12,9 @@ from adlc.agents.fake import FakeGateway, reply
 from adlc.agents.gateway import ProviderReply
 from adlc.agents.store import SqlCallRecorder, attempts
 from adlc.policy.synthetic import load_synthetic_artifacts
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import SYNTHETIC, Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 from .support import MODELS, PRIMARY, _model_t1
 
@@ -115,7 +115,7 @@ def test_review_scores_every_item_and_is_recorded(reviewing: Any) -> None:
     )
     assert rec["checklist_scores"] == {i: 2 for i in ITEMS}
     rows = h.sql(
-        "SELECT item_id, score, finding FROM run.checklist_result WHERE run_id = :r "
+        "SELECT item_id, score, finding FROM checklist_result WHERE run_id = :r "
         "ORDER BY checklist_result_id",
         r=t1,
     )
@@ -129,7 +129,7 @@ def test_review_scores_every_item_and_is_recorded(reviewing: Any) -> None:
     for role in ("product_owner", "business_owner"):  # passing against a rework needs a reason
         h.service.decide(person(role), t1, "pass", reason="targets agreed with finance")
     h.drain()
-    record = h.sql("SELECT content_json FROM ledger.ledger_record WHERE run_id = :r", r=t1)[0][0]
+    record = h.sql("SELECT content_json FROM ledger_record WHERE run_id = :r", r=t1)[0][0]
     assert record["reviewer_recommendation"]["root_cause"] == "requirement"
 
 
@@ -194,7 +194,7 @@ def test_reviewer_clarification_pauses_the_run(reviewing: Any) -> None:
     t1 = h.active(usecase, "T1")
     assert (t1.state, t1.return_state) == ("awaiting_clarification", "reviewing")
     row = h.sql(
-        "SELECT asked_by, addressed_role, looked_in FROM run.clarification_round WHERE run_id = :r",
+        "SELECT asked_by, addressed_role, looked_in FROM clarification_round WHERE run_id = :r",
         r=t1.run_id,
     )[0]
     assert tuple(row) == ("reviewer", "product_owner", ["kpis", "T0 evidence"])

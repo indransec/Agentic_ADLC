@@ -6,7 +6,7 @@ import subprocess
 
 import pytest
 
-from tests.support.pg import REPO_ROOT
+from tests.support.db import REPO_ROOT
 
 GUARD = REPO_ROOT / "deploy" / "require-env.sh"
 

@@ -1,9 +1,9 @@
 """T040: sign-off rule by tier and by mode; boards and external bodies are recorded only (FR-009b, FR-009c)."""
 
 from adlc.orchestration.stubs import StubPolicy
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 
 def test_by_tier(h: Harness) -> None:
@@ -50,7 +50,7 @@ def _notified(h: Harness, run_id: str) -> list[object]:
     return [
         r[0]["bodies"]
         for r in h.sql(
-            "SELECT detail FROM run.run_activity WHERE run_id = :r AND outcome = 'notified'",
+            "SELECT detail FROM run_activity WHERE run_id = :r AND outcome = 'notified'",
             r=run_id,
         )
     ]
@@ -61,7 +61,7 @@ def test_board_and_external_bodies_are_notified(h: Harness) -> None:
     _, t5 = walk_to(h, "T5", tier="high")
     h.pass_run(t5)
     assert _notified(h, t5) == [["rai_board"]]
-    payload = h.sql("SELECT payload FROM events.outbox_event WHERE causation_run_id = :r", r=t5)
+    payload = h.sql("SELECT payload FROM outbox_event WHERE causation_run_id = :r", r=t5)
     assert payload[0][0]["notify_bodies"] == ["rai_board"]
     t6 = h.active(h.run(t5).usecase_id, "T6").run_id
     h.pass_run(t6)

@@ -36,7 +36,7 @@ A test keeps the code and that table in step.
 Use `SpecRegistry` (`registry.py`), never YAML, at run time:
 
 ```python
-registry = SqlSpecRegistry(app_engine)  # or InMemorySpecRegistry.from_bundle(bundle)
+registry = SqlSpecRegistry(engine)  # or InMemorySpecRegistry.from_bundle(bundle)
 registry.terminals_opened_by("T4.rework.implementation")  # (TerminalRef("T3", "1.0.0"),)
 registry.outcome_route("T5", "exception").recheck_at  # ("T6", "T8")
 registry.timeline("T2", "medium").max_clarification_rounds  # 2

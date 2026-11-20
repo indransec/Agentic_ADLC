@@ -1,10 +1,9 @@
 """The orchestrator process loop (research R-11): deliver events, advance automatic runs, fire
 timers, beat the heartbeat. ``drain`` repeats until nothing is left, which makes tests and
-scenarios deterministic; ``run_forever`` waits on ``LISTEN adlc_outbox`` between rounds.
+scenarios deterministic; ``run_forever`` waits ``ADLC_POLL_INTERVAL`` between rounds.
 """
 
 import logging
-import select
 import socket
 import threading
 from dataclasses import dataclass
@@ -13,23 +12,22 @@ from datetime import timedelta
 from sqlalchemy import Engine
 
 from adlc.orchestration import store
-from adlc.orchestration.engine import EngineConfig, PostgresTerminalRun
+from adlc.orchestration.engine import EngineConfig, SqlTerminalRun
 from adlc.orchestration.interfaces import AgentRunner, Clock, PolicyEngine, Reviewer
 from adlc.orchestration.monitors import MonitorEvaluator
 from adlc.orchestration.outbox import OutboxProcessor
-from adlc.orchestration.router import FaultHook, PostgresRouter
+from adlc.orchestration.router import FaultHook, SqlRouter
 from adlc.orchestration.service import OrchestratorService
 from adlc.orchestration.timers import TimerLoop
 from adlc.spec_toolkit.registry import SpecRegistry
 
 log = logging.getLogger(__name__)
-CHANNEL = "adlc_outbox"
 
 
 @dataclass
 class Orchestrator:
-    runs: PostgresTerminalRun
-    router: PostgresRouter
+    runs: SqlTerminalRun
+    router: SqlRouter
     outbox: OutboxProcessor
     timers: TimerLoop
     service: OrchestratorService
@@ -61,24 +59,12 @@ class Orchestrator:
         return steps
 
     def run_forever(self, poll_interval: timedelta, stop: threading.Event) -> None:
-        raw = self.runs.engine.raw_connection()
-        try:
-            dbapi = raw.driver_connection
-            if dbapi is None:
-                raise RuntimeError("no database connection for LISTEN")
-            dbapi.autocommit = True
-            dbapi.execute(f"LISTEN {CHANNEL}")
-            while not stop.is_set():
-                try:
-                    self.run_once()
-                except Exception:  # keep the loop alive; the failing step is retried
-                    log.exception("orchestrator round failed")
-                ready, _, _ = select.select([dbapi.fileno()], [], [], poll_interval.total_seconds())
-                if ready:
-                    for _ in dbapi.notifies(timeout=0):
-                        pass
-        finally:
-            raw.close()
+        while not stop.is_set():
+            try:
+                self.run_once()
+            except Exception:  # keep the loop alive; the failing step is retried
+                log.exception("orchestrator round failed")
+            stop.wait(poll_interval.total_seconds())
 
 
 def build_orchestrator(
@@ -95,8 +81,8 @@ def build_orchestrator(
     worker_id: str | None = None,
 ) -> Orchestrator:
     config = config or EngineConfig()
-    runs = PostgresTerminalRun(engine, registry, policy, agent, reviewer, clock, config)
-    router = PostgresRouter(runs, fault)
+    runs = SqlTerminalRun(engine, registry, policy, agent, reviewer, clock, config)
+    router = SqlRouter(runs, fault)
     return Orchestrator(
         runs=runs,
         router=router,

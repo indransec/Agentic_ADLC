@@ -26,7 +26,7 @@ from adlc.agents.fake import FakeGateway, reply
 from adlc.agents.gateway import CallRecorder, Outcome, ProviderReply, Transport
 from adlc.inbox.rules import waiver_approvers
 from adlc.orchestration import routing, spec_view
-from adlc.orchestration.engine import PostgresTerminalRun, awaiting
+from adlc.orchestration.engine import SqlTerminalRun, awaiting
 from adlc.orchestration.service import Actor, NotAuthorised, OrchestratorService
 from adlc.orchestration.states import RunState
 from adlc.orchestration.store import RunRow
@@ -225,7 +225,7 @@ class Replayer:
     def __init__(
         self,
         service: OrchestratorService,
-        runs: PostgresTerminalRun,
+        runs: SqlTerminalRun,
         drain: Callable[[], int],
         people: People,
         max_rounds: int = MAX_ROUNDS,
@@ -301,7 +301,7 @@ class Replayer:
             open_round = conn.execute(
                 text(
                     "SELECT c.clarification_id, c.addressed_role, c.questions FROM "
-                    "run.clarification_round c LEFT JOIN run.clarification_answer a "
+                    "clarification_round c LEFT JOIN clarification_answer a "
                     "USING (clarification_id) WHERE c.run_id = :r AND a.clarification_id IS NULL"
                 ),
                 {"r": run.run_id},
@@ -423,28 +423,28 @@ class Replayer:
             attempts = conn.execute(
                 text(
                     "SELECT agent_id, agent_version, prompt_hash, playbook_hashes, steps, "
-                    "tokens_in, tokens_out, cost_usd FROM run.agent_attempt WHERE run_id = :r "
+                    "tokens_in, tokens_out, cost_usd FROM agent_attempt WHERE run_id = :r "
                     "AND kind = 'build' ORDER BY agent_attempt_id"
                 ),
                 {"r": run.run_id},
             ).all()
             models = conn.execute(
                 text(
-                    "SELECT DISTINCT model FROM run.model_call WHERE run_id = :r AND "
+                    "SELECT DISTINCT model FROM model_call WHERE run_id = :r AND "
                     "outcome = 'ok' ORDER BY model"
                 ),
                 {"r": run.run_id},
             ).scalars()
             citations = conn.execute(
-                text("SELECT count(*) FROM run.artifact_citation WHERE run_id = :r"),
+                text("SELECT count(*) FROM artifact_citation WHERE run_id = :r"),
                 {"r": run.run_id},
             ).scalar_one()
             rounds = conn.execute(
-                text("SELECT count(*) FROM run.clarification_round WHERE run_id = :r"),
+                text("SELECT count(*) FROM clarification_round WHERE run_id = :r"),
                 {"r": run.run_id},
             ).scalar_one()
             tool_calls = conn.execute(
-                text("SELECT count(*) FROM tools.tool_call WHERE run_id = :r"), {"r": run.run_id}
+                text("SELECT count(*) FROM tool_call WHERE run_id = :r"), {"r": run.run_id}
             ).scalar_one()
         last = attempts[-1] if attempts else None
         costs = [a[7] for a in attempts]

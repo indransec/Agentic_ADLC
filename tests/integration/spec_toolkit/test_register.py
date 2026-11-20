@@ -11,7 +11,7 @@ from sqlalchemy import Engine, text
 
 from adlc.spec_toolkit import register as register_module
 from adlc.spec_toolkit.register import RegistrationRefused, register
-from tests.support.pg import PlatformDatabase
+from tests.support.db import PlatformDatabase
 
 ROOT = Path(__file__).resolve().parents[3]
 PROMPTS = len(list((ROOT / "adlc-specs" / "prompts").glob("*.md")))  # 006, 008, 011 prompts
@@ -61,16 +61,12 @@ def test_first_registration_creates_everything(owner_engine: Engine, specs: Path
     report = register(specs, owner_engine)
     assert time.monotonic() - started < 30  # SC-005
     assert report.registered_count == TOTAL
-    assert (
-        _count(owner_engine, "SELECT count(*) FROM spec.spec_registry WHERE status='active'") == 10
-    )
-    assert (
-        _count(owner_engine, "SELECT count(*) FROM spec.spec_catalogue WHERE status='active'") == 16
-    )
-    assert _count(owner_engine, "SELECT count(*) FROM spec.playbook_registry") == 31
-    assert _count(owner_engine, "SELECT count(*) FROM spec.prompt_registry") == PROMPTS
-    assert _count(owner_engine, "SELECT count(*) FROM spec.spec_timeline") == 30
-    assert _count(owner_engine, "SELECT count(*) FROM spec.spec_event_route") == 7
+    assert _count(owner_engine, "SELECT count(*) FROM spec_registry WHERE status='active'") == 10
+    assert _count(owner_engine, "SELECT count(*) FROM spec_catalogue WHERE status='active'") == 16
+    assert _count(owner_engine, "SELECT count(*) FROM playbook_registry") == 31
+    assert _count(owner_engine, "SELECT count(*) FROM prompt_registry") == PROMPTS
+    assert _count(owner_engine, "SELECT count(*) FROM spec_timeline") == 30
+    assert _count(owner_engine, "SELECT count(*) FROM spec_event_route") == 7
 
 
 def test_second_registration_writes_nothing(owner_engine: Engine, specs: Path) -> None:
@@ -85,7 +81,7 @@ def test_changed_content_same_version_refused(owner_engine: Engine, specs: Path)
     _edit(specs / "terminals" / "T0.yaml", "/terminal/timeline/reminder_after", "3d")
     with pytest.raises(RegistrationRefused, match="T0"):
         register(specs, owner_engine)
-    assert _count(owner_engine, "SELECT count(*) FROM spec.spec_registry") == 10
+    assert _count(owner_engine, "SELECT count(*) FROM spec_registry") == 10
 
 
 def test_bump_registers_and_deprecates(owner_engine: Engine, specs: Path) -> None:
@@ -100,7 +96,7 @@ def test_bump_registers_and_deprecates(owner_engine: Engine, specs: Path) -> Non
     with owner_engine.connect() as conn:
         rows = conn.execute(
             text(
-                "SELECT version, status, deprecated_at IS NOT NULL FROM spec.spec_registry "
+                "SELECT version, status, deprecated_at IS NOT NULL FROM spec_registry "
                 "WHERE terminal_id='T0' ORDER BY version"
             )
         ).all()
@@ -132,13 +128,13 @@ def test_validation_errors_refused_before_writing(owner_engine: Engine, specs: P
     )
     with pytest.raises(RegistrationRefused, match="V-06"):
         register(specs, owner_engine)
-    assert _count(owner_engine, "SELECT count(*) FROM spec.spec_registry") == 0
+    assert _count(owner_engine, "SELECT count(*) FROM spec_registry") == 0
 
 
 def test_dry_run_leaves_nothing(owner_engine: Engine, specs: Path) -> None:
     report = register(specs, owner_engine, dry_run=True)
     assert report.registered_count == TOTAL
-    assert _count(owner_engine, "SELECT count(*) FROM spec.spec_registry") == 0
+    assert _count(owner_engine, "SELECT count(*) FROM spec_registry") == 0
 
 
 def test_interrupted_registration_leaves_nothing(
@@ -153,8 +149,8 @@ def test_interrupted_registration_leaves_nothing(
     monkeypatch.setattr(register_module, "_insert_projection", explode)
     with pytest.raises(RuntimeError):
         register(specs, owner_engine)
-    assert _count(owner_engine, "SELECT count(*) FROM spec.spec_registry") == 0
-    assert _count(owner_engine, "SELECT count(*) FROM spec.spec_trigger") == 0
+    assert _count(owner_engine, "SELECT count(*) FROM spec_registry") == 0
+    assert _count(owner_engine, "SELECT count(*) FROM spec_trigger") == 0
 
 
 def test_concurrent_registrations_serialise(
@@ -176,6 +172,4 @@ def test_concurrent_registrations_serialise(
         t.join()
     assert errors == []
     assert sorted(results) == [0, TOTAL]
-    assert (
-        _count(owner_engine, "SELECT count(*) FROM spec.spec_registry WHERE status='active'") == 10
-    )
+    assert _count(owner_engine, "SELECT count(*) FROM spec_registry WHERE status='active'") == 10

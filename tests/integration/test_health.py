@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from adlc.api.app import create_app
 from adlc.config.settings import Settings
 from tests.integration.conftest import settings_for
-from tests.support.pg import PlatformDatabase
+from tests.support.db import PlatformDatabase
 
 
 def test_health_ok_without_auth(api_settings: Settings) -> None:
@@ -22,7 +22,7 @@ def test_health_503_when_database_unreachable(
 ) -> None:
     accounts = tmp_path / "accounts.yaml"
     accounts.write_text("accounts: []\n")
-    settings = settings_for(platform_db, accounts, db_port=1)
+    settings = settings_for(platform_db, accounts, db_path=tmp_path / "missing" / "adlc.db")
     with TestClient(create_app(settings)) as client:
         response = client.get("/health")
     assert response.status_code == 503
@@ -32,10 +32,5 @@ def test_health_503_when_database_unreachable(
 def test_health_body_reveals_no_connection_details(api_settings: Settings) -> None:
     with TestClient(create_app(api_settings)) as client:
         body = client.get("/health").text
-    for value in (
-        api_settings.db_host,
-        str(api_settings.db_port),
-        api_settings.db_app_user,
-        api_settings.db_app_password.get_secret_value(),
-    ):
-        assert value not in body
+    assert str(api_settings.db_path) not in body
+    assert api_settings.db_path.name not in body

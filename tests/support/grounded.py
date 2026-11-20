@@ -14,9 +14,9 @@ from adlc.agents.replay import AgentReplies, Planned, replay_gateway
 from adlc.agents.store import SqlCallRecorder
 from adlc.spec_toolkit.loader import load_bundle
 from adlc.spec_toolkit.registry import InMemorySpecRegistry
+from tests.support.db import REPO_ROOT, PlatformDatabase
 from tests.support.knowledge import TOKEN, knowledge_server
 from tests.support.orchestration import SPECS, Harness, harness
-from tests.support.pg import REPO_ROOT, PlatformDatabase
 
 KNOWLEDGE = REPO_ROOT / "data" / "knowledge"
 BUNDLE = load_bundle(SPECS)

@@ -86,7 +86,6 @@ def api_for(
         synthetic_dir=SYNTHETIC,
         spec_dir=SPECS,
         file_store_dir=tmp_path / "files",
-        db_name=h.db.name,  # the harness's per-test database
         **overrides,
     )
     app = create_app(settings, span_exporter)

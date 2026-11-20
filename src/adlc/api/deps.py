@@ -18,7 +18,7 @@ from adlc.config.settings import Settings
 from adlc.identity.protocol import Person
 from adlc.ledger.service import LedgerService
 from adlc.ledger.storage import FileStore, LedgerContentStore
-from adlc.orchestration.engine import EngineConfig, PostgresTerminalRun
+from adlc.orchestration.engine import EngineConfig, SqlTerminalRun
 from adlc.orchestration.interfaces import Clock, SystemClock
 from adlc.orchestration.service import Actor, OrchestratorService
 from adlc.orchestration.stubs import StubAgent, StubReviewer
@@ -40,7 +40,7 @@ class Services:
     clock: Clock = field(default_factory=SystemClock)  # tests share the harness clock
 
     @cached_property
-    def runs(self) -> PostgresTerminalRun:
+    def runs(self) -> SqlTerminalRun:
         registry = SqlSpecRegistry(self.engine)
         clock = self.clock
         policy = build_policy_engine(
@@ -52,7 +52,7 @@ class Services:
                 self.settings.accounts_file, self.settings.role_catalogue, self.settings.env
             ),
         )
-        return PostgresTerminalRun(
+        return SqlTerminalRun(
             self.engine, registry, policy, StubAgent(), StubReviewer(), clock, EngineConfig()
         )
 

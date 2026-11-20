@@ -76,8 +76,7 @@ class RuntimeReviewer:
             attempt = 1 + int(
                 conn.execute(
                     text(
-                        "SELECT count(*) FROM run.agent_attempt "
-                        "WHERE run_id = :r AND kind = 'review'"
+                        "SELECT count(*) FROM agent_attempt WHERE run_id = :r AND kind = 'review'"
                     ),
                     {"r": context.run_id},
                 ).scalar()

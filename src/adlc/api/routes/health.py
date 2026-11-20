@@ -22,7 +22,6 @@ class Health(BaseModel):
 def _database(engine: Engine) -> CheckState:
     try:
         with engine.connect() as connection:
-            connection.execute(text("SET LOCAL statement_timeout = 2000"))
             connection.execute(text("SELECT 1"))
     except SQLAlchemyError:
         log.warning("health: database check failed")

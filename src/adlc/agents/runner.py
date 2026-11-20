@@ -2,7 +2,7 @@
 
 For every build attempt the runner resolves the agent from the catalogue, builds and hashes the
 context pack, then either runs the stub (terminal agents until feature 008) or the bounded model
-loop. Output is validated in both cases, and every attempt is recorded in ``run.agent_attempt``.
+loop. Output is validated in both cases, and every attempt is recorded in ``agent_attempt``.
 """
 
 import re

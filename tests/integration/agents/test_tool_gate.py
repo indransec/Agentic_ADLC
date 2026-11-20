@@ -12,9 +12,9 @@ from adlc.agents.fake import FakeGateway, reply
 from adlc.agents.gateway import ProviderReply
 from adlc.agents.store import SqlCallRecorder
 from adlc.agents.tools import FakeTool, ToolOutput, ToolRefused
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness
-from tests.support.pg import PlatformDatabase
 
 from .support import BUNDLE, GOOD, MODELS, PRIMARY, T1_AGENT
 
@@ -100,7 +100,7 @@ def test_allowed_tool_runs_and_denied_tool_is_refused(gated: Any) -> None:
         "ledger_writer was refused" in after_writer and "denied by write:ledger.T0" in after_writer
     )
     decisions = h.sql(
-        "SELECT rule, passed FROM run.policy_decision WHERE run_id = :r AND kind = 'authorize' "
+        "SELECT rule, passed FROM policy_decision WHERE run_id = :r AND kind = 'authorize' "
         "ORDER BY policy_decision_id",
         r=t1,
     )

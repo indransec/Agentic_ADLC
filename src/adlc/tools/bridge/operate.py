@@ -3,9 +3,10 @@ research R-11).
 
 Metrics come from the traffic generator (accuracy and leak rate over its window) and prod-sim's
 hosts (cost, latency, RAI counts per package), flattened into one set of named metrics that
-monitors evaluate. Traces come from Jaeger's v3 API and keep only allowlisted attributes, so no
-incident text or personal data leaves. Monitors are per use case, evaluated in the background and
-on read; a breach is recorded once per episode, with value and time, and re-arms after recovery.
+monitors evaluate. Traces come from Phoenix's REST API (the project named after the pilot's
+service) and keep only allowlisted attributes, so no incident text or personal data leaves.
+Monitors are per use case, evaluated in the background and on read; a breach is recorded once per
+episode, with value and time, and re-arms after recovery.
 """
 
 import operator
@@ -13,6 +14,7 @@ import threading
 from collections.abc import Callable, Coroutine
 from datetime import UTC, datetime, timedelta
 from typing import Any
+from urllib.parse import quote
 
 import anyio
 import anyio.to_thread
@@ -22,6 +24,8 @@ from adlc.tools.bridge.records import Records
 from adlc.tools.mcp_app import Call, Handler, ToolFailure
 
 SPAN_ATTRIBUTES = ("request_id", "package_hash", "model", "tool")
+SPANS_PER_TRACE = 5  # a request span, its tool spans and its model span
+MAX_SPANS = 1000
 OPERATORS: dict[str, Callable[[float, float], bool]] = {
     "<": operator.lt,
     "<=": operator.le,
@@ -41,8 +45,8 @@ HOST_COUNTS = ("toxic_outputs", "pii_outputs", "jailbreak_attempts", "tokens", "
 
 
 class Telemetry:
-    def __init__(self, pilot: Pilot, jaeger_url: str, service: str) -> None:
-        self.pilot, self.jaeger_url, self.service = pilot, jaeger_url.rstrip("/"), service
+    def __init__(self, pilot: Pilot, phoenix_url: str, service: str) -> None:
+        self.pilot, self.phoenix_url, self.service = pilot, phoenix_url.rstrip("/"), service
 
     def metrics(self) -> dict[str, Any]:
         traffic = self.pilot.request("GET", self.pilot.urls.traffic, "/metrics")
@@ -74,41 +78,51 @@ class Telemetry:
         }
 
     def traces(self, request_id: str | None, minutes: int, limit: int) -> dict[str, Any]:
+        """The service's spans of the last ``minutes``, oldest first, allowlisted attributes only.
+
+        Phoenix keeps each service's spans in a project of the same name; a service that has sent
+        nothing yet has no project (404), which reads as no spans."""
         end = datetime.now(UTC)
         params = {
-            "query.service_name": self.service,
-            "query.start_time_min": (end - timedelta(minutes=minutes)).isoformat(),
-            "query.start_time_max": end.isoformat(),
-            "query.search_depth": str(max(limit, 20)),
+            "start_time": (end - timedelta(minutes=minutes)).isoformat(),
+            "end_time": end.isoformat(),
+            "limit": str(min(max(limit, 20) * SPANS_PER_TRACE, MAX_SPANS)),
         }
         found = self.pilot.request(
-            "GET", self.jaeger_url, "/api/v3/traces", params=params, missing_ok=True
+            "GET",
+            self.phoenix_url,
+            f"/v1/projects/{quote(self.service, safe='')}/spans",
+            params=params,
+            missing_ok=True,
         )
         spans: list[dict[str, Any]] = []
-        for resource in ((found or {}).get("result") or {}).get("resourceSpans") or []:
-            for scope in resource.get("scopeSpans") or []:
-                for span in scope.get("spans") or []:
-                    kept = {
-                        a["key"]: next(iter((a.get("value") or {}).values()), None)
-                        for a in span.get("attributes") or []
-                        if a.get("key") in SPAN_ATTRIBUTES
-                    }
-                    if request_id and kept.get("request_id") != request_id:
-                        continue
-                    start, stop = (
-                        int(span.get("startTimeUnixNano", 0)),
-                        int(span.get("endTimeUnixNano", 0)),
-                    )
-                    spans.append(
-                        {
-                            "trace_id": span.get("traceId"),
-                            "name": span.get("name"),
-                            "duration_ms": round((stop - start) / 1e6, 3),
-                            "status": (span.get("status") or {}).get("code", "unset"),
-                            **{k: kept.get(k) for k in SPAN_ATTRIBUTES if k in kept},
-                        }
-                    )
+        for span in sorted((found or {}).get("data") or [], key=lambda s: s.get("start_time", "")):
+            attributes = span.get("attributes") or {}
+            kept = {k: attributes[k] for k in SPAN_ATTRIBUTES if k in attributes}
+            if request_id and kept.get("request_id") != request_id:
+                continue
+            started, ended = _time(span.get("start_time")), _time(span.get("end_time"))
+            spans.append(
+                {
+                    "trace_id": (span.get("context") or {}).get("trace_id"),
+                    "name": span.get("name"),
+                    "duration_ms": (
+                        round((ended - started).total_seconds() * 1000, 3)
+                        if started and ended
+                        else None
+                    ),
+                    "status": str(span.get("status_code") or "unset").lower(),
+                    **kept,
+                }
+            )
         return {"service": self.service, "spans": spans[:limit]}
+
+
+def _time(value: Any) -> datetime | None:
+    try:
+        return datetime.fromisoformat(str(value))
+    except ValueError:
+        return None
 
 
 class Monitors:

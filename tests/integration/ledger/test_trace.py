@@ -3,7 +3,7 @@ actor and evidence hash; missing links are reported; the chain verification is i
 
 from adlc.ledger.trace import KINDS, TraceItem, gaps, trace
 from tests.integration.dashboard.walk import walked
-from tests.support.pg import PlatformDatabase
+from tests.support.db import PlatformDatabase
 
 
 def test_a_walked_use_case_is_fully_traceable(orch_template: PlatformDatabase) -> None:

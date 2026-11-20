@@ -19,9 +19,9 @@ from adlc.inbox.changes import ChangeService
 from adlc.orchestration.monitors import MonitorEvaluator
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 from tests.support.acting import acting
+from tests.support.db import REPO_ROOT, PlatformDatabase
 from tests.support.fake_pilot import FakePilot
 from tests.support.orchestration import Harness, person
-from tests.support.pg import REPO_ROOT, PlatformDatabase
 
 SCRIPT = REPO_ROOT / "demo" / "script.yaml"
 AGENTS = tuple(

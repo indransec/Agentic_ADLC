@@ -30,7 +30,7 @@ def main() -> None:
     except RoleCatalogueMismatch as exc:
         print(f"adlc: configuration error\n  {exc}", file=sys.stderr)
         sys.exit(2)
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_config=None)  # noqa: S104  # container port
+    uvicorn.run(app, host="0.0.0.0", port=settings.api_port, log_config=None)  # noqa: S104
 
 
 if __name__ == "__main__":

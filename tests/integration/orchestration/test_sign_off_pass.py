@@ -4,8 +4,8 @@ import pytest
 
 from adlc.orchestration.service import Actor, InvalidDecision, NotAuthorised
 from adlc.orchestration.stubs import StubAgent, StubPolicy
+from tests.support.db import PlatformDatabase
 from tests.support.orchestration import Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 
 def _to(h: Harness, terminal: str) -> tuple[str, str]:
@@ -64,7 +64,7 @@ def test_emitted_value_required(h: Harness) -> None:
         h.service.decide(person("business_owner"), run_id, "pass")
     h.service.decide(person("business_owner"), run_id, "pass", fields={"risk_tier": "high"})
     assert h.service.get_usecase(usecase).risk_tier == "high"
-    payload = h.sql("SELECT payload FROM events.outbox_event WHERE event_type = 'T0.pass'")[0][0]
+    payload = h.sql("SELECT payload FROM outbox_event WHERE event_type = 'T0.pass'")[0][0]
     assert payload["ledger_key"] == run_id
     assert payload["status"] == "pass"
     assert payload["emits"] == {"risk_tier": "high", "usecase_id": usecase}

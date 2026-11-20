@@ -6,9 +6,9 @@ import pytest
 
 from adlc.orchestration.service import Actor, InvalidDecision
 from adlc.orchestration.stubs import StubAgent, StubPolicy
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 MONITOR = Actor.system("monitor")
 
@@ -26,9 +26,7 @@ def test_reentry_from_artifacts(orch_template: PlatformDatabase) -> None:
         usecase, t9 = _t9(h)
         h.pass_run(t9)
         assert (
-            h.sql("SELECT event_type FROM events.outbox_event WHERE causation_run_id = :r", r=t9)[
-                0
-            ][0]
+            h.sql("SELECT event_type FROM outbox_event WHERE causation_run_id = :r", r=t9)[0][0]
             == "T9.reentry.T2"
         )
         t2 = h.active(usecase, "T2")
@@ -72,7 +70,7 @@ def test_continue_opens_the_next_review(h: Harness) -> None:
     usecase, t8 = walk_to(h, "T8")
     h.pass_run(t8)
     timers = h.sql(
-        "SELECT kind, due_at FROM run.timer WHERE run_id = :r AND cancelled_at IS NULL", r=t8
+        "SELECT kind, due_at FROM timer WHERE run_id = :r AND cancelled_at IS NULL", r=t8
     )
     assert [t[0] for t in timers] == ["review_due"]
     assert timers[0][1] - h.run(t8).closed_at == timedelta(days=14)  # medium: fortnightly

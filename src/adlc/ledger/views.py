@@ -37,7 +37,7 @@ def run_timeline(conn: Connection, run_id: str) -> list[dict[str, Any]]:
     return _rows(
         conn,
         "SELECT step, actor_type, actor_id, started_at, ended_at, duration_seconds, outcome "
-        "FROM run.v_run_step WHERE run_id = :r ORDER BY started_at, run_activity_id",
+        "FROM v_run_step WHERE run_id = :r ORDER BY started_at, run_activity_id",
         r=run_id,
     )
 
@@ -51,7 +51,7 @@ def run_checks(conn: Connection, run_id: str) -> list[dict[str, Any]]:
         "SELECT check_id, rule, passed, reason, synthetic, fail_safe, decided_at, attempt, "
         "(attempt IS NOT NULL AND row_number() OVER (PARTITION BY check_id, attempt "
         "ORDER BY policy_decision_id) > 1) AS recheck "
-        "FROM run.policy_decision WHERE run_id = :r AND kind = 'evaluate' "
+        "FROM policy_decision WHERE run_id = :r AND kind = 'evaluate' "
         "ORDER BY policy_decision_id",
         r=run_id,
     )
@@ -60,7 +60,7 @@ def run_checks(conn: Connection, run_id: str) -> list[dict[str, Any]]:
 def checklist_results(conn: Connection, run_id: str) -> list[dict[str, Any]]:
     return _rows(
         conn,
-        "SELECT attempt, item_id, score, finding, recorded_at FROM run.checklist_result "
+        "SELECT attempt, item_id, score, finding, recorded_at FROM checklist_result "
         "WHERE run_id = :r ORDER BY checklist_result_id",
         r=run_id,
     )
@@ -70,7 +70,7 @@ def artifact_versions(conn: Connection, run_id: str) -> list[dict[str, Any]]:
     return _rows(
         conn,
         "SELECT artifact_id, version, content_hash, producer_type, producer_id, attempt, "
-        "derived_from_version, schema_valid, created_at FROM run.artifact_version "
+        "derived_from_version, schema_valid, created_at FROM artifact_version "
         "WHERE run_id = :r ORDER BY artifact_id, version",
         r=run_id,
     )
@@ -80,7 +80,7 @@ def ledger_reference(conn: Connection, run_id: str) -> dict[str, Any] | None:
     rows = _rows(
         conn,
         "SELECT ledger_key, content_hash, previous_record_hash, written_at "
-        "FROM ledger.ledger_record WHERE run_id = :r",
+        "FROM ledger_record WHERE run_id = :r",
         r=run_id,
     )
     return rows[0] if rows else None
@@ -101,7 +101,7 @@ def usecase_summary(conn: Connection, usecase_id: str) -> list[dict[str, Any]]:
     rows = _rows(
         conn,
         "SELECT terminal_id, runs, reworks, clarification_rounds, escalations, "
-        "automatic_seconds, waiting_seconds FROM run.v_usecase_terminal_summary "
+        "automatic_seconds, waiting_seconds FROM v_usecase_terminal_summary "
         "WHERE usecase_id = :u ORDER BY terminal_id",
         u=usecase_id,
     )

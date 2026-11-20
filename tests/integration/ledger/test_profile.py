@@ -4,14 +4,14 @@ from adlc.ledger.profile import SqlProfileSource
 from adlc.orchestration.interfaces import EvalContext
 from adlc.policy.factory import build_policy_engine
 from adlc.spec_toolkit.registry import SqlSpecRegistry
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import SYNTHETIC, Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 
 def _versions(h: Harness, usecase: str) -> list[tuple[int, dict, str]]:  # type: ignore[type-arg]
     rows = h.sql(
-        "SELECT version, profile_values, source_run_id FROM ledger.profile_version WHERE usecase_id = :u ORDER BY version",
+        "SELECT version, profile_values, source_run_id FROM profile_version WHERE usecase_id = :u ORDER BY version",
         u=usecase,
     )
     return [(int(r[0]), dict(r[1]), str(r[2])) for r in rows]
@@ -75,14 +75,12 @@ def test_profile_value_drives_parameters(orch_template: PlatformDatabase) -> Non
         usecase, t2 = walk_to(h, "T2")
         with h.app.begin() as conn:
             conn.exec_driver_sql(
-                "INSERT INTO ledger.profile_version (usecase_id, version, profile_values, source_run_id) "
+                "INSERT INTO profile_version (usecase_id, version, profile_values, source_run_id) "
                 f"VALUES ('{usecase}', 4, '{{\"autonomy_level_max\": {{\"value\": 2}}, \"test_scenarios_min\": 10}}', '{t2}')"
             )
         h.pass_run(t2)
         t3 = h.active(usecase, "T3").run_id
-        row = h.sql(
-            "SELECT parameters, rejected FROM run.run_parameter_set WHERE run_id = :r", r=t3
-        )[0]
+        row = h.sql("SELECT parameters, rejected FROM run_parameter_set WHERE run_id = :r", r=t3)[0]
         assert row[0]["autonomy_level_max"] == {"value": 2, "source": "usecase"}
         assert row[0]["test_scenarios_min"]["source"] == "guardrail"
         assert row[1][0]["name"] == "test_scenarios_min"

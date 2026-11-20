@@ -2,7 +2,7 @@
 
 One interface, keyed by SHA-256:
 
-* structured content (table rows, records, references) goes in ``ledger.content_blob`` on the
+* structured content (table rows, records, references) goes in ``content_blob`` on the
   caller's connection, so it commits with the run's close;
 * files (Word, Excel, PDF, images, text) go in a content-addressed folder, written before the
   database row that refers to them. An S3-compatible store can replace the folder later.

@@ -7,9 +7,9 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from adlc.policy.synthetic import load_synthetic_artifacts
+from tests.support.db import PlatformDatabase
 from tests.support.grounded import grounded
 from tests.support.orchestration import SYNTHETIC, person
-from tests.support.pg import PlatformDatabase
 
 SYN = load_synthetic_artifacts(SYNTHETIC)
 T0_DRAFT = json.dumps({"artifacts": SYN["T0"]})

@@ -1,6 +1,6 @@
 """Transactional registration of specs, catalogues and playbooks (research R-12; FR-018–FR-023).
 
-One owner-identity transaction, serialised by a PostgreSQL advisory lock. Unchanged items are
+One transaction, serialised by the database write lock (``BEGIN IMMEDIATE``). Unchanged items are
 skipped; changed content under an already registered version, an insufficient version bump,
 or any validation error refuses the whole registration and writes nothing.
 """
@@ -99,8 +99,7 @@ def _register_catalogue(conn: Connection, name: str, loaded: LoadedFile) -> Item
     digest = content_hash(data)
     same = _rows(
         conn,
-        "SELECT status, content_hash FROM spec.spec_catalogue "
-        "WHERE catalogue_name=:n AND version=:v",
+        "SELECT status, content_hash FROM spec_catalogue WHERE catalogue_name=:n AND version=:v",
         n=name,
         v=version,
     )
@@ -116,7 +115,7 @@ def _register_catalogue(conn: Connection, name: str, loaded: LoadedFile) -> Item
         return ItemResult("catalogue", name, version, "unchanged")
     active = _rows(
         conn,
-        "SELECT version, content_json FROM spec.spec_catalogue "
+        "SELECT version, content_json FROM spec_catalogue "
         "WHERE catalogue_name=:n AND status='active'",
         n=name,
     )
@@ -126,16 +125,16 @@ def _register_catalogue(conn: Connection, name: str, loaded: LoadedFile) -> Item
         _check_bump(f"catalogue {name}", previous, version, active[0]["content_json"], data)
         conn.execute(
             text(
-                "UPDATE spec.spec_catalogue SET status='deprecated', deprecated_at=now() "
+                "UPDATE spec_catalogue SET status='deprecated', deprecated_at=now() "
                 "WHERE catalogue_name=:n AND status='active'"
             ),
             {"n": name},
         )
     conn.execute(
         text(
-            "INSERT INTO spec.spec_catalogue "
+            "INSERT INTO spec_catalogue "
             "(catalogue_name, version, status, content_json, content_hash) "
-            "VALUES (:n, :v, 'active', CAST(:j AS jsonb), :h)"
+            "VALUES (:n, :v, 'active', :j, :h)"
         ),
         {"n": name, "v": version, "j": json.dumps(data), "h": digest},
     )
@@ -145,13 +144,13 @@ def _register_catalogue(conn: Connection, name: str, loaded: LoadedFile) -> Item
 def _insert_projection(conn: Connection, registry_id: int, proj: Projection) -> None:
     for event in proj.triggers:
         conn.execute(
-            text("INSERT INTO spec.spec_trigger (spec_registry_id, event_type) VALUES (:r, :e)"),
+            text("INSERT INTO spec_trigger (spec_registry_id, event_type) VALUES (:r, :e)"),
             {"r": registry_id, "e": event},
         )
     for r in proj.outcome_routes:
         conn.execute(
             text(
-                "INSERT INTO spec.spec_outcome_route "
+                "INSERT INTO spec_outcome_route "
                 "(spec_registry_id, outcome_status, root_cause, "
                 "destination_kind, destination, alternatives, requires, recheck_at, set_by, "
                 "notify, "
@@ -174,7 +173,7 @@ def _insert_projection(conn: Connection, registry_id: int, proj: Projection) -> 
     for e in proj.event_routes:
         conn.execute(
             text(
-                "INSERT INTO spec.spec_event_route "
+                "INSERT INTO spec_event_route "
                 "(spec_registry_id, event_type, destination_kind, "
                 "destination, immediate, then_destination, notify, condition) "
                 "VALUES (:r, :e, :k, :d, :imm, :then, :notify, :cond)"
@@ -193,7 +192,7 @@ def _insert_projection(conn: Connection, registry_id: int, proj: Projection) -> 
     for c in proj.change_classes:
         conn.execute(
             text(
-                "INSERT INTO spec.spec_change_class "
+                "INSERT INTO spec_change_class "
                 "(spec_registry_id, change_class, reentry_terminal, "
                 "path, retrospective, within, alternative) "
                 "VALUES (:r, :c, :t, :p, :retro, :w, :alt)"
@@ -211,7 +210,7 @@ def _insert_projection(conn: Connection, registry_id: int, proj: Projection) -> 
     for t in proj.timelines:
         conn.execute(
             text(
-                "INSERT INTO spec.spec_timeline (spec_registry_id, risk_tier, expected_duration, "
+                "INSERT INTO spec_timeline (spec_registry_id, risk_tier, expected_duration, "
                 "continuous, reminder_after, escalate_after, escalate_at_window_end, "
                 "max_rework_cycles, "
                 "clarification_sla, max_clarification_rounds, max_auto_retries, retirement_duration) "
@@ -243,7 +242,7 @@ def _register_terminal(
     digest = content_hash(loaded.data)
     same = _rows(
         conn,
-        "SELECT status, content_hash FROM spec.spec_registry WHERE terminal_id=:t AND version=:v",
+        "SELECT status, content_hash FROM spec_registry WHERE terminal_id=:t AND version=:v",
         t=tid,
         v=version,
     )
@@ -259,7 +258,7 @@ def _register_terminal(
         return ItemResult("terminal", tid, version, "unchanged")
     active = _rows(
         conn,
-        "SELECT version, spec_json FROM spec.spec_registry WHERE terminal_id=:t AND status='active'",
+        "SELECT version, spec_json FROM spec_registry WHERE terminal_id=:t AND status='active'",
         t=tid,
     )
     previous = None
@@ -268,7 +267,7 @@ def _register_terminal(
         _check_bump(tid, previous, version, active[0]["spec_json"], loaded.data)
         conn.execute(
             text(
-                "UPDATE spec.spec_registry SET status='deprecated', deprecated_at=now() "
+                "UPDATE spec_registry SET status='deprecated', deprecated_at=now() "
                 "WHERE terminal_id=:t AND status='active'"
             ),
             {"t": tid},
@@ -277,9 +276,9 @@ def _register_terminal(
     registry_id = int(
         conn.execute(
             text(
-                "INSERT INTO spec.spec_registry (terminal_id, version, status, schema_version, spec_yaml, "
+                "INSERT INTO spec_registry (terminal_id, version, status, schema_version, spec_yaml, "
                 "spec_json, content_hash, trigger_events, emitted_events) VALUES (:t, :v, 'active', :sv, "
-                ":yaml, CAST(:json AS jsonb), :h, :trig, :emit) RETURNING spec_registry_id"
+                ":yaml, :json, :h, :trig, :emit) RETURNING spec_registry_id"
             ),
             {
                 "t": tid,
@@ -303,7 +302,7 @@ def _register_playbook(conn: Connection, loaded: LoadedFile) -> ItemResult:
     digest = file_hash(loaded.text)
     same = _rows(
         conn,
-        "SELECT content_hash FROM spec.playbook_registry WHERE playbook_id=:p AND version=:v",
+        "SELECT content_hash FROM playbook_registry WHERE playbook_id=:p AND version=:v",
         p=pid,
         v=version,
     )
@@ -315,7 +314,7 @@ def _register_playbook(conn: Connection, loaded: LoadedFile) -> ItemResult:
         return ItemResult("playbook", pid, version, "unchanged")
     conn.execute(
         text(
-            "INSERT INTO spec.playbook_registry (playbook_id, version, path, content_hash) "
+            "INSERT INTO playbook_registry (playbook_id, version, path, content_hash) "
             "VALUES (:p, :v, :path, :h)"
         ),
         {"p": pid, "v": version, "path": loaded.rel, "h": digest},
@@ -330,7 +329,7 @@ def _register_prompt(conn: Connection, loaded: LoadedFile) -> ItemResult:
     digest = file_hash(loaded.text)
     same = _rows(
         conn,
-        "SELECT content_hash FROM spec.prompt_registry WHERE prompt_id=:p AND version=:v",
+        "SELECT content_hash FROM prompt_registry WHERE prompt_id=:p AND version=:v",
         p=pid,
         v=version,
     )
@@ -342,7 +341,7 @@ def _register_prompt(conn: Connection, loaded: LoadedFile) -> ItemResult:
         return ItemResult("prompt", pid, version, "unchanged")
     conn.execute(
         text(
-            "INSERT INTO spec.prompt_registry (prompt_id, version, path, content_hash) "
+            "INSERT INTO prompt_registry (prompt_id, version, path, content_hash) "
             "VALUES (:p, :v, :path, :h)"
         ),
         {"p": pid, "v": version, "path": loaded.rel, "h": digest},
@@ -368,7 +367,6 @@ def register(root: Path, engine: Engine, *, dry_run: bool = False) -> Registrati
     report = RegistrationReport(dry_run=dry_run)
     try:
         with engine.begin() as conn:
-            conn.execute(text("SELECT pg_advisory_xact_lock(hashtext(:k))"), {"k": LOCK_KEY})
             for name, loaded in sorted(bundle.catalogues.items()):
                 report.items.append(_register_catalogue(conn, name, loaded))
             for loaded in terminals:

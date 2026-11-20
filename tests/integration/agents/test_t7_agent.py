@@ -9,9 +9,9 @@ from typing import Any
 
 from tests.support.acting import acting
 from tests.support.acting_scripts import Deployment
+from tests.support.db import PlatformDatabase
 from tests.support.fake_pilot import SYNTHETIC_CANDIDATE, FakePilot, with_candidate
 from tests.support.orchestration import Harness
-from tests.support.pg import PlatformDatabase
 
 AGENT = "t7-deployment-agent"
 

@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 from adlc.config.errors import load_settings_or_exit
 from adlc.config.settings import OrchestratorSettings
-from adlc.db.engine import app_engine
+from adlc.db.engine import open_engine
 from adlc.identity.accounts import load_accounts
 from adlc.identity.catalogue import load_role_ids
 from adlc.orchestration import routing
@@ -45,7 +45,7 @@ def person(role: str) -> Actor:
 def main() -> int:
     load_dotenv()
     settings = load_settings_or_exit(OrchestratorSettings)
-    engine = app_engine(settings)
+    engine = open_engine(settings)
     # Only the service is used here; the orchestrator container routes and advances runs.
     orch = build_orchestrator(
         engine,

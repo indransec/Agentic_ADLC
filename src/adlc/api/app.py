@@ -19,7 +19,7 @@ from adlc.api.routes import (
     usecases,
 )
 from adlc.config.settings import Settings
-from adlc.db.engine import app_engine
+from adlc.db.engine import open_engine
 from adlc.identity.local import LocalIdentityProvider
 from adlc.observability.logging import configure_logging
 from adlc.observability.tracing import setup_tracing
@@ -40,7 +40,7 @@ def create_app(settings: Settings, span_exporter: SpanExporter | None = None) ->
     )
     app = FastAPI(title="ADLC Platform API", version="0.1.0")
     app.state.settings = settings
-    app.state.engine = app_engine(settings)
+    app.state.engine = open_engine(settings)
     install_auth(app, provider)
     install_errors(app)
     app.state.services = Services(settings, app.state.engine)  # built on first use

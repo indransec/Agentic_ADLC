@@ -81,7 +81,7 @@ def test_decide_a_waiver(h: Harness, api: Api) -> None:
     at.button(key=f"waiver_send:{waiver}").click()
     at = at.run()
     assert "Waiver decision recorded" in success(at), [e.value for e in at.error]
-    status = h.sql("SELECT status FROM run.waiver WHERE waiver_id = :w", w=waiver)[0][0]
+    status = h.sql("SELECT status FROM waiver WHERE waiver_id = :w", w=waiver)[0][0]
     assert status == "approved"
 
 
@@ -90,12 +90,12 @@ def test_dead_letters_for_the_coe(h: Harness, api: Api) -> None:
     with h.owner.begin() as conn:
         conn.execute(
             text(
-                "UPDATE events.outbox_event SET dead_lettered_at = now() "
+                "UPDATE outbox_event SET dead_lettered_at = now() "
                 "WHERE event_type = 'usecase.submitted'"
             )
         )
     other = go(sign_in(open_ui(api), "sre"), "Dead letters")
-    assert any("CoE" in c.value for c in other.caption) and not other.exception
+    assert any("CoE" in i.value for i in other.info) and not other.exception
     at = go(sign_in(open_ui(api), "adlc_coe"), "Dead letters")
     assert not at.exception, at.exception
     at.button(key="dead_requeue").click()

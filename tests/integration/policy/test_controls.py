@@ -4,9 +4,9 @@ from adlc.orchestration.interfaces import EvalContext
 from adlc.orchestration.stubs import StubAgent
 from adlc.policy.factory import build_policy_engine
 from adlc.spec_toolkit.registry import SqlSpecRegistry
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness
-from tests.support.pg import PlatformDatabase
 
 
 def test_good_artifacts_pass_every_control(h: Harness) -> None:

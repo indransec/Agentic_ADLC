@@ -29,7 +29,7 @@ def test_required_fields(h: Harness) -> None:
         h.service.decide(
             so, run_id, "exception", reason="r", fields={**T5_FIELDS, "expiry": "2001-01-01"}
         )
-    assert h.sql("SELECT count(*) FROM run.waiver")[0][0] == 0
+    assert h.sql("SELECT count(*) FROM waiver")[0][0] == 0
 
 
 def test_propose_then_approve(h: Harness) -> None:
@@ -45,12 +45,10 @@ def test_propose_then_approve(h: Harness) -> None:
     h.service.decide_waiver(person("risk_owner"), "WVR-0001", True, "accepted for one quarter")
     h.drain()
     assert h.run(run_id).final_status == "exception"
-    waiver = h.sql("SELECT status, decided_by, recheck_at FROM run.waiver")[0]
+    waiver = h.sql("SELECT status, decided_by, recheck_at FROM waiver")[0]
     assert tuple(waiver) == ("approved", "risk_owner-person", ["T6", "T8"])
     assert h.active(usecase, "T6").trigger_event_type == "T5.exception"
-    record = h.sql("SELECT content_json FROM ledger.ledger_record WHERE run_id = :r", r=run_id)[0][
-        0
-    ]
+    record = h.sql("SELECT content_json FROM ledger_record WHERE run_id = :r", r=run_id)[0][0]
     assert record["waiver"]["waiver_id"] == "WVR-0001"
 
 
@@ -62,6 +60,6 @@ def test_reject_lets_a_new_decision_be_made(h: Harness) -> None:
         h.service.decide(so, run_id, "pass")
     h.service.decide_waiver(person("risk_owner"), "WVR-0001", False, "not acceptable")
     assert h.run(run_id).pending_waiver_id is None
-    assert h.sql("SELECT status FROM run.waiver")[0][0] == "rejected"
+    assert h.sql("SELECT status FROM waiver")[0][0] == "rejected"
     h.pass_run(run_id)
     assert h.run(run_id).final_status == "pass"

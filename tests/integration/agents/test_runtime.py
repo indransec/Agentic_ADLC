@@ -54,7 +54,7 @@ def test_invalid_output_is_corrected_then_counts_as_a_failed_attempt(model_harne
     assert (first["outcome"], first["corrections"], first["steps"]) == ("failed", 2, 3)
     assert "missing" in first["reason"] and "x" not in first["reason"].split("columns")[-1][:3]
     # SC-004: nothing from the failed attempt reached versions or controls.
-    versions = h.sql("SELECT count(*) FROM run.artifact_version WHERE run_id = :r", r=t1)
+    versions = h.sql("SELECT count(*) FROM artifact_version WHERE run_id = :r", r=t1)
     second = attempts(h.app, t1)[1]
     assert second["outcome"] == "artifacts" and second["attempt"] == 2
     assert versions[0][0] == len(load_synthetic_artifacts(SYNTHETIC)["T1"])
@@ -68,9 +68,7 @@ def test_failed_attempts_escalate_at_the_retry_limit(model_harness: Any) -> None
     t1 = h.active(usecase, "T1")
     assert (t1.state, t1.escalation_trigger) == ("escalated", "retry_limit")
     assert {a["outcome"] for a in attempts(h.app, t1.run_id)} == {"failed"}
-    assert (
-        h.sql("SELECT count(*) FROM run.artifact_version WHERE run_id = :r", r=t1.run_id)[0][0] == 0
-    )
+    assert h.sql("SELECT count(*) FROM artifact_version WHERE run_id = :r", r=t1.run_id)[0][0] == 0
 
 
 @pytest.mark.parametrize(
@@ -118,7 +116,7 @@ def test_full_outage_defers_then_escalates(model_harness: Any) -> None:
     assert t1.state == "building" and t1.model_unavailable_since is not None
     assert t1.auto_retries == 0  # an outage never uses a retry
     deferred = h.sql(
-        "SELECT count(*) FROM run.run_activity WHERE run_id = :r AND outcome = 'deferred'",
+        "SELECT count(*) FROM run_activity WHERE run_id = :r AND outcome = 'deferred'",
         r=t1.run_id,
     )
     assert deferred[0][0] == 1
@@ -165,6 +163,6 @@ def test_an_interrupted_step_keeps_its_model_calls(model_harness: Any) -> None:
     h.drain()
     assert h.run(t1).state == "awaiting_sign_off"
     calls = model_calls(h.app, t1)
-    assert len(calls) >= 3 and h.sql("SELECT calls FROM run.v_run_cost WHERE run_id = :r", r=t1)[0][
+    assert len(calls) >= 3 and h.sql("SELECT calls FROM v_run_cost WHERE run_id = :r", r=t1)[0][
         0
     ] == len(calls)

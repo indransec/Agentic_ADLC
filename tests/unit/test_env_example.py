@@ -13,7 +13,7 @@ from adlc.config.settings import (
 )
 
 ENV_EXAMPLE = Path(__file__).resolve().parents[2] / ".env.example"
-COMPOSE_ONLY = {"POSTGRES_PASSWORD", "ADLC_API_PORT", "ADLC_JAEGER_UI_PORT", "ADLC_UI_PORT"}
+COMPOSE_ONLY = {"ADLC_PHOENIX_UI_PORT", "ADLC_UI_PORT"}
 
 
 def _entries() -> dict[str, str]:
@@ -32,7 +32,7 @@ def _secret_names() -> set[str]:
         extra = field.json_schema_extra
         if isinstance(extra, dict) and extra.get("secret"):
             names.add(env_name(name))
-    return names | {"POSTGRES_PASSWORD"}
+    return names
 
 
 def test_keys_match_settings() -> None:

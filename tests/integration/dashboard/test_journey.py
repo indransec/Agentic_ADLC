@@ -5,8 +5,8 @@ from typing import Any
 
 from adlc.dashboard.service import DashboardService
 from tests.integration.dashboard.walk import walked
+from tests.support.db import PlatformDatabase
 from tests.support.orchestration import harness
-from tests.support.pg import PlatformDatabase
 
 
 def _arrows(journey: dict[str, Any], kind: str) -> list[dict[str, Any]]:

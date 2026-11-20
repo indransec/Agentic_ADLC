@@ -15,8 +15,8 @@ from adlc.orchestration.interfaces import AttemptFailed, Clarification
 from adlc.orchestration.service import Actor
 from adlc.orchestration.stubs import StubAgent
 from adlc.policy.synthetic import load_synthetic_artifacts
+from tests.support.db import PlatformDatabase
 from tests.support.orchestration import SYNTHETIC, Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 ASK = Clarification(("Which channels are in scope?",), looked_in=("intake",))
 FAIL = AttemptFailed("the build did not fit")
@@ -50,9 +50,7 @@ def walked(db: PlatformDatabase) -> Iterator[Walked]:
         _pass(h, "T1", usecase)
         h.drain()
         t2 = h.active(usecase, "T2")
-        clarification = h.sql(
-            "SELECT clarification_id, addressed_role FROM run.clarification_round"
-        )[0]
+        clarification = h.sql("SELECT clarification_id, addressed_role FROM clarification_round")[0]
         h.clock.advance(timedelta(minutes=10))
         h.service.answer_clarification(person(clarification[1]), clarification[0], ["web"])
         _pass(h, "T2", usecase)

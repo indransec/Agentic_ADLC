@@ -1,5 +1,5 @@
 """Retrieval records (008 research R-04, FR-021): every knowledge result returned to an agent is
-written to ``run.knowledge_retrieval`` (append-only) with its own commit, before the model sees
+written to ``knowledge_retrieval`` (append-only) with its own commit, before the model sees
 it, so a citation can always be checked against what was read."""
 
 from collections.abc import Sequence
@@ -27,7 +27,7 @@ class SqlRetrievalLog:
             for item in found:
                 retrieval_id = conn.execute(
                     text(
-                        "INSERT INTO run.knowledge_retrieval (run_id, attempt, step, source, "
+                        "INSERT INTO knowledge_retrieval (run_id, attempt, step, source, "
                         "operation, request, document, section, content_hash, data_class, "
                         "synthetic, retrieved_at) VALUES (:run, :attempt, :step, :source, "
                         ":operation, :request, :document, :section, :hash, :class, :synthetic, "
@@ -56,7 +56,7 @@ class SqlRetrievalLog:
             rows = conn.execute(
                 text(
                     "SELECT source, operation, request, document, section, content_hash, "
-                    "data_class, synthetic, knowledge_retrieval_id FROM run.knowledge_retrieval "
+                    "data_class, synthetic, knowledge_retrieval_id FROM knowledge_retrieval "
                     "WHERE run_id = :r AND attempt = :a ORDER BY knowledge_retrieval_id"
                 ),
                 {"r": run_id, "a": attempt},

@@ -54,8 +54,8 @@ def items(conn: Connection, usecase_id: str) -> list[TraceItem]:
         str(r["run_id"]): r
         for r in conn.execute(
             text(
-                "SELECT r.run_id, r.spec_version, l.content_hash FROM run.terminal_run r "
-                "LEFT JOIN ledger.ledger_record l ON l.run_id = r.run_id WHERE r.usecase_id = :u"
+                "SELECT r.run_id, r.spec_version, l.content_hash FROM terminal_run r "
+                "LEFT JOIN ledger_record l ON l.run_id = r.run_id WHERE r.usecase_id = :u"
             ),
             {"u": usecase_id},
         ).mappings()
@@ -72,7 +72,7 @@ def items(conn: Connection, usecase_id: str) -> list[TraceItem]:
     found: list[TraceItem] = []
     for r in conn.execute(
         text(
-            "SELECT s.sign_off_id, s.run_id, s.person FROM run.sign_off s JOIN run.terminal_run r "
+            "SELECT s.sign_off_id, s.run_id, s.person FROM sign_off s JOIN terminal_run r "
             "USING (run_id) WHERE r.usecase_id = :u"
         ),
         {"u": usecase_id},
@@ -88,7 +88,7 @@ def items(conn: Connection, usecase_id: str) -> list[TraceItem]:
         )
     for r in conn.execute(
         text(
-            "SELECT policy_decision_id, run_id, check_id, actor, inputs FROM run.policy_decision "
+            "SELECT policy_decision_id, run_id, check_id, actor, inputs FROM policy_decision "
             "WHERE usecase_id = :u AND kind = 'evaluate' AND check_id LIKE 'CTL-%'"
         ),
         {"u": usecase_id},
@@ -104,7 +104,7 @@ def items(conn: Connection, usecase_id: str) -> list[TraceItem]:
         )
     for r in conn.execute(
         text(
-            "SELECT event_id, event_type, causation_run_id, payload FROM events.outbox_event "
+            "SELECT event_id, event_type, causation_run_id, payload FROM outbox_event "
             "WHERE usecase_id = :u AND causation_run_id IS NOT NULL"
         ),
         {"u": usecase_id},
@@ -125,7 +125,7 @@ def items(conn: Connection, usecase_id: str) -> list[TraceItem]:
     for r in conn.execute(
         text(
             "SELECT run_id, artifact_id, version, producer_type, producer_id, content_hash "
-            "FROM run.artifact_version WHERE run_id = ANY(:r)"
+            "FROM artifact_version WHERE run_id IN (SELECT value FROM json_each(:r))"
         ),
         {"r": list(runs)},
     ).mappings():

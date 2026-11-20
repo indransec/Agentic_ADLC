@@ -4,9 +4,9 @@ from typing import Any
 
 from adlc.orchestration.interfaces import BuildContext, ReviewContext
 from adlc.orchestration.stubs import StubAgent, StubReviewer
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import harness
-from tests.support.pg import PlatformDatabase
 
 
 class Probe:

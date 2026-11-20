@@ -19,7 +19,7 @@ from pydantic import SecretStr
 
 from adlc.config.settings import KnowledgeSettings
 from adlc.knowledge.server import build_app
-from tests.support.pg import REPO_ROOT
+from tests.support.db import REPO_ROOT
 
 FIXTURES = REPO_ROOT / "tests" / "fixtures" / "knowledge"
 TOKEN = "knowledge-test-token-0001"

@@ -8,9 +8,9 @@ from adlc.orchestration.engine import StaleRun
 from adlc.orchestration.interfaces import BudgetExceeded
 from adlc.orchestration.service import InvalidDecision, NotAuthorised
 from adlc.orchestration.stubs import StubAgent, StubPolicy
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 PO = person("product_owner")
 
@@ -31,7 +31,7 @@ def test_rework_limit_opens_escalated(h: Harness) -> None:
     assert (run5.run_number, run5.rework_count, run5.state) == (5, 4, "escalated")
     assert run5.escalation_trigger == "rework_limit"
     assert run5.escalation_destination == "human_completion"
-    escalations = h.sql("SELECT payload FROM events.outbox_event WHERE event_type = 'T1.escalate'")
+    escalations = h.sql("SELECT payload FROM outbox_event WHERE event_type = 'T1.escalate'")
     assert escalations[0][0]["trigger"] == "rework_limit"
 
 
@@ -43,10 +43,7 @@ def test_timer_escalates_waiting_run_once(h: Harness) -> None:
     assert (run.state, run.escalation_trigger) == ("escalated", "timer")
     h.clock.advance(timedelta(days=30))
     h.drain()
-    assert (
-        h.sql("SELECT count(*) FROM events.outbox_event WHERE event_type = 'T1.escalate'")[0][0]
-        == 1
-    )
+    assert h.sql("SELECT count(*) FROM outbox_event WHERE event_type = 'T1.escalate'")[0][0] == 1
 
 
 def test_blocked_run_escalates_on_timer(orch_template: PlatformDatabase) -> None:

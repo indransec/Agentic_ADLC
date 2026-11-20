@@ -1,5 +1,5 @@
 """``adlc-tools`` (feature 010, research R-01): the eval store and the enterprise mocks, on the
-platform network with the app database role. Servers are those whose registry host is ``tools``."""
+platform network with the platform database. Servers are those whose registry host is ``tools``."""
 
 from sqlalchemy import Engine
 from starlette.applications import Starlette

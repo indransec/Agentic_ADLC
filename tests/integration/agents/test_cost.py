@@ -8,9 +8,9 @@ import pytest
 from adlc.agents.cost import CostAlerts, alerts, run_cost, terminal_cost, usecase_cost
 from adlc.agents.fake import FakeGateway, reply
 from adlc.agents.store import SqlCallRecorder
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness
-from tests.support.pg import PlatformDatabase
 
 from .support import MODELS, PRIMARY
 from .test_reviewer import _items, _review
@@ -54,7 +54,7 @@ def test_every_call_of_a_full_walk_is_recorded(priced: Any) -> None:
     h.pass_run(t8, {"risk_tier": "medium"})
     rows = h.sql(
         "SELECT provider, model, tokens_in, tokens_out, cost_usd, cost_known, outcome "
-        "FROM run.model_call WHERE usecase_id = :u",
+        "FROM model_call WHERE usecase_id = :u",
         u=usecase,
     )
     assert len(rows) == len(gateway.fake.calls) == 9  # T0 to T8, one review each
@@ -72,10 +72,10 @@ def test_views_add_up_to_the_calls(priced: Any) -> None:
     h, _ = priced((2000, 500), [])
     usecase, t2 = walk_to(h, "T2")
     t1 = h.sql(
-        "SELECT run_id FROM run.terminal_run WHERE usecase_id = :u AND terminal_id = 'T1'",
+        "SELECT run_id FROM terminal_run WHERE usecase_id = :u AND terminal_id = 'T1'",
         u=usecase,
     )[0][0]
-    calls = h.sql("SELECT cost_usd FROM run.model_call WHERE run_id = :r", r=t1)
+    calls = h.sql("SELECT cost_usd FROM model_call WHERE run_id = :r", r=t1)
     assert run_cost(h.app, t1)["cost_usd"] == sum(c[0] for c in calls)
     assert terminal_cost(h.app, usecase, "T1")["cost_usd"] == run_cost(h.app, t1)["cost_usd"]
     by_terminal = sum(terminal_cost(h.app, usecase, t)["cost_usd"] for t in ("T0", "T1", "T2"))

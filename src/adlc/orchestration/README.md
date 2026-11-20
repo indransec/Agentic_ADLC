@@ -20,7 +20,7 @@ blocked   awaiting_clarification                      ▼
   property tests prove:
   - only human decisions close a run with an outcome;
   - only the orchestrator's rules escalate.
-- **The engine** (`engine.py`, `PostgresTerminalRun`) applies one signal per transaction:
+- **The engine** (`engine.py`, `SqlTerminalRun`) applies one signal per transaction:
   1. lock the run row;
   2. run `transition()`;
   3. execute the effects;
@@ -44,13 +44,13 @@ blocked   awaiting_clarification                      ▼
 | `spec_view.py`, `routing.py` | Pure reads and routing decisions over a pinned spec |
 | `ids.py`, `durations.py`, `ledger.py` | Identifiers and UUID v7; TDS durations and the time scale; ledger content and hash |
 | `store.py` | All SQL; every function takes the caller's connection |
-| `engine.py` | `PostgresTerminalRun`: `open_in`, `apply`, `apply_in` and `advance` |
+| `engine.py` | `SqlTerminalRun`: `open_in`, `apply`, `apply_in` and `advance` |
 | `router.py` | Event → open or signal runs; self-routes and resolver destinations; event routes |
 | `outbox.py` | Ordered delivery per use case, idempotency, retries (10 s, 1 min, 5 min, 15 min), dead letter after 5 |
 | `timers.py` | `escalate_after`, `clarification_sla` and `review_due` (continuous terminals) |
 | `service.py` | `OrchestratorService`, the human and admin operations (exposed by feature 007) |
 | `interfaces.py`, `stubs.py` | `PolicyEngine`, `AgentRunner`, `Reviewer`, `Clock` and their scriptable stubs |
-| `worker.py`, `__main__.py` | The `adlc-orchestrator run` loop (LISTEN `adlc_outbox`, 1 s fallback) and `health` |
+| `worker.py`, `__main__.py` | The `adlc-orchestrator run` loop (polls every `ADLC_POLL_INTERVAL`) and `health` |
 
 ## Replacing the stubs
 

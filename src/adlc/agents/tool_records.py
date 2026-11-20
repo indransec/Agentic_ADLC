@@ -1,15 +1,13 @@
 """Records of tool calls and evidence results (feature 010, data-model.md, research R-04).
 
-Written by the platform, never by the agent or a server: ``tools.tool_call`` for every call
-(including refusals) and ``tools.tool_result`` for an evidence tool's answer, with its content hash.
+Written by the platform, never by the agent or a server: ``tool_call`` for every call
+(including refusals) and ``tool_result`` for an evidence tool's answer, with its content hash.
 Both tables are append-only.
 """
 
 from typing import Any
 
 from sqlalchemy import Engine, text
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.sql.expression import bindparam
 
 from adlc.agents.imports import ImportSource, Resolver
 from adlc.agents.mcp_tools import sha256_of
@@ -36,7 +34,7 @@ class SqlToolRecords:
             return int(
                 conn.execute(
                     text(
-                        "INSERT INTO tools.tool_call (run_id, usecase_id, terminal_id, attempt, "
+                        "INSERT INTO tool_call (run_id, usecase_id, terminal_id, attempt, "
                         "step, tool, server, scope, arguments_sha256, outcome, reason, "
                         "duration_ms, at) VALUES (:run, :uc, :t, :attempt, :step, :tool, "
                         ":server, :scope, :args, :outcome, :reason, :ms, :at) "
@@ -66,10 +64,10 @@ class SqlToolRecords:
         with self.engine.begin() as conn:
             found = conn.execute(
                 text(
-                    "INSERT INTO tools.tool_result (tool_call_id, run_id, usecase_id, "
+                    "INSERT INTO tool_result (tool_call_id, run_id, usecase_id, "
                     "terminal_id, kind, package_hash, result, result_sha256, at) VALUES (:call, "
                     ":run, :uc, :t, :kind, :package, :result, :sha, :at) RETURNING tool_result_id"
-                ).bindparams(bindparam("result", type_=JSONB)),
+                ),
                 {
                     "call": call_id,
                     "run": context.run_id,
@@ -94,7 +92,7 @@ def case_results(engine: Engine, run_id: str) -> Resolver:
         with engine.connect() as conn:
             row = conn.execute(
                 text(
-                    "SELECT kind, result, result_sha256 FROM tools.tool_result "
+                    "SELECT kind, result, result_sha256 FROM tool_result "
                     "WHERE tool_result_id = :id AND run_id = :run"
                 ),
                 {"id": int(result_id[4:]), "run": run_id},

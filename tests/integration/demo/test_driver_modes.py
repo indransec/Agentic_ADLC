@@ -6,8 +6,8 @@ from pathlib import Path
 
 from adlc.demo.driver import DemoDriver
 from tests.integration.demo.test_demo_auto import demo
+from tests.support.db import PlatformDatabase
 from tests.support.orchestration import person
-from tests.support.pg import PlatformDatabase
 
 
 def test_presenter_mode_waits_for_the_person(

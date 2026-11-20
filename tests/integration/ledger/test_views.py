@@ -1,5 +1,6 @@
 """T030: read views per run and per use case (US5; FR-020 to FR-022)."""
 
+import time
 from datetime import timedelta
 from pathlib import Path
 from typing import Any
@@ -7,10 +8,10 @@ from typing import Any
 from adlc.ledger import views
 from adlc.orchestration.interfaces import Clarification, Recommendation
 from adlc.orchestration.stubs import StubAgent, StubReviewer
+from tests.support.db import PlatformDatabase
 from tests.support.ledger import ledger_service
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 ASK = Clarification(("Which channels are in scope?",))
 REVIEW = Recommendation(
@@ -30,7 +31,7 @@ def test_lifecycle_views(orch_template: PlatformDatabase, tmp_path: Path) -> Non
         h.clock.advance(timedelta(hours=1))  # an hour waiting for sign-off
         h.pass_run(t1)
         t2 = h.active(usecase, "T2").run_id
-        clar = h.sql("SELECT clarification_id FROM run.clarification_round")[0][0]
+        clar = h.sql("SELECT clarification_id FROM clarification_round")[0][0]
         h.service.answer_clarification(person("engineering_lead"), clar, ["web"])
         h.drain()
         h.service.decide(
@@ -83,12 +84,12 @@ def test_checklist_rows_per_review(orch_template: PlatformDatabase) -> None:
     with harness(orch_template, agent=agent) as h:
         usecase, t1 = walk_to(h, "T1")
         rows = h.sql(
-            "SELECT attempt, count(*) FROM run.checklist_result WHERE run_id = :r GROUP BY attempt",
+            "SELECT attempt, count(*) FROM checklist_result WHERE run_id = :r GROUP BY attempt",
             r=t1,
         )
         assert [tuple(r) for r in rows] == [(2, len(h.reviewer.contexts[-1].checklist_items))]
         checks = h.sql(
-            "SELECT max(n) FROM (SELECT count(*) AS n FROM run.policy_decision "
+            "SELECT max(n) FROM (SELECT count(*) AS n FROM policy_decision "
             "WHERE run_id = :r AND check_id LIKE 'CTL-%' GROUP BY check_id) x",
             r=t1,
         )
@@ -117,7 +118,7 @@ def test_open_run_counts_to_now(orch_template: PlatformDatabase) -> None:
     with harness(orch_template) as h:
         usecase, t1 = walk_to(h, "T1")
         first = {r["terminal_id"]: r for r in ledger_rows(h, usecase)}["T1"]["waiting_seconds"]
-        h.sql("SELECT pg_sleep(0.2)")
+        time.sleep(0.2)
         later = {r["terminal_id"]: r for r in ledger_rows(h, usecase)}["T1"]["waiting_seconds"]
         assert later > first
 

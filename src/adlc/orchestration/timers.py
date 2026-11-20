@@ -1,6 +1,6 @@
 """Timer loop (research R-07; FR-018b, FR-021).
 
-Due timers are taken one per transaction (``FOR UPDATE SKIP LOCKED``) and marked fired in the
+Due timers are taken one per transaction (under the database write lock) and marked fired in the
 same transaction as their effect, so an overdue timer fires once after downtime. A timer whose
 run has moved on is ignored. ``review_due`` belongs to a closed continuous run: it asks the
 router to open the next review run instead of signalling the closed run.
@@ -9,15 +9,15 @@ router to open the next review run instead of signalling the closed run.
 from sqlalchemy import Engine
 
 from adlc.orchestration import store
-from adlc.orchestration.engine import ORCHESTRATOR_ID, PostgresTerminalRun
+from adlc.orchestration.engine import ORCHESTRATOR_ID, SqlTerminalRun
 from adlc.orchestration.interfaces import Clock
-from adlc.orchestration.router import PostgresRouter
+from adlc.orchestration.router import SqlRouter
 from adlc.orchestration.states import ActorType, InvalidTransition, RunState, Signal, SignalKind
 
 
 class TimerLoop:
     def __init__(
-        self, engine: Engine, runs: PostgresTerminalRun, router: PostgresRouter, clock: Clock
+        self, engine: Engine, runs: SqlTerminalRun, router: SqlRouter, clock: Clock
     ) -> None:
         self.engine = engine
         self.runs = runs

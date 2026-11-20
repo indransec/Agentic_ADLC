@@ -1,7 +1,7 @@
 """`adlc-ledger` command line (contracts/verification.md).
 
 ``adlc-ledger verify [--usecase UC-nnnn] [--json]`` exits 0 when verified, 1 with breaks and
-2 on a configuration error. Each call is recorded in ``ledger.verification_run`` with the actor
+2 on a configuration error. Each call is recorded in ``verification_run`` with the actor
 ``cli:<os user>``.
 """
 
@@ -30,7 +30,7 @@ def verify_command(
     """Recompute record, artifact and attachment hashes, the chain and package bindings."""
     from adlc.config.errors import load_settings_or_exit
     from adlc.config.settings import RuntimeSettings
-    from adlc.db.engine import ConfigurationError, app_engine
+    from adlc.db.engine import ConfigurationError, open_engine
     from adlc.ledger.storage import FileStore
     from adlc.ledger.verify import Verifier
     from adlc.observability.tracing import setup_process_tracing
@@ -39,7 +39,7 @@ def verify_command(
     settings = load_settings_or_exit(RuntimeSettings)
     tracing = setup_process_tracing(SERVICE_NAME, settings)
     try:
-        engine = app_engine(settings)
+        engine = open_engine(settings)
     except ConfigurationError as exc:
         typer.echo(f"adlc: configuration error\n  {exc}", err=True)
         raise typer.Exit(2) from None
@@ -81,14 +81,14 @@ def trace_command(
     """014: every decision linked to spec version, actor and evidence hash; and the chain."""
     from adlc.config.errors import load_settings_or_exit
     from adlc.config.settings import RuntimeSettings
-    from adlc.db.engine import app_engine
+    from adlc.db.engine import open_engine
     from adlc.ledger.storage import FileStore
     from adlc.ledger.trace import trace
     from adlc.ledger.verify import Verifier
     from adlc.spec_toolkit.registry import SqlSpecRegistry
 
     settings = load_settings_or_exit(RuntimeSettings)
-    engine = app_engine(settings)
+    engine = open_engine(settings)
     files = FileStore(
         settings.file_store_dir,
         max_bytes=settings.attachment_max,

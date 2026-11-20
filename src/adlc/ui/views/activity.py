@@ -4,8 +4,8 @@ newest first, filterable; refreshes itself and keeps the filters."""
 import streamlit as st
 
 from adlc.ui.client import ApiClient
-from adlc.ui.pages.journey import refresh_seconds
-from adlc.ui.render import table
+from adlc.ui.render import empty, page_header, table
+from adlc.ui.views.journey import refresh_seconds
 
 ACTORS = ("", "agent", "reviewer", "human", "orchestrator", "system")
 STEPS = (
@@ -24,14 +24,23 @@ STEPS = (
 )
 
 
+def any_or(value: str) -> str:
+    return value.replace("_", " ").capitalize() if value else "Any"
+
+
 def render(api: ApiClient) -> None:
-    st.header("Activity")
+    page_header(
+        "Activity", "What agents, reviewers, people and the orchestrator did, newest first."
+    )
     usecases = [""] + [u["usecase_id"] for u in api.get("/usecases")]
-    columns = st.columns(4)
-    columns[0].selectbox("Use case", usecases, key="activity_usecase")
-    columns[1].text_input("Terminal", key="activity_terminal")
-    columns[2].selectbox("Actor", ACTORS, key="activity_actor")
-    columns[3].selectbox("Step", STEPS, key="activity_step")
+    with st.container(border=True):
+        columns = st.columns(4)
+        columns[0].selectbox(
+            "Use case", usecases, key="activity_usecase", format_func=lambda v: v or "Any"
+        )
+        columns[1].text_input("Terminal", key="activity_terminal", placeholder="Any terminal")
+        columns[2].selectbox("Actor", ACTORS, key="activity_actor", format_func=any_or)
+        columns[3].selectbox("Step", STEPS, key="activity_step", format_func=any_or)
     feed(api)
 
 
@@ -45,6 +54,7 @@ def feed(api: ApiClient) -> None:
     }
     found = api.get("/dashboard/activity", **{k: v for k, v in params.items() if v})
     if not found:
-        st.caption("No activity matches.")
+        empty("No activity matches these filters.")
         return
+    st.caption(f"{len(found)} action(s)")
     table(found, key="activity_feed")

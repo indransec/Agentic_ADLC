@@ -22,11 +22,11 @@ from adlc.spec_toolkit.registry import InMemorySpecRegistry
 from adlc.tools.bridge.app import build_bridge
 from adlc.tools.client import McpClient
 from adlc.tools.enterprise.app import build_tools
+from tests.support.db import REPO_ROOT, PlatformDatabase
 from tests.support.fake_pilot import FakePilot, urls
 from tests.support.grounded import BUNDLE, KNOWLEDGE, prompt_bodies
 from tests.support.knowledge import TOKEN, knowledge_server
 from tests.support.orchestration import Harness, harness
-from tests.support.pg import REPO_ROOT, PlatformDatabase
 from tests.support.tools import ALLOWED, KEY, serve
 
 SPECS = REPO_ROOT / "adlc-specs"
@@ -91,7 +91,7 @@ def acting(
             bridge_pilot_prodsim_url=u.prodsim,
             bridge_pilot_lab_url=u.lab,
             bridge_pilot_traffic_url=u.traffic,
-            bridge_jaeger_url=f"{pilot_url}/jaeger",
+            bridge_phoenix_url=f"{pilot_url}/phoenix",
             spec_dir=SPECS,
             redteam_suite=REPO_ROOT / "data" / "redteam" / "suite.yaml",
         )
@@ -113,8 +113,7 @@ def acting(
         )
         tools = ToolsSettings(
             env="dev",
-            db_host="unused",
-            db_app_password=SecretStr("unused-password-0001"),
+            db_path=Path("unused.db"),
             tools_token_key=SecretStr(KEY),
             tools_allowed_hosts=",".join(ALLOWED),
             spec_dir=SPECS,

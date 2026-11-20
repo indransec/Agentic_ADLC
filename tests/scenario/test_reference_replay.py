@@ -8,9 +8,9 @@ from dataclasses import replace
 import pytest
 
 from adlc.agents.replay import Reference, Replayer, Report, load_references, read_recording
+from tests.support.db import REPO_ROOT, PlatformDatabase
 from tests.support.grounded import grounded
 from tests.support.orchestration import person
-from tests.support.pg import REPO_ROOT, PlatformDatabase
 
 ALL = load_references(REPO_ROOT / "data" / "reference_usecases")
 REFERENCES = [replace(r, until="T2", complete_escalations=()) for r in ALL]  # T0-T2 here

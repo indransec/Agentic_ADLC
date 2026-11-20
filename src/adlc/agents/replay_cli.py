@@ -33,7 +33,7 @@ from adlc.agents.store import SqlCallRecorder
 from adlc.agents.wiring import build_runtime
 from adlc.config.errors import load_settings_or_exit
 from adlc.config.settings import OrchestratorSettings
-from adlc.db.engine import app_engine
+from adlc.db.engine import open_engine
 from adlc.identity.accounts import load_accounts
 from adlc.identity.catalogue import load_role_ids
 from adlc.inbox.changes import ChangeService
@@ -106,7 +106,7 @@ class Stack:
 def build_stack(
     settings: OrchestratorSettings, profile: str | None, live: bool, worker_id: str
 ) -> Stack:
-    engine = app_engine(settings)
+    engine = open_engine(settings)
     with engine.connect() as conn:
         beat = store.last_beat(conn)
     if beat is not None and datetime.now(UTC) - beat < settings.heartbeat_max_age:

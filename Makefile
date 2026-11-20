@@ -13,7 +13,7 @@ COMPOSE := docker compose -f deploy/compose.yaml --env-file .env
 UV := uv run
 GITLEAKS_IMAGE := ghcr.io/gitleaks/gitleaks:v8.30.1
 
-.PHONY: help install up down status reset migrate migrate-down lint typecheck test \
+.PHONY: help install up down status reset local local-setup migrate migrate-down phoenix lint typecheck test \
         migration-check secret-scan check spec-validate spec-register \
         demo demo-auto demo-live demo-reset resilience trace
 
@@ -47,6 +47,30 @@ reset: .env
 
 .env:
 	@echo "missing .env: copy .env.example to .env and fill in every REPLACE_ME" >&2; exit 1
+
+# ------------------------------------------------------------------ without Docker
+# docs/run-without-docker.md. Settings: .env, then deploy/local.env (localhost values).
+LOCAL_ENV := set -a; source .env; source deploy/local.env; set +a
+HONCHO := uvx honcho==2.0.0
+
+# Migrate the database file and register the specs (idempotent).
+local-setup: .env
+	@echo "==> local-setup"
+	@$(LOCAL_ENV); mkdir -p data/local/pilot/packages; \
+	  env -u VIRTUAL_ENV uv run alembic upgrade head && \
+	  env -u VIRTUAL_ENV uv run adlc-spec register adlc-specs && \
+	  (cd pilot && env -u VIRTUAL_ENV uv sync --locked -q) && \
+	  (cd deploy/phoenix && env -u VIRTUAL_ENV uv sync --locked -q)
+
+# Every process of deploy/Procfile.local in the foreground; Ctrl-C stops them all.
+local: local-setup
+	@echo "==> local"
+	$(HONCHO) -f deploy/Procfile.local -e .env,deploy/local.env -d . start
+
+# The trace collector without Docker (deploy/phoenix, its own uv project): UI and OTLP on :6006.
+phoenix:
+	@echo "==> phoenix"
+	cd deploy/phoenix && env -u VIRTUAL_ENV PHOENIX_WORKING_DIR=$(CURDIR)/data/local/phoenix uv run phoenix serve
 
 migrate:
 	@echo "==> migrate"
@@ -87,7 +111,7 @@ spec-validate:
 	@echo "==> spec-validate"
 	$(UV) adlc-spec validate adlc-specs --baseline-ref $(ADLC_SPEC_BASELINE_REF)
 
-# Registers adlc-specs into the ADLC_DB_* data store (schema-owner identity), host side.
+# Registers adlc-specs into the ADLC_DB_PATH data store, host side.
 spec-register: .env
 	@echo "==> spec-register"
 	$(UV) adlc-spec register adlc-specs

@@ -34,8 +34,18 @@ class UseCaseRow:
     status: str
 
 
+def _next_value(conn: Connection, sequence: str) -> int:
+    """The next number of a 1-9999 sequence (refused by its check beyond 9999)."""
+    return int(
+        conn.execute(
+            text("UPDATE sequence_counter SET value = value + 1 WHERE name = :n RETURNING value"),
+            {"n": sequence},
+        ).scalar_one()
+    )
+
+
 def next_usecase_number(conn: Connection) -> int:
-    return int(conn.execute(text("SELECT nextval('run.usecase_seq')")).scalar_one())
+    return _next_value(conn, "usecase_seq")
 
 
 def insert_usecase(
@@ -43,7 +53,7 @@ def insert_usecase(
 ) -> None:
     conn.execute(
         text(
-            "INSERT INTO run.usecase (usecase_id, name, intake_text, submitted_by) "
+            "INSERT INTO usecase (usecase_id, name, intake_text, submitted_by) "
             "VALUES (:u, :n, :i, :o)"
         ),
         {"u": usecase_id, "n": name, "i": intake_text, "o": owner},
@@ -53,10 +63,10 @@ def insert_usecase(
 def load_usecase(conn: Connection, usecase_id: str, *, lock: bool = False) -> UseCaseRow | None:
     sql = (
         "SELECT usecase_id, name, intake_text, submitted_by, risk_tier, status "
-        "FROM run.usecase WHERE usecase_id = :u FOR NO KEY UPDATE"
+        "FROM usecase WHERE usecase_id = :u"
         if lock
         else "SELECT usecase_id, name, intake_text, submitted_by, risk_tier, status "
-        "FROM run.usecase WHERE usecase_id = :u"
+        "FROM usecase WHERE usecase_id = :u"
     )
     row = conn.execute(text(sql), {"u": usecase_id}).mappings().first()
     return None if row is None else UseCaseRow(**row)
@@ -64,7 +74,7 @@ def load_usecase(conn: Connection, usecase_id: str, *, lock: bool = False) -> Us
 
 def set_usecase_tier(conn: Connection, usecase_id: str, tier: str) -> None:
     conn.execute(
-        text("UPDATE run.usecase SET risk_tier = :t WHERE usecase_id = :u"),
+        text("UPDATE usecase SET risk_tier = :t WHERE usecase_id = :u"),
         {"t": tier, "u": usecase_id},
     )
 
@@ -72,7 +82,7 @@ def set_usecase_tier(conn: Connection, usecase_id: str, tier: str) -> None:
 def end_usecase(conn: Connection, usecase_id: str, status: str, now: datetime) -> None:
     conn.execute(
         text(
-            "UPDATE run.usecase SET status = :s, closed_at = :now "
+            "UPDATE usecase SET status = :s, closed_at = :now "
             "WHERE usecase_id = :u AND status = 'active'"
         ),
         {"s": status, "u": usecase_id, "now": now},
@@ -82,7 +92,7 @@ def end_usecase(conn: Connection, usecase_id: str, status: str, now: datetime) -
 def active_spec_versions(conn: Connection) -> list[tuple[str, str]]:
     rows = conn.execute(
         text(
-            "SELECT terminal_id, version FROM spec.spec_registry WHERE status = 'active' "
+            "SELECT terminal_id, version FROM spec_registry WHERE status = 'active' "
             "ORDER BY terminal_id"
         )
     )
@@ -94,7 +104,7 @@ def insert_pin(
 ) -> None:
     conn.execute(
         text(
-            "INSERT INTO spec.usecase_spec_pin (usecase_id, terminal_id, version, pinned_reason) "
+            "INSERT INTO usecase_spec_pin (usecase_id, terminal_id, version, pinned_reason) "
             "VALUES (:u, :t, :v, :r)"
         ),
         {"u": usecase_id, "t": terminal_id, "v": version, "r": reason},
@@ -103,7 +113,7 @@ def insert_pin(
 
 def pins(conn: Connection, usecase_id: str) -> dict[str, str]:
     rows = conn.execute(
-        text("SELECT terminal_id, version FROM spec.usecase_spec_pin WHERE usecase_id = :u"),
+        text("SELECT terminal_id, version FROM usecase_spec_pin WHERE usecase_id = :u"),
         {"u": usecase_id},
     )
     return {str(r[0]): str(r[1]) for r in rows}
@@ -164,13 +174,10 @@ def load_run(conn: Connection, run_id: str, *, lock: bool = False) -> RunRow | N
         "pending_waiver_id, escalation_trigger, escalation_destination, final_status, version, "
         "lease_until, opened_at, due_at, closed_at, profile_version, approvals_after_sign_off_id, "
         "controls_pending, model_unavailable_since "
-        "FROM run.terminal_run "
+        "FROM terminal_run "
         "WHERE run_id = :r"
     )
-    if lock:
-        # NO KEY UPDATE: serializes writers of the run, but lets rows that reference it (for
-        # example 004's frozen parameter set) be inserted from another connection meanwhile.
-        sql += " FOR NO KEY UPDATE"
+    # ``lock`` needs no clause: every transaction holds the database write lock (BEGIN IMMEDIATE).
     row = conn.execute(text(sql), {"r": run_id}).mappings().first()
     return None if row is None else _run(row)
 
@@ -184,7 +191,7 @@ def runs_of_usecase(conn: Connection, usecase_id: str) -> list[RunRow]:
             "recommendation, received_events, pending_waiver_id, escalation_trigger, "
             "escalation_destination, final_status, version, lease_until, opened_at, due_at, "
             "closed_at, profile_version, approvals_after_sign_off_id, controls_pending, "
-            "model_unavailable_since FROM run.terminal_run "
+            "model_unavailable_since FROM terminal_run "
             "WHERE usecase_id = :u "
             "ORDER BY opened_at, run_id"
         ),
@@ -196,7 +203,7 @@ def runs_of_usecase(conn: Connection, usecase_id: str) -> list[RunRow]:
 def active_run(conn: Connection, usecase_id: str, terminal_id: str) -> str | None:
     value = conn.execute(
         text(
-            "SELECT run_id FROM run.terminal_run WHERE usecase_id = :u AND terminal_id = :t "
+            "SELECT run_id FROM terminal_run WHERE usecase_id = :u AND terminal_id = :t "
             "AND state <> 'closed'"
         ),
         {"u": usecase_id, "t": terminal_id},
@@ -207,7 +214,7 @@ def active_run(conn: Connection, usecase_id: str, terminal_id: str) -> str | Non
 def run_history(conn: Connection, usecase_id: str, terminal_id: str) -> list[tuple[int, str]]:
     rows = conn.execute(
         text(
-            "SELECT run_number, trigger_event_type FROM run.terminal_run "
+            "SELECT run_number, trigger_event_type FROM terminal_run "
             "WHERE usecase_id = :u AND terminal_id = :t ORDER BY run_number"
         ),
         {"u": usecase_id, "t": terminal_id},
@@ -218,7 +225,7 @@ def run_history(conn: Connection, usecase_id: str, terminal_id: str) -> list[tup
 def latest_closed_artifacts(conn: Connection, usecase_id: str, terminal_id: str) -> dict[str, Any]:
     value = conn.execute(
         text(
-            "SELECT artifacts FROM run.terminal_run WHERE usecase_id = :u AND terminal_id = :t "
+            "SELECT artifacts FROM terminal_run WHERE usecase_id = :u AND terminal_id = :t "
             "AND state = 'closed' ORDER BY run_number DESC LIMIT 1"
         ),
         {"u": usecase_id, "t": terminal_id},
@@ -245,11 +252,11 @@ def insert_run(
 ) -> None:
     conn.execute(
         text(
-            "INSERT INTO run.terminal_run (run_id, usecase_id, terminal_id, run_number, "
+            "INSERT INTO terminal_run (run_id, usecase_id, terminal_id, run_number, "
             "spec_version, state, mode, trigger_event_id, trigger_event_type, trigger_context, "
             "rework_count, opened_at, due_at, profile_version) VALUES (:run_id, :usecase_id, "
             ":terminal_id, :run_number, :spec_version, 'opened', :mode, :trigger_event_id, "
-            ":trigger_event_type, CAST(:trigger_context AS jsonb), :rework_count, :now, :due_at, "
+            ":trigger_event_type, :trigger_context, :rework_count, :now, :due_at, "
             ":profile_version)"
         ),
         {
@@ -274,12 +281,12 @@ def save_run(conn: Connection, run: RunRow, now: datetime) -> None:
     """Write the run's mutable fields and bump ``version`` (caller holds the row lock)."""
     conn.execute(
         text(
-            "UPDATE run.terminal_run SET state = :state, return_state = :return_state, "
+            "UPDATE terminal_run SET state = :state, return_state = :return_state, "
             "auto_retries = :auto_retries, clarification_rounds = :clarification_rounds, "
-            "artifacts = CAST(:artifacts AS jsonb), "
-            "control_results = CAST(:control_results AS jsonb), "
-            "recommendation = CAST(:recommendation AS jsonb), "
-            "received_events = CAST(:received_events AS jsonb), "
+            "artifacts = :artifacts, "
+            "control_results = :control_results, "
+            "recommendation = :recommendation, "
+            "received_events = :received_events, "
             "pending_waiver_id = :pending_waiver_id, escalation_trigger = :escalation_trigger, "
             "escalation_destination = :escalation_destination, final_status = :final_status, "
             "version = version + 1, lease_until = NULL, closed_at = :closed_at, "
@@ -319,18 +326,19 @@ def lease_next_automatic(
     row = conn.execute(
         text(
             "SELECT run_id, CASE WHEN state IN ('opened', 'building', 'checking', 'reviewing') "
-            "AND model_unavailable_since IS NULL THEN lease_until END FROM run.terminal_run "
+            'AND model_unavailable_since IS NULL THEN lease_until END AS "lease [timestamptz]" '
+            "FROM terminal_run "
             "WHERE (state IN ('opened', 'building', 'checking', 'reviewing') "
             "OR (state IN ('awaiting_sign_off', 'escalated') AND controls_pending)) "
             "AND (lease_until IS NULL OR lease_until < :now) "
-            "ORDER BY opened_at, run_id LIMIT 1 FOR NO KEY UPDATE SKIP LOCKED"
+            "ORDER BY opened_at, run_id LIMIT 1"
         ),
         {"now": now},
     ).first()
     if row is None:
         return None
     conn.execute(
-        text("UPDATE run.terminal_run SET lease_until = :l WHERE run_id = :r"),
+        text("UPDATE terminal_run SET lease_until = :l WHERE run_id = :r"),
         {"l": lease_until, "r": row[0]},
     )
     return str(row[0]), row[1] is not None
@@ -340,7 +348,7 @@ def defer_for_outage(conn: Connection, run_id: str, since: datetime, lease_until
     """006: hold a run through a model outage; its expired lease is a retry, not an interrupt."""
     conn.execute(
         text(
-            "UPDATE run.terminal_run SET model_unavailable_since = :s, lease_until = :l "
+            "UPDATE terminal_run SET model_unavailable_since = :s, lease_until = :l "
             "WHERE run_id = :r"
         ),
         {"s": since, "l": lease_until, "r": run_id},
@@ -350,7 +358,7 @@ def defer_for_outage(conn: Connection, run_id: str, since: datetime, lease_until
 def deferrals_since(conn: Connection, run_id: str, since: datetime) -> int:
     value = conn.execute(
         text(
-            "SELECT count(*) FROM run.run_activity WHERE run_id = :r AND outcome = 'deferred' "
+            "SELECT count(*) FROM run_activity WHERE run_id = :r AND outcome = 'deferred' "
             "AND ended_at >= :s"
         ),
         {"r": run_id, "s": since},
@@ -360,7 +368,7 @@ def deferrals_since(conn: Connection, run_id: str, since: datetime) -> int:
 
 def set_lease(conn: Connection, run_id: str, lease_until: datetime) -> None:
     conn.execute(
-        text("UPDATE run.terminal_run SET lease_until = :l WHERE run_id = :r"),
+        text("UPDATE terminal_run SET lease_until = :l WHERE run_id = :r"),
         {"l": lease_until, "r": run_id},
     )
 
@@ -381,7 +389,7 @@ def insert_transition(
 ) -> None:
     conn.execute(
         text(
-            "INSERT INTO run.run_transition (run_id, from_state, to_state, signal_kind, "
+            "INSERT INTO run_transition (run_id, from_state, to_state, signal_kind, "
             "actor_type, actor_id, reason, at) VALUES (:r, :f, :t, :k, :at, :ai, :reason, :now)"
         ),
         {
@@ -410,9 +418,9 @@ def insert_activity(
 ) -> None:
     conn.execute(
         text(
-            "INSERT INTO run.run_activity (run_id, step, actor_type, actor_id, started_at, "
+            "INSERT INTO run_activity (run_id, step, actor_type, actor_id, started_at, "
             "ended_at, outcome, detail) VALUES (:r, :s, :at, :ai, :st, :en, :o, "
-            "CAST(:d AS jsonb))"
+            ":d)"
         ),
         {
             "r": run_id,
@@ -438,9 +446,9 @@ def insert_sign_off(
 ) -> None:
     conn.execute(
         text(
-            "INSERT INTO run.sign_off (run_id, role, person, decision, comment, root_cause, "
+            "INSERT INTO sign_off (run_id, role, person, decision, comment, root_cause, "
             "reason_differs, target_terminal, fields, signed_at) VALUES (:r, :role, :p, :d, :c, "
-            ":rc, :rd, :tt, CAST(:f AS jsonb), :now)"
+            ":rc, :rd, :tt, :f, :now)"
         ),
         {
             "r": run_id,
@@ -461,7 +469,7 @@ def sign_offs(conn: Connection, run_id: str) -> list[dict[str, Any]]:
     rows = conn.execute(
         text(
             "SELECT sign_off_id, role, person, decision, comment, root_cause, reason_differs, "
-            "target_terminal, fields, signed_at FROM run.sign_off WHERE run_id = :r "
+            "target_terminal, fields, signed_at FROM sign_off WHERE run_id = :r "
             "ORDER BY sign_off_id"
         ),
         {"r": run_id},
@@ -470,7 +478,7 @@ def sign_offs(conn: Connection, run_id: str) -> list[dict[str, Any]]:
 
 
 def next_waiver_number(conn: Connection) -> int:
-    return int(conn.execute(text("SELECT nextval('run.waiver_seq')")).scalar_one())
+    return _next_value(conn, "waiver_seq")
 
 
 def insert_waiver(
@@ -488,9 +496,9 @@ def insert_waiver(
 ) -> None:
     conn.execute(
         text(
-            "INSERT INTO run.waiver (waiver_id, run_id, waiver_owner, compensating_control, "
+            "INSERT INTO waiver (waiver_id, run_id, waiver_owner, compensating_control, "
             "expiry, recheck_at, requires, status, proposed_by, proposed_at) VALUES (:w, :r, :o, "
-            ":c, CAST(:e AS date), :ra, CAST(:req AS jsonb), 'proposed', :p, :now)"
+            ":c, :e, :ra, :req, 'proposed', :p, :now)"
         ),
         {
             "w": waiver_id,
@@ -511,7 +519,7 @@ def load_waiver(conn: Connection, waiver_id: str) -> dict[str, Any] | None:
         conn.execute(
             text(
                 "SELECT waiver_id, run_id, waiver_owner, compensating_control, expiry, recheck_at, "
-                "requires, status, proposed_by, decided_by, decision_comment FROM run.waiver "
+                "requires, status, proposed_by, decided_by, decision_comment FROM waiver "
                 "WHERE waiver_id = :w"
             ),
             {"w": waiver_id},
@@ -527,7 +535,7 @@ def decide_waiver(
 ) -> None:
     conn.execute(
         text(
-            "UPDATE run.waiver SET status = :s, decided_by = :p, decision_comment = :c, "
+            "UPDATE waiver SET status = :s, decided_by = :p, decision_comment = :c, "
             "decided_at = :now WHERE waiver_id = :w"
         ),
         {
@@ -552,9 +560,9 @@ def insert_clarification(
 ) -> None:
     conn.execute(
         text(
-            "INSERT INTO run.clarification_round (clarification_id, run_id, asked_by, "
+            "INSERT INTO clarification_round (clarification_id, run_id, asked_by, "
             "addressed_role, questions, looked_in, asked_at) VALUES (:c, :r, :a, :role, "
-            "CAST(:q AS jsonb), CAST(:l AS jsonb), :now)"
+            ":q, :l, :now)"
         ),
         {
             "c": clarification_id,
@@ -573,8 +581,8 @@ def insert_answer(
 ) -> None:
     conn.execute(
         text(
-            "INSERT INTO run.clarification_answer (clarification_id, answered_by, answers, "
-            "answered_at) VALUES (:c, :p, CAST(:a AS jsonb), :now)"
+            "INSERT INTO clarification_answer (clarification_id, answered_by, answers, "
+            "answered_at) VALUES (:c, :p, :a, :now)"
         ),
         {"c": clarification_id, "p": person, "a": _json(answers), "now": now},
     )
@@ -585,8 +593,8 @@ def load_clarification(conn: Connection, clarification_id: str) -> dict[str, Any
         conn.execute(
             text(
                 "SELECT c.clarification_id, c.run_id, c.asked_by, c.addressed_role, c.questions, "
-                "a.answered_by, a.answers FROM run.clarification_round c "
-                "LEFT JOIN run.clarification_answer a USING (clarification_id) "
+                "a.answered_by, a.answers FROM clarification_round c "
+                "LEFT JOIN clarification_answer a USING (clarification_id) "
                 "WHERE c.clarification_id = :c"
             ),
             {"c": clarification_id},
@@ -601,8 +609,8 @@ def clarifications(conn: Connection, run_id: str) -> list[dict[str, Any]]:
     rows = conn.execute(
         text(
             "SELECT c.clarification_id, c.asked_by, c.addressed_role, c.questions, c.looked_in, "
-            "a.answered_by, a.answers FROM run.clarification_round c "
-            "LEFT JOIN run.clarification_answer a USING (clarification_id) "
+            "a.answered_by, a.answers FROM clarification_round c "
+            "LEFT JOIN clarification_answer a USING (clarification_id) "
             "WHERE c.run_id = :r ORDER BY c.asked_at, c.clarification_id"
         ),
         {"r": run_id},
@@ -615,7 +623,7 @@ def clarifications(conn: Connection, run_id: str) -> list[dict[str, Any]]:
 
 def insert_timer(conn: Connection, run_id: str, kind: str, due_at: datetime) -> None:
     conn.execute(
-        text("INSERT INTO run.timer (run_id, kind, due_at) VALUES (:r, :k, :d)"),
+        text("INSERT INTO timer (run_id, kind, due_at) VALUES (:r, :k, :d)"),
         {"r": run_id, "k": kind, "d": due_at},
     )
 
@@ -623,7 +631,7 @@ def insert_timer(conn: Connection, run_id: str, kind: str, due_at: datetime) -> 
 def cancel_timers(conn: Connection, run_id: str, now: datetime, kind: str | None = None) -> None:
     conn.execute(
         text(
-            "UPDATE run.timer SET cancelled_at = :now WHERE run_id = :r "
+            "UPDATE timer SET cancelled_at = :now WHERE run_id = :r "
             "AND fired_at IS NULL AND cancelled_at IS NULL "
             "AND (CAST(:k AS text) IS NULL OR kind = :k)"
         ),
@@ -634,16 +642,16 @@ def cancel_timers(conn: Connection, run_id: str, now: datetime, kind: str | None
 def take_due_timer(conn: Connection, now: datetime) -> tuple[int, str, str] | None:
     row = conn.execute(
         text(
-            "SELECT timer_id, run_id, kind FROM run.timer WHERE due_at <= :now "
+            "SELECT timer_id, run_id, kind FROM timer WHERE due_at <= :now "
             "AND fired_at IS NULL AND cancelled_at IS NULL ORDER BY due_at, timer_id "
-            "LIMIT 1 FOR UPDATE SKIP LOCKED"
+            "LIMIT 1"
         ),
         {"now": now},
     ).first()
     if row is None:
         return None
     conn.execute(
-        text("UPDATE run.timer SET fired_at = :now WHERE timer_id = :t"),
+        text("UPDATE timer SET fired_at = :now WHERE timer_id = :t"),
         {"now": now, "t": row[0]},
     )
     return int(row[0]), str(row[1]), str(row[2])
@@ -676,9 +684,9 @@ def insert_event(
 ) -> None:
     conn.execute(
         text(
-            "INSERT INTO events.outbox_event (event_id, event_type, usecase_id, correlation_id, "
+            "INSERT INTO outbox_event (event_id, event_type, usecase_id, correlation_id, "
             "causation_run_id, payload, next_attempt_at) VALUES (:id, :t, :u, :c, :r, "
-            "CAST(:p AS jsonb), :now)"
+            ":p, :now)"
         ),
         {
             "id": event_id,
@@ -690,7 +698,6 @@ def insert_event(
             "now": now,
         },
     )
-    conn.execute(text("SELECT pg_notify('adlc_outbox', :u)"), {"u": usecase_id or ""})
 
 
 def take_next_event(conn: Connection, now: datetime) -> EventRow | None:
@@ -699,13 +706,13 @@ def take_next_event(conn: Connection, now: datetime) -> EventRow | None:
         conn.execute(
             text(
                 "SELECT e.event_id, e.event_type, e.usecase_id, e.correlation_id, "
-                "e.causation_run_id, e.payload, e.attempts FROM events.outbox_event e "
+                "e.causation_run_id, e.payload, e.attempts FROM outbox_event e "
                 "WHERE e.processed_at IS NULL AND e.dead_lettered_at IS NULL "
-                "AND e.next_attempt_at <= :now AND NOT EXISTS (SELECT 1 FROM events.outbox_event o "
+                "AND e.next_attempt_at <= :now AND NOT EXISTS (SELECT 1 FROM outbox_event o "
                 "WHERE o.usecase_id IS NOT DISTINCT FROM e.usecase_id AND o.processed_at IS NULL "
                 "AND o.dead_lettered_at IS NULL AND (o.created_at, o.event_id) < "
                 "(e.created_at, e.event_id)) ORDER BY e.created_at, e.event_id "
-                "LIMIT 1 FOR UPDATE OF e SKIP LOCKED"
+                "LIMIT 1"
             ),
             {"now": now},
         )
@@ -718,7 +725,7 @@ def take_next_event(conn: Connection, now: datetime) -> EventRow | None:
 def already_processed(conn: Connection, event_id: UUID) -> bool:
     return (
         conn.execute(
-            text("SELECT 1 FROM events.processed_event WHERE event_id = :e"), {"e": event_id}
+            text("SELECT 1 FROM processed_event WHERE event_id = :e"), {"e": event_id}
         ).first()
         is not None
     )
@@ -727,13 +734,13 @@ def already_processed(conn: Connection, event_id: UUID) -> bool:
 def mark_processed(conn: Connection, event_id: UUID, now: datetime) -> None:
     conn.execute(
         text(
-            "INSERT INTO events.processed_event (event_id, processed_at) VALUES (:e, :now) "
+            "INSERT INTO processed_event (event_id, processed_at) VALUES (:e, :now) "
             "ON CONFLICT (event_id) DO NOTHING"
         ),
         {"e": event_id, "now": now},
     )
     conn.execute(
-        text("UPDATE events.outbox_event SET processed_at = :now WHERE event_id = :e"),
+        text("UPDATE outbox_event SET processed_at = :now WHERE event_id = :e"),
         {"e": event_id, "now": now},
     )
 
@@ -748,7 +755,7 @@ def record_failure(
 ) -> None:
     conn.execute(
         text(
-            "UPDATE events.outbox_event SET attempts = :a, last_error = :err, "
+            "UPDATE outbox_event SET attempts = :a, last_error = :err, "
             "next_attempt_at = COALESCE(:next, next_attempt_at), "
             "dead_lettered_at = CASE WHEN CAST(:next AS timestamptz) IS NULL THEN :now END "
             "WHERE event_id = :e"
@@ -761,8 +768,8 @@ def dead_letters(conn: Connection) -> list[dict[str, Any]]:
     rows = conn.execute(
         text(
             "SELECT event_id, event_type, usecase_id, causation_run_id, attempts, last_error, "
-            "dead_lettered_at, (SELECT count(*) FROM events.dead_letter_action d WHERE "
-            "d.event_id = e.event_id) AS requeues FROM events.outbox_event e "
+            "dead_lettered_at, (SELECT count(*) FROM dead_letter_action d WHERE "
+            "d.event_id = e.event_id) AS requeues FROM outbox_event e "
             "WHERE dead_lettered_at IS NOT NULL ORDER BY dead_lettered_at, event_id"
         )
     ).mappings()
@@ -775,7 +782,7 @@ def dead_letter(conn: Connection, event_id: UUID) -> dict[str, Any] | None:
         conn.execute(
             text(
                 "SELECT event_id, event_type, usecase_id, causation_run_id, attempts, last_error, "
-                "dead_lettered_at, processed_at, payload FROM events.outbox_event "
+                "dead_lettered_at, processed_at, payload FROM outbox_event "
                 "WHERE event_id = :e"
             ),
             {"e": event_id},
@@ -787,7 +794,7 @@ def dead_letter(conn: Connection, event_id: UUID) -> dict[str, Any] | None:
         return None
     history = conn.execute(
         text(
-            "SELECT action, actor, at FROM events.dead_letter_action WHERE event_id = :e "
+            "SELECT action, actor, at FROM dead_letter_action WHERE event_id = :e "
             "ORDER BY dead_letter_action_id"
         ),
         {"e": event_id},
@@ -798,7 +805,7 @@ def dead_letter(conn: Connection, event_id: UUID) -> dict[str, Any] | None:
 def requeue(conn: Connection, event_id: UUID, actor: str, now: datetime) -> bool:
     updated = conn.execute(
         text(
-            "UPDATE events.outbox_event SET attempts = 0, next_attempt_at = :now, "
+            "UPDATE outbox_event SET attempts = 0, next_attempt_at = :now, "
             "dead_lettered_at = NULL WHERE event_id = :e AND dead_lettered_at IS NOT NULL"
         ),
         {"e": event_id, "now": now},
@@ -806,7 +813,7 @@ def requeue(conn: Connection, event_id: UUID, actor: str, now: datetime) -> bool
     if updated:
         conn.execute(
             text(
-                "INSERT INTO events.dead_letter_action (event_id, action, actor, at) "
+                "INSERT INTO dead_letter_action (event_id, action, actor, at) "
                 "VALUES (:e, 'requeue', :a, :now)"
             ),
             {"e": event_id, "a": actor, "now": now},
@@ -817,7 +824,7 @@ def requeue(conn: Connection, event_id: UUID, actor: str, now: datetime) -> bool
 def event_caused_by(conn: Connection, run_id: str) -> tuple[UUID, str] | None:
     row = conn.execute(
         text(
-            "SELECT event_id, event_type FROM events.outbox_event WHERE causation_run_id = :r "
+            "SELECT event_id, event_type FROM outbox_event WHERE causation_run_id = :r "
             "ORDER BY created_at DESC, event_id DESC LIMIT 1"
         ),
         {"r": run_id},
@@ -831,7 +838,7 @@ def event_caused_by(conn: Connection, run_id: str) -> tuple[UUID, str] | None:
 def latest_ledger_hash(conn: Connection, usecase_id: str) -> str | None:
     value = conn.execute(
         text(
-            "SELECT content_hash FROM ledger.ledger_record WHERE usecase_id = :u "
+            "SELECT content_hash FROM ledger_record WHERE usecase_id = :u "
             "ORDER BY ledger_record_id DESC LIMIT 1"
         ),
         {"u": usecase_id},
@@ -842,9 +849,9 @@ def latest_ledger_hash(conn: Connection, usecase_id: str) -> str | None:
 def insert_ledger_record(conn: Connection, record: LedgerRecord, now: datetime) -> None:
     conn.execute(
         text(
-            "INSERT INTO ledger.ledger_record (ledger_key, content_hash, previous_record_hash, "
+            "INSERT INTO ledger_record (ledger_key, content_hash, previous_record_hash, "
             "written_at, run_id, usecase_id, content_json) VALUES (:k, :h, :p, :now, :r, :u, "
-            "CAST(:c AS jsonb))"
+            ":c)"
         ),
         {
             "k": record.ledger_key,
@@ -864,7 +871,7 @@ def insert_ledger_record(conn: Connection, record: LedgerRecord, now: datetime) 
 def beat(conn: Connection, worker_id: str, now: datetime) -> None:
     conn.execute(
         text(
-            "INSERT INTO events.orchestrator_heartbeat (worker_id, beat_at) VALUES (:w, :now) "
+            "INSERT INTO orchestrator_heartbeat (worker_id, beat_at) VALUES (:w, :now) "
             "ON CONFLICT (worker_id) DO UPDATE SET beat_at = EXCLUDED.beat_at"
         ),
         {"w": worker_id, "now": now},
@@ -872,12 +879,14 @@ def beat(conn: Connection, worker_id: str, now: datetime) -> None:
 
 
 def last_beat(conn: Connection) -> datetime | None:
-    value = conn.execute(text("SELECT max(beat_at) FROM events.orchestrator_heartbeat")).scalar()
+    value = conn.execute(
+        text('SELECT max(beat_at) AS "beat_at [timestamptz]" FROM orchestrator_heartbeat')
+    ).scalar()
     return value if isinstance(value, datetime) else None
 
 
 def max_sign_off_id(conn: Connection, run_id: str) -> int | None:
     value = conn.execute(
-        text("SELECT max(sign_off_id) FROM run.sign_off WHERE run_id = :r"), {"r": run_id}
+        text("SELECT max(sign_off_id) FROM sign_off WHERE run_id = :r"), {"r": run_id}
     ).scalar()
     return None if value is None else int(value)

@@ -57,18 +57,16 @@ ATTEMPT_COLUMNS = (
 
 def _insert(columns: tuple[str, ...], json_columns: tuple[str, ...], table: str) -> str:
     names = ", ".join((*columns, *json_columns))
-    values = ", ".join(
-        (*(f":{c}" for c in columns), *(f"CAST(:{c} AS jsonb)" for c in json_columns))
-    )
+    values = ", ".join((*(f":{c}" for c in columns), *(f":{c}" for c in json_columns)))
     return f"INSERT INTO {table} ({names}) VALUES ({values})"  # noqa: S608 - fixed names
 
 
-INSERT_CALL = _insert(MODEL_CALL_COLUMNS, ("tried",), "run.model_call")
-INSERT_ATTEMPT = _insert(ATTEMPT_COLUMNS, ("playbook_hashes",), "run.agent_attempt")
+INSERT_CALL = _insert(MODEL_CALL_COLUMNS, ("tried",), "model_call")
+INSERT_ATTEMPT = _insert(ATTEMPT_COLUMNS, ("playbook_hashes",), "agent_attempt")
 
 
 class SqlCallRecorder:
-    """``CallRecorder`` writing ``run.model_call`` rows."""
+    """``CallRecorder`` writing ``model_call`` rows."""
 
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
@@ -92,7 +90,7 @@ def insert_attempt(engine: Engine, row: Mapping[str, Any]) -> None:
 def model_calls(engine: Engine, run_id: str) -> list[dict[str, Any]]:
     with engine.connect() as conn:
         rows = conn.execute(
-            text("SELECT * FROM run.model_call WHERE run_id = :r ORDER BY model_call_id"),
+            text("SELECT * FROM model_call WHERE run_id = :r ORDER BY model_call_id"),
             {"r": run_id},
         ).mappings()
         return [dict(r) for r in rows]
@@ -101,7 +99,7 @@ def model_calls(engine: Engine, run_id: str) -> list[dict[str, Any]]:
 def attempts(engine: Engine, run_id: str) -> list[dict[str, Any]]:
     with engine.connect() as conn:
         rows = conn.execute(
-            text("SELECT * FROM run.agent_attempt WHERE run_id = :r ORDER BY agent_attempt_id"),
+            text("SELECT * FROM agent_attempt WHERE run_id = :r ORDER BY agent_attempt_id"),
             {"r": run_id},
         ).mappings()
         return [dict(r) for r in rows]

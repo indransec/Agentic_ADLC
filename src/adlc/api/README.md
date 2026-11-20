@@ -10,7 +10,7 @@ Contract: `specs/007-human-inbox/contracts/api.md`.
 | --- | --- |
 | `app.py` | `create_app`: identity provider, session check, error handlers, services, routers, tracing. |
 | `auth.py` | Bearer sessions. Every path needs one except `PUBLIC_PATHS` (`/health`, `/auth/sign-in`). |
-| `deps.py` | `Services`, built on first use: `PostgresTerminalRun` with the real policy engine and stub agent and reviewer (the API never advances runs; the orchestrator worker does), `OrchestratorService`, `LedgerService` and `InboxService`. `current_actor` turns the session's person into the acting actor. |
+| `deps.py` | `Services`, built on first use: `SqlTerminalRun` with the real policy engine and stub agent and reviewer (the API never advances runs; the orchestrator worker does), `OrchestratorService`, `LedgerService` and `InboxService`. `current_actor` turns the session's person into the acting actor. |
 | `errors.py` | One error body for every operation. |
 | `routes/` | `usecases` (submit, list, journey, verify), `inbox`, `runs` (detail, decisions, escalation completion), `artifacts` (edit, spreadsheet, attachments, history, download), `requests` (clarification answers, waiver decisions, dead letters). |
 

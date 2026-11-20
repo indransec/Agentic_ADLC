@@ -39,7 +39,7 @@ def _latest(
 ) -> tuple[int, dict[str, Any]] | None:
     row = conn.execute(
         text(
-            "SELECT tool_result_id, result FROM tools.tool_result WHERE usecase_id = :u "
+            "SELECT tool_result_id, result FROM tool_result WHERE usecase_id = :u "
             "AND kind = :k AND (CAST(:r AS text) IS NULL OR run_id = :r) "
             "AND (CAST(:p AS text) IS NULL OR package_hash = :p) "
             "ORDER BY tool_result_id DESC LIMIT 1"
@@ -61,7 +61,7 @@ def stages(conn: Connection, usecase_id: str, run_id: str | None) -> dict[str, A
         return None
     rows = conn.execute(
         text(
-            "SELECT kind, result FROM tools.tool_result WHERE usecase_id = :u AND run_id = :r "
+            "SELECT kind, result FROM tool_result WHERE usecase_id = :u AND run_id = :r "
             "AND kind IN ('traffic', 'observability') ORDER BY tool_result_id"
         ),
         {"u": usecase_id, "r": run_id},

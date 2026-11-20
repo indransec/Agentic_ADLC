@@ -2,12 +2,11 @@
 
 import json
 import time
-from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 import pytest
-from sqlalchemy import Connection, Engine, create_engine, text
+from sqlalchemy import Connection, Engine, text
 
 from adlc.identity.catalogue import load_role_ids
 from adlc.ledger.content import record_hash
@@ -15,6 +14,7 @@ from adlc.ledger.service import LedgerService
 from adlc.orchestration import store as run_store
 from adlc.orchestration.ledger import make_record
 from adlc.orchestration.service import Actor
+from tests.support.db import tamper
 from tests.support.ledger import ledger_service
 from tests.support.lifecycle import ORDER, walk_to
 from tests.support.orchestration import Harness, person
@@ -30,22 +30,19 @@ def ledger(h: Harness, tmp_path: Path) -> LedgerService:
 
 
 @pytest.fixture
-def superuser(h: Harness) -> Iterator[Engine]:
-    engine = create_engine(h.db.url("postgres", h.db.superuser_password))
-    yield engine
-    engine.dispose()
+def superuser(h: Harness) -> Engine:
+    """Anyone with write access to the database file (the attacker of these tests)."""
+    return h.app
 
 
 def _tamper(engine: Engine, sql: str, **params: Any) -> None:
-    """Bypass the append-only triggers, as an attacker with database superuser rights could."""
-    with engine.begin() as conn:
-        conn.execute(text("SET LOCAL session_replication_role = replica"))
-        conn.execute(text(sql), params)
+    """Bypass the append-only triggers, as anyone with write access to the file could."""
+    tamper(engine, sql, **params)
 
 
 def _key(h: Harness, usecase: str, terminal: str) -> str:
     rows = h.sql(
-        "SELECT ledger_key FROM ledger.ledger_record WHERE usecase_id = :u AND ledger_key LIKE :k",
+        "SELECT ledger_key FROM ledger_record WHERE usecase_id = :u AND ledger_key LIKE :k",
         u=usecase,
         k=f"%/{terminal}/run-1",
     )
@@ -95,8 +92,8 @@ def test_altered_record_content(h: Harness, ledger: LedgerService, superuser: En
     key = _key(h, usecase, "T2")
     _tamper(
         superuser,
-        "UPDATE ledger.ledger_record SET content_json = jsonb_set(content_json, "
-        "'{final_status}', '\"rework\"') WHERE ledger_key = :k",
+        "UPDATE ledger_record SET content_json = json_set(content_json, "
+        "'$.final_status', 'rework') WHERE ledger_key = :k",
         k=key,
     )
     breaks = ledger.verify(AUDITOR, usecase).breaks
@@ -106,11 +103,11 @@ def test_altered_record_content(h: Harness, ledger: LedgerService, superuser: En
 def test_altered_artifact_body(h: Harness, ledger: LedgerService, superuser: Engine) -> None:
     usecase = _lifecycle(h)
     key = _key(h, usecase, "T1")
-    record = h.sql("SELECT content_json FROM ledger.ledger_record WHERE ledger_key = :k", k=key)
+    record = h.sql("SELECT content_json FROM ledger_record WHERE ledger_key = :k", k=key)
     kpis = [a for a in record[0][0]["artifacts"] if a["id"] == "kpis"][0]
     _tamper(
         superuser,
-        "UPDATE ledger.content_blob SET body = '[]'::jsonb WHERE content_hash = :h",
+        "UPDATE content_blob SET body = '[]' WHERE content_hash = :h",
         h=kpis["content_hash"],
     )
     breaks = ledger.verify(AUDITOR, usecase).breaks
@@ -121,7 +118,7 @@ def test_altered_artifact_body(h: Harness, ledger: LedgerService, superuser: Eng
 def test_deleted_attachment_file(h: Harness, ledger: LedgerService) -> None:
     usecase = _lifecycle(h, ledger)
     key = _key(h, usecase, "T1")
-    digest = h.sql("SELECT content_hash FROM ledger.file_object")[0][0]
+    digest = h.sql("SELECT content_hash FROM file_object")[0][0]
     ledger.content.files.path(digest).unlink()
     breaks = ledger.verify(AUDITOR, usecase).breaks
     assert [(b.ledger_key, b.check, b.element, b.actual) for b in breaks] == [
@@ -134,7 +131,7 @@ def test_broken_chain(h: Harness, ledger: LedgerService, superuser: Engine) -> N
     key = _key(h, usecase, "T5")
     _tamper(
         superuser,
-        "UPDATE ledger.ledger_record SET previous_record_hash = :p WHERE ledger_key = :k",
+        "UPDATE ledger_record SET previous_record_hash = :p WHERE ledger_key = :k",
         p="sha256:" + "0" * 64,
         k=key,
     )
@@ -146,12 +143,11 @@ def test_package_binding(h: Harness, ledger: LedgerService, superuser: Engine) -
     """A rewritten T4 record with a valid hash but a different package is still caught."""
     usecase = _lifecycle(h)
     key = _key(h, usecase, "T4")
-    content = h.sql("SELECT content_json FROM ledger.ledger_record WHERE ledger_key = :k", k=key)
+    content = h.sql("SELECT content_json FROM ledger_record WHERE ledger_key = :k", k=key)
     forged = {**content[0][0], "bound_to": "sha256:" + "f" * 64}
     _tamper(
         superuser,
-        "UPDATE ledger.ledger_record SET content_json = CAST(:c AS jsonb), content_hash = :h "
-        "WHERE ledger_key = :k",
+        "UPDATE ledger_record SET content_json = :c, content_hash = :h WHERE ledger_key = :k",
         c=json.dumps(forged),
         h=record_hash(forged),
         k=key,
@@ -172,7 +168,7 @@ def test_verification_runs_are_recorded(
     ledger.verify(AUDITOR, first)
     ledger.verify(AUDITOR, "all")
     rows = h.sql(
-        "SELECT actor, scope, records_checked, verified, breaks FROM ledger.verification_run "
+        "SELECT actor, scope, records_checked, verified, breaks FROM verification_run "
         "ORDER BY verification_run_id"
     )
     assert [tuple(r)[:4] for r in rows] == [
@@ -215,7 +211,7 @@ def test_verification_is_fast(h: Harness, ledger: LedgerService) -> None:
     elapsed = time.perf_counter() - started
     assert report.verified, report.breaks
     assert report.records_checked == 10
-    assert h.sql("SELECT count(*) FROM ledger.file_object")[0][0] == 30
+    assert h.sql("SELECT count(*) FROM file_object")[0][0] == 30
     assert elapsed < 2.0, f"verification took {elapsed:.2f} s"
 
 
@@ -228,10 +224,10 @@ def test_records_without_a_use_case_are_listed(h: Harness, ledger: LedgerService
     walk_to(h, "T1")
     with h.app.begin() as conn:
         conn.execute(
-            text("INSERT INTO ledger.ledger_record (ledger_key, content_hash) VALUES ('qs/1', :h)"),
+            text("INSERT INTO ledger_record (ledger_key, content_hash) VALUES ('qs/1', :h)"),
             {"h": "sha256:" + "0" * 64},
         )
     report = ledger.verify(AUDITOR, "all")
     assert report.verified and report.unscoped == ["qs/1"]
     assert report.records_checked == 1
-    assert ledger.verify(AUDITOR, h.sql("SELECT usecase_id FROM run.usecase")[0][0]).unscoped == []
+    assert ledger.verify(AUDITOR, h.sql("SELECT usecase_id FROM usecase")[0][0]).unscoped == []

@@ -20,7 +20,7 @@ from adlc.ledger.storage import FileRef, LedgerContentStore
 from adlc.ledger.verify import Report, Verifier
 from adlc.orchestration import spec_view
 from adlc.orchestration import store as run_store
-from adlc.orchestration.engine import PostgresTerminalRun, StaleRun, UnknownRun
+from adlc.orchestration.engine import SqlTerminalRun, StaleRun, UnknownRun
 from adlc.orchestration.service import Actor, NotAuthorised
 from adlc.orchestration.states import (
     ActorType,
@@ -47,7 +47,7 @@ class Upload:
 
 
 class LedgerService:
-    def __init__(self, runs: PostgresTerminalRun, content: LedgerContentStore) -> None:
+    def __init__(self, runs: SqlTerminalRun, content: LedgerContentStore) -> None:
         self.runs = runs
         self.content = content
 

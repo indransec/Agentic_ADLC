@@ -1,10 +1,10 @@
 """Outbox delivery (research R-08; contracts/events.md; FR-028, FR-029).
 
 One event per transaction: the oldest due event of a use case with no older pending event is
-locked (``FOR UPDATE SKIP LOCKED``), routed, and marked processed together with its
-``processed_event`` row, so a crash never half-delivers and a repeat is skipped. A failure is
-rolled back to a savepoint and recorded on the event: retried after 10 s, 1 min, 5 min, 15 min
-(time-scaled), and dead-lettered on the fifth failure.
+taken under the database write lock (``BEGIN IMMEDIATE``), routed, and marked processed together
+with its ``processed_event`` row, so a crash never half-delivers and a repeat is skipped. A
+failure is rolled back to a savepoint and recorded on the event: retried after 10 s, 1 min, 5 min,
+15 min (time-scaled), and dead-lettered on the fifth failure.
 """
 
 import logging

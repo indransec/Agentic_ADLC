@@ -4,8 +4,8 @@ from datetime import timedelta
 
 from adlc.orchestration import ids, store
 from adlc.orchestration.store import EventRow
+from tests.support.db import PlatformDatabase
 from tests.support.orchestration import Harness, harness
-from tests.support.pg import PlatformDatabase
 
 
 def _event(h: Harness, usecase: str, event_type: str) -> None:

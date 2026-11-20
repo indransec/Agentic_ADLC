@@ -6,7 +6,7 @@ from typing import Any
 
 from adlc.dashboard.service import DashboardService
 from tests.scenario.demo_run import demo_run
-from tests.support.pg import PlatformDatabase
+from tests.support.db import PlatformDatabase
 
 
 def test_d8_dashboard_reflects_the_demo(orch_template: PlatformDatabase, tmp_path: Path) -> None:

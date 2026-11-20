@@ -59,7 +59,7 @@ def read_evidence(conn: Connection, usecase_id: str, terminals: Sequence[str]) -
     for terminal in terminals:
         row = conn.execute(
             text(
-                "SELECT ledger_key, content_hash, content_json FROM ledger.ledger_record "
+                "SELECT ledger_key, content_hash, content_json FROM ledger_record "
                 "WHERE usecase_id = :u AND content_json->>'terminal_id' = :t "
                 "ORDER BY ledger_record_id DESC LIMIT 1"
             ),
@@ -73,7 +73,7 @@ def read_evidence(conn: Connection, usecase_id: str, terminals: Sequence[str]) -
         if isinstance(listed, list):  # record content version 2 (feature 005)
             for a in listed:
                 body = conn.execute(
-                    text("SELECT body FROM ledger.content_blob WHERE content_hash = :h"),
+                    text("SELECT body FROM content_blob WHERE content_hash = :h"),
                     {"h": a.get("content_hash")},
                 ).scalar()
                 artifacts[str(a["id"])] = {

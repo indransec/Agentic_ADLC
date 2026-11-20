@@ -21,7 +21,7 @@ from adlc.dashboard.timesplit import Transition, split
 from adlc.inbox.rules import needed_sign_off_roles
 from adlc.orchestration import durations, spec_view
 from adlc.orchestration import store as run_store
-from adlc.orchestration.engine import PostgresTerminalRun
+from adlc.orchestration.engine import SqlTerminalRun
 from adlc.orchestration.states import RunState
 from adlc.orchestration.store import RunRow
 
@@ -38,7 +38,7 @@ def _iso(value: datetime | None) -> str | None:
 
 
 class DashboardService:
-    def __init__(self, runs: PostgresTerminalRun, time_scale: float = 1.0) -> None:
+    def __init__(self, runs: SqlTerminalRun, time_scale: float = 1.0) -> None:
         self.runs, self.time_scale = runs, time_scale
 
     @property
@@ -63,7 +63,8 @@ class DashboardService:
             return found
         rows = conn.execute(
             text(
-                "SELECT run_id, to_state, at FROM run.run_transition WHERE run_id = ANY(:r) "
+                "SELECT run_id, to_state, at FROM run_transition WHERE run_id IN (SELECT value "
+                "FROM json_each(:r)) "
                 "ORDER BY run_transition_id"
             ),
             {"r": run_ids},
@@ -78,8 +79,8 @@ class DashboardService:
             return {}
         rows = conn.execute(
             text(
-                "SELECT event_id, event_type, causation_run_id, payload FROM events.outbox_event "
-                "WHERE event_id = ANY(:e)"
+                "SELECT event_id, event_type, causation_run_id, payload FROM outbox_event "
+                "WHERE event_id IN (SELECT value FROM json_each(:e))"
             ),
             {"e": event_ids},
         ).mappings()
@@ -93,7 +94,8 @@ class DashboardService:
         rows = conn.execute(
             text(
                 "SELECT run_id, role, person, decision, comment, root_cause, fields, signed_at "
-                "FROM run.sign_off WHERE run_id = ANY(:r) ORDER BY sign_off_id"
+                "FROM sign_off WHERE run_id IN (SELECT value FROM json_each(:r)) ORDER BY "
+                "sign_off_id"
             ),
             {"r": run_ids},
         ).mappings()
@@ -105,8 +107,8 @@ class DashboardService:
     def _waivers(conn: Connection, usecase_id: str) -> list[dict[str, Any]]:
         rows = conn.execute(
             text(
-                "SELECT w.waiver_id, w.run_id, w.status, w.expiry FROM run.waiver w JOIN "
-                "run.terminal_run r USING (run_id) WHERE r.usecase_id = :u ORDER BY w.waiver_id"
+                "SELECT w.waiver_id, w.run_id, w.status, w.expiry FROM waiver w JOIN "
+                "terminal_run r USING (run_id) WHERE r.usecase_id = :u ORDER BY w.waiver_id"
             ),
             {"u": usecase_id},
         ).mappings()
@@ -115,8 +117,8 @@ class DashboardService:
     def _open_round_role(self, conn: Connection, run_id: str) -> str | None:
         found = conn.execute(
             text(
-                "SELECT c.addressed_role FROM run.clarification_round c LEFT JOIN "
-                "run.clarification_answer a USING (clarification_id) WHERE c.run_id = :r "
+                "SELECT c.addressed_role FROM clarification_round c LEFT JOIN "
+                "clarification_answer a USING (clarification_id) WHERE c.run_id = :r "
                 "AND a.clarification_id IS NULL ORDER BY c.asked_at DESC LIMIT 1"
             ),
             {"r": run_id},
@@ -139,7 +141,7 @@ class DashboardService:
                 text(
                     "SELECT a.run_activity_id, a.run_id, r.usecase_id, r.terminal_id, a.step, "
                     "a.actor_type, a.actor_id, a.outcome, a.started_at, a.ended_at "
-                    "FROM run.run_activity a JOIN run.terminal_run r USING (run_id) WHERE "
+                    "FROM run_activity a JOIN terminal_run r USING (run_id) WHERE "
                     "(CAST(:u AS text) IS NULL OR r.usecase_id = :u) AND "
                     "(CAST(:t AS text) IS NULL OR r.terminal_id = :t) AND "
                     "(CAST(:a AS text) IS NULL OR a.actor_type = :a) AND "
@@ -188,7 +190,7 @@ class DashboardService:
                 for r in conn.execute(
                     text(
                         "SELECT step, actor_type, actor_id, outcome, started_at, ended_at FROM "
-                        "run.run_activity WHERE run_id = :r ORDER BY started_at, run_activity_id"
+                        "run_activity WHERE run_id = :r ORDER BY started_at, run_activity_id"
                     ),
                     {"r": run_id},
                 ).mappings()
@@ -198,7 +200,7 @@ class DashboardService:
                 for r in conn.execute(
                     text(
                         "SELECT kind, attempt, agent_id, implementation, steps, tokens_in, "
-                        "tokens_out, cost_usd FROM run.agent_attempt WHERE run_id = :r "
+                        "tokens_out, cost_usd FROM agent_attempt WHERE run_id = :r "
                         "ORDER BY agent_attempt_id"
                     ),
                     {"r": run_id},
@@ -208,7 +210,7 @@ class DashboardService:
             for r in conn.execute(
                 text(
                     "SELECT agent_attempt_ref, provider, model, tokens_in, tokens_out, cost_usd, "
-                    "latency_ms, outcome, called_at FROM run.model_call WHERE run_id = :r "
+                    "latency_ms, outcome, called_at FROM model_call WHERE run_id = :r "
                     "ORDER BY model_call_id"
                 ),
                 {"r": run_id},
@@ -230,7 +232,7 @@ class DashboardService:
             for r in conn.execute(
                 text(
                     "SELECT attempt, step, tool, outcome, reason, duration_ms, at FROM "
-                    "tools.tool_call WHERE run_id = :r ORDER BY tool_call_id"
+                    "tool_call WHERE run_id = :r ORDER BY tool_call_id"
                 ),
                 {"r": run_id},
             ).mappings():
@@ -285,8 +287,9 @@ class DashboardService:
             for r in conn.execute(
                 text(
                     "SELECT c.run_id, c.addressed_role, c.asked_at, a.answered_at FROM "
-                    "run.clarification_round c LEFT JOIN run.clarification_answer a "
-                    "USING (clarification_id) WHERE c.run_id = ANY(:r) ORDER BY c.asked_at"
+                    "clarification_round c LEFT JOIN clarification_answer a "
+                    "USING (clarification_id) WHERE c.run_id IN (SELECT value FROM "
+                    "json_each(:r)) ORDER BY c.asked_at"
                 ),
                 {"r": ids},
             ).all()
@@ -295,8 +298,9 @@ class DashboardService:
             (str(r[0]), r[1])
             for r in conn.execute(
                 text(
-                    "SELECT t.run_id, r.escalation_trigger FROM run.run_transition t JOIN "
-                    "run.terminal_run r USING (run_id) WHERE t.run_id = ANY(:r) "
+                    "SELECT t.run_id, r.escalation_trigger FROM run_transition t JOIN "
+                    "terminal_run r USING (run_id) WHERE t.run_id IN (SELECT value FROM "
+                    "json_each(:r)) "
                     "AND t.to_state = 'escalated' ORDER BY t.run_transition_id"
                 ),
                 {"r": ids},
@@ -306,8 +310,8 @@ class DashboardService:
             kpis.ArtifactVersion(str(r[0]), str(r[1]), int(r[2]), str(r[3]))
             for r in conn.execute(
                 text(
-                    "SELECT run_id, artifact_id, version, producer_type FROM run.artifact_version "
-                    "WHERE run_id = ANY(:r)"
+                    "SELECT run_id, artifact_id, version, producer_type FROM artifact_version "
+                    "WHERE run_id IN (SELECT value FROM json_each(:r))"
                 ),
                 {"r": ids},
             ).all()
@@ -316,15 +320,16 @@ class DashboardService:
             kpis.ControlDecision(str(r[0]), str(r[1]), int(r[2] or 1), bool(r[3]))
             for r in conn.execute(
                 text(
-                    "SELECT run_id, check_id, attempt, passed FROM run.policy_decision "
-                    "WHERE run_id = ANY(:r) AND kind = 'evaluate' AND check_id LIKE 'CTL-%' "
+                    "SELECT run_id, check_id, attempt, passed FROM policy_decision "
+                    "WHERE run_id IN (SELECT value FROM json_each(:r)) AND kind = 'evaluate' "
+                    "AND check_id LIKE 'CTL-%' "
                     "ORDER BY policy_decision_id"
                 ),
                 {"r": ids},
             ).all()
         ]
         closed = conn.execute(
-            text("SELECT closed_at FROM run.usecase WHERE usecase_id = :u"), {"u": usecase_id}
+            text("SELECT closed_at FROM usecase WHERE usecase_id = :u"), {"u": usecase_id}
         ).scalar()
         return kpis.Records(
             submitted_at=self._submitted(conn, usecase_id),
@@ -345,8 +350,9 @@ class DashboardService:
         like every other time here; the submission time before any run."""
         found = conn.execute(
             text(
-                "SELECT coalesce(min(r.opened_at), u.created_at) FROM run.usecase u LEFT JOIN "
-                "run.terminal_run r USING (usecase_id) WHERE u.usecase_id = :u "
+                'SELECT coalesce(min(r.opened_at), u.created_at) AS "at [timestamptz]" '
+                "FROM usecase u LEFT JOIN "
+                "terminal_run r USING (usecase_id) WHERE u.usecase_id = :u "
                 "GROUP BY u.created_at"
             ),
             {"u": usecase_id},
@@ -363,7 +369,7 @@ class DashboardService:
                 str(u)
                 for u in conn.execute(
                     text(
-                        "SELECT usecase_id FROM run.usecase WHERE "
+                        "SELECT usecase_id FROM usecase WHERE "
                         "(CAST(:t AS text) IS NULL OR risk_tier = :t) AND "
                         "(CAST(:s AS text) IS NULL OR status = :s) ORDER BY usecase_id"
                     ),

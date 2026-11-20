@@ -7,7 +7,7 @@
   window is too small;
 - move to the next entry only on an outage;
 - return a refusal, a truncated answer or a request error at once, never trying another model;
-- record every request (``run.model_call``) and trace it without content.
+- record every request (``model_call``) and trace it without content.
 
 A ``Transport`` performs one request: ``LiteLLMTransport`` in production (research R-01, R-02,
 R-17), ``FakeTransport`` in tests.

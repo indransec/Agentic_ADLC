@@ -3,63 +3,63 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from sqlalchemy import Engine, create_engine
+from sqlalchemy import Engine
 
 from adlc.config.settings import Settings
-from tests.support.pg import REPO_ROOT, PlatformDatabase, alembic, platform_postgres
+from tests.support.db import REPO_ROOT, PlatformDatabase, alembic
 
 if TYPE_CHECKING:
     from tests.support.orchestration import Harness
 
 
-@pytest.fixture(scope="session")
-def platform_db() -> Iterator[PlatformDatabase]:
-    with platform_postgres() as db:
-        yield db
+@pytest.fixture
+def platform_db(tmp_path: Path) -> PlatformDatabase:
+    """A database file that does not exist yet (the migrations create it)."""
+    return PlatformDatabase(tmp_path / "adlc.db")
 
 
 @pytest.fixture
-def migrated_db(platform_db: PlatformDatabase) -> Iterator[PlatformDatabase]:
+def migrated_db(platform_db: PlatformDatabase) -> PlatformDatabase:
     alembic(platform_db, "upgrade", "head")
-    try:
-        yield platform_db
-    finally:
-        alembic(platform_db, "downgrade", "base")
+    return platform_db
 
 
 @pytest.fixture
-def owner_engine(migrated_db: PlatformDatabase) -> Iterator[Engine]:
-    engine = create_engine(migrated_db.owner_url)
-    yield engine
-    engine.dispose()
+def engine(migrated_db: PlatformDatabase) -> Iterator[Engine]:
+    """The migrated database, opened as every platform process opens it."""
+    built = migrated_db.engine()
+    yield built
+    built.dispose()
+
+
+# The platform has one database identity; older suites name it by its two former roles.
+@pytest.fixture
+def owner_engine(engine: Engine) -> Engine:
+    return engine
 
 
 @pytest.fixture
-def app_engine(migrated_db: PlatformDatabase) -> Iterator[Engine]:
-    engine = create_engine(migrated_db.app_url)
-    yield engine
-    engine.dispose()
+def app_engine(engine: Engine) -> Engine:
+    return engine
 
 
 @pytest.fixture
-def api_settings(platform_db: PlatformDatabase, tmp_path: Path) -> Settings:
-    """Settings for an API process talking to the test database as the app identity."""
+def api_settings(migrated_db: PlatformDatabase, tmp_path: Path) -> Settings:
+    """Settings for an API process talking to the test database."""
     accounts = tmp_path / "accounts.yaml"
     accounts.write_text("accounts: []\n")
-    return settings_for(platform_db, accounts)
+    return settings_for(migrated_db, accounts)
 
 
 def settings_for(db: PlatformDatabase, accounts_file: Path, **overrides: object) -> Settings:
     values: dict[str, object] = {
         "env": "dev",
-        "db_host": db.host,
-        "db_port": db.port,
-        "db_app_password": db.app_password,
-        "db_owner_password": db.owner_password,
+        "db_path": db.path,
         "session_secret": "test-session-secret-" + "x" * 20,
         "accounts_file": accounts_file,
         "role_catalogue": REPO_ROOT / "adlc-specs" / "shared" / "roles.yaml",
         "db_connect_timeout": "5s",
+        "db_busy_timeout": "10s",
         "deadletter_role": "adlc_coe",  # 007: the API serves dead letters to this role
     }
     values.update(overrides)
@@ -70,12 +70,11 @@ def settings_for(db: PlatformDatabase, accounts_file: Path, **overrides: object)
 
 
 @pytest.fixture(scope="session")
-def orch_template(platform_db: PlatformDatabase) -> PlatformDatabase:
+def orch_template(tmp_path_factory: pytest.TempPathFactory) -> PlatformDatabase:
     """Migrated database with the real adlc-specs registered, copied for each test."""
     from tests.support.orchestration import build_template
 
-    build_template(platform_db)
-    return platform_db
+    return build_template(PlatformDatabase(tmp_path_factory.mktemp("template") / "adlc.db"))
 
 
 @pytest.fixture

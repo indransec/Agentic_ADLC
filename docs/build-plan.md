@@ -99,8 +99,8 @@ Every platform component is open source and, except the database, the proxy and 
 | Language and tooling | Python 3.12, uv, ruff, mypy, pytest | Python PSF; MIT / Apache | — |
 | API | FastAPI + Pydantic v2 | MIT | Platform API contracts |
 | Workflow / orchestration | PostgreSQL state machine behind `TerminalRun` (changed by feature 003, ADR-01; CoE to confirm). LangGraph considered for agent graphs once subagents arrive (feature 006 runs a bounded loop without it) | — (own code) | `TerminalRun` interface; Temporal (MIT) later |
-| Database | PostgreSQL 16; SQLAlchemy 2 + Alembic; psycopg 3 | PostgreSQL; MIT; LGPL-3.0 | Schema-per-concern |
-| Event delivery | Postgres outbox + poller (LISTEN/NOTIFY) | — (own code) | Router interface; Kafka later |
+| Database | SQLite (one file, write-ahead log; changed from PostgreSQL 16 on `feature/sqlite`); SQLAlchemy 2 + Alembic | Public domain; MIT | `adlc.db` engine; one host only |
+| Event delivery | Outbox table + poller (`ADLC_POLL_INTERVAL`) | — (own code) | Router interface; Kafka later |
 | Policy engine | cel-python + predicate catalogue | Apache-2.0 | `evaluate` / `authorize`; OPA or Cedar later |
 | Spec toolkit | ruamel.yaml, jsonschema, networkx, Typer (CLI) | MIT / MIT / BSD / MIT | `adlc-spec` CLI |
 | Model gateway | LiteLLM (Python SDK, pinned; no proxy, router or callbacks) behind the ADLC `ModelGateway`, which owns the fallback order and records every call (feature 006) | MIT (core) | Model catalogue by tier and profile |
@@ -108,7 +108,7 @@ Every platform component is open source and, except the database, the proxy and 
 | Agent tools | Official MCP Python SDK (FastMCP) for all MCP servers | MIT | MCP registry |
 | Artifact storage | Local content-addressed file store behind a storage interface | — (own code) | S3-compatible later (e.g. SeaweedFS, Apache-2.0); avoid MinIO unless AGPL-3.0 is acceptable |
 | UI (inbox + dashboard) | Streamlit (+ Plotly for charts; `st.data_editor` for artifact tables) | Apache-2.0; MIT | Approval and query APIs; React later if needed |
-| Tracing | OpenTelemetry SDK; Langfuse self-hosted | Apache-2.0; MIT (core) | OTel export; Jaeger (Apache-2.0) if Langfuse is too heavy |
+| Tracing | OpenTelemetry SDK; Arize Phoenix (Python, own SQLite store; replaced Jaeger on `feature/sqlite`) | Apache-2.0; Elastic License 2.0 | OTel export (any OTLP collector) |
 | Evaluation (T4, T8) | DeepEval, Ragas where retrieval applies | Apache-2.0 | Eval harness MCP |
 | Red-team (T5) | garak, PyRIT | Apache-2.0; MIT | Red-team harness MCP |
 | Synthetic data and traffic | Faker; Locust | MIT | Pilot tooling |

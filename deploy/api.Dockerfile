@@ -25,11 +25,12 @@ COPY db ./db
 COPY alembic.ini ./
 COPY adlc-specs ./adlc-specs
 COPY data ./data
+COPY .streamlit ./.streamlit
 RUN uv sync --locked --no-dev
 
 RUN useradd --system --uid 10001 --no-create-home adlc \
-    && mkdir -p /var/lib/adlc/files /var/lib/adlc/bridge \
-    && chown adlc /var/lib/adlc/files /var/lib/adlc/bridge
+    && mkdir -p /var/lib/adlc/files /var/lib/adlc/bridge /var/lib/adlc/db \
+    && chown adlc /var/lib/adlc/files /var/lib/adlc/bridge /var/lib/adlc/db
 # The evidence file store (feature 005) and the bridge data (010); named volumes inherit the owner.
 USER adlc
 

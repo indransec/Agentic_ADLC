@@ -300,7 +300,7 @@ class SqlEvidenceProvider:
         """Every other terminal's latest closed run in this use case (012 R-09)."""
         terminals = conn.execute(
             text(
-                "SELECT DISTINCT terminal_id FROM run.terminal_run WHERE usecase_id = :u "
+                "SELECT DISTINCT terminal_id FROM terminal_run WHERE usecase_id = :u "
                 "AND state = 'closed' AND terminal_id <> :t"
             ),
             {"u": usecase_id, "t": run.terminal_id},

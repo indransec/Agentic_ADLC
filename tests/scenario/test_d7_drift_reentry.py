@@ -2,9 +2,9 @@
 
 from adlc.orchestration.service import Actor
 from adlc.orchestration.stubs import StubAgent
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import harness
-from tests.support.pg import PlatformDatabase
 
 
 def test_d7(orch_template: PlatformDatabase) -> None:

@@ -46,7 +46,7 @@ def rows_of(api: Api, run: str) -> list[dict[str, Any]]:
 
 
 def versions(h: Harness, run: str) -> int:
-    count = h.sql("SELECT count(*) FROM run.artifact_version WHERE run_id = :r", r=run)
+    count = h.sql("SELECT count(*) FROM artifact_version WHERE run_id = :r", r=run)
     return int(count[0][0])
 
 

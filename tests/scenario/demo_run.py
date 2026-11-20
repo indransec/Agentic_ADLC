@@ -7,8 +7,8 @@ from pathlib import Path
 
 from adlc.demo.driver import DemoReport
 from tests.integration.demo.test_demo_auto import TestIo, demo
+from tests.support.db import PlatformDatabase
 from tests.support.orchestration import Harness
-from tests.support.pg import PlatformDatabase
 
 
 @dataclass

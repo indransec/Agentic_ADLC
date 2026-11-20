@@ -7,7 +7,7 @@ from streamlit.testing.v1 import AppTest
 
 from adlc.ui.client import ApiClient
 from tests.support.api import PASSWORD, Api
-from tests.support.pg import REPO_ROOT
+from tests.support.db import REPO_ROOT
 
 APP = REPO_ROOT / "src" / "adlc" / "ui" / "app.py"
 
@@ -26,7 +26,8 @@ def sign_in(at: AppTest, role: str) -> AppTest:
 
 
 def go(at: AppTest, page: str) -> AppTest:
-    at.radio(key="page").set_value(page)
+    """Open a page by its title, as the sidebar (or another page) does."""
+    at.session_state["goto"] = page
     return at.run()
 
 

@@ -1,0 +1,42 @@
+# Streamlit settings for the web application (src/adlc/ui). Streamlit reads this file from the
+# working directory, so the `ui` container copies it next to src/ (deploy/api.Dockerfile).
+# A neutral light theme: slate text, one cobalt accent, status colours shared with the charts
+# (adlc.ui.render.STATUS_COLOURS). System fonts only, so the browser fetches nothing external.
+
+[client]
+toolbarMode = "minimal"
+showSidebarNavigation = false  # the application draws its own grouped navigation
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"
+primaryColor = "#2F5DAA"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F3F5F8"
+textColor = "#1B2430"
+linkColor = "#2F5DAA"
+borderColor = "#DCE1E8"
+dataframeBorderColor = "#E4E8EE"
+dataframeHeaderBackgroundColor = "#F3F5F8"
+showWidgetBorder = true
+showSidebarBorder = true
+baseRadius = "0.5rem"
+buttonRadius = "0.5rem"
+font = "sans-serif"
+headingFontSizes = ["2.25rem", "1.75rem", "1.3rem", "1.15rem", "1rem", "0.9rem"]
+headingFontWeights = [650, 600, 600, 600, 600, 600]
+paddingTop = "2.5rem"
+metricValueFontWeight = 600
+blueColor = "#2F5DAA"
+greenColor = "#2E7D4F"
+orangeColor = "#B8621B"
+redColor = "#B83B3B"
+violetColor = "#6E4BB8"
+grayColor = "#6B7588"
+chartCategoricalColors = ["#2F5DAA", "#2E7D4F", "#B8621B", "#6E4BB8", "#B83B3B", "#6B7588"]
+
+[theme.sidebar]
+backgroundColor = "#F3F5F8"
+secondaryBackgroundColor = "#E8ECF2"

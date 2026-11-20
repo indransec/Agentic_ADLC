@@ -6,7 +6,7 @@ from adlc.orchestration.interfaces import EvalContext
 from adlc.policy.evidence import Evidence, SqlEvidenceProvider
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 from tests.scenario.demo_run import demo_run
-from tests.support.pg import PlatformDatabase
+from tests.support.db import PlatformDatabase
 
 
 def test_d6_one_hash_from_build_to_production(

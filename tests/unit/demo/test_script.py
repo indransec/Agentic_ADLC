@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from adlc.demo.script import MOMENTS, ScriptError, load_script
-from tests.support.pg import REPO_ROOT
+from tests.support.db import REPO_ROOT
 
 ROLES = {
     "business_owner",

@@ -25,7 +25,7 @@ from sqlalchemy import Engine, text
 
 from adlc.config.errors import load_settings_or_exit
 from adlc.config.settings import OrchestratorSettings
-from adlc.db.engine import app_engine, owner_engine
+from adlc.db.engine import open_engine
 from adlc.orchestration.interfaces import SystemClock
 from adlc.orchestration.service import Actor, OrchestratorService
 from adlc.orchestration.stubs import StubAgent, StubPolicy, StubReviewer
@@ -68,7 +68,7 @@ def main() -> int:
     settings = load_settings_or_exit(OrchestratorSettings)
     if settings.env != "demo":
         raise SystemExit("resilience: refused outside ADLC_ENV=demo")
-    app, owner = app_engine(settings), owner_engine(settings)
+    app = owner = open_engine(settings)  # one database identity
     orchestrator = build_orchestrator(  # the service only; the stack's container advances runs
         app,
         SqlSpecRegistry(app),
@@ -82,7 +82,7 @@ def main() -> int:
     service: OrchestratorService = orchestrator.service
     usecase = service.submit_usecase(person("business_owner"), "Resilience check", INTAKE)
     t0 = f"{usecase}/T0/run-1"
-    state = "SELECT state FROM run.terminal_run WHERE run_id = :r"
+    state = "SELECT state FROM terminal_run WHERE run_id = :r"
 
     # 1. restart mid-run
     wait("T0 building", lambda: scalar(app, state, r=t0) == "building")
@@ -91,7 +91,7 @@ def main() -> int:
     wait("T0 back with people", lambda: scalar(app, state, r=t0) in NEEDS_PEOPLE)
     duplicates = scalar(
         app,
-        "SELECT count(*) - count(DISTINCT (from_state, to_state, at)) FROM run.run_transition "
+        "SELECT count(*) - count(DISTINCT (from_state, to_state, at)) FROM run_transition "
         "WHERE run_id = :r",
         r=t0,
     )
@@ -105,7 +105,7 @@ def main() -> int:
     # 2. duplicate delivery
     event = scalar(
         app,
-        "SELECT event_id FROM events.outbox_event WHERE usecase_id = :u "
+        "SELECT event_id FROM outbox_event WHERE usecase_id = :u "
         "AND processed_at IS NOT NULL "
         "ORDER BY created_at LIMIT 1",
         u=usecase,
@@ -113,7 +113,7 @@ def main() -> int:
     with owner.begin() as conn:
         conn.execute(
             text(
-                "UPDATE events.outbox_event SET processed_at = NULL, next_attempt_at = now() "
+                "UPDATE outbox_event SET processed_at = NULL, next_attempt_at = now() "
                 "WHERE event_id = :e"
             ),
             {"e": event},
@@ -121,7 +121,7 @@ def main() -> int:
     time.sleep(10)
     runs = scalar(
         app,
-        "SELECT count(*) FROM run.terminal_run WHERE usecase_id = :u AND terminal_id = 'T0'",
+        "SELECT count(*) FROM terminal_run WHERE usecase_id = :u AND terminal_id = 'T0'",
         u=usecase,
     )
     print(
@@ -139,7 +139,7 @@ def main() -> int:
         person("business_owner"), t0, "pass", reason="resilience check", fields={"risk_tier": "low"}
     )
     dead = (
-        "SELECT event_id FROM events.outbox_event WHERE usecase_id = :u AND event_type = :t "
+        "SELECT event_id FROM outbox_event WHERE usecase_id = :u AND event_type = :t "
         "AND dead_lettered_at IS NOT NULL"
     )
     wait("the dead letter", lambda: scalar(app, dead, u=usecase, t=fault) is not None)
@@ -151,16 +151,13 @@ def main() -> int:
         lambda: (
             scalar(
                 app,
-                "SELECT count(*) FROM run.terminal_run WHERE usecase_id = :u "
-                "AND terminal_id = 'T1'",
+                "SELECT count(*) FROM terminal_run WHERE usecase_id = :u AND terminal_id = 'T1'",
                 u=usecase,
             )
             == 1
         ),
     )
-    requeues = scalar(
-        app, "SELECT count(*) FROM events.dead_letter_action WHERE event_id = :e", e=event
-    )
+    requeues = scalar(app, "SELECT count(*) FROM dead_letter_action WHERE event_id = :e", e=event)
     print(
         f"PASS dead letter: {event} dead-lettered, re-queued ({requeues} recorded), "
         "delivered (T1 open)"

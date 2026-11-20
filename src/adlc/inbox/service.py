@@ -21,7 +21,7 @@ from adlc.ledger import store as ledger_store
 from adlc.ledger.service import LedgerService
 from adlc.orchestration import spec_view
 from adlc.orchestration import store as run_store
-from adlc.orchestration.engine import PostgresTerminalRun
+from adlc.orchestration.engine import SqlTerminalRun
 from adlc.orchestration.states import RunState
 from adlc.orchestration.store import RunRow
 
@@ -47,7 +47,7 @@ def run_summary(run: RunRow) -> dict[str, Any]:
 class InboxService:
     def __init__(
         self,
-        runs: PostgresTerminalRun,
+        runs: SqlTerminalRun,
         ledger: LedgerService,
         deadletter_role: str | None,
         spec_dir: Path,
@@ -69,8 +69,8 @@ class InboxService:
                 text(
                     "SELECT u.usecase_id, u.name, u.submitted_by, u.risk_tier, u.status, "
                     "u.created_at AS submitted_at, count(r.run_id) FILTER "
-                    "(WHERE r.state <> 'closed') AS open_runs FROM run.usecase u "
-                    "LEFT JOIN run.terminal_run r USING (usecase_id) "
+                    "(WHERE r.state <> 'closed') AS open_runs FROM usecase u "
+                    "LEFT JOIN terminal_run r USING (usecase_id) "
                     "GROUP BY u.usecase_id ORDER BY u.created_at DESC, u.usecase_id DESC"
                 )
             ).mappings()
@@ -141,7 +141,7 @@ class InboxService:
         rows = conn.execute(
             text(
                 "SELECT c.clarification_id, c.run_id, c.addressed_role, c.asked_at "
-                "FROM run.clarification_round c LEFT JOIN run.clarification_answer a "
+                "FROM clarification_round c LEFT JOIN clarification_answer a "
                 "USING (clarification_id) WHERE a.clarification_id IS NULL ORDER BY c.asked_at"
             )
         ).mappings()
@@ -186,7 +186,7 @@ class InboxService:
     def _waiver_items(self, conn: Connection, actor: Actor) -> list[dict[str, Any]]:
         ids = conn.execute(
             text(
-                "SELECT w.waiver_id FROM run.waiver w JOIN run.terminal_run r "
+                "SELECT w.waiver_id FROM waiver w JOIN terminal_run r "
                 "ON r.pending_waiver_id = w.waiver_id WHERE w.status = 'proposed' "
                 "ORDER BY w.proposed_at"
             )
@@ -202,7 +202,7 @@ class InboxService:
                 continue
             role = sorted(actor.roles & rules.waiver_approvers(spec))[0]
             proposed = conn.execute(
-                text("SELECT proposed_at FROM run.waiver WHERE waiver_id = :w"), {"w": waiver_id}
+                text("SELECT proposed_at FROM waiver WHERE waiver_id = :w"), {"w": waiver_id}
             ).scalar()
             items.append(
                 _item(
@@ -246,8 +246,8 @@ class InboxService:
         latest: dict[str, Mapping[str, Any]] = {}
         rows = conn.execute(
             text(
-                "SELECT check_id, passed, reason, synthetic FROM run.policy_decision "
-                "WHERE run_id = :r AND check_id = ANY(:ids) "
+                "SELECT check_id, passed, reason, synthetic FROM policy_decision "
+                "WHERE run_id = :r AND check_id IN (SELECT value FROM json_each(:ids)) "
                 "ORDER BY decided_at, policy_decision_id"
             ),
             {"r": run_id, "ids": [p["id"] for p in declared]},
@@ -295,14 +295,17 @@ class InboxService:
 
     def _waiting(self, conn: Connection, state: str) -> list[RunRow]:
         ids = conn.execute(
-            text("SELECT run_id FROM run.terminal_run WHERE state = :s ORDER BY opened_at"),
+            text("SELECT run_id FROM terminal_run WHERE state = :s ORDER BY opened_at"),
             {"s": state},
         ).scalars()
         return [r for r in (run_store.load_run(conn, str(i)) for i in ids) if r is not None]
 
     def _entered(self, conn: Connection, run_id: str, state: str) -> Any:
         return conn.execute(
-            text("SELECT max(at) FROM run.run_transition WHERE run_id = :r AND to_state = :s"),
+            text(
+                'SELECT max(at) AS "at [timestamptz]" FROM run_transition '
+                "WHERE run_id = :r AND to_state = :s"
+            ),
             {"r": run_id, "s": state},
         ).scalar()
 
@@ -457,7 +460,7 @@ class InboxService:
         with self.runs.engine.connect() as conn:
             row = conn.execute(
                 text(
-                    "SELECT file_name, media_type FROM run.artifact_attachment "
+                    "SELECT file_name, media_type FROM artifact_attachment "
                     "WHERE run_id = :r AND content_hash = :h ORDER BY version DESC LIMIT 1"
                 ),
                 {"r": run_id, "h": content_hash},

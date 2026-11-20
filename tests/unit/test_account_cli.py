@@ -39,8 +39,7 @@ def test_hash_mismatch_exits_1(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def _env(monkeypatch: pytest.MonkeyPatch, accounts: Path, env: str = "dev") -> None:
     monkeypatch.setenv("ADLC_ENV", env)
-    monkeypatch.setenv("ADLC_DB_HOST", "localhost")
-    monkeypatch.setenv("ADLC_DB_APP_PASSWORD", "cli-app-password-0001")
+    monkeypatch.setenv("ADLC_DB_PATH", str(accounts.parent / "adlc.db"))
     monkeypatch.setenv("ADLC_SESSION_SECRET", "cli-session-secret-" + "y" * 20)
     monkeypatch.setenv("ADLC_ACCOUNTS_FILE", str(accounts))
     monkeypatch.setenv("ADLC_ROLE_CATALOGUE", str(CATALOGUE))

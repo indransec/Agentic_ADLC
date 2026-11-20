@@ -2,8 +2,8 @@
 (research R-02; US1/AC2, AC4, AC5; FR-005 to FR-008, FR-035)."""
 
 from adlc.orchestration.stubs import StubPolicy
+from tests.support.db import PlatformDatabase
 from tests.support.orchestration import Harness, harness
-from tests.support.pg import PlatformDatabase
 
 
 def test_steps_and_activity(h: Harness) -> None:
@@ -14,7 +14,7 @@ def test_steps_and_activity(h: Harness) -> None:
     assert run.recommendation is not None and run.recommendation["status"] == "pass"
     assert all(c["passed"] for c in run.control_results)
     rows = h.sql(
-        "SELECT step, actor_type, outcome FROM run.run_activity WHERE run_id = :r ORDER BY run_activity_id",
+        "SELECT step, actor_type, outcome FROM run_activity WHERE run_id = :r ORDER BY run_activity_id",
         r=run.run_id,
     )
     assert [tuple(r) for r in rows] == [

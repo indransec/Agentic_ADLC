@@ -25,7 +25,7 @@ def test_prompts_and_catalogues_register(owner_engine: Engine, tmp_path: Path) -
     assert ("catalogue", "model_catalogue") in kinds and ("catalogue", "agents") in kinds
     with owner_engine.connect() as conn:
         rows = conn.execute(
-            text("SELECT prompt_id, version, path, content_hash FROM spec.prompt_registry")
+            text("SELECT prompt_id, version, path, content_hash FROM prompt_registry")
         ).all()
     prompts = {r[0]: r for r in rows}
     reviewer = prompts["common-terminal-reviewer"]

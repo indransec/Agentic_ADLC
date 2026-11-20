@@ -8,17 +8,17 @@ from adlc.orchestration.engine import StaleRun
 from adlc.orchestration.interfaces import Recommendation
 from adlc.orchestration.service import InvalidDecision, NotAuthorised
 from adlc.orchestration.stubs import StubReviewer
+from tests.support.db import PlatformDatabase
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness, harness, person
-from tests.support.pg import PlatformDatabase
 
 PO = person("product_owner")
 
 
 def _writes(h: Harness) -> tuple[int, int]:
     return (
-        h.sql("SELECT count(*) FROM run.sign_off")[0][0],
-        h.sql("SELECT count(*) FROM events.outbox_event")[0][0],
+        h.sql("SELECT count(*) FROM sign_off")[0][0],
+        h.sql("SELECT count(*) FROM outbox_event")[0][0],
     )
 
 
@@ -127,4 +127,4 @@ def test_concurrent_decisions_one_wins(h: Harness) -> None:
     for t in threads:
         t.join()
     assert sorted(outcomes) == ["stale", "won"]
-    assert h.sql("SELECT count(*) FROM run.sign_off WHERE run_id = :r", r=run_id)[0][0] == 1
+    assert h.sql("SELECT count(*) FROM sign_off WHERE run_id = :r", r=run_id)[0][0] == 1

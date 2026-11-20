@@ -14,10 +14,10 @@ def _result(engine: Engine, kind: str, result: str) -> None:
     with engine.begin() as conn:
         conn.execute(
             text(
-                "INSERT INTO tools.tool_result (tool_call_id, run_id, usecase_id, terminal_id, "
+                "INSERT INTO tool_result (tool_call_id, run_id, usecase_id, terminal_id, "
                 "kind, package_hash, result, result_sha256, at) SELECT tool_call_id, :r, :u, "
-                f"'T7', '{kind}', NULL, CAST(:res AS jsonb), 'sha256:{'d' * 64}', now() "
-                "FROM tools.tool_call LIMIT 1"
+                f"'T7', '{kind}', NULL, :res, 'sha256:{'d' * 64}', now() "
+                "FROM tool_call LIMIT 1"
             ),
             {"r": RUN, "u": UC, "res": result},
         )

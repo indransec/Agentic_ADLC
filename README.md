@@ -9,7 +9,7 @@ The platform drives an agentic use case through lifecycle terminals T0–T9: age
 | `adlc-specs/` | ADLC terminal specs and shared catalogues (runtime YAML), e.g. `shared/roles.yaml` |
 | `src/adlc/` | Platform code, one module per layer |
 | `db/migrations/` | Alembic migrations |
-| `deploy/` | Compose environment, API image, Postgres init, example account file |
+| `deploy/` | Compose environment, API image, example account file |
 | `tests/` | Unit, integration (Docker) and scenario tests |
 
 ## Prerequisites
@@ -30,7 +30,9 @@ make up                         # returns when every service is healthy
 curl -s localhost:${ADLC_API_PORT:-8000}/health
 ```
 
-The Jaeger UI is at `http://localhost:16686` (service `adlc-api`). If a port is already taken, change `ADLC_API_PORT`, `ADLC_DB_PORT` or `ADLC_JAEGER_UI_PORT` in `.env`.
+The Phoenix trace UI is at `http://localhost:6006` (project `adlc-platform`; each pilot environment has its own project). If a port is already taken, change `ADLC_API_PORT` or `ADLC_PHOENIX_UI_PORT` in `.env`.
+
+The platform's infrastructure is Python only: the database is a SQLite file and the trace collector is Arize Phoenix (`deploy/phoenix`). **Without Docker:** fill in `.env`, then `make local` starts every process in one terminal; see [docs/run-without-docker.md](docs/run-without-docker.md) for settings, ports and the step-by-step route.
 
 ## Commands
 
@@ -48,18 +50,20 @@ records how they were converted from the TDS.
 
 Run `make check` before calling a task done.
 
-## Data store identities
+## Data store
 
-- `adlc_owner` owns the schemas and is used only by migrations.
-- `adlc_app` is used by running services and can only read and insert ledger records.
-- `ledger.ledger_record` refuses UPDATE, DELETE and TRUNCATE for every identity.
-- The container superuser (`POSTGRES_PASSWORD`) is used only once, to create the two identities.
+- One SQLite file (`ADLC_DB_PATH`), created by the migrations and shared by every platform process
+  on one host. SQLite allows one writer at a time; writers wait up to `ADLC_DB_BUSY_TIMEOUT`.
+- Triggers refuse UPDATE and DELETE on the ledger and every other append-only table, for every
+  connection.
+- SQLite has no database identities: a process with write access to the file could drop a
+  trigger. The hash chain (`adlc-ledger verify`) detects any changed or removed ledger record.
 
 ## Accepted MVP limits
 
 These are recorded in `specs/001-platform-foundation/spec.md` (Assumptions).
 
-- A PostgreSQL superuser can bypass ledger immutability. Signed evidence and write-once storage come later.
+- Anyone with write access to the database file can bypass ledger immutability (verification still detects it). Signed evidence and write-once storage come later.
 - A sign-out is not remembered after the API restarts; the session lasts at most `ADLC_SESSION_TTL`.
 - There is no lockout after failed sign-ins, but every failure is logged.
 - Traffic is plain HTTP on the single private demo network.

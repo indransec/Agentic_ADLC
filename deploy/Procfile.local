@@ -1,0 +1,21 @@
+# Every long-running process of the platform and the pilot, without Docker
+# (docs/run-without-docker.md). Started by `make local` with honcho, from the repository root,
+# with .env then deploy/local.env loaded. Migrations and spec registration run first (make local).
+
+# Traces (Arize Phoenix): UI and OTLP on :6006
+phoenix: cd deploy/phoenix && env -u VIRTUAL_ENV PHOENIX_WORKING_DIR=$PWD/../../data/local/phoenix uv run phoenix serve
+
+# Platform
+api: OTEL_RESOURCE_ATTRIBUTES=openinference.project.name=adlc-platform uv run adlc-api
+orchestrator: OTEL_RESOURCE_ATTRIBUTES=openinference.project.name=adlc-platform uv run adlc-orchestrator run
+knowledge: uv run adlc-knowledge
+tools: uv run adlc-tools
+bridge: uv run adlc-pilot-bridge
+ui: ADLC_API_URL=http://127.0.0.1:${ADLC_API_PORT:-8000} uv run streamlit run src/adlc/ui/app.py --server.port ${ADLC_UI_PORT:-8501} --server.address 127.0.0.1 --server.headless true --browser.gatherUsageStats false
+
+# Pilot (its own uv project in pilot/): three environment hosts, traffic and the lab
+pilot-dev: cd pilot && env -u VIRTUAL_ENV OTEL_RESOURCE_ATTRIBUTES=openinference.project.name=pilot-triage-dev PILOT_OTLP_ENDPOINT=http://127.0.0.1:6006 PILOT_TEMPLATE=template PILOT_REGISTRY=../data/local/pilot/packages PILOT_RECORDS=../data/local/pilot/records/dev PILOT_WORK=../data/local/pilot/work/dev uv run pilot-host --env dev --port 8101
+pilot-test: cd pilot && env -u VIRTUAL_ENV OTEL_RESOURCE_ATTRIBUTES=openinference.project.name=pilot-triage-test PILOT_OTLP_ENDPOINT=http://127.0.0.1:6006 PILOT_TEMPLATE=template PILOT_REGISTRY=../data/local/pilot/packages PILOT_RECORDS=../data/local/pilot/records/test PILOT_WORK=../data/local/pilot/work/test uv run pilot-host --env test --port 8102
+pilot-prodsim: cd pilot && env -u VIRTUAL_ENV OTEL_RESOURCE_ATTRIBUTES=openinference.project.name=pilot-triage-prod-sim PILOT_OTLP_ENDPOINT=http://127.0.0.1:6006 PILOT_TEMPLATE=template PILOT_REGISTRY=../data/local/pilot/packages PILOT_RECORDS=../data/local/pilot/records/prod-sim PILOT_WORK=../data/local/pilot/work/prod-sim uv run pilot-host --env prod-sim --port 8103
+pilot-traffic: cd pilot && env -u VIRTUAL_ENV PILOT_TRAFFIC_TARGET=http://127.0.0.1:8103 uv run pilot-traffic --port 8200
+pilot-lab: cd pilot && env -u VIRTUAL_ENV PILOT_TEMPLATE=template PILOT_REGISTRY=../data/local/pilot/packages uv run pilot-lab --port 8300

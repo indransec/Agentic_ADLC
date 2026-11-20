@@ -15,7 +15,7 @@ from sqlalchemy import Connection
 from adlc.orchestration import ids, routing, store
 from adlc.orchestration.engine import (
     ORCHESTRATOR_ID,
-    PostgresTerminalRun,
+    SqlTerminalRun,
     Trigger,
     json_dict,
     json_safe,
@@ -57,8 +57,8 @@ class Router(Protocol):
     def handle(self, conn: Connection, event: EventRow) -> None: ...
 
 
-class PostgresRouter:
-    def __init__(self, runs: PostgresTerminalRun, fault: FaultHook | None = None) -> None:
+class SqlRouter:
+    def __init__(self, runs: SqlTerminalRun, fault: FaultHook | None = None) -> None:
         self.runs = runs
         self.fault = fault  # test hook: raise for chosen events (research R-08)
 

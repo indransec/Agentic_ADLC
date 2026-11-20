@@ -19,7 +19,7 @@ def test_submit_pins_and_opens_t0(h: Harness) -> None:
         None,
     )
     pins = h.sql(
-        "SELECT terminal_id, version FROM spec.usecase_spec_pin WHERE usecase_id = :u ORDER BY terminal_id",
+        "SELECT terminal_id, version FROM usecase_spec_pin WHERE usecase_id = :u ORDER BY terminal_id",
         u=usecase,
     )
     assert [p[0] for p in pins] == ALL
@@ -39,7 +39,7 @@ def test_submit_validates(h: Harness) -> None:
 
 def test_no_active_specs(h: Harness) -> None:
     with h.owner.begin() as conn:
-        conn.execute(text("UPDATE spec.spec_registry SET status = 'deprecated'"))
+        conn.execute(text("UPDATE spec_registry SET status = 'deprecated'"))
     with pytest.raises(NoActiveSpecs):
         h.service.submit_usecase(person("business_owner"), "x", "intake")
 
@@ -47,20 +47,20 @@ def test_no_active_specs(h: Harness) -> None:
 def test_pinned_version_survives_a_new_registration(h: Harness) -> None:
     """Spec Edge Cases: a use case keeps its pinned versions (C1)."""
     usecase = h.submit()
-    pinned = h.sql("SELECT version FROM spec.spec_registry WHERE terminal_id = 'T1'")[0][0]
+    pinned = h.sql("SELECT version FROM spec_registry WHERE terminal_id = 'T1'")[0][0]
     with h.owner.begin() as conn:
         conn.execute(
             text(
-                "UPDATE spec.spec_registry SET status = 'deprecated', deprecated_at = now() "
+                "UPDATE spec_registry SET status = 'deprecated', deprecated_at = now() "
                 "WHERE terminal_id = 'T1'"
             )
         )
         conn.execute(
             text(
-                "INSERT INTO spec.spec_registry (terminal_id, version, status, schema_version, "
+                "INSERT INTO spec_registry (terminal_id, version, status, schema_version, "
                 "spec_yaml, spec_json, content_hash, trigger_events, emitted_events) "
                 "SELECT terminal_id, '99.0.0', 'active', schema_version, spec_yaml, spec_json, "
-                "content_hash, trigger_events, emitted_events FROM spec.spec_registry "
+                "content_hash, trigger_events, emitted_events FROM spec_registry "
                 "WHERE terminal_id = 'T1'"
             )
         )
