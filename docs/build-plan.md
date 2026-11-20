@@ -291,11 +291,25 @@ No platform code may contain terminal-specific branching (constitution I).
 
 ## 11. Phase 2 (proposed): tracker engagement and work plans
 
-Proposed 2026-11-15 as Amendment 1 of the solution architecture (SA §22); not approved. The fourteen MVP features above are unchanged. Seven further platform features (015–021) and three simulator features (S-001 to S-003, in the separate `ado-board-simulator` repository with its own Spec Kit setup and constitution) follow the same per-feature flow and gates. The feature table, order and what each supersedes are in SA §22.10.
+Proposed 2026-11-15 as Amendment 1 of the solution architecture (SA §22), updated 2026-11-20; not approved. The fourteen MVP features above are unchanged. Phase 2 is delivered in two options, one Spec Kit feature at a time with the same three gates:
 
-- The MVP is tagged before 015 starts, so the working demo on the inbox is kept.
-- 007 (inbox) and 013 (dashboard) are not removed; 019 reduces them to the operations console once the board can drive every human action.
-- The 014 recordings and rehearsed replies are re-recorded in 020, because the planning step changes every terminal's run.
+- **Option A first: the board as the user interface, the platform as built.** An Azure DevOps simulator (`ado_sim/`, its own uv project in this repository, own SQLite file, Python UI) and an engagement layer in the platform let people drive the lifecycle from a board instead of the inbox. The orchestrator, policy engine, ledger and agents are reused unchanged; inbound board changes call the services the inbox calls today.
+- **Option B after its demo: work plans and increments.** Agent-proposed, human-approved plans of Features, Stories and Tasks, plan dispatch with role subagents, and increments. Decided after the Option A demo.
+
+| # | Feature | Option | Delivers |
+| --- | --- | --- | --- |
+| 015 | `015-ado-sim-api` | A | The ADO REST subset (work items, JSON Patch with `test /rev`, relations, WIQL subset, revisions, comments, area paths, identities), OpenAPI contract, contract fixtures, demo users |
+| 016 | `016-engagement-layer` | A | `BoardAdapter` port, ADO adapter, `adlc-specs/tracker_mapping.yaml` and its validation, outbound projector (outbox), inbound sync (polling of revisions, idempotent), manual reconciliation, contract suite against 015 |
+| 017 | `017-ado-sim-board` | A | Epic board with terminal columns and sub-stage, sign-in with demo users |
+| 018 | `018-ado-sim-backlog-form` | A | Backlog tree and work item form: decision field, clarification answer, comments, history, links into the console |
+| 019 | `019-operations-console` | A | The inbox reduced to the operations console (evidence, KPIs, journey, dead letters, sync health) |
+| 020 | `020-e2e-demo-on-board` | A | D-1 to D-9, D-12 and D-13 driven from the board; re-recorded replies; rehearsal |
+| 021–024 | work-plan-specs, work-plan-service, plan-dispatch, increments | B | SA §22.5–22.8; D-10, D-11, D-14 |
+
+- The MVP is tagged before 015 starts, so the working demo on the inbox is kept; the inbox stays available until 020 passes.
+- Phase 2 builds on the `feature/sqlite` stack (SQLite database, Arize Phoenix traces, `make local`); new platform tables are new SQLite migrations, and the simulator is a new process in compose and in `deploy/Procfile.local`.
+- The simulator is the only reference for the ADO contract until a real ADO organisation is available (SA §22.2 fidelity rule).
+- Decisions behind this plan, with dates, are in SA §22.10.
 
 ## Sources
 

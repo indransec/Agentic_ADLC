@@ -75,7 +75,8 @@ sit behind an interface; mocks implement the same interface as the real system.
   service; every mock MUST implement the same interface (and for MCP, the same tool names and
   schemas) as the real system.
   A tracker is reached only through the `BoardAdapter` interface and the tracker mapping;
-  the tracker simulator shares no code, database or specs with the platform (SA §22.2).
+  the tracker simulator (`ado_sim/`, its own uv project in this repository) shares no code,
+  database or specs with the platform and imports nothing from `adlc` (SA §22.2).
 - Rationale: swapping a mock or an engine changes configuration or an adapter, not platform
   code (SA P-9, §18.1).
 
@@ -86,6 +87,9 @@ in the plan for every new dependency.
 
 - Rules: code MUST pass mypy in strict mode and ruff; every new dependency MUST appear in the
   feature plan with its licence; non-OSI or AGPL dependencies need an explicit amendment.
+  Amendment (1.2.0): Arize Phoenix (Elastic License 2.0), the trace collector, is allowed as a
+  separately run, unmodified service in its own uv project; platform code never imports it and
+  reaches it only over OTLP and its REST API, so any OTLP collector can replace it.
 - Rationale: keeps the platform portable, auditable and free of licence surprises.
 
 ### IX. Test first for the core
@@ -140,6 +144,9 @@ Follow Annex A naming conventions of the solution architecture.
   describing lifecycle terminals) live in `adlc-specs/` and never in `specs/`.
 - Platform code lives in `src/adlc/` as one typed Python package with one module per layer;
   layout follows build plan §5.
+- Other Python components are separate uv projects in this repository, each with its own
+  lockfile and no imports from `adlc`: `pilot/` (the pilot use case), `ado_sim/` (the tracker
+  simulator, SA §22.2) and `deploy/phoenix/` (the trace collector).
 - Tooling: Python 3.12 managed with uv; ruff, mypy and pytest; `make` targets are the single
   entry point for CI and developers.
 - Tech stack choices appear only at `/speckit-plan`, never in a feature spec, so specs stay
@@ -175,4 +182,4 @@ deviation MUST be justified in the plan's Complexity Tracking section or rejecte
   `/speckit-analyze` treats constitution conflicts as critical findings.
 - Runtime development guidance for the coding agent lives in `claude.md`.
 
-**Version**: 1.1.0 (proposed, pending CoE lead and architect approval) | **Ratified**: 2026-11-09 | **Last Amended**: 2026-11-15
+**Version**: 1.2.0 (proposed, pending CoE lead and architect approval) | **Ratified**: 2026-11-09 | **Last Amended**: 2026-11-20
