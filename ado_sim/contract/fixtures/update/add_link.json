@@ -1,0 +1,158 @@
+{
+  "operation": "update",
+  "case": "add_link",
+  "description": "Add a dependency link (successor) to another work item",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/update?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [
+    {
+      "method": "POST",
+      "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/$Epic",
+      "query": {
+        "api-version": "7.1"
+      },
+      "headers": {
+        "Content-Type": "application/json-patch+json"
+      },
+      "body": [
+        {
+          "op": "add",
+          "path": "/fields/System.Title",
+          "value": "Use case UC-1"
+        },
+        {
+          "op": "add",
+          "path": "/fields/System.AreaPath",
+          "value": "Agentic ADLC\\Use cases"
+        },
+        {
+          "op": "add",
+          "path": "/fields/Custom.AdlcUseCaseId",
+          "value": "UC-1"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/$Bug",
+      "query": {
+        "api-version": "7.1"
+      },
+      "headers": {
+        "Content-Type": "application/json-patch+json"
+      },
+      "body": [
+        {
+          "op": "add",
+          "path": "/fields/System.Title",
+          "value": "A bug"
+        }
+      ]
+    }
+  ],
+  "request": {
+    "method": "PATCH",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/1",
+    "query": {
+      "api-version": "7.1"
+    },
+    "headers": {
+      "Content-Type": "application/json-patch+json"
+    },
+    "body": [
+      {
+        "op": "add",
+        "path": "/relations/-",
+        "value": {
+          "rel": "System.LinkTypes.Dependency-Forward",
+          "url": "http://localhost:8600/adlc-demo/_apis/wit/workItems/2",
+          "attributes": {
+            "comment": "found while qualifying"
+          }
+        }
+      }
+    ]
+  },
+  "expected": {
+    "status": 200,
+    "body": {
+      "id": "<int>",
+      "rev": 2,
+      "fields": {
+        "System.TeamProject": "Agentic ADLC",
+        "System.WorkItemType": "Epic",
+        "System.State": "T0 Intake & Qualification",
+        "System.Reason": "New",
+        "System.AreaPath": "Agentic ADLC\\Use cases",
+        "System.Title": "Use case UC-1",
+        "Custom.AdlcUseCaseId": "UC-1",
+        "System.Id": "<int>",
+        "System.Rev": 2,
+        "System.CreatedBy": {
+          "displayName": "ADLC Platform",
+          "url": "<url>",
+          "_links": {
+            "avatar": {
+              "href": "<url>"
+            }
+          },
+          "id": "<uuid>",
+          "uniqueName": "adlc-platform@adlc.demo",
+          "imageUrl": "<url>",
+          "descriptor": "sim.f5621a6e-2b60-5795-84d6-1f4d6067aa07"
+        },
+        "System.CreatedDate": "<datetime>",
+        "System.ChangedBy": {
+          "displayName": "ADLC Platform",
+          "url": "<url>",
+          "_links": {
+            "avatar": {
+              "href": "<url>"
+            }
+          },
+          "id": "<uuid>",
+          "uniqueName": "adlc-platform@adlc.demo",
+          "imageUrl": "<url>",
+          "descriptor": "sim.f5621a6e-2b60-5795-84d6-1f4d6067aa07"
+        },
+        "System.ChangedDate": "<datetime>",
+        "System.CommentCount": 0
+      },
+      "relations": [
+        {
+          "rel": "System.LinkTypes.Dependency-Forward",
+          "url": "<url>",
+          "attributes": {
+            "isLocked": false,
+            "comment": "found while qualifying",
+            "name": "Successor"
+          }
+        }
+      ],
+      "_links": {
+        "self": {
+          "href": "<url>"
+        },
+        "workItemUpdates": {
+          "href": "<url>"
+        },
+        "workItemRevisions": {
+          "href": "<url>"
+        },
+        "workItemComments": {
+          "href": "<url>"
+        },
+        "html": {
+          "href": "<url>"
+        },
+        "workItemType": {
+          "href": "<url>"
+        },
+        "fields": {
+          "href": "<url>"
+        }
+      },
+      "url": "<url>"
+    }
+  }
+}

@@ -587,6 +587,16 @@ def run_query(
         return _execute(conn, query, top, time_precision, today)
 
 
+def _snapshot_time(conn: sqlite3.Connection) -> str:
+    """``asOf``: the latest changed date this query could see (its snapshot), or now if none.
+
+    Every later change has a later date (``WorkItemStore._stamp``), so a reader that passes this
+    back as ``[System.ChangedDate] >= <asOf>`` misses nothing (research R-06, SC-002).
+    """
+    latest = conn.execute("SELECT MAX(changed_date) FROM work_item").fetchone()[0]
+    return str(latest) if latest else utc_now()
+
+
 def _execute(
     conn: sqlite3.Connection,
     query: Query,
@@ -633,7 +643,7 @@ def _execute(
             raise invalid(
                 f"VS402337: The number of work items returned exceeds the size limit of {MAX_TOP}."
             )
-        return WiqlResult("flat", columns, sort_columns, ids, [], utc_now())
+        return WiqlResult("flat", columns, sort_columns, ids, [], _snapshot_time(conn))
     sql = (
         "SELECT s.id AS source, t.id AS target, r.rel AS rel FROM work_item s"  # noqa: S608
         " JOIN relation r ON r.source_id = s.id JOIN work_item t ON t.id = r.target_id"
@@ -651,4 +661,4 @@ def _execute(
     for source, links in grouped.items():
         relations.append((None, None, source))
         relations.extend((rel, source, target) for rel, target in links)
-    return WiqlResult("oneHop", columns, sort_columns, [], relations, utc_now())
+    return WiqlResult("oneHop", columns, sort_columns, [], relations, _snapshot_time(conn))

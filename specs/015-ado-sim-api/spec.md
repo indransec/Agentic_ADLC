@@ -294,7 +294,8 @@ serves.
 - A batch get or query result is larger than the ADO limits (200 items per batch, 20,000 ids per
   query): refused or truncated as ADO does, and documented in the contract.
 - A changed-since query whose time equals a change's time: that change is included (no gap
-  between two reads that use the previous result's latest changed date).
+  between two reads that use the previous query's `asOf`, the latest changed date that query
+  saw).
 - Field values with text, numbers, dates, identities and HTML: stored and returned unchanged; the
   simulator never renders or interprets them (rendering is the UI features' concern).
 - An item is linked to itself, or a link to a missing item is added: refused.
@@ -338,9 +339,11 @@ serves.
   changed field's old and new value, relation changes, the changer's identity and the change
   time; updates MUST be readable per item in revision order and never altered or removed.
 - **FR-008**: The simulator MUST return any past revision of an item as it was at that revision.
-- **FR-009**: Changed dates MUST be strictly increasing per item and taken from the simulator's
-  own clock, so a reader using "changed at or after the latest changed date I saw" never misses a
-  change.
+- **FR-009**: Changed dates MUST be taken from the simulator's own clock and strictly increase in
+  the order changes are committed, across all items; a query's `asOf` MUST be the latest changed
+  date the query could see. A reader that asks for "changed at or after the previous query's
+  `asOf`" then never misses a change. (Strengthened during T044: a bound taken from items read
+  after the query, or from the clock, can skip a change committed in between.)
 
 **Queries (US3)**
 
@@ -356,8 +359,10 @@ serves.
 
 - **FR-012**: The simulator MUST support parent/child (hierarchy) and predecessor/successor
   (dependency) links, added and removed through a patch, shown on both items, and recorded in the
-  history of both. A link change is atomic: both items get their new revision and update, or
-  neither does.
+  history of both. As ADO (confirmed in T001): the item the patch was sent to gets a new revision
+  and update; the other item gets an update carrying the relation change but no new revision (its
+  `rev` and changed date stay as they were). A link change is atomic: both records are written, or
+  neither is.
 - **FR-013**: The simulator MUST refuse a second parent, a hierarchy cycle, a self-link and a link
   to a missing item.
 

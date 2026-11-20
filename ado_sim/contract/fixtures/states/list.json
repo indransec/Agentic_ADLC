@@ -1,0 +1,83 @@
+{
+  "operation": "states",
+  "case": "list",
+  "description": "The states of the Epic type (the terminal stages)",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-item-type-states/list?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitemtypes/Epic/states",
+    "query": {
+      "api-version": "7.1"
+    }
+  },
+  "expected": {
+    "status": 200,
+    "body": {
+      "count": 12,
+      "value": [
+        {
+          "name": "T0 Intake & Qualification",
+          "color": "b2b2b2",
+          "category": "Proposed"
+        },
+        {
+          "name": "T1 Requirements & Outcome",
+          "color": "b2b2b2",
+          "category": "InProgress"
+        },
+        {
+          "name": "T2 Architecture & Design",
+          "color": "b2b2b2",
+          "category": "InProgress"
+        },
+        {
+          "name": "T3 Build & Integration",
+          "color": "b2b2b2",
+          "category": "InProgress"
+        },
+        {
+          "name": "T4 Evaluation",
+          "color": "b2b2b2",
+          "category": "InProgress"
+        },
+        {
+          "name": "T5 Trust, Risk & Assurance",
+          "color": "b2b2b2",
+          "category": "InProgress"
+        },
+        {
+          "name": "T6 Release Readiness",
+          "color": "b2b2b2",
+          "category": "InProgress"
+        },
+        {
+          "name": "T7 Deployment & Transition",
+          "color": "b2b2b2",
+          "category": "InProgress"
+        },
+        {
+          "name": "T8 Operate & Observe",
+          "color": "b2b2b2",
+          "category": "InProgress"
+        },
+        {
+          "name": "T9 Evolve / Retire",
+          "color": "b2b2b2",
+          "category": "InProgress"
+        },
+        {
+          "name": "Closed",
+          "color": "339933",
+          "category": "Completed"
+        },
+        {
+          "name": "Removed",
+          "color": "ffffff",
+          "category": "Removed"
+        }
+      ]
+    }
+  }
+}

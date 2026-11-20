@@ -33,8 +33,12 @@ WHERE [System.WorkItemType] = 'Epic' AND [System.AreaPath] UNDER 'Agentic ADLC\U
   AND [System.State] <> 'Closed'
 ```
 
-`System.ChangedDate` comparisons use the full stored precision (microseconds), so a reader that
-passes back the latest changed date it saw misses nothing (research R-06).
+`System.ChangedDate` comparisons use the full stored precision (microseconds). The answer's
+`asOf` is the latest changed date the query could see; changed dates increase in commit order
+across all items, so a reader that passes the previous answer's `asOf` back as
+`[System.ChangedDate] >= '<asOf>'` (with `timePrecision=true`) misses nothing and de-duplicates by
+(id, rev) (research R-06). A bound taken from items read after the query is not safe: another
+item can change in between with an earlier date.
 
 ## Link queries (parent and child)
 

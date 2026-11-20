@@ -1,0 +1,42 @@
+{
+  "operation": "fields",
+  "case": "list",
+  "description": "Every field",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/fields/list?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/fields",
+    "query": {
+      "api-version": "7.1"
+    }
+  },
+  "expected": {
+    "status": 200,
+    "body": {
+      "count": 23,
+      "value": [
+        {
+          "referenceName": "Custom.AdlcClarificationAnswer",
+          "name": "ADLC Clarification Answer",
+          "url": "<url>",
+          "type": "plainText",
+          "readOnly": false,
+          "usage": "workItem",
+          "isIdentity": false
+        },
+        {
+          "referenceName": "Custom.AdlcComment",
+          "name": "ADLC Comment",
+          "url": "<url>",
+          "type": "plainText",
+          "readOnly": false,
+          "usage": "workItem",
+          "isIdentity": false
+        },
+        "<more>"
+      ]
+    }
+  }
+}

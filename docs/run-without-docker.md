@@ -22,7 +22,8 @@ make local                         # migrate, register the specs, start every pr
 ```
 
 `make local` runs `make local-setup` (create and migrate the database file, register
-`adlc-specs`, install the pilot and Phoenix projects), then starts every process of
+`adlc-specs`, install the pilot, Phoenix and ADO simulator projects, and migrate and seed the
+simulator's own database), then starts every process of
 `deploy/Procfile.local` with [honcho](https://pypi.org/project/honcho/) (a Python Procfile runner,
 fetched by `uvx`). Their logs are interleaved in one terminal, prefixed by process name;
 **Ctrl-C stops them all**. Data stays in `data/local/` (git-ignored) between runs.
@@ -34,6 +35,7 @@ When it is up:
 | Web application | `http://127.0.0.1:8501` (`ADLC_UI_PORT`) |
 | Platform API | `http://127.0.0.1:8000` (`ADLC_API_PORT`), `GET /health` |
 | Traces (Phoenix UI) | `http://127.0.0.1:6006`, project `adlc-platform`; `pilot-triage-<env>` per pilot environment |
+| ADO simulator | `http://127.0.0.1:8600` (`ADO_SIM_PORT`), `GET /health`; data in `data/local/ado_sim/` |
 | Orchestrator health | `set -a; source .env; source deploy/local.env; set +a; uv run adlc-orchestrator health` |
 
 ## Settings
@@ -66,6 +68,7 @@ In `.env`, beyond the `REPLACE_ME` values of `.env.example`:
 | `pilot-prodsim` | `cd pilot && uv run pilot-host --env prod-sim --port 8103` | 8103 |
 | `pilot-traffic` | `cd pilot && uv run pilot-traffic --port 8200` | 8200 |
 | `pilot-lab` | `cd pilot && uv run pilot-lab --port 8300` | 8300 |
+| `ado-sim` | `cd ado_sim && uv run ado-sim serve` (`ADO_SIM_DB_PATH=../data/local/ado_sim/ado_sim.db`) | 8600 |
 
 Platform processes run from the repository root (they read `adlc-specs/` and `data/` by relative
 path); pilot processes run from `pilot/`, its own uv project. The pilot's operator commands take a
@@ -94,6 +97,13 @@ set -a; source .env; source deploy/local.env; set +a
    work arrives.
 4. The pilot: the five `pilot-*` lines of `deploy/Procfile.local`, each with its `PILOT_*`
    settings.
+5. The ADO simulator: the `ado-sim` line of `deploy/Procfile.local`. `make local-setup` installed
+   it, created `data/local/ado_sim/ado_sim.db` and seeded it. It needs `ADO_SIM_TOKEN_KEY` in
+   `.env` (at least 32 characters, e.g. `openssl rand -hex 32`). Issue a token for a client:
+
+   ```bash
+   cd ado_sim && ADO_SIM_DB_PATH=../data/local/ado_sim/ado_sim.db uv run ado-sim token issue adlc-platform@adlc.demo
+   ```
 
 ## What differs from compose
 

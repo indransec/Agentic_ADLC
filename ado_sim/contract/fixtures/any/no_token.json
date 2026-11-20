@@ -1,0 +1,19 @@
+{
+  "operation": "any",
+  "case": "no_token",
+  "description": "No personal access token: 401 with an empty body",
+  "identity": null,
+  "setup": [],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/1",
+    "query": {
+      "api-version": "7.1"
+    },
+    "auth": false
+  },
+  "expected": {
+    "status": 401,
+    "body": null
+  }
+}

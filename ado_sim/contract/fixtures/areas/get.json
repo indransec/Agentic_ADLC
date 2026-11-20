@@ -1,0 +1,39 @@
+{
+  "operation": "areas",
+  "case": "get",
+  "description": "The area tree",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/classification-nodes/get?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/classificationnodes/Areas",
+    "query": {
+      "api-version": "7.1",
+      "$depth": "2"
+    }
+  },
+  "expected": {
+    "status": 200,
+    "body": {
+      "id": "<int>",
+      "identifier": "<uuid>",
+      "name": "Agentic ADLC",
+      "structureType": "area",
+      "hasChildren": true,
+      "path": "\\Agentic ADLC\\Area",
+      "children": [
+        {
+          "id": "<int>",
+          "identifier": "<uuid>",
+          "name": "Use cases",
+          "structureType": "area",
+          "hasChildren": false,
+          "path": "\\Agentic ADLC\\Area\\Use cases",
+          "url": "<url>"
+        }
+      ],
+      "url": "<url>"
+    }
+  }
+}

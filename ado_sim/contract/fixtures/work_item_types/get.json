@@ -1,0 +1,65 @@
+{
+  "operation": "work_item_types",
+  "case": "get",
+  "description": "One work item type",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-item-types/get?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitemtypes/Epic",
+    "query": {
+      "api-version": "7.1"
+    }
+  },
+  "expected": {
+    "status": 200,
+    "body": {
+      "name": "Epic",
+      "referenceName": "Microsoft.VSTS.WorkItemTypes.Epic",
+      "description": "A use case; its state is its current terminal stage.",
+      "color": "FF7B00",
+      "isDisabled": false,
+      "states": [
+        {
+          "name": "T0 Intake & Qualification",
+          "color": "b2b2b2",
+          "category": "Proposed"
+        },
+        {
+          "name": "T1 Requirements & Outcome",
+          "color": "b2b2b2",
+          "category": "InProgress"
+        },
+        {
+          "name": "T2 Architecture & Design",
+          "color": "b2b2b2",
+          "category": "InProgress"
+        },
+        "<more>"
+      ],
+      "fields": [
+        {
+          "referenceName": "Custom.AdlcClarificationAnswer",
+          "name": "ADLC Clarification Answer",
+          "url": "<url>",
+          "alwaysRequired": false
+        },
+        {
+          "referenceName": "Custom.AdlcComment",
+          "name": "ADLC Comment",
+          "url": "<url>",
+          "alwaysRequired": false
+        },
+        {
+          "referenceName": "Custom.AdlcDecision",
+          "name": "ADLC Decision",
+          "url": "<url>",
+          "alwaysRequired": false
+        },
+        "<more>"
+      ],
+      "url": "<url>"
+    }
+  }
+}

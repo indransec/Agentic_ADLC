@@ -1,0 +1,52 @@
+{
+  "operation": "identities",
+  "case": "search",
+  "description": "Find an identity by name",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/ims/identities/read-identities?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/_apis/identities",
+    "query": {
+      "api-version": "7.1",
+      "searchFilter": "General",
+      "filterValue": "product.owner@adlc.demo"
+    }
+  },
+  "expected": {
+    "status": 200,
+    "body": {
+      "count": 1,
+      "value": [
+        {
+          "id": "<uuid>",
+          "descriptor": "Microsoft.IdentityModel.Claims.ClaimsIdentity;ado-sim\\product.owner@adlc.demo",
+          "subjectDescriptor": "sim.79e3c80a-b4eb-5632-a1c9-0dd653f1cc28",
+          "providerDisplayName": "Product Owner",
+          "isActive": true,
+          "isContainer": false,
+          "members": [],
+          "memberOf": [],
+          "memberIds": [],
+          "properties": {
+            "SchemaClassName": {
+              "$type": "System.String",
+              "$value": "User"
+            },
+            "Account": {
+              "$type": "System.String",
+              "$value": "product.owner@adlc.demo"
+            },
+            "Mail": {
+              "$type": "System.String",
+              "$value": "product.owner@adlc.demo"
+            }
+          },
+          "resourceVersion": 2,
+          "metaTypeId": 0
+        }
+      ]
+    }
+  }
+}

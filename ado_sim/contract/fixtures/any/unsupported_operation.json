@@ -1,0 +1,26 @@
+{
+  "operation": "any",
+  "case": "unsupported_operation",
+  "description": "An ADO route the simulator does not serve",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/reporting/workitemrevisions",
+    "query": {
+      "api-version": "7.1"
+    }
+  },
+  "expected": {
+    "status": 404,
+    "body": {
+      "$id": "1",
+      "innerException": null,
+      "message": "<string>",
+      "typeName": "Microsoft.TeamFoundation.WorkItemTracking.Server.ResourceNotFoundException, Microsoft.TeamFoundation.WorkItemTracking.Server",
+      "typeKey": "ResourceNotFoundException",
+      "errorCode": 0,
+      "eventId": 3000
+    }
+  }
+}

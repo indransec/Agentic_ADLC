@@ -1,0 +1,92 @@
+{
+  "operation": "update",
+  "case": "stale_rev",
+  "description": "test /rev with an old revision: refused with 412, nothing changes",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/update?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [
+    {
+      "method": "POST",
+      "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/$Epic",
+      "query": {
+        "api-version": "7.1"
+      },
+      "headers": {
+        "Content-Type": "application/json-patch+json"
+      },
+      "body": [
+        {
+          "op": "add",
+          "path": "/fields/System.Title",
+          "value": "Use case UC-1"
+        },
+        {
+          "op": "add",
+          "path": "/fields/System.AreaPath",
+          "value": "Agentic ADLC\\Use cases"
+        },
+        {
+          "op": "add",
+          "path": "/fields/Custom.AdlcUseCaseId",
+          "value": "UC-1"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/1",
+      "query": {
+        "api-version": "7.1"
+      },
+      "headers": {
+        "Content-Type": "application/json-patch+json"
+      },
+      "body": [
+        {
+          "op": "test",
+          "path": "/rev",
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/fields/System.State",
+          "value": "T1 Requirements & Outcome"
+        }
+      ]
+    }
+  ],
+  "request": {
+    "method": "PATCH",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/1",
+    "query": {
+      "api-version": "7.1"
+    },
+    "headers": {
+      "Content-Type": "application/json-patch+json"
+    },
+    "body": [
+      {
+        "op": "test",
+        "path": "/rev",
+        "value": 1
+      },
+      {
+        "op": "add",
+        "path": "/fields/System.State",
+        "value": "T1 Requirements & Outcome"
+      }
+    ]
+  },
+  "expected": {
+    "status": 412,
+    "body": {
+      "$id": "1",
+      "innerException": null,
+      "message": "<string>",
+      "typeName": "Microsoft.TeamFoundation.WorkItemTracking.Server.WorkItemRevisionMismatchException, Microsoft.TeamFoundation.WorkItemTracking.Server",
+      "typeKey": "WorkItemRevisionMismatchException",
+      "errorCode": 0,
+      "eventId": 3000
+    }
+  }
+}

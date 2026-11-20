@@ -1,0 +1,24 @@
+{
+  "operation": "any",
+  "case": "missing_api_version",
+  "description": "No api-version",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitemtypes",
+    "query": {}
+  },
+  "expected": {
+    "status": 400,
+    "body": {
+      "$id": "1",
+      "innerException": null,
+      "message": "<string>",
+      "typeName": "Microsoft.TeamFoundation.WorkItemTracking.Server.VssVersionNotSpecifiedException, Microsoft.TeamFoundation.WorkItemTracking.Server",
+      "typeKey": "VssVersionNotSpecifiedException",
+      "errorCode": 0,
+      "eventId": 3000
+    }
+  }
+}

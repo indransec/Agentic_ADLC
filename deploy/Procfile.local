@@ -19,3 +19,6 @@ pilot-test: cd pilot && env -u VIRTUAL_ENV OTEL_RESOURCE_ATTRIBUTES=openinferenc
 pilot-prodsim: cd pilot && env -u VIRTUAL_ENV OTEL_RESOURCE_ATTRIBUTES=openinference.project.name=pilot-triage-prod-sim PILOT_OTLP_ENDPOINT=http://127.0.0.1:6006 PILOT_TEMPLATE=template PILOT_REGISTRY=../data/local/pilot/packages PILOT_RECORDS=../data/local/pilot/records/prod-sim PILOT_WORK=../data/local/pilot/work/prod-sim uv run pilot-host --env prod-sim --port 8103
 pilot-traffic: cd pilot && env -u VIRTUAL_ENV PILOT_TRAFFIC_TARGET=http://127.0.0.1:8103 uv run pilot-traffic --port 8200
 pilot-lab: cd pilot && env -u VIRTUAL_ENV PILOT_TEMPLATE=template PILOT_REGISTRY=../data/local/pilot/packages uv run pilot-lab --port 8300
+
+# ADO simulator (feature 015, its own uv project in ado_sim/): the ADO REST subset on :8600
+ado-sim: cd ado_sim && env -u VIRTUAL_ENV ADO_SIM_DB_PATH=../data/local/ado_sim/ado_sim.db uv run ado-sim serve

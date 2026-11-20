@@ -1,0 +1,234 @@
+{
+  "operation": "work_item_types",
+  "case": "list",
+  "description": "The process's work item types",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-item-types/list?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitemtypes",
+    "query": {
+      "api-version": "7.1"
+    }
+  },
+  "expected": {
+    "status": 200,
+    "body": {
+      "count": 5,
+      "value": [
+        {
+          "name": "Epic",
+          "referenceName": "Microsoft.VSTS.WorkItemTypes.Epic",
+          "description": "A use case; its state is its current terminal stage.",
+          "color": "FF7B00",
+          "isDisabled": false,
+          "states": [
+            {
+              "name": "T0 Intake & Qualification",
+              "color": "b2b2b2",
+              "category": "Proposed"
+            },
+            {
+              "name": "T1 Requirements & Outcome",
+              "color": "b2b2b2",
+              "category": "InProgress"
+            },
+            {
+              "name": "T2 Architecture & Design",
+              "color": "b2b2b2",
+              "category": "InProgress"
+            },
+            {
+              "name": "T3 Build & Integration",
+              "color": "b2b2b2",
+              "category": "InProgress"
+            },
+            {
+              "name": "T4 Evaluation",
+              "color": "b2b2b2",
+              "category": "InProgress"
+            },
+            {
+              "name": "T5 Trust, Risk & Assurance",
+              "color": "b2b2b2",
+              "category": "InProgress"
+            },
+            {
+              "name": "T6 Release Readiness",
+              "color": "b2b2b2",
+              "category": "InProgress"
+            },
+            {
+              "name": "T7 Deployment & Transition",
+              "color": "b2b2b2",
+              "category": "InProgress"
+            },
+            {
+              "name": "T8 Operate & Observe",
+              "color": "b2b2b2",
+              "category": "InProgress"
+            },
+            {
+              "name": "T9 Evolve / Retire",
+              "color": "b2b2b2",
+              "category": "InProgress"
+            },
+            {
+              "name": "Closed",
+              "color": "339933",
+              "category": "Completed"
+            },
+            {
+              "name": "Removed",
+              "color": "ffffff",
+              "category": "Removed"
+            }
+          ],
+          "fields": [
+            {
+              "referenceName": "Custom.AdlcClarificationAnswer",
+              "name": "ADLC Clarification Answer",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "Custom.AdlcComment",
+              "name": "ADLC Comment",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "Custom.AdlcDecision",
+              "name": "ADLC Decision",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "Custom.AdlcRunId",
+              "name": "ADLC Run Id",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "Custom.AdlcSubStage",
+              "name": "ADLC Sub-stage",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "Custom.AdlcUseCaseId",
+              "name": "ADLC Use Case Id",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.AreaPath",
+              "name": "Area Path",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.AssignedTo",
+              "name": "Assigned To",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.ChangedBy",
+              "name": "Changed By",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.ChangedDate",
+              "name": "Changed Date",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.CommentCount",
+              "name": "Comment Count",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.CreatedBy",
+              "name": "Created By",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.CreatedDate",
+              "name": "Created Date",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.Description",
+              "name": "Description",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.History",
+              "name": "History",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.Id",
+              "name": "ID",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.Reason",
+              "name": "Reason",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.Rev",
+              "name": "Rev",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.State",
+              "name": "State",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.Tags",
+              "name": "Tags",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.TeamProject",
+              "name": "Team Project",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "System.Title",
+              "name": "Title",
+              "url": "<url>",
+              "alwaysRequired": true
+            },
+            {
+              "referenceName": "System.WorkItemType",
+              "name": "Work Item Type",
+              "url": "<url>",
+              "alwaysRequired": false
+            }
+          ],
+          "url": "<url>"
+        },
+        "<more>"
+      ]
+    }
+  }
+}

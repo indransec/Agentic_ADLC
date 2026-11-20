@@ -14,7 +14,7 @@ UV := uv run
 GITLEAKS_IMAGE := ghcr.io/gitleaks/gitleaks:v8.30.1
 
 .PHONY: help install up down status reset local local-setup migrate migrate-down phoenix lint typecheck test \
-        migration-check secret-scan check spec-validate spec-register \
+        migration-check secret-scan check ado-sim-check spec-validate spec-register \
         demo demo-auto demo-live demo-reset resilience trace
 
 # L5 spec validation compares with this git ref (override in the environment).
@@ -60,7 +60,11 @@ local-setup: .env
 	  env -u VIRTUAL_ENV uv run alembic upgrade head && \
 	  env -u VIRTUAL_ENV uv run adlc-spec register adlc-specs && \
 	  (cd pilot && env -u VIRTUAL_ENV uv sync --locked -q) && \
-	  (cd deploy/phoenix && env -u VIRTUAL_ENV uv sync --locked -q)
+	  (cd deploy/phoenix && env -u VIRTUAL_ENV uv sync --locked -q) && \
+	  (cd ado_sim && env -u VIRTUAL_ENV uv sync --locked -q && \
+	    export ADO_SIM_DB_PATH=../data/local/ado_sim/ado_sim.db && \
+	    env -u VIRTUAL_ENV uv run ado-sim migrate && \
+	    env -u VIRTUAL_ENV uv run ado-sim seed --if-new --file seed/demo.yaml)
 
 # Every process of deploy/Procfile.local in the foreground; Ctrl-C stops them all.
 local: local-setup
@@ -107,6 +111,15 @@ pilot-check:
 	cd pilot && env -u VIRTUAL_ENV $(UV) pytest
 	cd pilot && env -u VIRTUAL_ENV $(UV) coverage report --skip-covered --fail-under=80
 
+# The ADO simulator (feature 015): its own uv project, checks and published contract.
+ado-sim-check:
+	@echo "==> ado-sim-check"
+	cd ado_sim && env -u VIRTUAL_ENV $(UV) ruff check . && env -u VIRTUAL_ENV $(UV) ruff format --check .
+	cd ado_sim && env -u VIRTUAL_ENV $(UV) mypy
+	cd ado_sim && env -u VIRTUAL_ENV $(UV) pytest
+	cd ado_sim && env -u VIRTUAL_ENV $(UV) coverage report --skip-covered --fail-under=80
+	cd ado_sim && env -u VIRTUAL_ENV $(UV) ado-sim export-openapi --check
+
 spec-validate:
 	@echo "==> spec-validate"
 	$(UV) adlc-spec validate adlc-specs --baseline-ref $(ADLC_SPEC_BASELINE_REF)
@@ -134,6 +147,7 @@ check:
 	@$(MAKE) --no-print-directory spec-validate
 	@$(MAKE) --no-print-directory test
 	@$(MAKE) --no-print-directory pilot-check
+	@$(MAKE) --no-print-directory ado-sim-check
 	@$(MAKE) --no-print-directory migration-check
 	@$(MAKE) --no-print-directory secret-scan
 	@echo "==> check passed"

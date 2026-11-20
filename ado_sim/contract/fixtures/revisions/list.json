@@ -1,0 +1,163 @@
+{
+  "operation": "revisions",
+  "case": "list",
+  "description": "Every revision of a work item",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/revisions/list?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [
+    {
+      "method": "POST",
+      "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/$Epic",
+      "query": {
+        "api-version": "7.1"
+      },
+      "headers": {
+        "Content-Type": "application/json-patch+json"
+      },
+      "body": [
+        {
+          "op": "add",
+          "path": "/fields/System.Title",
+          "value": "Use case UC-1"
+        },
+        {
+          "op": "add",
+          "path": "/fields/System.AreaPath",
+          "value": "Agentic ADLC\\Use cases"
+        },
+        {
+          "op": "add",
+          "path": "/fields/Custom.AdlcUseCaseId",
+          "value": "UC-1"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/1",
+      "query": {
+        "api-version": "7.1"
+      },
+      "headers": {
+        "Content-Type": "application/json-patch+json"
+      },
+      "body": [
+        {
+          "op": "test",
+          "path": "/rev",
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/fields/System.State",
+          "value": "T1 Requirements & Outcome"
+        }
+      ]
+    }
+  ],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/1/revisions",
+    "query": {
+      "api-version": "7.1"
+    }
+  },
+  "expected": {
+    "status": 200,
+    "body": {
+      "count": 2,
+      "value": [
+        {
+          "id": "<int>",
+          "rev": 1,
+          "fields": {
+            "System.TeamProject": "Agentic ADLC",
+            "System.WorkItemType": "Epic",
+            "System.State": "T0 Intake & Qualification",
+            "System.Reason": "New",
+            "System.AreaPath": "Agentic ADLC\\Use cases",
+            "System.Title": "Use case UC-1",
+            "Custom.AdlcUseCaseId": "UC-1",
+            "System.Id": "<int>",
+            "System.Rev": 1,
+            "System.CreatedBy": {
+              "displayName": "ADLC Platform",
+              "url": "<url>",
+              "_links": {
+                "avatar": {
+                  "href": "<url>"
+                }
+              },
+              "id": "<uuid>",
+              "uniqueName": "adlc-platform@adlc.demo",
+              "imageUrl": "<url>",
+              "descriptor": "sim.f5621a6e-2b60-5795-84d6-1f4d6067aa07"
+            },
+            "System.CreatedDate": "<datetime>",
+            "System.ChangedBy": {
+              "displayName": "ADLC Platform",
+              "url": "<url>",
+              "_links": {
+                "avatar": {
+                  "href": "<url>"
+                }
+              },
+              "id": "<uuid>",
+              "uniqueName": "adlc-platform@adlc.demo",
+              "imageUrl": "<url>",
+              "descriptor": "sim.f5621a6e-2b60-5795-84d6-1f4d6067aa07"
+            },
+            "System.ChangedDate": "<datetime>",
+            "System.CommentCount": 0
+          },
+          "url": "<url>"
+        },
+        {
+          "id": "<int>",
+          "rev": 2,
+          "fields": {
+            "System.TeamProject": "Agentic ADLC",
+            "System.WorkItemType": "Epic",
+            "System.State": "T1 Requirements & Outcome",
+            "System.Reason": "New",
+            "System.AreaPath": "Agentic ADLC\\Use cases",
+            "System.Title": "Use case UC-1",
+            "Custom.AdlcUseCaseId": "UC-1",
+            "System.Id": "<int>",
+            "System.Rev": 2,
+            "System.CreatedBy": {
+              "displayName": "ADLC Platform",
+              "url": "<url>",
+              "_links": {
+                "avatar": {
+                  "href": "<url>"
+                }
+              },
+              "id": "<uuid>",
+              "uniqueName": "adlc-platform@adlc.demo",
+              "imageUrl": "<url>",
+              "descriptor": "sim.f5621a6e-2b60-5795-84d6-1f4d6067aa07"
+            },
+            "System.CreatedDate": "<datetime>",
+            "System.ChangedBy": {
+              "displayName": "ADLC Platform",
+              "url": "<url>",
+              "_links": {
+                "avatar": {
+                  "href": "<url>"
+                }
+              },
+              "id": "<uuid>",
+              "uniqueName": "adlc-platform@adlc.demo",
+              "imageUrl": "<url>",
+              "descriptor": "sim.f5621a6e-2b60-5795-84d6-1f4d6067aa07"
+            },
+            "System.ChangedDate": "<datetime>",
+            "System.CommentCount": 0
+          },
+          "url": "<url>"
+        }
+      ]
+    }
+  }
+}

@@ -80,6 +80,29 @@ deploy/pilot-isolation-check.sh                # both directions closed (SC-007)
 Pilot settings use the `PILOT_` prefix (see `.env.example`); `PILOT_MODEL_API_KEY` is only for the
 optional real model in dev and test, and is empty by default.
 
+## ADO simulator (feature 015)
+
+The `ado-sim` service (`ado_sim/`, its own locked uv project, image `adlc-ado-sim:0.1.0` from
+`deploy/ado-sim.Dockerfile`) serves the Azure DevOps REST API 7.1 subset the tracker adapter
+(feature 016) uses, on the platform network as `http://ado-sim:8600` and on the host at
+`ADO_SIM_PORT` (default 8600). Its data is one SQLite file on the `ado-sim-data` volume. On every
+start the image migrates, seeds from `seed/demo.yaml` only when the database is new, then serves;
+it runs as a non-root user. `ADO_SIM_TOKEN_KEY` (at least 32 characters, in `.env`) is required:
+it signs the personal access tokens, and changing it invalidates them all. Traces go to Phoenix,
+project `ado-sim`.
+
+```bash
+sim() { docker compose -f deploy/compose.yaml --env-file .env exec ado-sim ado-sim "$@"; }   # bash or zsh
+sim token issue adlc-platform@adlc.demo        # printed once; store it where the client reads it
+sim token list                                 # ids, identities, labels; never the tokens
+sim token revoke <id>
+sim reset --yes                                # remove all simulator data and seed again
+```
+
+Removing the `ado-sim-data` volume (`make reset` removes every volume) loses the simulator's work
+items and tokens; the next start seeds a fresh board. Known differences from real ADO are listed
+in `ado_sim/contract/differences.md`.
+
 ## Traces (Arize Phoenix)
 
 The `phoenix` service (`deploy/phoenix`, its own locked uv project, image `adlc-phoenix:0.1.0`)

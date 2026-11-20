@@ -1,0 +1,27 @@
+{
+  "operation": "get",
+  "case": "unknown_item",
+  "description": "An id that does not exist",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/get-work-item?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/999",
+    "query": {
+      "api-version": "7.1"
+    }
+  },
+  "expected": {
+    "status": 404,
+    "body": {
+      "$id": "1",
+      "innerException": null,
+      "message": "<string>",
+      "typeName": "Microsoft.TeamFoundation.WorkItemTracking.Server.WorkItemUnauthorizedAccessException, Microsoft.TeamFoundation.WorkItemTracking.Server",
+      "typeKey": "WorkItemUnauthorizedAccessException",
+      "errorCode": 0,
+      "eventId": 3000
+    }
+  }
+}

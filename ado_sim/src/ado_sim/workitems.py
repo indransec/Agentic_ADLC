@@ -106,7 +106,7 @@ class WorkItemStore:
                         "TF401320: Rule Error for field Title. Error code: Required, InvalidEmpty.",
                         "RuleValidationException",
                     )
-                now = self.clock()
+                now = self._stamp(conn)
                 cursor = conn.execute(
                     "INSERT INTO work_item (type_name, rev, fields, changed_date, state, area_path)"
                     " VALUES (?, 1, '{}', ?, '', '')",
@@ -169,7 +169,7 @@ class WorkItemStore:
                 )
                 if not result.changed:
                     return self._current(conn, item_id)
-                when = later_than(row["changed_date"], self.clock())
+                when = self._stamp(conn)
                 self._apply_links(conn, item_id, result.added, result.removed, by, when)
                 self.commit_change(
                     conn,
@@ -186,6 +186,16 @@ class WorkItemStore:
                 return view
         except _ValidateOnly as preview:
             return preview.view
+
+    def _stamp(self, conn: sqlite3.Connection) -> str:
+        """The time of a new change: the clock, but always after the latest change to any item.
+
+        Writes are serialised (``BEGIN IMMEDIATE``), so changed dates increase strictly in commit
+        order across the whole database; a query's ``asOf`` (the latest changed date in its
+        snapshot) is then a complete "changed since" bound for the next poll (research R-06).
+        """
+        latest = conn.execute("SELECT MAX(changed_date) FROM work_item").fetchone()[0]
+        return later_than(latest, self.clock())
 
     def commit_change(
         self,
@@ -207,7 +217,7 @@ class WorkItemStore:
         item_id = int(row["id"])
         old_fields = json.loads(row["fields"])
         rev = int(row["rev"]) + 1
-        when = when or later_than(row["changed_date"], self.clock())
+        when = when or self._stamp(conn)
         fields = dict(new_fields)
         fields.update(
             {"System.Rev": rev, "System.ChangedBy": by.reference(), "System.ChangedDate": when}

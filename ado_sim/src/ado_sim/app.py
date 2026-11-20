@@ -12,6 +12,7 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Annotated, Any
+from urllib.parse import quote
 
 from fastapi import Depends, FastAPI, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -318,12 +319,17 @@ def _openapi(app: FastAPI) -> dict[str, Any]:
     )
     for path, operations in schema["paths"].items():
         for operation in operations.values():
+            # FastAPI documents its own 422; the simulator answers invalid input with ADO's 400.
+            operation.get("responses", {}).pop("422", None)
             for parameter in operation.get("parameters", []):
                 if parameter["name"] == "api-version":
                     parameter["required"] = True
             if path in PUBLIC_PATHS:
                 operation["security"] = []
-    schema.setdefault("components", {})["securitySchemes"] = {
+    component_schemas = schema.setdefault("components", {}).get("schemas", {})
+    for unused in ("HTTPValidationError", "ValidationError"):
+        component_schemas.pop(unused, None)
+    schema["components"]["securitySchemes"] = {
         "basic": {
             "type": "http",
             "scheme": "basic",
@@ -892,7 +898,7 @@ def _area_tree(nodes: list[dict[str, Any]], urls: render.Urls, depth: int) -> di
         if remaining > 0 and below:
             body["children"] = [build(child, remaining - 1) for child in below]
         body["url"] = f"{urls.wit}/classificationNodes/Areas" + (
-            "/" + relative.replace("\\", "/") if relative else ""
+            "/" + "/".join(quote(part) for part in relative.split("\\")) if relative else ""
         )
         return body
 

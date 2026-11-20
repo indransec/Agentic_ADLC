@@ -4,6 +4,7 @@ from datetime import date
 
 import pytest
 
+from ado_sim.db import Database
 from ado_sim.errors import AdoError
 from ado_sim.wiql import MAX_QUERY_BYTES, MAX_TOP, parse, run_query, tokenize
 from ado_sim.workitems import WorkItemStore
@@ -247,3 +248,28 @@ def test_query_size_limit(store: WorkItemStore) -> None:
         "SELECT [System.Id] FROM workitems WHERE [System.Title] = '" + "x" * MAX_QUERY_BYTES + "'"
     )
     assert "32 KB" in refusal(store, text)
+
+
+def test_as_of_is_the_latest_change_the_query_saw(
+    store: WorkItemStore, people: People, board: dict[str, int]
+) -> None:
+    store.update(board["task_1"], [add("/fields/System.Title", "latest")], people.owner)
+    latest = store.get(board["task_1"]).fields["System.ChangedDate"]
+    result = run_query(store.db, "SELECT [System.Id] FROM workitems WHERE [System.Id] = 1")
+    assert result.as_of == latest
+
+
+def test_changed_dates_increase_across_items_even_when_the_clock_stands_still(
+    db: Database, people: People
+) -> None:
+    frozen = WorkItemStore(db, clock=lambda: "2026-11-20T10:00:00.000000Z")
+    first = frozen.create("Task", [title("a")], people.service)
+    second = frozen.create("Task", [title("b")], people.service)
+    changed = frozen.update(first.id, [title("a2")], people.owner)
+    dates = [
+        first.fields["System.ChangedDate"],
+        second.fields["System.ChangedDate"],
+        changed.fields["System.ChangedDate"],
+    ]
+    assert dates == sorted(dates) and len(set(dates)) == 3
+    assert dates[-1] == "2026-11-20T10:00:00.000002Z"

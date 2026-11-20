@@ -74,12 +74,17 @@ follows observed ADO behaviour and lists the choice in `contract/differences.md`
 ## R-06 Changed dates and "changed since" completeness
 
 - **Decision**: `System.ChangedDate` comes from the simulator's clock with microseconds; if the
-  clock would give a time not later than the item's previous changed date, the previous date plus
-  one microsecond is used. A "changed since" query uses `>=`, so a reader that passes the latest
-  changed date it saw re-reads that item rather than missing a later change in the same instant;
-  readers de-duplicate by (id, rev).
-- **Rationale**: FR-009 and SC-002 require that no change is missed between two reads; strictly
-  increasing per-item dates plus an inclusive bound make that hold even with clock ties.
+  clock would give a time not later than the latest changed date of **any** item, that date plus
+  one microsecond is used. Writes are serialised (`BEGIN IMMEDIATE`), so changed dates increase
+  strictly in commit order across the database. A WIQL answer's `asOf` is the latest changed date
+  in the query's own snapshot (now, if there are no items). A "changed since" query uses `>=`, so
+  a reader that passes back the previous answer's `asOf` re-reads that item rather than missing a
+  later change in the same instant; readers de-duplicate by (id, rev).
+- **Rationale**: FR-009 and SC-002 require that no change is missed between two reads. Every
+  change outside a query's snapshot was committed later, so it has a later date than the
+  snapshot's `asOf`. Found during T044: per-item ordering was not enough. A bound taken from
+  items read after the query, or an `asOf` from the clock, skipped changes stamped before the
+  bound but committed after the query (a slow writer); the property test reproduces both.
 - **Alternatives**: a global sequence number exposed as a field (not ADO behaviour).
 
 ## R-07 JSON Patch

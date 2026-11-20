@@ -1,0 +1,26 @@
+{
+  "operation": "any",
+  "case": "unknown_project",
+  "description": "A project that is not the seeded one",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Elsewhere/_apis/wit/workitemtypes",
+    "query": {
+      "api-version": "7.1"
+    }
+  },
+  "expected": {
+    "status": 404,
+    "body": {
+      "$id": "1",
+      "innerException": null,
+      "message": "<string>",
+      "typeName": "Microsoft.TeamFoundation.WorkItemTracking.Server.ProjectDoesNotExistWithNameException, Microsoft.TeamFoundation.WorkItemTracking.Server",
+      "typeKey": "ProjectDoesNotExistWithNameException",
+      "errorCode": 0,
+      "eventId": 3000
+    }
+  }
+}

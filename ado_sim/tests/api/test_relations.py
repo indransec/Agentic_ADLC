@@ -17,9 +17,7 @@ def link(rel: str, target: int) -> dict[str, Any]:
 
 
 def relations(api: ApiClient, item_id: int) -> list[tuple[str, str, str]]:
-    body = api.call(
-        "GET", f"{WIT}/workitems/{item_id}", params={"$expand": "Relations"}
-    ).json()
+    body = api.call("GET", f"{WIT}/workitems/{item_id}", params={"$expand": "Relations"}).json()
     return [
         (r["rel"], r["url"].rsplit("/", 1)[-1], r["attributes"]["name"])
         for r in body.get("relations", [])

@@ -1,0 +1,57 @@
+{
+  "operation": "get",
+  "case": "selected_fields",
+  "description": "Read one work item, only the named fields",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/get-work-item?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [
+    {
+      "method": "POST",
+      "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/$Epic",
+      "query": {
+        "api-version": "7.1"
+      },
+      "headers": {
+        "Content-Type": "application/json-patch+json"
+      },
+      "body": [
+        {
+          "op": "add",
+          "path": "/fields/System.Title",
+          "value": "Use case UC-1"
+        },
+        {
+          "op": "add",
+          "path": "/fields/System.AreaPath",
+          "value": "Agentic ADLC\\Use cases"
+        },
+        {
+          "op": "add",
+          "path": "/fields/Custom.AdlcUseCaseId",
+          "value": "UC-1"
+        }
+      ]
+    }
+  ],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/1",
+    "query": {
+      "api-version": "7.1",
+      "fields": "System.Id,System.Title,System.State"
+    }
+  },
+  "expected": {
+    "status": 200,
+    "body": {
+      "id": "<int>",
+      "rev": 1,
+      "fields": {
+        "System.State": "T0 Intake & Qualification",
+        "System.Title": "Use case UC-1",
+        "System.Id": "<int>"
+      },
+      "url": "<url>"
+    }
+  }
+}

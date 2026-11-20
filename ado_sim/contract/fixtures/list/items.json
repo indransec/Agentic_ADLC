@@ -1,0 +1,99 @@
+{
+  "operation": "list",
+  "case": "items",
+  "description": "Read several work items by id, omitting missing ones",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/work-items/list?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [
+    {
+      "method": "POST",
+      "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/$Epic",
+      "query": {
+        "api-version": "7.1"
+      },
+      "headers": {
+        "Content-Type": "application/json-patch+json"
+      },
+      "body": [
+        {
+          "op": "add",
+          "path": "/fields/System.Title",
+          "value": "Use case UC-1"
+        },
+        {
+          "op": "add",
+          "path": "/fields/System.AreaPath",
+          "value": "Agentic ADLC\\Use cases"
+        },
+        {
+          "op": "add",
+          "path": "/fields/Custom.AdlcUseCaseId",
+          "value": "UC-1"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/$Task",
+      "query": {
+        "api-version": "7.1"
+      },
+      "headers": {
+        "Content-Type": "application/json-patch+json"
+      },
+      "body": [
+        {
+          "op": "add",
+          "path": "/fields/System.Title",
+          "value": "Task under UC-1"
+        },
+        {
+          "op": "add",
+          "path": "/relations/-",
+          "value": {
+            "rel": "System.LinkTypes.Hierarchy-Reverse",
+            "url": "http://localhost:8600/adlc-demo/_apis/wit/workItems/1"
+          }
+        }
+      ]
+    }
+  ],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems",
+    "query": {
+      "api-version": "7.1",
+      "ids": "1,2,999",
+      "errorPolicy": "Omit",
+      "fields": "System.Id,System.Title,System.WorkItemType"
+    }
+  },
+  "expected": {
+    "status": 200,
+    "body": {
+      "count": 2,
+      "value": [
+        {
+          "id": "<int>",
+          "rev": 1,
+          "fields": {
+            "System.WorkItemType": "Epic",
+            "System.Title": "Use case UC-1",
+            "System.Id": "<int>"
+          },
+          "url": "<url>"
+        },
+        {
+          "id": "<int>",
+          "rev": 1,
+          "fields": {
+            "System.WorkItemType": "Task",
+            "System.Title": "Task under UC-1",
+            "System.Id": "<int>"
+          },
+          "url": "<url>"
+        }
+      ]
+    }
+  }
+}

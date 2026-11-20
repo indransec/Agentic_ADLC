@@ -17,7 +17,9 @@ def test_requests_without_a_valid_token_are_refused_alike(api: ApiClient, db: Da
     responses = [
         api.http.get(path, params={"api-version": "7.1"}),
         api.http.get(path, params={"api-version": "7.1"}, headers={"Authorization": "Bearer nope"}),
-        api.http.get(path, params={"api-version": "7.1"}, headers={"Authorization": f"Bearer {revoked}"}),
+        api.http.get(
+            path, params={"api-version": "7.1"}, headers={"Authorization": f"Bearer {revoked}"}
+        ),
         api.http.patch(
             path,
             params={"api-version": "7.1"},
@@ -61,7 +63,10 @@ def test_identity_refusals(api: ApiClient) -> None:
     assert api.call("GET", IDENTITIES).status_code == 400
     bad_filter = api.call("GET", IDENTITIES, params={"searchFilter": "Odd", "filterValue": "x"})
     assert bad_filter.status_code == 400
-    assert api.call("GET", "/other-org/_apis/identities", params={"identityIds": "x"}).status_code == 404
+    assert (
+        api.call("GET", "/other-org/_apis/identities", params={"identityIds": "x"}).status_code
+        == 404
+    )
 
 
 def test_revoked_token_stops_working(api: ApiClient, db: Database, tmp_path: Path) -> None:

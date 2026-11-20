@@ -1,0 +1,33 @@
+{
+  "operation": "wiql",
+  "case": "unsupported_ever",
+  "description": "EVER is outside the supported subset",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/wiql/query-by-wiql?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [],
+  "request": {
+    "method": "POST",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/wiql",
+    "query": {
+      "api-version": "7.1"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "query": "SELECT [System.Id] FROM workitems WHERE [System.State] EVER 'Active'"
+    }
+  },
+  "expected": {
+    "status": 400,
+    "body": {
+      "$id": "1",
+      "innerException": null,
+      "message": "<string>",
+      "typeName": "Microsoft.TeamFoundation.WorkItemTracking.Server.WiqlUnsupportedException, Microsoft.TeamFoundation.WorkItemTracking.Server",
+      "typeKey": "WiqlUnsupportedException",
+      "errorCode": 0,
+      "eventId": 3000
+    }
+  }
+}

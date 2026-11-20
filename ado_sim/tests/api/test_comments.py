@@ -26,9 +26,7 @@ def test_add_and_list_in_both_orders(api: ApiClient) -> None:
     assert created["text"] == "third" and created["version"] == 1
     assert created["createdBy"]["uniqueName"] == OWNER
     assert created["url"].endswith(f"/workItems/{item_id}/comments/{created['id']}")
-    newest = api.call(
-        "GET", f"{WIT}/workitems/{item_id}/comments", api_version=PREVIEW
-    ).json()
+    newest = api.call("GET", f"{WIT}/workitems/{item_id}/comments", api_version=PREVIEW).json()
     assert newest["totalCount"] == 3 and newest["count"] == 3
     assert [c["text"] for c in newest["comments"]] == ["third", "second", "first"]
     oldest = api.call(

@@ -68,11 +68,17 @@ Never holds the token itself (FR-017).
 | Column | Type | Notes |
 | --- | --- | --- |
 | work_item_id | FK | |
-| rev | integer | PK (`work_item_id`, `rev`); the update with `rev` = 1 is the creation |
+| id | integer | PK (`work_item_id`, `id`); 1, 2, 3 … per item, in order; the update with `id` 1 is the creation |
+| rev | integer | the item's revision after this update; not unique: an update from the other side of a link keeps the current `rev` |
+| revision_bearing | 0 or 1 | 1 when this update created a revision; 0 for the other side of a link (T001) |
 | revised_by | FK identity | the authenticated changer |
-| revised_date | text | equals the new `System.ChangedDate` |
-| fields | JSON | `{ref: {"oldValue": …, "newValue": …}}`; `oldValue` absent on creation |
+| change_date | text | when the change was made |
+| fields | JSON | `{ref: {"oldValue": …, "newValue": …}}`; `oldValue` absent on creation; a comment's update carries `System.CommentCount` and the transient `System.History` |
 | relations | JSON | `{"added": [...], "removed": [...], "updated": [...]}` |
+
+An update's `revisedDate` (in the API) is the changed date of the next revision, or
+`9999-01-01T00:00:00Z` for the latest one; for a non-revision update it is its own change date
+(as ADO, T001).
 
 **`relation`** — current links, both directions stored explicitly.
 | Column | Type | Notes |
@@ -81,11 +87,14 @@ Never holds the token itself (FR-017).
 | target_id | FK work_item | |
 | rel | text | `System.LinkTypes.Hierarchy-Forward` (child), `-Reverse` (parent), `System.LinkTypes.Dependency-Forward` (successor), `-Reverse` (predecessor) |
 | attributes | JSON | e.g. `{"comment": "..."}`; `isLocked` false |
-PK (`source_id`, `target_id`, `rel`). Adding a link on one item adds the reverse on the other;
-both items get a new revision and update (FR-012).
+PK (`source_id`, `target_id`, `rel`). Adding a link on one item adds the reverse on the other in
+the same transaction; the item the patch was sent to gets a new revision and update, the other item
+an update without a revision (FR-012, T001).
 
 **`comment`** — `id` (integer PK), `work_item_id` (FK), `version` (integer, 1), `text`
-(text, stored as given), `created_by` (FK identity), `created_date`, `modified_date`.
+(text, stored as given), `created_by` (FK identity), `created_date`, `modified_date`. Adding a
+comment also records a new revision of the work item (`System.CommentCount` + 1, and
+`System.History` holding the text in that revision only), as ADO's `commentVersionRef` (T001).
 
 ## Validation rules (from the spec)
 
@@ -96,8 +105,8 @@ both items get a new revision and update (FR-012).
 - Hierarchy: at most one parent per item; no cycles (walk the parent chain); no self-links; the
   target must exist (FR-013).
 - A patch is all-or-nothing; a patch with no effective change creates no revision.
-- `rev` increases by exactly one per change; `changed_date` strictly increases per item
-  (research R-06).
+- `rev` increases by exactly one per revision; `changed_date` strictly increases in commit order
+  across all items (research R-06, FR-009).
 - `revision` and `work_item_update` rows are refused UPDATE and DELETE by triggers; `reset`
   drops and recreates the tables instead (FR-019).
 

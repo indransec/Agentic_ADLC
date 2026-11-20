@@ -12,9 +12,7 @@ def query(api: ApiClient, text: str, **params: object) -> Any:
 
 
 def test_epics_in_a_state_under_an_area(api: ApiClient) -> None:
-    target = api.new(
-        "Epic", "match", **{"System.AreaPath": "Agentic ADLC\\Use cases"}
-    )
+    target = api.new("Epic", "match", **{"System.AreaPath": "Agentic ADLC\\Use cases"})
     api.new("Epic", "elsewhere")
     api.new("Task", "task", **{"System.AreaPath": "Agentic ADLC\\Use cases"})
     response = query(
@@ -28,9 +26,7 @@ def test_epics_in_a_state_under_an_area(api: ApiClient) -> None:
     assert body["queryType"] == "flat" and body["queryResultType"] == "workItem"
     assert [w["id"] for w in body["workItems"]] == [target]
     assert [c["referenceName"] for c in body["columns"]] == ["System.Id", "System.Title"]
-    assert body["sortColumns"] == [
-        {"field": body["columns"][0], "descending": False}
-    ]
+    assert body["sortColumns"] == [{"field": body["columns"][0], "descending": False}]
     assert body["workItems"][0]["url"].endswith(f"/workItems/{target}")
 
 

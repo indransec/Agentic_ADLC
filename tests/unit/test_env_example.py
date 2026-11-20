@@ -13,7 +13,9 @@ from adlc.config.settings import (
 )
 
 ENV_EXAMPLE = Path(__file__).resolve().parents[2] / ".env.example"
-COMPOSE_ONLY = {"ADLC_PHOENIX_UI_PORT", "ADLC_UI_PORT"}
+COMPOSE_ONLY = {"ADLC_PHOENIX_UI_PORT", "ADLC_UI_PORT", "ADO_SIM_TOKEN_KEY", "ADO_SIM_PORT"}
+# 015: the ADO simulator's own secret, read only by the simulator (not a platform setting)
+SIMULATOR_SECRETS = {"ADO_SIM_TOKEN_KEY"}
 
 
 def _entries() -> dict[str, str]:
@@ -32,7 +34,7 @@ def _secret_names() -> set[str]:
         extra = field.json_schema_extra
         if isinstance(extra, dict) and extra.get("secret"):
             names.add(env_name(name))
-    return names
+    return names | SIMULATOR_SECRETS
 
 
 def test_keys_match_settings() -> None:

@@ -456,6 +456,37 @@ services:
       - pilot-packages:/packages
       - pilot-data:/data
 
+  # ADO simulator (feature 015): an Azure DevOps Boards REST API 7.1 subset with its own SQLite
+  # file. On the platform network for feature 016's adapter; the port is for the host operator.
+  # Issue a token: docker compose exec ado-sim ado-sim token issue adlc-platform@adlc.demo
+  ado-sim:
+    networks: [platform]
+    image: adlc-ado-sim:0.1.0
+    build:
+      context: ..
+      dockerfile: deploy/ado-sim.Dockerfile
+    environment:
+      ADO_SIM_TOKEN_KEY: ${ADO_SIM_TOKEN_KEY:?ADO_SIM_TOKEN_KEY is required (at least 32 characters)}
+      ADO_SIM_DB_PATH: /var/lib/ado-sim/ado_sim.db
+      ADO_SIM_HOST: 0.0.0.0
+      ADO_SIM_PORT: "8600"
+      ADO_SIM_OTLP_ENDPOINT: http://phoenix:6006
+    ports:
+      - "${ADO_SIM_PORT:-8600}:8600"
+    volumes:
+      - ado-sim-data:/var/lib/ado-sim
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8600/health', timeout=2).status == 200 else 1)"
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
 volumes:
   adlc-db:
   phoenix-data:
@@ -464,6 +495,7 @@ volumes:
   pilot-records:
   pilot-data:
   bridge-data:
+  ado-sim-data:
 
 networks:
   platform:

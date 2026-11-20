@@ -1,0 +1,103 @@
+{
+  "operation": "updates",
+  "case": "get",
+  "description": "One update by its number",
+  "reference": "https://learn.microsoft.com/en-us/rest/api/azure/devops/wit/updates/get?view=azure-devops-rest-7.1",
+  "identity": "adlc-platform@adlc.demo",
+  "setup": [
+    {
+      "method": "POST",
+      "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/$Epic",
+      "query": {
+        "api-version": "7.1"
+      },
+      "headers": {
+        "Content-Type": "application/json-patch+json"
+      },
+      "body": [
+        {
+          "op": "add",
+          "path": "/fields/System.Title",
+          "value": "Use case UC-1"
+        },
+        {
+          "op": "add",
+          "path": "/fields/System.AreaPath",
+          "value": "Agentic ADLC\\Use cases"
+        },
+        {
+          "op": "add",
+          "path": "/fields/Custom.AdlcUseCaseId",
+          "value": "UC-1"
+        }
+      ]
+    },
+    {
+      "method": "PATCH",
+      "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/1",
+      "query": {
+        "api-version": "7.1"
+      },
+      "headers": {
+        "Content-Type": "application/json-patch+json"
+      },
+      "body": [
+        {
+          "op": "test",
+          "path": "/rev",
+          "value": 1
+        },
+        {
+          "op": "add",
+          "path": "/fields/System.State",
+          "value": "T1 Requirements & Outcome"
+        }
+      ]
+    }
+  ],
+  "request": {
+    "method": "GET",
+    "path": "/adlc-demo/Agentic%20ADLC/_apis/wit/workitems/1/updates/2",
+    "query": {
+      "api-version": "7.1"
+    }
+  },
+  "expected": {
+    "status": 200,
+    "body": {
+      "id": "<int>",
+      "workItemId": "<int>",
+      "rev": 2,
+      "revisedBy": {
+        "displayName": "ADLC Platform",
+        "url": "<url>",
+        "_links": {
+          "avatar": {
+            "href": "<url>"
+          }
+        },
+        "id": "<uuid>",
+        "uniqueName": "adlc-platform@adlc.demo",
+        "imageUrl": "<url>",
+        "descriptor": "sim.f5621a6e-2b60-5795-84d6-1f4d6067aa07",
+        "name": "ADLC Platform <adlc-platform@adlc.demo>"
+      },
+      "revisedDate": "9999-01-01T00:00:00Z",
+      "fields": {
+        "System.ChangedDate": {
+          "oldValue": "<datetime>",
+          "newValue": "<datetime>"
+        },
+        "System.Rev": {
+          "oldValue": 1,
+          "newValue": 2
+        },
+        "System.State": {
+          "oldValue": "T0 Intake & Qualification",
+          "newValue": "T1 Requirements & Outcome"
+        }
+      },
+      "url": "<url>"
+    }
+  }
+}

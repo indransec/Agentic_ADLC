@@ -174,9 +174,7 @@ def test_get_options(api: ApiClient) -> None:
         == 400
     )
     assert api.call("GET", f"{WIT}/workitems/{item_id}", params={"asOf": "soon"}).status_code == 400
-    early = api.call(
-        "GET", f"{WIT}/workitems/{item_id}", params={"asOf": "2000-01-01T00:00:00Z"}
-    )
+    early = api.call("GET", f"{WIT}/workitems/{item_id}", params={"asOf": "2000-01-01T00:00:00Z"})
     assert early.status_code == 404
 
 
