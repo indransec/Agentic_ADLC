@@ -133,14 +133,20 @@ class InboundSync:
             return self._baseline()
         page = self.board.changed_since(watermark or self.start_from)
         handled = 0
+        failed: list[int] = []
         for item_id in page.item_ids:
             try:
                 handled += self._item(item_id)
             except BoardError:
                 raise  # the board failed: the watermark stays, the next poll re-reads
             except Exception:
+                # one item must not hold back the others: carry on with them, and keep the
+                # watermark so the next poll comes back to this one (research R-04, step 4)
                 log.exception("board item %s could not be handled; the watermark stays", item_id)
-                return self._record("ok", f"item {item_id} failed", len(page.item_ids), handled)
+                failed.append(item_id)
+        if failed:
+            items = ", ".join(str(i) for i in failed)
+            return self._record("ok", f"items {items} failed", len(page.item_ids), handled)
         with self.engine.begin() as conn:
             store.set_watermark(conn, page.as_of)
         return self._record("ok", None, len(page.item_ids), handled)

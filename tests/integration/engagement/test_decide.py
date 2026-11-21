@@ -98,6 +98,23 @@ def test_a_missing_input_is_refused_and_reverted(rig: Rig, h: Harness) -> None:
     assert rig.outcomes()[-1] == ("refused", "missing_input")
 
 
+def test_an_invalid_typed_value_is_refused_with_a_comment(rig: Rig, h: Harness) -> None:
+    """Found in 018's live walk: a value the platform cannot store is refused like any invalid
+    input (a comment, the decision cleared), never a failure that stalls the sync."""
+    _, run_id = walk_to(h, "T0")
+    rig.cycle()
+    role = _needed(h, run_id)[0]
+    _save(rig, role, run_id, rig.mapping.value_for("pass"), "ok", values="risk_tier: extreme")
+    rig.cycle()
+    assert h.run(run_id).state == "awaiting_sign_off"
+    assert rig.outcomes()[-1][0] == "refused"
+    assert any("risk_tier" in c for c in rig.comments("run", run_id))
+    assert _fields(rig, run_id).get(rig.mapping.decision_field) in (None, "")
+    _save(rig, role, run_id, rig.mapping.value_for("pass"), "ok", values="risk_tier: medium")
+    rig.cycle()
+    assert h.run(run_id).final_status == "pass"
+
+
 def test_a_person_without_the_right_is_refused(rig: Rig, h: Harness) -> None:
     _, run_id = walk_to(h, "T1")
     rig.cycle()

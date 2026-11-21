@@ -70,6 +70,19 @@ def test_emitted_value_required(h: Harness) -> None:
     assert payload["emits"] == {"risk_tier": "high", "usecase_id": usecase}
 
 
+def test_an_unknown_risk_tier_is_refused(h: Harness) -> None:
+    """A typed tier outside the policy's tiers is an invalid decision, not a database error."""
+    usecase, run_id = _to(h, "T0")
+    with pytest.raises(InvalidDecision, match="risk_tier must be one of low, medium, high"):
+        h.service.decide(
+            person("business_owner"), run_id, "pass", fields={"risk_tier": "risk_tier (typed)"}
+        )
+    assert h.run(run_id).state == "awaiting_sign_off"
+    assert h.service.get_usecase(usecase).risk_tier is None
+    h.service.decide(person("business_owner"), run_id, "pass", fields={"risk_tier": "low"})
+    assert h.service.get_usecase(usecase).risk_tier == "low"
+
+
 def test_tier_drives_timers_and_rules(h: Harness) -> None:
     usecase = h.submit()
     h.pass_run(h.active(usecase, "T0").run_id, {"risk_tier": "high"})

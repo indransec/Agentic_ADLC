@@ -26,6 +26,7 @@ from adlc.orchestration.states import (
     SignalKind,
 )
 from adlc.orchestration.store import RunRow, UseCaseRow
+from adlc.spec_toolkit.projections import TIERS
 
 __all__ = [
     "Actor",
@@ -297,6 +298,10 @@ class OrchestratorService:
             )
             if emitted.missing:
                 raise InvalidDecision(f"a pass must supply {', '.join(emitted.missing)}")
+            tier = emitted.values.get("risk_tier")
+            if isinstance(tier, str) and tier not in TIERS:
+                # the use case's tier is one of the policy's tiers (the database refuses others)
+                raise InvalidDecision(f"risk_tier must be one of {', '.join(TIERS)}, not {tier!r}")
         if route.kind == "template":
             alternative = fields.get("alternative")
             if alternative:
