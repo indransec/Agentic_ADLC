@@ -6,6 +6,7 @@ attributes whose names suggest credentials, so a stray ``extra=`` cannot leak th
 
 import logging
 import sys
+from typing import Any
 
 SENSITIVE_ATTRIBUTES = frozenset({"authorization", "password", "token", "credential_hash"})
 LOG_FORMAT = "%(asctime)s %(levelname)s %(name)s %(message)s"
@@ -21,11 +22,24 @@ class SensitiveAttributeFilter(logging.Filter):
 
 
 class _AdlcHandler(logging.StreamHandler):  # type: ignore[type-arg]
-    """Marker type so repeated configuration replaces only our own handler."""
+    """Marker type so repeated configuration replaces only our own handler.
+
+    It writes to ``sys.stderr`` as it is when each record is emitted, not as it was when logging
+    was configured: a replaced stderr (a test runner's capture, closed afterwards) is never
+    written to later.
+    """
+
+    @property
+    def stream(self) -> Any:
+        return sys.stderr
+
+    @stream.setter
+    def stream(self, value: Any) -> None:
+        pass  # always the current sys.stderr
 
 
 def configure_logging(level: str) -> None:
-    handler = _AdlcHandler(sys.stderr)
+    handler = _AdlcHandler()
     handler.setFormatter(logging.Formatter(LOG_FORMAT))
     handler.addFilter(SensitiveAttributeFilter())
     root = logging.getLogger()

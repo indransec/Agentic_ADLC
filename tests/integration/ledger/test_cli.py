@@ -42,7 +42,7 @@ def test_breaks_exit_one(h: Harness, tmp_path: Path) -> None:
         json_result = runner.invoke(app, ["verify", "--json"])
     assert text_result.exit_code == 1
     assert "2 breaks" in text_result.output and "content" in text_result.output
-    report = json.loads(json_result.output)
+    report = json.loads(json_result.stdout)  # the JSON; logs go to stderr
     assert json_result.exit_code == 1 and report["scope"] == "all" and not report["verified"]
     assert set(report["breaks"][0]) == {"ledger_key", "check", "element", "expected", "actual"}
 
