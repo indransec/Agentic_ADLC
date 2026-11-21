@@ -1,0 +1,1 @@
+- {file: tracker_mapping.yaml, op: delete, path: /decision/values/approve_change}

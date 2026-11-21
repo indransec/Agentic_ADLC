@@ -57,6 +57,8 @@ def test_inputs_by_field_type(db: Database) -> None:
         "Approve waiver",
         "Reject waiver",
         "Complete escalation",
+        "Approve change",
+        "Reject change",
     ]
     assert fields["System.State"].kind == "select"
     assert "" not in [c.value for c in fields["System.State"].choices]  # a required field

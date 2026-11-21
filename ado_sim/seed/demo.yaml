@@ -36,7 +36,7 @@ process:
         # in its order (a platform contract test keeps the two in step)
         - ref: Custom.AdlcDecision
           allowed_values: [Pass, Rework, Exception, Terminate, Approve waiver, Reject waiver,
-                           Complete escalation]
+                           Complete escalation, Approve change, Reject change]
         - Custom.AdlcComment
         - Custom.AdlcClarificationAnswer
         - Custom.AdlcRootCause
@@ -48,6 +48,15 @@ process:
     User Story: {color: 009CCC, states: agile, fields: *adlc_fields}
     Task: {color: F2CB1D, states: agile, fields: *adlc_fields}
     Bug: {color: CC293D, states: agile, fields: *adlc_fields}
+    # 020: a release's ITSM change request, decided on the board (an item under its run's item)
+    Change Request:
+      description: An ITSM change request raised for a run; approved or rejected by its owner role.
+      color: 009933
+      states:
+        - {name: Awaiting approval, category: Proposed}
+        - {name: Approved, category: Completed}
+        - {name: Rejected, category: Removed}
+      fields: *adlc_fields
   custom_fields:
     Custom.AdlcUseCaseId: {type: string, name: ADLC Use Case Id}
     Custom.AdlcSubStage: {type: string, name: ADLC Sub-stage}
@@ -94,6 +103,9 @@ form:
   Feature:
     - {title: Decision, fields: [Custom.AdlcDecision, Custom.AdlcComment, Custom.AdlcRootCause, Custom.AdlcReason, Custom.AdlcReworkTarget, Custom.AdlcValues]}
     - {title: Run, fields: [System.Title, System.State, Custom.AdlcRunId, Custom.AdlcEvidenceLink, System.Description]}
+  Change Request:
+    - {title: Decision, fields: [Custom.AdlcDecision, Custom.AdlcComment]}
+    - {title: Change, fields: [System.Title, System.State, Custom.AdlcRunId, System.Description]}
   Task:
     - {title: Clarification, fields: [System.Description, Custom.AdlcClarificationAnswer]}
     - {title: Details, fields: [System.Title, System.State, Custom.AdlcRunId]}

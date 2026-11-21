@@ -21,6 +21,7 @@ OWN, REGISTER, DECIDE, ANSWER, REVERT, IGNORED = (
     "revert",
     "ignored",
 )
+DECIDE_CHANGE = "decide_change"  # 020: a decision on a change request item
 
 
 @dataclass(frozen=True)
@@ -66,6 +67,10 @@ def classify(
         value = _new_value(update, mapping.field("clarification", "answer"))
         if value is not None:
             actions.append(Action(ANSWER, value=value))
+    elif kind == "change":
+        value = _new_value(update, mapping.decision_field)
+        if value is not None:
+            actions.append(Action(DECIDE_CHANGE, value=value))
     return actions or [Action(IGNORED)]
 
 

@@ -10,6 +10,11 @@ from typing import Any
 from ruamel.yaml import YAML
 
 MOMENTS = tuple(f"D-{n}" for n in range(1, 10))
+# 020 (SA §22.10): shown only on the board, by board-only steps; optional in a script
+BOARD_MOMENTS = frozenset({"D-12", "D-13"})
+ITEM_KINDS = ("usecase", "run", "clarification", "change")  # the board items (tracker mapping)
+# 020: actions that exist only on the board; a step with one is skipped when the sync is off
+BOARD_ONLY = frozenset({"board_change", "drift", "reconcile"})
 ACTIONS = {
     "submit": True,  # kind: needs a role
     "pass": False,
@@ -20,8 +25,19 @@ ACTIONS = {
     "complete_escalation": True,
     "fault": False,
     "wait": False,
+    "board_change": True,  # 020 D-12: a person changes a platform-written field
+    "drift": False,  # 020 D-13: the operator changes one with the service account
+    "reconcile": False,  # 020 D-13: the CoE reconciles
 }
-EXPECTATIONS = ("state", "final_status", "run_number", "arrow", "escalated")
+EXPECTATIONS = (
+    "state",
+    "final_status",
+    "run_number",
+    "arrow",
+    "escalated",
+    "reverted",  # 020: the changed field is back and the item has the platform's comment
+    "reconciled",  # 020: the last reconciliation corrected the drifted field
+)
 
 
 class ScriptError(ValueError):
@@ -45,6 +61,11 @@ class Step:
     actions: tuple[Action, ...]
     expect: Mapping[str, Any]
 
+    @property
+    def board_only(self) -> bool:
+        """020: the step shows something only the board has; skipped with the sync off."""
+        return any(a.kind in BOARD_ONLY for a in self.actions)
+
 
 @dataclass(frozen=True)
 class DemoScript:
@@ -61,7 +82,7 @@ def _step(raw: Mapping[str, Any], usecases: Mapping[str, str], roles: Collection
         raise ScriptError(f"{where}: use case {raw.get('usecase')} is not in usecases")
     proves = tuple(str(m) for m in raw.get("proves") or ())
     for moment in proves:
-        if moment not in MOMENTS:
+        if moment not in MOMENTS and moment not in BOARD_MOMENTS:
             raise ScriptError(f"{where}: {moment} is not a demo moment")
     actions = []
     for item in raw.get("actions") or ():
@@ -74,7 +95,21 @@ def _step(raw: Mapping[str, Any], usecases: Mapping[str, str], roles: Collection
             raise ScriptError(f"{where}: action {kind} needs a role")
         if role is not None and role not in roles:
             raise ScriptError(f"{where}: role {role} is not in the role catalogue")
+        if kind in ("board_change", "drift"):
+            if not all(params.get(k) not in (None, "") for k in ("item", "field", "value")):
+                raise ScriptError(f"{where}: {kind} needs item, field and value")
+            if params["item"] not in ITEM_KINDS:
+                raise ScriptError(
+                    f"{where}: item {params['item']} is not a board item kind"
+                    f" ({', '.join(ITEM_KINDS)})"
+                )
         actions.append(Action(kind, None if role is None else str(role), params))
+    board_only = any(a.kind in BOARD_ONLY for a in actions)
+    for moment in proves:
+        if board_only and moment in MOMENTS:
+            raise ScriptError(f"{where}: {moment} cannot be proved by a board-only step")
+        if not board_only and moment in BOARD_MOMENTS:
+            raise ScriptError(f"{where}: {moment} is shown only by a board-only step")
     expect = dict(raw.get("expect") or {})
     for key in expect:
         if key not in EXPECTATIONS:

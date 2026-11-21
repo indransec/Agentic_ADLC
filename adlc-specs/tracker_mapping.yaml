@@ -7,7 +7,8 @@ catalogue: tracker_mapping
 version: 1.0.0
 description: >-
   The ADO simulator's demo board: one Epic per use case in the column of its current terminal,
-  one Feature per terminal run, one Task per clarification round.
+  one Feature per terminal run, one Task per clarification round, one Change Request per ITSM
+  change request of a run.
 inbound:
   mode: polling
   poll_interval: 10s
@@ -68,6 +69,19 @@ items:
       answer: Custom.AdlcClarificationAnswer
     open: Active
     answered: Closed
+  # 020: a release's ITSM change request (feature 012), decided on the board by its owner role
+  change:
+    type: Change Request
+    parent: run
+    fields:
+      title: System.Title
+      description: System.Description
+      state: System.State
+      change_id: Custom.AdlcRunId
+    states:
+      awaiting: Awaiting approval
+      approved: Approved
+      rejected: Rejected
 sub_stages:
   opened: Opened
   blocked: Blocked
@@ -89,6 +103,8 @@ decision:
     approve_waiver: Approve waiver
     reject_waiver: Reject waiver
     complete_escalation: Complete escalation
+    approve_change: Approve change  # 020: change requests
+    reject_change: Reject change
   inputs:
     root_cause: {field: Custom.AdlcRootCause, label: root cause}
     reason: {field: Custom.AdlcReason, label: reason}
@@ -98,3 +114,4 @@ platform_written:
   usecase: [state, sub_stage, usecase_id]
   run: [title, description, state, run_id, evidence]
   clarification: [title, description, state, clarification_id]
+  change: [title, description, state, change_id]

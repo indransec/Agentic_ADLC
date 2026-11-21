@@ -94,6 +94,7 @@ def build(
         projector,
         clock,
         settings.board_start_from,
+        changes=services.changes,
     )
     reconciler = Reconciler(
         services.engine, projector, board, mapping, clock, settings.deadletter_role

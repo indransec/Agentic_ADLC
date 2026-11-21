@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 from ruamel.yaml import YAML
 
-from adlc.engagement.mapping import MappingError, TrackerMapping
+from adlc.engagement.mapping import KINDS, MappingError, TrackerMapping
 from adlc.engagement.model import BoardInfo, BoardType
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -27,13 +27,9 @@ def _raw() -> dict[str, Any]:
 def _board(mapping: TrackerMapping) -> BoardInfo:
     """A board offering exactly what the mapping names."""
     types = {}
-    for kind in ("usecase", "run", "clarification"):
+    for kind in KINDS:
         item = mapping.item(kind)
-        fields = set(item.fields.values())
-        if kind == "run":
-            fields |= mapping.person_input_fields("run")
-        if kind == "clarification":
-            fields |= mapping.person_input_fields("clarification")
+        fields = set(item.fields.values()) | mapping.person_input_fields(kind)
         types[item.type] = BoardType(
             item.type, tuple(sorted(mapping.states_used(kind))), frozenset(fields)
         )
@@ -136,3 +132,46 @@ def test_broken_file_names_file_and_path(tmp_path: Path) -> None:
 def test_unreadable_file(tmp_path: Path) -> None:
     with pytest.raises(MappingError, match="cannot read"):
         TrackerMapping.load(tmp_path / "missing.yaml")
+
+
+# ------------------------------------------------------------------ 020 the change request kind
+
+
+def test_the_change_kind(mapping: TrackerMapping) -> None:
+    tracker = mapping
+    assert "change" in KINDS
+    spec = tracker.item("change")
+    assert (spec.type, spec.parent) == ("Change Request", "run")
+    assert tracker.kind_of_type("Change Request") == "change"
+    assert tracker.change_state("awaiting") == "Awaiting approval"
+    assert tracker.change_state("approved") == "Approved"
+    assert tracker.states_used("change") == {"Awaiting approval", "Approved", "Rejected"}
+    assert tracker.platform_written("change") == {
+        "System.Title",
+        "System.Description",
+        "System.State",
+        "Custom.AdlcRunId",
+    }
+    assert tracker.person_input_fields("change") == {
+        tracker.decision_field,
+        tracker.comment_field,
+    }
+
+
+def test_decision_values_belong_to_runs_or_to_changes(mapping: TrackerMapping) -> None:
+    tracker = mapping
+    change = tracker.allowed_values("change")
+    run = tracker.allowed_values("run")
+    assert change == ["Approve change", "Reject change"]
+    assert "Pass" in run and "Approve change" not in run
+    assert set(run) | set(change) == set(tracker.allowed_values())
+    assert tracker.action_for("approve change") == "approve_change"
+    assert tracker.kind_of_action("approve_change") == "change"
+    assert tracker.kind_of_action("pass") == "run"
+
+
+def test_a_board_without_the_change_type_is_a_gap(mapping: TrackerMapping) -> None:
+    board = _board(mapping)
+    types = {k: v for k, v in board.types.items() if k != "Change Request"}
+    gaps = mapping.check_against(BoardInfo(types=types, areas=board.areas))
+    assert gaps == ["change: the board has no work item type 'Change Request'"]

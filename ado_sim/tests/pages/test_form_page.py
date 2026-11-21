@@ -24,6 +24,8 @@ DECISIONS = [
     "Approve waiver",
     "Reject waiver",
     "Complete escalation",
+    "Approve change",
+    "Reject change",
 ]
 
 

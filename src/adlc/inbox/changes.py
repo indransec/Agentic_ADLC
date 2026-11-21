@@ -10,7 +10,7 @@ wait for that decision then re-run them (research R-11).
 from collections.abc import Mapping
 from typing import Any
 
-from sqlalchemy import Engine, text
+from sqlalchemy import Connection, Engine, text
 from sqlalchemy.exc import IntegrityError
 
 from adlc.api.errors import NotFound
@@ -30,6 +30,35 @@ def approver_role(registry: Mapping[str, Any] | None) -> str | None:
         if server.get("id") == SYSTEM and server.get("owner_role"):
             return str(server["owner_role"])
     return None
+
+
+def current_changes(
+    conn: Connection, *, record_id: str | None = None, run_id: str | None = None
+) -> list[dict[str, Any]]:
+    """The latest version of each change record, optionally one record or one run's (020)."""
+    rows = conn.execute(
+        text(
+            "SELECT record_id, version, usecase_id, run_id, terminal_id, body, at FROM ("
+            "SELECT *, row_number() OVER (PARTITION BY record_id ORDER BY version DESC) "
+            "AS rank FROM enterprise_record WHERE system = :s "
+            "AND kind = :k AND (CAST(:r AS text) IS NULL OR record_id = :r) "
+            "AND (CAST(:run AS text) IS NULL OR run_id = :run)) "
+            "WHERE rank = 1 ORDER BY record_id"
+        ),
+        {"s": SYSTEM, "k": KIND, "r": record_id, "run": run_id},
+    ).mappings()
+    return [
+        {
+            **dict(r["body"]),
+            "change_id": r["record_id"],
+            "record_version": r["version"],
+            "usecase_id": r["usecase_id"],
+            "run_id": r["run_id"],
+            "terminal_id": r["terminal_id"],
+            "at": r["at"].isoformat(),
+        }
+        for r in rows
+    ]
 
 
 class ChangeService:
@@ -61,28 +90,7 @@ class ChangeService:
 
     def _current(self, record_id: str | None = None) -> list[dict[str, Any]]:
         with self.engine.connect() as conn:
-            rows = conn.execute(
-                text(
-                    "SELECT record_id, version, usecase_id, run_id, terminal_id, body, at FROM ("
-                    "SELECT *, row_number() OVER (PARTITION BY record_id ORDER BY version DESC) "
-                    "AS rank FROM enterprise_record WHERE system = :s "
-                    "AND kind = :k AND (CAST(:r AS text) IS NULL OR record_id = :r)) "
-                    "WHERE rank = 1 ORDER BY record_id"
-                ),
-                {"s": SYSTEM, "k": KIND, "r": record_id},
-            ).mappings()
-            return [
-                {
-                    **dict(r["body"]),
-                    "change_id": r["record_id"],
-                    "record_version": r["version"],
-                    "usecase_id": r["usecase_id"],
-                    "run_id": r["run_id"],
-                    "terminal_id": r["terminal_id"],
-                    "at": r["at"].isoformat(),
-                }
-                for r in rows
-            ]
+            return current_changes(conn, record_id=record_id)
 
     def waiting(self, actor: Actor) -> list[dict[str, Any]]:
         """Changes awaiting a decision, for the approver role (empty for anyone else)."""
@@ -92,8 +100,16 @@ class ChangeService:
         return sorted(found, key=lambda c: int(str(c["change_id"]).rpartition("-")[2] or 0))
 
     def decide(
-        self, actor: Actor, change_id: str, approve: bool, comment: str | None
+        self,
+        actor: Actor,
+        change_id: str,
+        approve: bool,
+        comment: str | None,
+        *,
+        source: Mapping[str, Any] | None = None,
     ) -> dict[str, Any]:
+        """``source``: where the decision came from (020: the board item and update), recorded in
+        the change record so a restarted board sync knows it was applied."""
         if not self._may_decide(actor):
             raise NotAuthorised(f"changes are decided by {self._role() or 'nobody configured'}")
         found = self._current(change_id)
@@ -110,6 +126,8 @@ class ChangeService:
             decided_at=self.clock.now().isoformat(),
             comment=(comment or "")[:2000],
         )
+        if source is not None:
+            body["source"] = dict(source)
         try:
             with self.engine.begin() as conn:
                 conn.execute(

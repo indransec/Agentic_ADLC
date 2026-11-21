@@ -189,7 +189,7 @@ services:
     image: adlc-api:0.1.0
     command: ["adlc-orchestrator", "run"]
     environment:
-      <<: *db-settings
+      <<: [*db-settings, *board-settings]  # 020: the demo driver runs in this image
       ADLC_DB_CONNECT_TIMEOUT: ${ADLC_DB_CONNECT_TIMEOUT:-60s}
       ADLC_ROLE_CATALOGUE: adlc-specs/shared/roles.yaml
       ADLC_OTLP_ENDPOINT: http://phoenix:6006

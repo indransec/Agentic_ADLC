@@ -136,7 +136,10 @@ the API answers the web app's mode, links to board items and runs reconciliation
 on, the web app is the operations console and people decide on the board (feature 019); a link
 from the console to a work item uses `ADLC_BOARD_PUBLIC_URL` (default `http://localhost:8600`,
 the address a browser on the host reaches). To fall back to the inbox, set
-`ADLC_BOARD_ENABLED=false` and `make up` again. The CoE (`ADLC_DEADLETTER_ROLE`) reads sync health and reconciles:
+`ADLC_BOARD_ENABLED=false` and `make up` again. For the demo on the board (feature 020),
+`make demo-reset` also registers the sync's token (`ADLC_BOARD_TOKEN`) and the demo people's
+tokens (`ADLC_DEMO_BOARD_TOKENS`, created when missing) in the freshly seeded simulator with
+`ado-sim token import`; see `demo/README.md`. The CoE (`ADLC_DEADLETTER_ROLE`) reads sync health and reconciles:
 
 ```bash
 board() { docker compose -f deploy/compose.yaml --env-file .env exec board adlc-board "$@"; }

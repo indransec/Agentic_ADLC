@@ -73,4 +73,7 @@ def test_board_items_of_use_cases_and_runs(h: Harness, api: Api, tmp_path: Path)
         body = answer.json()
         assert body["url"] == f"http://board.test/items/{body['work_item_id']}"
     assert api.get("sre", "/board/items/sprint/1").status_code == 422
+    assert (
+        api.get("sre", "/board/items/change/CHG-0001").status_code == 404
+    )  # 020: a kind, not yet there
     assert api.client.get(f"/board/items/run/{run_id}").status_code == 401

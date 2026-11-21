@@ -22,7 +22,9 @@ from ruamel.yaml.error import YAMLError
 from adlc.config.durations import DurationError, parse_duration
 from adlc.engagement.model import BoardInfo
 
-KINDS = ("usecase", "run", "clarification")
+KINDS = ("usecase", "run", "clarification", "change")
+# 020: the decisions made on a change request item; every other decision value is a run's
+CHANGE_ACTIONS = ("approve_change", "reject_change")
 SCHEMA = Path("schema") / "catalogues" / "tracker_mapping.schema.json"
 
 
@@ -144,6 +146,15 @@ class TrackerMapping:
     def clarification_answered(self) -> str:
         return str(self._data["items"]["clarification"]["answered"])
 
+    def change_state(self, status: str) -> str:
+        """020: the item state for a change request that is ``awaiting``, ``approved`` or
+        ``rejected``."""
+        return str(self._data["items"]["change"]["states"][status])
+
+    def kind_of_action(self, action: str) -> str:
+        """020: the kind of item a decision is made on (``change`` or ``run``)."""
+        return "change" if action in CHANGE_ACTIONS else "run"
+
     def value_for(self, action: str) -> str:
         return self._values[action]
 
@@ -153,8 +164,13 @@ class TrackerMapping:
             return None
         return self._by_value.get(value.strip().lower())
 
-    def allowed_values(self) -> list[str]:
-        return list(self._values.values())
+    def allowed_values(self, kind: str | None = None) -> list[str]:
+        """The decision values, or only those made on ``kind``'s items (020)."""
+        return [
+            value
+            for action, value in self._values.items()
+            if kind is None or self.kind_of_action(action) == kind
+        ]
 
     def inputs(self) -> Mapping[str, InputSpec]:
         return dict(self._inputs)
@@ -167,6 +183,8 @@ class TrackerMapping:
             }
         if kind == "clarification":
             return {self.field("clarification", "answer")}
+        if kind == "change":
+            return {self.decision_field, self.comment_field}
         return set()
 
     def platform_written(self, kind: str) -> set[str]:
@@ -182,6 +200,8 @@ class TrackerMapping:
             }
         if kind == "run":
             return {*map(str, items["run"]["states"].values()), self.terminated_state("run")}
+        if kind == "change":
+            return {str(v) for v in items["change"]["states"].values()}
         return {self.clarification_open, self.clarification_answered}
 
     def names(self) -> set[str]:

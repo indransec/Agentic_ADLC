@@ -62,6 +62,49 @@ Timings (demo time scale) and recovery: if a step stops, the driver says why and
 resume from; fix the cause and run `make demo FROM_STEP=<n>`. A live-model stop can always be
 resumed with the rehearsed replies (`make demo FROM_STEP=<n>`).
 
+## On the board (feature 020)
+
+With the board sync on (`ADLC_BOARD_ENABLED=true`, see `deploy/README.md`) the demo's decisions
+are made on the board, and the web app is the operations console (feature 019). The driver then
+acts, in `--auto`, as each demo person on the board with that person's own token; in presenter
+mode it prints, for every human step, the demo user to sign in as, the board item's address and
+every value to set, and waits until the platform has read it.
+
+**Before the audience**
+
+```bash
+# .env: ADLC_ENV=demo, ADLC_BOARD_ENABLED=true, ADLC_BOARD_TOKEN=<40+ characters>,
+#       ADO_SIM_DEMO_PASSWORD=<12+ characters>, ADLC_DEMO_BOARD_TOKENS=<a path outside the repo>
+make demo-reset   # also registers the sync's token and the demo people's tokens on the board
+make demo-auto    # a rehearsal: every step, D-1..D-9, D-12, D-13
+```
+
+The tokens file is created by `make demo-reset` when missing (random tokens, readable by you
+only); it is a secret: never commit or print it. `make demo` mounts it read-only for the driver.
+On Linux the container's user must be able to read it (Docker Desktop maps the owner).
+
+**On screen**: the board at `http://localhost:8600` (sign in as the demo user the driver names,
+with `ADO_SIM_DEMO_PASSWORD`), the console at `http://localhost:8501` on Journey. Each run item
+links to its evidence in the console.
+
+| Step | On the board, as | What to set |
+| --- | --- | --- |
+| 1 | business.owner: New Epic in `Agentic ADLC\Use cases` (name and intake as printed); then the T0 run item | decision Pass, value `risk_tier: low` |
+| 2 | product.owner, the T1 run item | decision Rework, comment, root cause `requirement`, reason |
+| 3 | the approvers named, the T1 run item | decision Pass |
+| 4 | the addressed role, the clarification item under the T2 run item; then the approvers | the numbered answer; then Pass |
+| 5–8 | as printed (step 6: qa.eval.lead, Rework with root cause `implementation`) | Pass / Rework |
+| 9 | security.officer: Complete escalation; the decider: Exception with the waiver values; risk.owner: Approve waiver | as printed |
+| 10 | release.manager: the **Change Request** item under the T6 run item; then the approvers | decision Approve change, a comment; then Pass |
+| 11–15 | as printed | as in the table above |
+| 16 (D-12) | product.owner: the use case's Epic | its state set to T5: the platform sets it back with a comment |
+| 17 (D-13) | the driver drifts the Epic's sub-stage (a demo device: changed as the service account, which the sync reads as its own change); the CoE: console, Sync status, Reconcile now | the board is corrected; the differences are listed |
+
+Steps 16 and 17 exist only on the board: with the sync off they are skipped and the demo is
+014's. **Falling back to the inbox** if the board fails mid-demo: set `ADLC_BOARD_ENABLED=false`
+in `.env`, `make up` (the API restarts; the web app is the inbox again within a minute), and
+`make demo FROM_STEP=<n>`.
+
 ## Known behaviour
 
 - Run the demo on a reset demo environment. On a database with earlier use cases it still works

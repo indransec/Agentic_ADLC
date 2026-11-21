@@ -59,6 +59,34 @@ def issue(db: Database, key: str, unique_name: str, label: str = "") -> tuple[in
         return int(cursor.lastrowid or 0), token
 
 
+MIN_IMPORTED_LENGTH = 40
+
+
+def import_token(
+    db: Database, key: str, unique_name: str, token: str, label: str = "imported"
+) -> int:
+    """020: register a token chosen elsewhere (a demo reset re-registers known tokens). A
+    simulator-only command: ADO lets nobody choose a token's value (contract/differences.md)."""
+    if len(token) < MIN_IMPORTED_LENGTH or any(c.isspace() for c in token):
+        raise TokenError(f"an imported token has at least {MIN_IMPORTED_LENGTH} characters")
+    digest = hash_token(key, token)
+    with db.write() as conn:
+        row = conn.execute(
+            "SELECT id FROM identity WHERE unique_name = ? COLLATE NOCASE AND active = 1",
+            (unique_name,),
+        ).fetchone()
+        if row is None:
+            raise TokenError(f"no active identity with unique name {unique_name}")
+        if conn.execute("SELECT 1 FROM access_token WHERE token_hash = ?", (digest,)).fetchone():
+            raise TokenError("that token is already registered")
+        cursor = conn.execute(
+            "INSERT INTO access_token (identity_id, token_hash, label, issued_at)"
+            " VALUES (?, ?, ?, ?)",
+            (row["id"], digest, label, utc_now()),
+        )
+        return int(cursor.lastrowid or 0)
+
+
 def revoke(db: Database, token_id: int) -> bool:
     with db.write() as conn:
         cursor = conn.execute(

@@ -38,6 +38,19 @@ class ClarificationSnapshot:
 
 
 @dataclass(frozen=True)
+class ChangeSnapshot:
+    """020: an ITSM change request raised for a run (feature 012's change record)."""
+
+    change_id: str
+    state: str  # new | approved | rejected
+    summary: str
+    risk: str
+    window: str
+    approver_role: str | None  # the role that decides it (the ITSM server's owner)
+    decided_by: str | None
+
+
+@dataclass(frozen=True)
 class RunSnapshot:
     run_id: str
     terminal_id: str
@@ -50,6 +63,7 @@ class RunSnapshot:
     waiting_roles: tuple[str, ...]  # sign-off roles still needed
     waiver: Mapping[str, Any] | None  # the pending waiver: id, status, approver roles
     clarifications: tuple[ClarificationSnapshot, ...] = ()
+    changes: tuple[ChangeSnapshot, ...] = ()  # 020
 
 
 @dataclass(frozen=True)
@@ -86,6 +100,7 @@ def desired(
     for run in usecase.runs:
         items.append(_run_item(usecase, run, mapping, evidence_url, terminated))
         items += [_clarification_item(run, round_, mapping) for round_ in run.clarifications]
+        items += [_change_item(run, change, mapping) for change in run.changes]
     return items
 
 
@@ -191,6 +206,44 @@ def _clarification_item(
     )
 
 
+CHANGE_STATUS = {"new": "awaiting", "approved": "approved", "rejected": "rejected"}
+
+
+def _change_item(run: RunSnapshot, change: ChangeSnapshot, mapping: TrackerMapping) -> DesiredItem:
+    """020: a change request under its run's item; people decide it in the decision field."""
+    f = mapping.item("change").fields
+    status = CHANGE_STATUS.get(change.state, "awaiting")
+    parts = [
+        f"<p>{html.escape(change.summary)}</p>",
+        f"<p>Risk: {html.escape(change.risk or 'not given')}. Window: {html.escape(change.window)}."
+        "</p>",
+    ]
+    if status == "awaiting":
+        role = html.escape(change.approver_role or "the ITSM owner role")
+        parts.append(
+            f"<p>A person with the role {role} sets the decision field to "
+            f"{html.escape(mapping.value_for('approve_change'))} or "
+            f"{html.escape(mapping.value_for('reject_change'))}, with a comment. "
+            f"The {html.escape(run.terminal_id)} run waits for it.</p>"
+        )
+    else:
+        parts.append(
+            f"<p>{html.escape(status.capitalize())} by {html.escape(str(change.decided_by))}.</p>"
+        )
+    return DesiredItem(
+        kind="change",
+        object_id=change.change_id,
+        item_type=mapping.item("change").type,
+        parent=("run", run.run_id),
+        fields={
+            f["title"]: f"{run.terminal_id} run {run.run_number}: change {change.change_id}",
+            f["description"]: "".join(parts),
+            f["state"]: mapping.change_state(status),
+            f["change_id"]: change.change_id,
+        },
+    )
+
+
 # ------------------------------------------------------------------------------ text
 
 
@@ -280,11 +333,14 @@ def snapshot(
     conn: Connection, inbox: InboxService, usecase_id: str, system_actor: Any
 ) -> UseCaseSnapshot | None:
     """Read one use case and its runs as the projector needs them (no board call)."""
+    from adlc.inbox.changes import approver_role, current_changes  # noqa: PLC0415
     from adlc.orchestration import store as run_store  # noqa: PLC0415 - keep desired() importable
 
     usecase = run_store.load_usecase(conn, usecase_id)
     if usecase is None:
         return None
+    servers = inbox.runs.registry.catalogue("mcp_servers")
+    change_role = approver_role(servers.content if servers else None)
     runs = []
     for run in run_store.runs_of_usecase(conn, usecase_id):
         rounds = tuple(
@@ -313,6 +369,18 @@ def snapshot(
                     "status": detail["waiver"]["status"],
                     "approver_roles": sorted(_waiver_approvers(inbox, run)),
                 }
+        changes = tuple(
+            ChangeSnapshot(
+                str(c["change_id"]),
+                str(c.get("state") or "new"),
+                str(c.get("summary") or ""),
+                str(c.get("risk") or ""),
+                f"{c.get('window_start', '')} to {c.get('window_end', '')}",
+                change_role,
+                None if c.get("decided_by") is None else str(c["decided_by"]),
+            )
+            for c in current_changes(conn, run_id=run.run_id)
+        )
         runs.append(
             RunSnapshot(
                 run_id=run.run_id,
@@ -326,6 +394,7 @@ def snapshot(
                 waiting_roles=waiting,
                 waiver=waiver,
                 clarifications=rounds,
+                changes=changes,
             )
         )
     return UseCaseSnapshot(

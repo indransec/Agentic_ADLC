@@ -19,14 +19,16 @@ import logging
 import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import Engine
 
+from adlc.api.errors import NotFound
 from adlc.engagement import store
 from adlc.engagement.classify import (
     ANSWER,
     DECIDE,
+    DECIDE_CHANGE,
     IGNORED,
     OWN,
     REGISTER,
@@ -59,6 +61,9 @@ from adlc.orchestration.service import (
 )
 from adlc.orchestration.states import InvalidTransition
 from adlc.orchestration.tracing import span
+
+if TYPE_CHECKING:
+    from adlc.inbox.changes import ChangeService
 
 log = logging.getLogger(__name__)
 PREFIX = "ADLC: "
@@ -94,7 +99,9 @@ class InboundSync:
         projector: Projector,
         clock: Clock,
         start_from: str | None = None,
+        changes: ChangeService | None = None,
     ) -> None:
+        """``changes``: feature 012's change decisions, for change request items (020)."""
         self.engine = engine
         self.orchestration = orchestration
         self.board = board
@@ -103,6 +110,7 @@ class InboundSync:
         self.projector = projector
         self.clock = clock
         self.start_from = start_from
+        self.changes = changes
 
     # ------------------------------------------------------------------ polling
 
@@ -203,13 +211,16 @@ class InboundSync:
             )
             kinds = [a.kind for a in actions]
             actor = self.identities.actor(update.changed_by)
-            request = next((a for a in actions if a.kind in (REGISTER, DECIDE, ANSWER)), None)
+            request = next(
+                (a for a in actions if a.kind in (REGISTER, DECIDE, ANSWER, DECIDE_CHANGE)), None
+            )
             kind = (
                 OWN
                 if kinds == [OWN]
                 else IGNORED
                 if kinds == [IGNORED]
-                else request.kind
+                # a change decision is claimed as a decision (the item's link says on what)
+                else (DECIDE if request.kind == DECIDE_CHANGE else request.kind)
                 if request is not None
                 else "revert_only"
             )
@@ -309,6 +320,10 @@ class InboundSync:
                 assert link is not None  # noqa: S101 - classify only asks for linked items here
                 if request.kind == ANSWER:
                     return self._answer(link.object_id, request.value, actor, source, update)
+                if request.kind == DECIDE_CHANGE:
+                    return self._decide_change(
+                        link.object_id, request.value, at, actor, source, update
+                    )
                 return self._decide(link.object_id, request.value, at, actor, source, update)
             except NotAuthorised as error:
                 return Refusal("not_authorised", str(error))
@@ -376,8 +391,8 @@ class InboundSync:
         update: BoardUpdate,
     ) -> str | Refusal:
         action = self.mapping.action_for(value)
-        if action is None:
-            allowed = ", ".join(self.mapping.allowed_values())
+        if action is None or self.mapping.kind_of_action(action) != "run":
+            allowed = ", ".join(self.mapping.allowed_values("run"))
             return Refusal("unknown_value", f"{value!r} is not a decision; use one of: {allowed}")
         run = self.orchestration.get_run(run_id)
         if run is None:
@@ -402,6 +417,42 @@ class InboundSync:
         return (
             f"decide:{action}" if action in ("pass", "rework", "exception", "terminate") else action
         )
+
+    def _decide_change(
+        self,
+        change_id: str,
+        value: str | None,
+        at: BoardItem,
+        actor: Actor,
+        source: Mapping[str, int],
+        update: BoardUpdate,
+    ) -> str | Refusal:
+        """020: approve or reject a change request through feature 012's change decision."""
+        action = self.mapping.action_for(value)
+        if action is None or self.mapping.kind_of_action(action) != "change":
+            allowed = ", ".join(self.mapping.allowed_values("change"))
+            return Refusal(
+                "unknown_value", f"{value!r} is not a change decision; use one of: {allowed}"
+            )
+        if self.changes is None:
+            return Refusal("stale", "change requests are not decided through this board sync")
+        comment = _plain(at.fields.get(self.mapping.comment_field)) or None
+        try:
+            decided = self.changes.decide(
+                actor, change_id, action == "approve_change", comment, source=source
+            )
+        except NotFound:
+            return Refusal("stale", f"there is no change request {change_id}")
+        except InvalidTransition as error:
+            return Refusal("stale", f"the change request was already decided: {error}")
+        with self.engine.begin() as conn:  # the item shows the decision at the next projection
+            store.mark_dirty(conn, [str(decided["usecase_id"])], self.clock.now())
+        self._accept(
+            update.item_id,
+            f"{self.mapping.value_for(action)} by {self._display(update)} accepted.",
+            kind="change",
+        )
+        return f"decide_change:{'approve' if action == 'approve_change' else 'reject'}"
 
     def _call(
         self, action: str, run_id: str, actor: Actor, inputs: Inputs, source: Mapping[str, int]
@@ -454,10 +505,10 @@ class InboundSync:
         except BoardError as error:
             log.warning("board comment on %s failed: %s", item_id, type(error).__name__)
 
-    def _accept(self, item_id: int, text: str) -> None:
-        """Comment, and clear the run item's decision, comment and inputs for the next decision."""
+    def _accept(self, item_id: int, text: str, kind: str = "run") -> None:
+        """Comment, and clear the item's decision, comment and inputs for the next decision."""
         self._comment(item_id, text)
-        fields = tuple(sorted(self.mapping.person_input_fields("run")))
+        fields = tuple(sorted(self.mapping.person_input_fields(kind)))
         try:
             current = self.board.get(item_id)
             if any(current.fields.get(f) not in (None, "") for f in fields):
@@ -483,7 +534,7 @@ class InboundSync:
             return False
         field = (
             self.mapping.decision_field
-            if link.object_kind == "run"
+            if link.object_kind in ("run", "change")
             else self.mapping.field("clarification", "answer")
         )
         change = update.fields.get(field)

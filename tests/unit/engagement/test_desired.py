@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from adlc.engagement.desired import (
+    ChangeSnapshot,
     ClarificationSnapshot,
     RunSnapshot,
     UseCaseSnapshot,
@@ -188,3 +189,55 @@ def test_only_platform_written_fields_are_compared(mapping: TrackerMapping) -> N
     for item in desired(_usecase(_run()), mapping, EVIDENCE):
         assert set(item.fields) <= mapping.platform_written(item.kind)
         assert not set(item.fields) & mapping.person_input_fields(item.kind)
+
+
+# ------------------------------------------------------------------ 020 change requests
+
+
+def _change(state: str = "new", **changes: object) -> ChangeSnapshot:
+    base = ChangeSnapshot(
+        change_id="CHG-0001",
+        state=state,
+        summary="Release <it-triage> 1.0",
+        risk="low",
+        window="2026-11-21T10:00 to 2026-11-21T12:00",
+        approver_role="release_manager",
+        decided_by=None,
+    )
+    return replace(base, **changes)  # type: ignore[arg-type]
+
+
+def test_a_change_request_is_an_item_under_its_run(mapping: TrackerMapping) -> None:
+    run = _run(changes=(_change(),))
+    found = _by_kind(desired(_usecase(run), mapping, EVIDENCE))
+    (item,) = found["change"]
+    f = mapping.item("change").fields
+    assert item.parent == ("run", run.run_id)
+    assert item.object_id == "CHG-0001"
+    assert item.item_type == mapping.item("change").type
+    assert item.fields[f["state"]] == mapping.change_state("awaiting")
+    assert item.fields[f["change_id"]] == "CHG-0001"
+    assert "CHG-0001" in item.fields[f["title"]] and "T1 run 1" in item.fields[f["title"]]
+    description = item.fields[f["description"]]
+    assert "Release &lt;it-triage&gt; 1.0" in description  # escaped
+    assert "release_manager" in description and "low" in description
+    assert mapping.value_for("approve_change") in description
+    assert mapping.value_for("reject_change") in description
+
+
+@pytest.mark.parametrize(
+    ("state", "status"), [("new", "awaiting"), ("approved", "approved"), ("rejected", "rejected")]
+)
+def test_a_change_item_follows_the_record(mapping: TrackerMapping, state: str, status: str) -> None:
+    decided = None if state == "new" else "release_manager-person"
+    run = _run(changes=(_change(state, decided_by=decided),))
+    (item,) = _by_kind(desired(_usecase(run), mapping, EVIDENCE))["change"]
+    assert item.fields[mapping.field("change", "state")] == mapping.change_state(status)
+    if decided:
+        assert "release_manager-person" in item.fields[mapping.field("change", "description")]
+
+
+def test_every_change_of_a_run_has_an_item(mapping: TrackerMapping) -> None:
+    run = _run(changes=(_change(), _change("approved", change_id="CHG-0002", decided_by="x")))
+    found = _by_kind(desired(_usecase(run), mapping, EVIDENCE))
+    assert [i.object_id for i in found["change"]] == ["CHG-0001", "CHG-0002"]

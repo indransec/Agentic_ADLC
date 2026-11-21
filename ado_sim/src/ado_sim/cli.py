@@ -34,6 +34,12 @@ def _parser() -> argparse.ArgumentParser:
     issue = token_commands.add_parser("issue", help="print a new token for an identity, once")
     issue.add_argument("unique_name")
     issue.add_argument("--label", default="")
+    imported = token_commands.add_parser(
+        "import", help="register a token read from stdin (020: demo resets; not in ADO)"
+    )
+    imported.add_argument("unique_name")
+    imported.add_argument("--stdin", action="store_true", required=True)
+    imported.add_argument("--label", default="imported")
     revoke = token_commands.add_parser("revoke", help="revoke a token by id")
     revoke.add_argument("token_id", type=int)
     listing = token_commands.add_parser("list", help="list tokens (never the tokens themselves)")
@@ -149,6 +155,17 @@ def _run_with_database(args: argparse.Namespace, settings: Settings, db: Databas
                 return REFUSED
             print(f"token id {token_id} for {args.unique_name} (shown once, store it now):")
             print(token)
+            return OK
+        if args.action == "import":
+            try:
+                given = sys.stdin.readline().strip()
+                token_id = auth.import_token(
+                    db, settings.token_key, args.unique_name, given, args.label
+                )
+            except auth.TokenError as error:
+                print(str(error), file=sys.stderr)
+                return REFUSED
+            print(f"token id {token_id} registered for {args.unique_name}")
             return OK
         if args.action == "revoke":
             owner = _token_owner(db, args.token_id)

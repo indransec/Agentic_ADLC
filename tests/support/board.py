@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from adlc.config.settings import DEFAULT_ATTACHMENT_TYPES
 from adlc.engagement.fake import FakeBoard
@@ -111,8 +111,18 @@ class Rig:
         self.identities = BoardIdentities(accounts, SERVICE)
         self.inbox = inbox_for(h)
         self.projector = Projector(h.app, self.inbox, self.board, self.mapping, EVIDENCE, h.clock)
+        from adlc.inbox.changes import ChangeService
+
+        changes = ChangeService(h.app, h.orch.runs.registry, h.service, h.clock)
         self.sync = InboundSync(
-            h.app, h.service, self.board, self.mapping, self.identities, self.projector, h.clock
+            h.app,
+            h.service,
+            self.board,
+            self.mapping,
+            self.identities,
+            self.projector,
+            h.clock,
+            changes=changes,
         )
         self.sync.poll()  # first start: an empty board, nothing to replay
 
@@ -123,6 +133,14 @@ class Rig:
             self.sync.poll()
             self.h.drain()
         self.projector.run_once()
+
+    def reconciler(self) -> Any:
+        """016's reconciliation over this rig (the CoE role of the harness)."""
+        from adlc.engagement.reconcile import Reconciler
+
+        return Reconciler(
+            self.h.app, self.projector, self.board, self.mapping, self.h.clock, DEADLETTER_ROLE
+        )
 
     def as_role(self, role: str) -> FakeBoard:
         return self.board.as_user(board_user(role))

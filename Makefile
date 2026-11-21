@@ -173,6 +173,7 @@ demo-reset: .env
 	@deploy/confirm-env.sh "Demo reset removes the platform and pilot data volumes"
 	$(COMPOSE) down -v
 	$(MAKE) up
+	$(UV) python -m scripts.demo_board   # 020: the board's tokens (sync and demo people)
 
 resilience: .env
 	@echo "==> resilience"

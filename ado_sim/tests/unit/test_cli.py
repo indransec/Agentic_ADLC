@@ -131,3 +131,39 @@ def test_page_passwords_and_session_revocation(
         assert sessions.read(db, again) is None  # revoking a token ends them too (FR-004a)
     finally:
         db.close()
+
+
+# ------------------------------------------------------------------ 020 token import
+
+
+def test_token_import(
+    env: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import io
+
+    from ado_sim import auth
+
+    assert run(["migrate"]) == OK
+    assert run(["seed", "--file", str(SEED)]) == OK
+    capsys.readouterr()
+    chosen = "imported-demo-token-" + "x" * 30
+
+    def stdin(text: str) -> None:
+        monkeypatch.setattr("sys.stdin", io.StringIO(text))
+
+    stdin(chosen + "\n")
+    assert run(["token", "import", OWNER, "--stdin"]) == OK
+    out = capsys.readouterr()
+    assert chosen not in out.out + out.err
+    db = Database(env)
+    who = auth.authenticate(db, KEY, f"Bearer {chosen}")
+    db.close()
+    assert who is not None and who.unique_name == OWNER
+    stdin(chosen + "\n")
+    assert run(["token", "import", OWNER, "--stdin"]) == REFUSED  # already registered
+    stdin("short-token\n")
+    assert run(["token", "import", OWNER, "--stdin"]) == REFUSED
+    stdin("y" * 52 + "\n")
+    assert run(["token", "import", "nobody@adlc.demo", "--stdin"]) == REFUSED
+    errors = capsys.readouterr().err
+    assert chosen not in errors and "short-token" not in errors

@@ -18,7 +18,14 @@ from adlc.spec_toolkit.rules.single_spec import spec
 from adlc.spec_toolkit.schema import _check
 
 # Platform actions a board decision can request besides the sign-off outcomes (R-06).
-BOARD_ACTIONS = ("approve_waiver", "reject_waiver", "complete_escalation")
+# Decisions made only on the board (no terminal outcome names them); 020 adds the change request's
+BOARD_ACTIONS = (
+    "approve_waiver",
+    "reject_waiver",
+    "complete_escalation",
+    "approve_change",
+    "reject_change",
+)
 
 
 def _mapping(ctx: Context) -> tuple[str, dict[str, Any]] | None:

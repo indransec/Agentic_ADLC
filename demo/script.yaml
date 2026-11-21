@@ -164,3 +164,24 @@ steps:
       - {kind: reject, role: product_owner, comment: Rework 3, root_cause: requirement, reason: demo}
       - {kind: reject, role: product_owner, comment: Rework 4, root_cause: requirement, reason: demo}
     expect: {escalated: true}
+
+  # 020: shown only on the board (skipped when the board sync is off). They touch no agent, so
+  # the recorded replies' call order is unchanged; at the end, so step numbers are as in 014.
+  - number: 16
+    usecase: main
+    terminal: T9
+    proves: [D-12]
+    say: The product owner drags the use case's Epic to T5 on the board; the platform owns the columns, sets it back and says why in a comment.
+    actions:
+      - {kind: board_change, role: product_owner, item: usecase, field: state, value: "T5 Trust, Risk & Assurance"}
+    expect: {reverted: true}
+
+  - number: 17
+    usecase: main
+    terminal: T9
+    proves: [D-13]
+    say: The board drifts out of step (the Epic's sub-stage changed behind the sync's back, a demo device); the CoE reconciles from the console and the board is corrected.
+    actions:
+      - {kind: drift, item: usecase, field: sub_stage, value: Closed}
+      - {kind: reconcile}
+    expect: {reconciled: true}

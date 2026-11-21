@@ -128,3 +128,26 @@ def test_classify_is_total_and_deterministic(
         a.kind in {"own", "register_usecase", "decide", "answer", "revert", "ignored"}
         for a in first
     )
+
+
+# ------------------------------------------------------------------ 020 change requests
+
+CHANGE = MAPPING.item("change").type
+
+
+def test_a_decision_on_a_change_item() -> None:
+    update = _update({MAPPING.decision_field: (None, "Approve change")})
+    [action] = classify(update, CHANGE, _link("change", "CHG-0001"), None, MAPPING, SERVICE)
+    assert action.kind == "decide_change" and action.value == "Approve change"
+
+
+def test_a_platform_field_of_a_change_item_is_reverted() -> None:
+    state = MAPPING.field("change", "state")
+    update = _update({state: ("Awaiting approval", "Approved")})
+    actions = classify(update, CHANGE, _link("change", "CHG-0001"), None, MAPPING, SERVICE)
+    assert _kinds(actions) == ["revert"] and actions[0].fields == (state,)
+
+
+def test_an_unlinked_change_item_is_ignored() -> None:
+    update = _update({MAPPING.decision_field: (None, "Approve change")}, update_id=1)
+    assert _kinds(classify(update, CHANGE, None, None, MAPPING, SERVICE)) == ["ignored"]

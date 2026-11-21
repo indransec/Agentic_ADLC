@@ -442,6 +442,12 @@ def activity_with_source(conn: Connection, work_item_id: int, update_id: int) ->
     ):
         if (_json(payload) or {}).get("source") == source:
             return True
+    for (body,) in conn.execute(  # 020: a change request decided from the board
+        text("SELECT body FROM enterprise_record WHERE body LIKE :p"),
+        {"p": f'%"board_item": {work_item_id}%'},
+    ):
+        if (_json(body) or {}).get("source") == source:
+            return True
     return False
 
 

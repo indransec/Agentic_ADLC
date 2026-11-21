@@ -54,7 +54,7 @@
     "items": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["usecase", "run", "clarification"],
+      "required": ["usecase", "run", "clarification", "change"],
       "properties": {
         "usecase": {
           "type": "object",
@@ -111,6 +111,31 @@
             "open": {"$ref": "#/$defs/name"},
             "answered": {"$ref": "#/$defs/name"}
           }
+        },
+        "change": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "parent", "fields", "states"],
+          "properties": {
+            "type": {"$ref": "#/$defs/name"},
+            "parent": {"const": "run"},
+            "fields": {
+              "allOf": [
+                {"$ref": "#/$defs/fields"},
+                {"required": ["title", "description", "state", "change_id"]}
+              ]
+            },
+            "states": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["awaiting", "approved", "rejected"],
+              "properties": {
+                "awaiting": {"$ref": "#/$defs/name"},
+                "approved": {"$ref": "#/$defs/name"},
+                "rejected": {"$ref": "#/$defs/name"}
+              }
+            }
+          }
         }
       }
     },
@@ -139,11 +164,12 @@
     "platform_written": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["usecase", "run", "clarification"],
+      "required": ["usecase", "run", "clarification", "change"],
       "properties": {
         "usecase": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
         "run": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
-        "clarification": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+        "clarification": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "change": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
       }
     }
   }

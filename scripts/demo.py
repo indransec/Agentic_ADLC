@@ -42,6 +42,25 @@ def prepare_pilot() -> None:
     pilot_tool("pilot-traffic-ctl", "start")
 
 
+def board_tokens() -> list[str]:
+    """020: with the board sync on, the demo people's tokens file, mounted read-only for the
+    driver (it acts on the board as each of them)."""
+    import os  # noqa: PLC0415
+
+    if os.environ.get("ADLC_BOARD_ENABLED", "").lower() != "true":
+        return []
+    path = os.environ.get("ADLC_DEMO_BOARD_TOKENS", "").strip()
+    if not path or not Path(path).expanduser().is_file():
+        raise SystemExit("demo: ADLC_DEMO_BOARD_TOKENS has no file: run make demo-reset first")
+    inside = "/run/adlc/board-tokens.yaml"
+    return [
+        "-v",
+        f"{Path(path).expanduser().resolve()}:{inside}:ro",
+        "-e",
+        f"ADLC_DEMO_BOARD_TOKENS={inside}",
+    ]
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--auto", action="store_true")
@@ -65,6 +84,7 @@ def main(argv: list[str]) -> int:
         "-T",
         "-v",
         f"{Path('demo').resolve()}:/app/demo:ro",
+        *board_tokens(),
         "orchestrator",
         "adlc-demo",
         "--script",

@@ -208,6 +208,10 @@ class OrchestratorSettings(RuntimeSettings):
     accounts_file: Path | None = Field(
         default=None, json_schema_extra=_meta("path to a readable file (optional)")
     )
+    # 020 (demo only): the demo people's board tokens file; the demo driver acts on the board
+    demo_board_tokens: Path | None = Field(
+        default=None, json_schema_extra=_meta("path to a private file (optional, demo only)")
+    )
     # 012: how often declared monitors are evaluated (real time; not scaled by time_scale)
     monitor_interval: Duration = Field(
         default=timedelta(minutes=1), json_schema_extra=_meta(DURATION_FORM)

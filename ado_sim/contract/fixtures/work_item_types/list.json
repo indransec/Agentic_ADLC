@@ -15,7 +15,7 @@
   "expected": {
     "status": 200,
     "body": {
-      "count": 5,
+      "count": 6,
       "value": [
         {
           "name": "Epic",
