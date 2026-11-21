@@ -106,8 +106,9 @@ set -a; source .env; source deploy/local.env; set +a
    cd ado_sim && ADO_SIM_DB_PATH=../data/local/ado_sim/ado_sim.db uv run ado-sim token issue adlc-platform@adlc.demo
    ```
 
-   For the board page (feature 017), give the demo users a page password once, then open
-   `http://127.0.0.1:8600/` and sign in:
+   For the pages (features 017 and 018: the board, the backlog at
+   `/adlc-demo/Agentic%20ADLC/_backlogs/backlog` and the work item form), give the demo users a
+   page password once, then open `http://127.0.0.1:8600/` and sign in:
 
    ```bash
    cd ado_sim && ADO_SIM_DB_PATH=../data/local/ado_sim/ado_sim.db uv run ado-sim password set --all

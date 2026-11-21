@@ -12,6 +12,12 @@
 <body{% if csrf %} hx-headers='{"X-CSRF-Token": "{{ csrf }}"}'{% endif %}>
   <header class="top">
     <span class="brand">ADO simulator</span>
+    {% if user and board_url %}
+    <nav aria-label="Main" class="main-nav">
+      <a href="{{ board_url }}">Board</a>
+      <a href="{{ backlog_url }}">Backlog</a>
+    </nav>
+    {% endif %}
     {% if user %}
     <nav aria-label="Account">
       <span class="who">Signed in as <strong>{{ user }}</strong></span>

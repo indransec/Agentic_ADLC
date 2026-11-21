@@ -1,0 +1,19 @@
+<div id="rows" class="backlog"{% if refresh %} hx-get="{{ poll_url }}" hx-trigger="every {{ refresh }}s" hx-include="[name='closed']" hx-swap="outerHTML"{% endif %}>
+  <p id="stale" class="stale" hidden>The backlog is not current: the last refresh failed. It will try again.</p>
+  {% if not backlog.rows %}<p>No {{ backlog.settings.type }} items{% if backlog.area %} in {{ backlog.area }}{% endif %}.</p>{% endif %}
+  <ul class="tree">
+  {% for row in backlog.rows recursive %}
+    <li>
+    {% if row.children %}
+      <details data-id="{{ row.id }}"{% if row.id not in closed %} open{% endif %}>
+        <summary><a href="{{ item_base }}{{ row.id }}">{{ row.type }} {{ row.id }}</a> {{ row.title }} <span class="state">{{ row.state }}</span></summary>
+        {% if row.id in closed %}<input type="hidden" name="closed" value="{{ row.id }}">{% endif %}
+        <ul>{{ loop(row.children) }}</ul>
+      </details>
+    {% else %}
+      <a href="{{ item_base }}{{ row.id }}">{{ row.type }} {{ row.id }}</a> {{ row.title }} <span class="state">{{ row.state }}</span>
+    {% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+</div>

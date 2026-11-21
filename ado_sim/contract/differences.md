@@ -65,3 +65,7 @@ Error messages are the simulator's own wording; the status and `typeKey` are the
 | Sign-in | `/_signin` with a seeded user and a page password, the shared demo password (when set) or a personal access token | Microsoft Entra or Microsoft account sign-in | no directory; local demo users |
 | Board changes | no drag and drop; a card's column changes only through the API (the platform) | people drag cards between columns | columns are written by the platform (SA §22.3); the platform reverts a person's change anyway |
 | Board refresh | polls its columns every few seconds | updates when the page is refreshed or through ADO's own notifications | the audience watches the platform move cards |
+| Comments on pages | always shown as plain text (feature 018) | formatted (rich text) | the platform's replies are text; nothing a person types is ever rendered as markup |
+| HTML fields on the form | edited as plain text, saved escaped in paragraphs; shown with a small safe subset (paragraphs, lists, bold, italic, http(s) links) | a rich-text editor | no editor or HTML sanitiser dependency; the platform writes only that subset |
+| Backlog | the board type's top items and their descendants, one tree | backlogs per level with their own filters | the demo's Epic → run → clarification tree |
+| Form layout | sections per type from the seed's `form` section | the process's layout, edited in the UI | no process editor |

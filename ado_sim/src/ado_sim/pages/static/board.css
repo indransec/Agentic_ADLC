@@ -27,3 +27,25 @@ h1 { font-size: 1.4rem; margin: .25rem 0 1rem; }
 .fields { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; }
 .fields dt { color: var(--muted); }
 .fields dd { margin: 0; white-space: pre-wrap; }
+/* 018: navigation, the work item form, the backlog tree */
+.main-nav { display: flex; gap: 1rem; }
+.main-nav a { color: inherit; font-weight: 600; }
+.meta { color: #555; }
+.item-form fieldset { border: 1px solid #ccc; border-radius: 4px; margin: 0 0 1rem; padding: 0.75rem 1rem; max-width: 60rem; }
+.item-form legend { font-weight: 600; padding: 0 0.25rem; }
+.field { display: grid; grid-template-columns: 14rem 1fr; gap: 0.25rem 1rem; align-items: start; margin: 0.4rem 0; }
+.field > label, .field > .label { font-weight: 600; }
+.field > :not(label):not(.label) { grid-column: 2; }
+.field input, .field select, .field textarea { font: inherit; padding: 0.3rem; max-width: 40rem; width: 100%; box-sizing: border-box; }
+.field input[aria-invalid="true"], .field select[aria-invalid="true"], .field textarea[aria-invalid="true"] { border: 2px solid #b00020; }
+.formatted { background: #f7f7f7; border-left: 3px solid #0078d4; padding: 0.25rem 0.75rem; }
+.comments, .history { list-style: none; padding: 0; max-width: 60rem; }
+.comments li, .history > li { border-top: 1px solid #ddd; padding: 0.5rem 0; }
+.comments .text { white-space: pre-wrap; margin: 0.25rem 0 0; }
+.history table { border-collapse: collapse; width: 100%; }
+.history th, .history td { border: 1px solid #ddd; padding: 0.25rem 0.5rem; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+.comment-form textarea { display: block; width: 100%; max-width: 40rem; font: inherit; margin: 0.25rem 0; }
+.tree, .tree ul { list-style: none; padding-left: 1.25rem; }
+.tree > li { margin: 0.25rem 0; }
+.tree summary { cursor: pointer; }
+.state { color: #555; font-size: 0.9em; margin-left: 0.5rem; }

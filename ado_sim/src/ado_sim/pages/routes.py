@@ -13,12 +13,13 @@ from urllib.parse import quote, urlsplit
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 
-from ado_sim.comments import list_comments
+from ado_sim.comments import add_comment, list_comments
 from ado_sim.db import Database
 from ado_sim.errors import AdoError
-from ado_sim.pages import page, sessions, signin
+from ado_sim.pages import form, page, sessions, signin
+from ado_sim.pages.backlog import tree
 from ado_sim.pages.board import columns
-from ado_sim.process import ProjectInfo, project_info
+from ado_sim.process import ProjectInfo, form_layout, project_info, type_info
 from ado_sim.settings import Settings
 from ado_sim.workitems import WorkItemStore
 
@@ -71,6 +72,8 @@ def _urls(info: ProjectInfo) -> dict[str, str]:
         "cards_url": f"{base}/_boards/board/cards",
         "create_url": f"{base}/_boards/board/epics",
         "item_base": f"{base}/_workitems/edit/",
+        "backlog_url": f"{base}/_backlogs/backlog",
+        "rows_url": f"{base}/_backlogs/backlog/rows",
     }
 
 
@@ -267,72 +270,211 @@ def create_item(
     return RedirectResponse(target, status_code=303)
 
 
-# ------------------------------------------------------------------------------ the item
+# ------------------------------------------------------------------------------ the backlog
 
 
-def _text(value: Any) -> str:
-    if isinstance(value, dict):
-        return str(value.get("displayName") or value.get("uniqueName") or "")
-    if isinstance(value, list):
-        return ", ".join(_text(v) for v in value)
-    return "" if value is None else str(value)
+def _backlog_context(
+    request: Request, info: ProjectInfo, area: str | None, closed: list[str]
+) -> dict[str, Any]:
+    session = _session(request)
+    found = tree(_db(request), area or None)
+    rows_url = _urls(info)["rows_url"] + (f"?area={quote(found.area)}" if found.area else "")
+    return {
+        **_urls(info),
+        "poll_url": rows_url,
+        "backlog": found,
+        "project": info.project,
+        "user": session.identity.display_name,
+        "csrf": session.csrf_token,
+        "refresh": found.settings.refresh_seconds if found.settings else None,
+        "closed": {int(c) for c in closed if c.isdigit()},
+    }
 
 
-@router.get("/{organization}/{project}/_workitems/edit/{item_id}")
-def item_page(request: Request, organization: str, project: str, item_id: int) -> Response:
+@router.get("/{organization}/{project}/_backlogs/backlog")
+def backlog_page(request: Request, organization: str, project: str, area: str = "") -> Response:
     info = _project(request, organization, project)
-    store: WorkItemStore = request.app.state.store
     if info is None:
         return _not_found(request, f"There is no project {project} in {organization}.")
+    return page("backlog.html", **_backlog_context(request, info, area, []))
+
+
+@router.get("/{organization}/{project}/_backlogs/backlog/rows")
+def backlog_rows(request: Request, organization: str, project: str, area: str = "") -> Response:
+    info = _project(request, organization, project)
+    if info is None:
+        return _not_found(request, f"There is no project {project} in {organization}.")
+    closed = request.query_params.getlist("closed")
+    return page("rows.html", **_backlog_context(request, info, area, closed))
+
+
+# ------------------------------------------------------------------------------ the item form
+
+
+CONFLICT = (
+    "This item has changed since you opened it. The form now shows the current item with your"
+    " changes kept; check them and save again."
+)
+
+
+def _brief(store: WorkItemStore, target: int) -> dict[str, Any]:
+    other = store.get(target)
+    return {
+        "id": target,
+        "type": other.fields.get("System.WorkItemType"),
+        "title": other.fields.get("System.Title"),
+        "state": other.fields.get("System.State"),
+    }
+
+
+def _form_page(
+    request: Request,
+    info: ProjectInfo,
+    item_id: int,
+    *,
+    status: int = 200,
+    typed: dict[str, str] | None = None,
+    errors: dict[str, str] | None = None,
+    message: str | None = None,
+    comment_error: str | None = None,
+    comment_text: str = "",
+) -> Response:
+    store: WorkItemStore = request.app.state.store
     try:
         item = store.get(item_id)
     except AdoError:
         return _not_found(request, f"There is no work item {item_id}.")
+    type_name = str(item.fields.get("System.WorkItemType"))
     with _db(request).read() as conn:
-        names = {r[0]: r[1] for r in conn.execute("SELECT reference_name, name FROM field")}
+        kind = type_info(conn, type_name)
+        layout = form_layout(conn).get(type_name, ())
+        areas = [str(r[0]) for r in conn.execute("SELECT path FROM area_node ORDER BY path")]
+    if kind is None:
+        return _not_found(request, f"There is no work item type {type_name}.")
+    people = [form.Choice(p["unique_name"], p["display_name"]) for p in _people(request)]
+    parent = next((_brief(store, r.target_id) for r in item.relations if r.rel == PARENT), None)
+    children = sorted(
+        (_brief(store, r.target_id) for r in item.relations if r.rel == CHILD),
+        key=lambda child: int(child["id"]),
+    )
 
-    def brief(target: int) -> dict[str, Any]:
-        other = store.get(target)
-        return {
-            "id": target,
-            "type": other.fields.get("System.WorkItemType"),
-            "title": other.fields.get("System.Title"),
-        }
+    def title_of(target: int) -> str:
+        try:
+            return str(store.get(target).fields.get("System.Title") or "")
+        except AdoError:
+            return ""
 
-    parent = next((brief(r.target_id) for r in item.relations if r.rel == PARENT), None)
-    children = [brief(r.target_id) for r in item.relations if r.rel == CHILD]
-    updates = []
-    for update in store.updates(item_id):
-        changed = sorted(
-            names.get(ref, ref) for ref in update.fields if not ref.startswith("System.Rev")
-        )
-        when = (update.fields.get("System.ChangedDate") or {}).get(
-            "newValue"
-        ) or update.revised_date
-        updates.append(
-            {"by": _text(update.revised_by), "when": when, "changes": ", ".join(changed) or "links"}
-        )
-    comments = [
-        {"by": _text(c.created_by), "when": c.created_date, "text": c.text}
-        for c in list_comments(store, item_id, order="asc").comments
-    ]
     session = _session(request)
+    comments = [
+        {"by": form.display_text(None, c.created_by), "when": c.created_date, "text": c.text}
+        for c in list_comments(store, item_id, top=200, order="desc").comments
+    ]
     urls: dict[str, Any] = dict(_urls(info))
     return page(
-        "item.html",
+        "form.html",
+        status=status,
         **urls,
         user=session.identity.display_name,
         csrf=session.csrf_token,
         item={
             "id": item.id,
-            "type": item.fields.get("System.WorkItemType"),
+            "rev": item.rev,
+            "type": type_name,
             "title": item.fields.get("System.Title"),
-            "fields": [
-                (names.get(ref, ref), _text(value)) for ref, value in sorted(item.fields.items())
-            ],
-            "parent": parent,
-            "children": children,
-            "updates": updates,
-            "comments": comments,
+            "state": item.fields.get("System.State"),
         },
+        sections=form.sections(
+            kind, layout, item.fields, people, areas, typed=typed, errors=errors
+        ),
+        parent=parent,
+        children=children,
+        comments=comments,
+        history=form.history(store.updates(item_id), kind, title_of),
+        message=message,
+        comment_error=comment_error,
+        comment_text=comment_text,
     )
+
+
+@router.get("/{organization}/{project}/_workitems/edit/{item_id}")
+def item_page(request: Request, organization: str, project: str, item_id: int) -> Response:
+    info = _project(request, organization, project)
+    if info is None:
+        return _not_found(request, f"There is no project {project} in {organization}.")
+    return _form_page(request, info, item_id)
+
+
+@router.post("/{organization}/{project}/_workitems/edit/{item_id}")
+async def item_save(request: Request, organization: str, project: str, item_id: int) -> Response:
+    info = _project(request, organization, project)
+    if info is None:
+        return _not_found(request, f"There is no project {project} in {organization}.")
+    data = await request.form()
+    session = _session(request)
+    if not sessions.csrf_ok(session.csrf_token, str(data.get("csrf") or "")):
+        return Response(status_code=403)
+    store: WorkItemStore = request.app.state.store
+    try:
+        item = store.get(item_id)
+        rev = int(str(data.get("rev") or "0"))
+        opened = store.revision(item_id, rev) if rev >= 1 else item
+    except (AdoError, ValueError):
+        return _not_found(request, f"There is no work item {item_id}.")
+    with _db(request).read() as conn:
+        kind = type_info(conn, str(item.fields.get("System.WorkItemType")))
+    if kind is None:
+        return _not_found(request, f"There is no work item {item_id}.")
+    submitted = {k: str(v) for k, v in data.items() if k not in ("csrf", "rev")}
+    operations = form.operations(kind, opened.fields, submitted, opened.rev)
+    target = _urls(info)["item_base"] + str(item_id)
+    if not operations:
+        return RedirectResponse(target, status_code=303)
+    # what the person changed, kept on the page when the save is refused
+    typed = {
+        op["path"].removeprefix("/fields/"): submitted.get(op["path"].removeprefix("/fields/"), "")
+        for op in operations
+        if op["path"].startswith("/fields/")
+    }
+    try:
+        store.update(item_id, operations, session.identity)
+    except AdoError as refused:
+        if refused.status == 412:
+            return _form_page(request, info, item_id, status=412, typed=typed, message=CONFLICT)
+        ref = form.field_of(kind, refused.message)
+        return _form_page(
+            request,
+            info,
+            item_id,
+            status=400,
+            typed=typed,
+            errors={ref: refused.message} if ref else None,
+            message=None if ref else refused.message,
+        )
+    return RedirectResponse(target, status_code=303)
+
+
+@router.post("/{organization}/{project}/_workitems/edit/{item_id}/comments")
+def item_comment(
+    request: Request,
+    organization: str,
+    project: str,
+    item_id: int,
+    text: str = Form(""),
+    csrf: str = Form(""),
+) -> Response:
+    info = _project(request, organization, project)
+    if info is None:
+        return _not_found(request, f"There is no project {project} in {organization}.")
+    session = _session(request)
+    if not sessions.csrf_ok(session.csrf_token, csrf):
+        return Response(status_code=403)
+    store: WorkItemStore = request.app.state.store
+    try:
+        add_comment(store, item_id, text, session.identity)
+    except AdoError as refused:
+        if refused.status == 404:
+            return _not_found(request, f"There is no work item {item_id}.")
+        return _form_page(
+            request, info, item_id, status=400, comment_error=refused.message, comment_text=text
+        )
+    return RedirectResponse(_urls(info)["item_base"] + f"{item_id}#comments", status_code=303)

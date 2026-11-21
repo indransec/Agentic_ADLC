@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import re
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -23,12 +23,13 @@ from ado_sim.process import (
     SYSTEM_FIELD_NAMES,
     SYSTEM_FIELDS,
     BoardSettings,
+    FormSection,
 )
 
 _NAMESPACE = uuid.UUID("6f1c5c0e-5a43-4c55-9d0e-0a6f0d1d2b15")
 _REFERENCE_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$")
 _SECRET_KEY = re.compile(r"token|secret|password|passwd|credential|\bpat\b", re.IGNORECASE)
-_TOP_KEYS = {"organization", "project", "areas", "process", "identities", "board"}
+_TOP_KEYS = {"organization", "project", "areas", "process", "identities", "board", "form"}
 _REFRESH = re.compile(r"^(\d+)s$")
 REFRESH_RANGE = (2, 60)
 _PROCESS_KEYS = {"agile_states", "types", "custom_fields"}
@@ -86,6 +87,7 @@ class Seed:
     fields: tuple[SeedField, ...]
     identities: tuple[SeedIdentity, ...]
     board: BoardSettings | None = None
+    form: dict[str, tuple[FormSection, ...]] = field(default_factory=dict)
 
 
 def _stable_id(kind: str, name: str) -> str:
@@ -257,7 +259,40 @@ def parse_seed(data: Any) -> Seed:
         fields=tuple(fields),
         identities=tuple(identities),
         board=_board(top.get("board"), types),
+        form=_form(top.get("form"), types),
     )
+
+
+def _form(value: Any, types: list[SeedType]) -> dict[str, tuple[FormSection, ...]]:
+    """018: the work item form's sections per type (data; validated against the process)."""
+    if value is None:
+        return {}
+    layout: dict[str, tuple[FormSection, ...]] = {}
+    for type_name, sections in _mapping(value, "form").items():
+        where = f"form.{type_name}"
+        kind = next((t for t in types if t.name.lower() == str(type_name).lower()), None)
+        if kind is None:
+            raise SeedError(f"{where}: '{type_name}' is not a work item type of the process")
+        own = {ref.lower() for ref, _ in kind.fields} | SYSTEM_FIELD_NAMES
+        if not isinstance(sections, list):
+            raise SeedError(f"{where} must be a list of sections")
+        seen: set[str] = set()
+        built = []
+        for index, item in enumerate(sections):
+            entry = _mapping(item, f"{where}[{index}]", {"title", "fields"})
+            title = _text(entry.get("title"), f"{where}[{index}].title")
+            names = []
+            for position, ref in enumerate(entry.get("fields") or []):
+                name = _text(ref, f"{where}[{index}].fields[{position}]")
+                if name.lower() not in own:
+                    raise SeedError(f"{where}[{index}]: {name} is not a field of {kind.name}")
+                if name.lower() in seen:
+                    raise SeedError(f"{where}[{index}]: {name} appears twice in the form")
+                seen.add(name.lower())
+                names.append(name)
+            built.append(FormSection(title, tuple(names)))
+        layout[kind.name] = tuple(built)
+    return layout
 
 
 def _board(value: Any, types: list[SeedType]) -> BoardSettings | None:
@@ -386,6 +421,18 @@ def load_seed(db: Database, path: Path) -> Seed:
                 "INSERT INTO identity (id, display_name, unique_name, is_service)"
                 " VALUES (?, ?, ?, ?)",
                 (identity.id, identity.display_name, identity.unique_name, int(identity.service)),
+            )
+        if seed.form:
+            conn.execute(
+                "INSERT INTO board_setting (key, value) VALUES ('form_layout', ?)",
+                (
+                    json.dumps(
+                        {
+                            kind: [{"title": s.title, "fields": list(s.fields)} for s in sections]
+                            for kind, sections in seed.form.items()
+                        }
+                    ),
+                ),
             )
         if seed.board is not None:
             for key, value in (

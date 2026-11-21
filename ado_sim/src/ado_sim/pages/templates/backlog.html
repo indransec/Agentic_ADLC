@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Backlog{% endblock %}
+{% block main %}
+<h1>{{ project }} backlog</h1>
+{% if backlog.notice %}<p class="notice" role="status">{{ backlog.notice }}</p>{% endif %}
+{% if backlog.settings %}
+<div class="tools">
+  <form method="get" action="{{ backlog_url }}" class="inline">
+    <label for="area">Area path</label>
+    <select id="area" name="area">
+      <option value="">All areas</option>
+      {% for path in backlog.areas %}<option value="{{ path }}"{% if path == backlog.area %} selected{% endif %}>{{ path }}</option>{% endfor %}
+    </select>
+    <button type="submit">Filter</button>
+  </form>
+</div>
+{% include "rows.html" %}
+{% endif %}
+{% endblock %}

@@ -1,6 +1,7 @@
 """The simulator shares nothing with the platform (FR-023, SC-008, constitution VII)."""
 
 import ast
+import re
 from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parents[1]
@@ -49,6 +50,11 @@ PAGES = PROJECT / "src" / "ado_sim" / "pages"
 VENDORED = {"htmx.min.js", "HTMX-LICENSE", "README.md"}
 
 
+HOST = re.compile(
+    r"https?://[\w.-]+"
+)  # a scheme followed by a host (018: the sanitiser names schemes)
+
+
 def test_pages_reach_no_external_host() -> None:
     """017 FR-013, FR-014: templates and the stylesheet name no other host; assets are served by
     the simulator itself (the vendored files and their provenance note are exempt)."""
@@ -58,9 +64,6 @@ def test_pages_reach_no_external_host() -> None:
         if path.is_file()
         and path.name not in VENDORED
         and path.suffix in {".html", ".css", ".js", ".py"}
-        and (
-            "http://" in path.read_text(encoding="utf-8")
-            or "https://" in path.read_text(encoding="utf-8")
-        )
+        and HOST.search(path.read_text(encoding="utf-8"))
     ]
     assert offenders == []

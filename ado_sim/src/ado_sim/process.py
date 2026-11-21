@@ -85,6 +85,14 @@ class BoardSettings:
 
 
 @dataclass(frozen=True)
+class FormSection:
+    """018: one section of the work item form (seed ``form``)."""
+
+    title: str
+    fields: tuple[str, ...]
+
+
+@dataclass(frozen=True)
 class ProjectInfo:
     organization_id: str
     organization: str
@@ -210,3 +218,14 @@ def board_settings(conn: sqlite3.Connection) -> BoardSettings | None:
         tuple(str(s) for s in rows.get("collapsed_states", [])),
         int(rows.get("refresh_seconds", 5)),
     )
+
+
+def form_layout(conn: sqlite3.Connection) -> dict[str, tuple[FormSection, ...]]:
+    """018: the form's sections per type name (empty when the seed has no ``form``)."""
+    row = conn.execute("SELECT value FROM board_setting WHERE key = 'form_layout'").fetchone()
+    if row is None:
+        return {}
+    return {
+        kind: tuple(FormSection(str(s["title"]), tuple(s["fields"])) for s in sections)
+        for kind, sections in json.loads(row[0]).items()
+    }

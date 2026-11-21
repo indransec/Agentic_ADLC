@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}{{ item.type }} {{ item.id }}{% endblock %}
+{% macro described(f) %}{% if f.error %} aria-describedby="err-{{ f.ref }}" aria-invalid="true"{% endif %}{% endmacro %}
+{% block main %}
+<h1>{{ item.type }} {{ item.id }}: {{ item.title }}</h1>
+<p class="meta">State <strong>{{ item.state }}</strong> · revision {{ item.rev }}</p>
+{% if parent %}<p>Parent: <a href="{{ item_base }}{{ parent.id }}">{{ parent.type }} {{ parent.id }}: {{ parent.title }}</a></p>{% endif %}
+{% if message %}<p class="error" role="alert" id="form-error">{{ message }}</p>{% endif %}
+<form method="post" action="{{ item_base }}{{ item.id }}" class="item-form">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input type="hidden" name="rev" value="{{ item.rev }}">
+  {% for section in sections %}
+  <fieldset>
+    <legend>{{ section.title }}</legend>
+    {% for f in section.fields %}
+    <div class="field">
+      {% if f.kind == "readonly" %}
+      <span class="label">{{ f.label }}</span>
+      <span class="value">{% if f.link %}<a href="{{ f.link }}" target="_blank" rel="noopener noreferrer">{{ f.value }}</a>{% else %}{{ f.value }}{% endif %}</span>
+      {% else %}
+      <label for="f-{{ f.ref }}">{{ f.label }}</label>
+      {% if f.formatted %}<div class="formatted">{{ f.formatted|safe }}</div>{% endif %}
+      {% if f.kind in ("select", "identity") %}
+      <select id="f-{{ f.ref }}" name="{{ f.ref }}"{{ described(f) }}>
+        {% for c in f.choices %}<option value="{{ c.value }}"{% if c.value == f.value %} selected{% endif %}>{{ c.label }}</option>{% endfor %}
+      </select>
+      {% elif f.kind == "textarea" %}
+      <textarea id="f-{{ f.ref }}" name="{{ f.ref }}" rows="4"{{ described(f) }}>{{ f.value }}</textarea>
+      {% elif f.kind == "number" %}
+      <input id="f-{{ f.ref }}" name="{{ f.ref }}" type="number" step="{{ f.step }}" value="{{ f.value }}"{{ described(f) }}>
+      {% elif f.kind == "datetime" %}
+      <input id="f-{{ f.ref }}" name="{{ f.ref }}" type="datetime-local" value="{{ f.value }}"{{ described(f) }}>
+      {% else %}
+      <input id="f-{{ f.ref }}" name="{{ f.ref }}" type="text" value="{{ f.value }}"{{ described(f) }}>
+      {% endif %}
+      {% if f.link %}<a href="{{ f.link }}" target="_blank" rel="noopener noreferrer" class="open">Open {{ f.label }}</a>{% endif %}
+      {% if f.error %}<p class="error" id="err-{{ f.ref }}" role="alert">{{ f.error }}</p>{% endif %}
+      {% endif %}
+    </div>
+    {% endfor %}
+  </fieldset>
+  {% endfor %}
+  <button type="submit">Save</button>
+</form>
+{% if children %}
+<h2>Children</h2>
+<ul class="children">{% for child in children %}<li><a href="{{ item_base }}{{ child.id }}">{{ child.type }} {{ child.id }}: {{ child.title }}</a> <span class="state">{{ child.state }}</span></li>{% endfor %}</ul>
+{% endif %}
+<section id="comments" aria-labelledby="comments-h">
+  <h2 id="comments-h">Comments</h2>
+  <form method="post" action="{{ item_base }}{{ item.id }}/comments" class="comment-form">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label for="comment-text">Add a comment</label>
+    {% if comment_error %}<p class="error" id="comment-error" role="alert">{{ comment_error }}</p>{% endif %}
+    <textarea id="comment-text" name="text" rows="3"{% if comment_error %} aria-describedby="comment-error" aria-invalid="true"{% endif %}>{{ comment_text }}</textarea>
+    <button type="submit">Comment</button>
+  </form>
+  <ul class="comments">
+    {% for c in comments %}<li><p class="by"><strong>{{ c.by }}</strong>, {{ c.when }}</p><p class="text">{{ c.text }}</p></li>{% endfor %}
+  </ul>
+</section>
+<section id="history" aria-labelledby="history-h">
+  <h2 id="history-h">History</h2>
+  <ol class="history">
+    {% for entry in history %}
+    <li>
+      <p><strong>{{ entry.who }}</strong>, {{ entry.when }}</p>
+      {% if entry.changes %}
+      <table>
+        <thead><tr><th scope="col">Field</th><th scope="col">Old value</th><th scope="col">New value</th></tr></thead>
+        <tbody>
+        {% for c in entry.changes %}
+        <tr><th scope="row">{{ c.label }}</th>
+          <td>{% if c.old_short %}<details><summary>{{ c.old_short }}</summary>{{ c.old }}</details>{% else %}{{ c.old }}{% endif %}</td>
+          <td>{% if c.new_short %}<details><summary>{{ c.new_short }}</summary>{{ c.new }}</details>{% else %}{{ c.new }}{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+      {% for link in entry.links %}<p class="link">{{ link }}</p>{% endfor %}
+    </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endblock %}

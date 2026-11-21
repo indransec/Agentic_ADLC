@@ -9,6 +9,7 @@ as text; the templates escape them.
 from __future__ import annotations
 
 import json
+import sqlite3
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -52,6 +53,25 @@ def _text(value: Any) -> str:
     return "" if value is None else str(value)
 
 
+def choose_area(
+    conn: sqlite3.Connection, area: str | None
+) -> tuple[list[str], str | None, str | None]:
+    """The area paths, the one chosen (stored spelling) and a notice when it does not exist."""
+    known = [str(r[0]) for r in conn.execute("SELECT path FROM area_node ORDER BY path")]
+    chosen = next((a for a in known if area and a.lower() == area.lower()), None)
+    notice = None if not area or chosen else f"There is no area path '{area}'; showing every area."
+    return known, chosen, notice
+
+
+def area_clause(chosen: str) -> tuple[str, list[Any]]:
+    """SQL for the chosen area path and every path below it."""
+    escaped = chosen.replace("!", "!!").replace("%", "!%").replace("_", "!_")
+    return "(area_path = ? COLLATE NOCASE OR area_path LIKE ? ESCAPE '!')", [
+        chosen,
+        escaped + "\\%",
+    ]
+
+
 def columns(db: Database, area: str | None) -> Board:
     with db.read() as conn:
         settings = board_settings(conn)
@@ -59,13 +79,7 @@ def columns(db: Database, area: str | None) -> Board:
             return Board(
                 None, notice="The board is not configured (the seed has no board section)."
             )
-        known = [str(r[0]) for r in conn.execute("SELECT path FROM area_node ORDER BY path")]
-        chosen = next((a for a in known if area and a.lower() == area.lower()), None)
-        notice = (
-            None
-            if area is None or chosen
-            else f"There is no area path '{area}'; showing every area."
-        )
+        known, chosen, notice = choose_area(conn, area)
         states = [
             r[0]
             for r in conn.execute(
@@ -89,9 +103,9 @@ def columns(db: Database, area: str | None) -> Board:
         sql = "SELECT id, state, fields FROM work_item WHERE type_name = ?"
         params: list[Any] = [settings.type]
         if chosen:
-            sql += " AND (area_path = ? COLLATE NOCASE OR area_path LIKE ? ESCAPE '!')"
-            escaped = chosen.replace("!", "!!").replace("%", "!%").replace("_", "!_")
-            params += [chosen, escaped + "\\%"]
+            clause, extra = area_clause(chosen)
+            sql += " AND " + clause
+            params += extra
         rows = conn.execute(sql + " ORDER BY id", params).fetchall()
     grouped: dict[str, list[Card]] = {}
     for row in rows:

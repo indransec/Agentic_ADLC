@@ -78,7 +78,10 @@ Environment only, prefix `ADO_SIM_`; the simulator reads no `ADLC_*` setting.
 paths, the process (Agile types; the Epic's states are the terminal stages T0–T9, then `Closed` and
 `Removed`), the `Custom.Adlc*` fields feature 016 maps, and the identities: the platform's service
 account `adlc-platform@adlc.demo` and one demo user per role. It holds no token and no secret; the
-seed refuses keys that look like one.
+seed refuses keys that look like one. Two sections serve the pages: `board:` (017) and `form:`
+(018: the work item form's sections per type, each a title and field references, validated against
+the process). The decision field's `allowed_values` are the platform's tracker mapping values; a
+platform contract test keeps the two files in step (change the mapping first).
 
 ## Tokens
 
@@ -104,7 +107,7 @@ returned item's updates and de-duplicate by (id, rev). Changed dates increase in
 across all items and `asOf` is the latest change the query saw, so no change is missed
 (research R-06).
 
-## Pages (feature 017)
+## Pages (features 017 and 018)
 
 The simulator also serves pages for people, at the addresses ADO uses:
 
@@ -112,7 +115,8 @@ The simulator also serves pages for people, at the addresses ADO uses:
 | --- | --- |
 | Sign in | `/_signin` (the start page redirects there without a session) |
 | The board | `/{organization}/{project}/_boards/board` (`?area=<path>` filters) |
-| A work item | `/{organization}/{project}/_workitems/edit/{id}` (read-only until feature 018) |
+| The backlog | `/{organization}/{project}/_backlogs/backlog` (`?area=<path>` filters) |
+| A work item | `/{organization}/{project}/_workitems/edit/{id}` (the form) |
 
 **Signing in.** Pick a seeded user (the platform's service account, `service: true` in the seed, is
 never offered) and give one of: a page password (`ado-sim password set <user>`, or `--all` for
@@ -127,6 +131,20 @@ page is recorded as theirs, exactly as through the API.
 card fields, collapsed states, refresh interval), one card per item, and refreshes its columns
 every few seconds. Cards cannot be moved: columns belong to the platform (feature 016). A person
 can create an Epic from the board, which the platform registers as a use case.
+
+**The backlog** (018) shows each item of the board type without a parent, with its descendants
+(run items, their clarification items) as a tree that collapses level by level, filtered by area and
+refreshed like the board.
+
+**The work item form** (018) shows the item's fields in the sections of the seed's `form:` layout
+(then "Other fields"), with an input for each field's type: a list for allowed values (the decision),
+states and areas, a user list for identities, text boxes otherwise; system fields are read-only. A
+save sends only the fields the person changed, as them, checked against the revision the form was
+opened at: if the item changed meanwhile, the form shows the current item with their changes kept.
+HTML fields are edited as plain text and shown with a small safe subset (paragraphs, lists, bold,
+italic, http(s) links); comments are always plain text. The form also adds comments and shows the
+history (who, when, old and new values). Any editable field can be changed, as in ADO; the platform
+sets back the fields it owns, with a comment (feature 016).
 
 The pages use Jinja2 templates (autoescaped), HTMX 2.0.4 and one stylesheet, all served by the
 simulator itself (`/_static/`); no external network. They send a strict content security policy.

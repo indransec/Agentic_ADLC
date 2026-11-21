@@ -32,7 +32,11 @@ process:
         - Custom.AdlcUseCaseId
         - Custom.AdlcSubStage
         - Custom.AdlcRunId
-        - Custom.AdlcDecision
+        # 018: the values the work item form offers; the platform's tracker mapping decision values,
+        # in its order (a platform contract test keeps the two in step)
+        - ref: Custom.AdlcDecision
+          allowed_values: [Pass, Rework, Exception, Terminate, Approve waiver, Reject waiver,
+                           Complete escalation]
         - Custom.AdlcComment
         - Custom.AdlcClarificationAnswer
         - Custom.AdlcRootCause
@@ -82,3 +86,14 @@ board:
   card_fields: [Custom.AdlcSubStage]
   collapsed_states: [Closed, Removed]
   refresh: 5s
+# The work item form (feature 018): its sections per type, in order. Fields of the type not named
+# here are shown in a last "Other fields" section. Data only.
+form:
+  Epic:
+    - {title: Use case, fields: [System.Title, System.State, Custom.AdlcSubStage, Custom.AdlcUseCaseId, System.AreaPath, System.Description]}
+  Feature:
+    - {title: Decision, fields: [Custom.AdlcDecision, Custom.AdlcComment, Custom.AdlcRootCause, Custom.AdlcReason, Custom.AdlcReworkTarget, Custom.AdlcValues]}
+    - {title: Run, fields: [System.Title, System.State, Custom.AdlcRunId, Custom.AdlcEvidenceLink, System.Description]}
+  Task:
+    - {title: Clarification, fields: [System.Description, Custom.AdlcClarificationAnswer]}
+    - {title: Details, fields: [System.Title, System.State, Custom.AdlcRunId]}
