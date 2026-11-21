@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Board{% endblock %}
+{% block main %}
+<h1>{{ project }} board</h1>
+{% if board.notice %}<p class="notice" role="status">{{ board.notice }}</p>{% endif %}
+{% if board.settings %}
+<div class="tools">
+  <form method="get" action="{{ board_url }}" class="inline">
+    <label for="area">Area path</label>
+    <select id="area" name="area">
+      <option value="">All areas</option>
+      {% for path in board.areas %}<option value="{{ path }}"{% if path == board.area %} selected{% endif %}>{{ path }}</option>{% endfor %}
+    </select>
+    <button type="submit">Filter</button>
+  </form>
+  <details class="create"{% if create_error %} open{% endif %}>
+    <summary>New {{ board.settings.type }}</summary>
+    <form method="post" action="{{ create_url }}" class="card-form">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      {% if create_error %}<p class="error" role="alert" id="create-error">{{ create_error }}</p>{% endif %}
+      <label for="title">Title</label>
+      <input id="title" name="title" value="{{ form.title }}" maxlength="255"{% if create_error %} aria-describedby="create-error"{% endif %}>
+      <label for="description">Description</label>
+      <textarea id="description" name="description" rows="4">{{ form.description }}</textarea>
+      <label for="new-area">Area path</label>
+      <select id="new-area" name="area">
+        {% for path in board.areas %}<option value="{{ path }}"{% if path == (form.area or board.area) %} selected{% endif %}>{{ path }}</option>{% endfor %}
+      </select>
+      <button type="submit">Create</button>
+    </form>
+  </details>
+</div>
+{% include "columns.html" %}
+{% endif %}
+{% endblock %}

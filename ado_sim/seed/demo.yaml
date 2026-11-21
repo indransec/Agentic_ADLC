@@ -58,7 +58,7 @@ process:
     Custom.AdlcValues: {type: plainText, name: ADLC Values}
     Custom.AdlcEvidenceLink: {type: string, name: ADLC Evidence Link}
 identities:
-  - {unique_name: adlc-platform@adlc.demo, display_name: ADLC Platform}
+  - {unique_name: adlc-platform@adlc.demo, display_name: ADLC Platform, service: true}
   - {unique_name: business.owner@adlc.demo, display_name: Business Owner}
   - {unique_name: product.owner@adlc.demo, display_name: Product Owner}
   - {unique_name: solution.architect@adlc.demo, display_name: Solution Architect}
@@ -74,3 +74,11 @@ identities:
   - {unique_name: sre@adlc.demo, display_name: Site Reliability Engineer}
   - {unique_name: data.owner@adlc.demo, display_name: Data Owner}
   - {unique_name: adlc.coe@adlc.demo, display_name: ADLC CoE Lead}
+# The board page (feature 017): which type it shows, the fields on its cards, the states whose
+# columns start collapsed, and how often it refreshes. Data only: the simulator gives these names
+# no meaning.
+board:
+  type: Epic
+  card_fields: [Custom.AdlcSubStage]
+  collapsed_states: [Closed, Removed]
+  refresh: 5s

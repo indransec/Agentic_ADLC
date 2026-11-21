@@ -1,0 +1,29 @@
+/* ADO simulator pages (feature 017): plain CSS, no external fonts or assets. */
+:root { --ink: #1b1b1f; --muted: #5a5a66; --line: #d6d6de; --panel: #f6f6f9; --accent: #0b5cad; --bad: #a4161a; }
+* { box-sizing: border-box; }
+body { margin: 0; font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); background: #fff; }
+a { color: var(--accent); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.top { display: flex; justify-content: space-between; align-items: center; padding: .5rem 1rem; border-bottom: 1px solid var(--line); background: var(--panel); }
+.brand { font-weight: 600; }
+.who { margin-right: .75rem; color: var(--muted); }
+.inline { display: inline-flex; gap: .5rem; align-items: center; }
+main { padding: 1rem; max-width: 100%; }
+h1 { font-size: 1.4rem; margin: .25rem 0 1rem; }
+.tools { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-start; margin-bottom: 1rem; }
+.card-form { display: grid; gap: .35rem; max-width: 28rem; }
+.columns { display: flex; gap: .75rem; overflow-x: auto; padding-bottom: .5rem; }
+.column { flex: 0 0 15rem; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: .5rem; max-height: 75vh; overflow-y: auto; }
+.column h2 { font-size: .95rem; margin: .25rem 0 .5rem; display: inline; }
+.column.other { border-style: dashed; }
+.count { color: var(--muted); font-weight: normal; }
+.cards { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .5rem; }
+.card { background: #fff; border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: 4px; padding: .5rem; }
+.card .id { color: var(--muted); font-variant-numeric: tabular-nums; }
+.card p { margin: .25rem 0 0; font-size: .85rem; }
+.label, .by { color: var(--muted); }
+.error { color: var(--bad); font-weight: 600; }
+.notice, .stale { background: #fff6d6; border: 1px solid #e7cf73; padding: .4rem .6rem; border-radius: 4px; }
+.fields { display: grid; grid-template-columns: max-content 1fr; gap: .25rem 1rem; }
+.fields dt { color: var(--muted); }
+.fields dd { margin: 0; white-space: pre-wrap; }

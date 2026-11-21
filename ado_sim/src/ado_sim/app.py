@@ -7,6 +7,7 @@ Paths after ``/_apis/`` are case-insensitive, as ADO's are.
 from __future__ import annotations
 
 import json
+import logging
 import time
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
@@ -17,7 +18,7 @@ from urllib.parse import quote
 from fastapi import Depends, FastAPI, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -284,10 +285,22 @@ def build_app(lifespan: Callable[[FastAPI], Any] | None = None) -> FastAPI:
     )
     _register_handlers(app)
     _register_routes(app)
+    _register_pages(app)
     app.middleware("http")(_gate)
     app.add_middleware(CaseInsensitiveApis)
     app.openapi = lambda: _openapi(app)  # type: ignore[method-assign]
     return app
+
+
+def _register_pages(app: FastAPI) -> None:
+    """017: the pages and their static files (outside the OpenAPI document)."""
+    from fastapi.staticfiles import StaticFiles  # noqa: PLC0415
+
+    from ado_sim.pages import STATIC  # noqa: PLC0415
+    from ado_sim.pages.routes import router  # noqa: PLC0415
+
+    app.include_router(router)
+    app.mount("/_static", StaticFiles(directory=STATIC), name="static")
 
 
 def create_app(settings: Settings) -> FastAPI:
@@ -304,6 +317,14 @@ def create_app(settings: Settings) -> FastAPI:
     app.state.settings = settings
     app.state.store = WorkItemStore(db)
     app.state.tracer = make_tracer(settings.otlp_endpoint)
+    from ado_sim.pages import sessions  # noqa: PLC0415
+
+    sessions.housekeeping(db)
+    if settings.demo_password is not None:
+        logging.getLogger("ado_sim").warning(
+            "ADO_SIM_DEMO_PASSWORD is set: anyone who has it can sign in to the pages"
+            " as any demo user"
+        )
     return app
 
 
@@ -342,6 +363,25 @@ def _openapi(app: FastAPI) -> dict[str, Any]:
     return schema
 
 
+PAGE_PUBLIC = ("/_signin", "/_static/")
+PAGE_HEADERS = {
+    "Content-Security-Policy": (
+        "default-src 'self'; style-src 'self'; script-src 'self'; img-src 'self' data:; "
+        "frame-ancestors 'none'; form-action 'self'"
+    ),
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "same-origin",
+}
+
+
+def _is_api(path: str) -> bool:
+    return "/_apis/" in path or path in PUBLIC_PATHS
+
+
+def _page_public(path: str) -> bool:
+    return path == PAGE_PUBLIC[0] or path.startswith(PAGE_PUBLIC[1])
+
+
 async def _gate(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
     started = time.perf_counter()
     identity_name = "-"
@@ -349,10 +389,11 @@ async def _gate(request: Request, call_next: Callable[[Request], Awaitable[Respo
     span_context = tracer.start_as_current_span(f"{request.method} request") if tracer else None
     span = span_context.__enter__() if span_context is not None else None
     response: Response | None = None
+    path = request.url.path
     try:
-        if request.method == "GET" and request.url.path in PUBLIC_PATHS:
+        if request.method == "GET" and path in PUBLIC_PATHS:
             response = await call_next(request)
-        else:
+        elif _is_api(path):
             settings: Settings = request.app.state.settings
             identity = await run_in_threadpool(
                 auth.authenticate,
@@ -373,6 +414,9 @@ async def _gate(request: Request, call_next: Callable[[Request], Awaitable[Respo
                 identity_name = identity.unique_name
                 request.state.identity = identity
                 response = await call_next(request)
+        else:
+            response = await _page_gate(request, call_next)
+            identity_name = getattr(request.state, "log_identity", "-")
     finally:
         route = request.scope.get("route")
         operation = getattr(route, "path", "unmatched")
@@ -390,6 +434,41 @@ async def _gate(request: Request, call_next: Callable[[Request], Awaitable[Respo
     return response
 
 
+async def _page_gate(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
+    """017: pages need a page session (FR-001); responses carry the security headers."""
+    path = request.url.path
+    if not _page_public(path):
+        from ado_sim.pages import sessions  # noqa: PLC0415 - keeps the API importable alone
+
+        session = await run_in_threadpool(
+            sessions.read, request.app.state.db, request.cookies.get(sessions.COOKIE)
+        )
+        if session is None:
+            if request.headers.get("hx-request"):
+                response: Response = Response(status_code=200, headers={"HX-Redirect": "/_signin"})
+            else:
+                target = path + (f"?{request.url.query}" if request.url.query else "")
+                response = RedirectResponse(
+                    f"/_signin?next={quote(target, safe='')}", status_code=303
+                )
+            return _headers(response, path)
+        request.state.page_session = session
+        request.state.log_identity = session.identity.unique_name
+    return _headers(await call_next(request), path)
+
+
+def _headers(response: Response, path: str) -> Response:
+    for name, value in PAGE_HEADERS.items():
+        response.headers.setdefault(name, value)
+    if path.startswith(PAGE_PUBLIC[1]):
+        response.headers.setdefault("Cache-Control", "public, max-age=3600")
+    else:
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 def _register_handlers(app: FastAPI) -> None:
     @app.exception_handler(AdoError)
     async def ado_error(_: Request, error: AdoError) -> JSONResponse:
@@ -404,6 +483,18 @@ def _register_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, error: StarletteHTTPException) -> Response:
+        if error.status_code in (404, 405) and not _is_api(request.url.path):
+            from ado_sim.pages import page  # noqa: PLC0415
+
+            session = getattr(request.state, "page_session", None)
+            return page(
+                "error.html",
+                status=404,
+                heading="Not found",
+                message="There is no such page on the ADO simulator.",
+                user=session.identity.display_name if session else None,
+                csrf=session.csrf_token if session else None,
+            )
         if error.status_code in (404, 405):
             body = error_body(
                 f"The resource {request.url.path} with method {request.method} is not served by "

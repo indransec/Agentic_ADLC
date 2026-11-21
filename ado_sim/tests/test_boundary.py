@@ -43,3 +43,24 @@ def test_no_platform_settings_are_read() -> None:
         and marker in path.read_text(encoding="utf-8")
     ]
     assert offenders == []
+
+
+PAGES = PROJECT / "src" / "ado_sim" / "pages"
+VENDORED = {"htmx.min.js", "HTMX-LICENSE", "README.md"}
+
+
+def test_pages_reach_no_external_host() -> None:
+    """017 FR-013, FR-014: templates and the stylesheet name no other host; assets are served by
+    the simulator itself (the vendored files and their provenance note are exempt)."""
+    offenders = [
+        str(path.relative_to(PROJECT))
+        for path in sorted(PAGES.rglob("*"))
+        if path.is_file()
+        and path.name not in VENDORED
+        and path.suffix in {".html", ".css", ".js", ".py"}
+        and (
+            "http://" in path.read_text(encoding="utf-8")
+            or "https://" in path.read_text(encoding="utf-8")
+        )
+    ]
+    assert offenders == []

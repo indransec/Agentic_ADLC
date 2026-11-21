@@ -55,3 +55,13 @@ Error messages are the simulator's own wording; the status and `typeKey` are the
 | Identities | seeded users and one service account; `descriptor` and `subjectDescriptor` are the simulator's (`sim.<uuid>`) | Microsoft Entra or Microsoft accounts with ADO descriptors | no directory |
 | Field rules | required fields (`System.Title`, `System.State`, `System.AreaPath`), types, allowed states, read-only system fields | also the process's rules (required-when, defaults, allowed values per field) | the seed file defines types, fields and states only |
 | Process changes | from the seed file only; no process or field API for writing | the process API | the process is data the operator seeds |
+
+## Pages (feature 017)
+
+| Difference | Simulator | ADO | Reason |
+| --- | --- | --- | --- |
+| Board address | `/{organization}/{project}/_boards/board` | `/{organization}/{project}/_boards/board/t/{team}/{backlog level}` | one board (the seed's board type), no teams |
+| Item address | `/{organization}/{project}/_workitems/edit/{id}`, read-only until feature 018 | the same address, the full work item form | the form arrives in 018 |
+| Sign-in | `/_signin` with a seeded user and a page password, the shared demo password (when set) or a personal access token | Microsoft Entra or Microsoft account sign-in | no directory; local demo users |
+| Board changes | no drag and drop; a card's column changes only through the API (the platform) | people drag cards between columns | columns are written by the platform (SA §22.3); the platform reverts a person's change anyway |
+| Board refresh | polls its columns every few seconds | updates when the page is refreshed or through ADO's own notifications | the audience watches the platform move cards |

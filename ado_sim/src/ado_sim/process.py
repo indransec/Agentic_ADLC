@@ -75,6 +75,16 @@ class Identity:
 
 
 @dataclass(frozen=True)
+class BoardSettings:
+    """017: what the board page shows (data; the simulator gives the names no meaning)."""
+
+    type: str
+    card_fields: tuple[str, ...]
+    collapsed_states: tuple[str, ...]
+    refresh_seconds: int
+
+
+@dataclass(frozen=True)
 class ProjectInfo:
     organization_id: str
     organization: str
@@ -181,3 +191,22 @@ def identity_by_name(conn: sqlite3.Connection, name: str) -> Identity | None:
 
 def _identity(row: sqlite3.Row) -> Identity:
     return Identity(row["id"], row["display_name"], row["unique_name"], bool(row["active"]))
+
+
+def is_service(conn: sqlite3.Connection, identity: Identity) -> bool:
+    """017: the platform's service account (seed ``service: true``) never signs in to pages."""
+    row = conn.execute("SELECT is_service FROM identity WHERE id = ?", (identity.id,)).fetchone()
+    return bool(row and row[0])
+
+
+def board_settings(conn: sqlite3.Connection) -> BoardSettings | None:
+    """017: the seed's board settings, or None when the seed has no ``board`` section."""
+    rows = {r[0]: json.loads(r[1]) for r in conn.execute("SELECT key, value FROM board_setting")}
+    if "type" not in rows:
+        return None
+    return BoardSettings(
+        str(rows["type"]),
+        tuple(str(f) for f in rows.get("card_fields", [])),
+        tuple(str(s) for s in rows.get("collapsed_states", [])),
+        int(rows.get("refresh_seconds", 5)),
+    )

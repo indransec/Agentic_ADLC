@@ -6,12 +6,14 @@ Exit codes (contracts/cli-settings-seed.md): 0 done, 1 refused, 2 settings or in
 from __future__ import annotations
 
 import argparse
+import getpass
 import sys
 from collections.abc import Sequence
 from pathlib import Path
 
 from ado_sim import auth
 from ado_sim.db import LATEST_VERSION, Database, DatabaseMissingError, migrate, schema_version
+from ado_sim.pages import sessions, signin
 from ado_sim.seed import SeedError, SeedRefusedError, is_seeded, load_seed
 from ado_sim.settings import Settings, SettingsError, load_settings
 
@@ -36,7 +38,16 @@ def _parser() -> argparse.ArgumentParser:
     revoke.add_argument("token_id", type=int)
     listing = token_commands.add_parser("list", help="list tokens (never the tokens themselves)")
     listing.add_argument("unique_name", nargs="?")
-    commands.add_parser("serve", help="run the API")
+    password = commands.add_parser("password", help="page sign-in passwords (feature 017)")
+    password_commands = password.add_subparsers(dest="action", required=True)
+    set_password = password_commands.add_parser("set", help="set a page password (asked twice)")
+    who = set_password.add_mutually_exclusive_group(required=True)
+    who.add_argument("unique_name", nargs="?")
+    who.add_argument("--all", action="store_true", help="the same password for every demo user")
+    set_password.add_argument("--stdin", action="store_true", help="read it once from stdin")
+    clear = password_commands.add_parser("clear", help="remove a page password; ends sessions")
+    clear.add_argument("unique_name")
+    commands.add_parser("serve", help="run the API and the pages")
     export = commands.add_parser("export-openapi", help="write or check contract/openapi.json")
     export.add_argument("--check", action="store_true")
     export.add_argument("--output", type=Path, default=Path("contract/openapi.json"))
@@ -140,15 +151,19 @@ def _run_with_database(args: argparse.Namespace, settings: Settings, db: Databas
             print(token)
             return OK
         if args.action == "revoke":
+            owner = _token_owner(db, args.token_id)
             if not auth.revoke(db, args.token_id):
                 print(f"no active token with id {args.token_id}", file=sys.stderr)
                 return REFUSED
-            print(f"revoked token {args.token_id}")
+            ended = sessions.revoke_all(db, owner) if owner else 0  # 017 FR-004a
+            print(f"revoked token {args.token_id}; ended {ended} page session(s)")
             return OK
         for info in auth.list_tokens(db, args.unique_name):
             status = f"revoked {info.revoked_at}" if info.revoked_at else "active"
             print(f"{info.id}\t{info.unique_name}\t{info.label}\tissued {info.issued_at}\t{status}")
         return OK
+    if args.command == "password":
+        return _password(args, db)
     # serve
     import uvicorn
 
@@ -162,6 +177,62 @@ def _run_with_database(args: argparse.Namespace, settings: Settings, db: Databas
         log_level=settings.log_level.lower(),
         access_log=False,
     )
+    return OK
+
+
+def _token_owner(db: Database, token_id: int) -> str | None:
+    with db.read() as conn:
+        row = conn.execute(
+            "SELECT identity_id FROM access_token WHERE id = ?", (token_id,)
+        ).fetchone()
+    return None if row is None else str(row[0])
+
+
+def _read_password(from_stdin: bool) -> str | None:
+    if from_stdin:
+        return sys.stdin.readline().rstrip("\n")
+    first = getpass.getpass("page password: ")
+    if first != getpass.getpass("again: "):
+        print("the two passwords differ", file=sys.stderr)
+        return None
+    return first
+
+
+def _password(args: argparse.Namespace, db: Database) -> int:
+    if args.action == "clear":
+        if not signin.clear_password(db, args.unique_name):
+            print(f"{args.unique_name} has no page password", file=sys.stderr)
+            return REFUSED
+        print(f"cleared the page password of {args.unique_name}; their page sessions ended")
+        return OK
+    password = _read_password(args.stdin)
+    if password is None:
+        return INVALID
+    if len(password) < signin.MIN_PASSWORD_LENGTH:
+        print(
+            f"a page password needs at least {signin.MIN_PASSWORD_LENGTH} characters",
+            file=sys.stderr,
+        )
+        return INVALID
+    if args.all:
+        with db.read() as conn:
+            names = [
+                r[0]
+                for r in conn.execute(
+                    "SELECT unique_name FROM identity WHERE is_service = 0 AND active = 1"
+                    " ORDER BY unique_name"
+                )
+            ]
+        for name in names:
+            signin.set_password(db, name, password)
+        print(f"set the page password of {len(names)} users")
+        return OK
+    try:
+        signin.set_password(db, args.unique_name, password)
+    except ValueError as error:
+        print(str(error), file=sys.stderr)
+        return REFUSED
+    print(f"set the page password of {args.unique_name}")
     return OK
 
 

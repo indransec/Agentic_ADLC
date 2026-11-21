@@ -17,12 +17,20 @@ from ruamel.yaml import YAML
 from ruamel.yaml.error import YAMLError
 
 from ado_sim.db import Database
-from ado_sim.process import FIELD_TYPES, STATE_CATEGORIES, SYSTEM_FIELD_NAMES, SYSTEM_FIELDS
+from ado_sim.process import (
+    FIELD_TYPES,
+    STATE_CATEGORIES,
+    SYSTEM_FIELD_NAMES,
+    SYSTEM_FIELDS,
+    BoardSettings,
+)
 
 _NAMESPACE = uuid.UUID("6f1c5c0e-5a43-4c55-9d0e-0a6f0d1d2b15")
 _REFERENCE_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$")
 _SECRET_KEY = re.compile(r"token|secret|password|passwd|credential|\bpat\b", re.IGNORECASE)
-_TOP_KEYS = {"organization", "project", "areas", "process", "identities"}
+_TOP_KEYS = {"organization", "project", "areas", "process", "identities", "board"}
+_REFRESH = re.compile(r"^(\d+)s$")
+REFRESH_RANGE = (2, 60)
 _PROCESS_KEYS = {"agile_states", "types", "custom_fields"}
 _TYPE_KEYS = {"reference_name", "description", "color", "states", "fields"}
 
@@ -64,6 +72,7 @@ class SeedIdentity:
     id: str
     unique_name: str
     display_name: str
+    service: bool = False  # 017: the platform's service account never signs in to pages
 
 
 @dataclass(frozen=True)
@@ -76,6 +85,7 @@ class Seed:
     types: tuple[SeedType, ...]
     fields: tuple[SeedField, ...]
     identities: tuple[SeedIdentity, ...]
+    board: BoardSettings | None = None
 
 
 def _stable_id(kind: str, name: str) -> str:
@@ -225,12 +235,17 @@ def parse_seed(data: Any) -> Seed:
     if not isinstance(raw_identities, list) or not raw_identities:
         raise SeedError("identities must be a non-empty list")
     for index, item in enumerate(raw_identities):
-        entry = _mapping(item, f"identities[{index}]", {"unique_name", "display_name"})
+        entry = _mapping(item, f"identities[{index}]", {"unique_name", "display_name", "service"})
         unique = _text(entry.get("unique_name"), f"identities[{index}].unique_name")
         display = _text(entry.get("display_name"), f"identities[{index}].display_name")
         if unique.lower() in (i.unique_name.lower() for i in identities):
             raise SeedError(f"identities[{index}]: duplicate unique name '{unique}'")
-        identities.append(SeedIdentity(_stable_id("identity", unique), unique, display))
+        service = entry.get("service", False)
+        if not isinstance(service, bool):
+            raise SeedError(f"identities[{index}].service must be true or false")
+        identities.append(SeedIdentity(_stable_id("identity", unique), unique, display, service))
+    if sum(1 for i in identities if i.service) > 1:
+        raise SeedError("identities: at most one identity is the service account (service: true)")
 
     return Seed(
         organization_id=_stable_id("organization", organization),
@@ -241,7 +256,41 @@ def parse_seed(data: Any) -> Seed:
         types=tuple(types),
         fields=tuple(fields),
         identities=tuple(identities),
+        board=_board(top.get("board"), types),
     )
+
+
+def _board(value: Any, types: list[SeedType]) -> BoardSettings | None:
+    if value is None:
+        return None
+    entry = _mapping(value, "board", {"type", "card_fields", "collapsed_states", "refresh"})
+    type_name = _text(entry.get("type"), "board.type")
+    kind = next((t for t in types if t.name.lower() == type_name.lower()), None)
+    if kind is None:
+        raise SeedError(f"board.type: '{type_name}' is not a work item type of the process")
+    own = {ref.lower() for ref, _ in kind.fields} | SYSTEM_FIELD_NAMES
+    card_fields = []
+    for index, ref in enumerate(entry.get("card_fields") or []):
+        name = _text(ref, f"board.card_fields[{index}]")
+        if name.lower() not in own:
+            raise SeedError(f"board.card_fields[{index}]: '{name}' is not a field of {kind.name}")
+        card_fields.append(name)
+    states = {state.name.lower(): state.name for state in kind.states}
+    collapsed = []
+    for index, state in enumerate(entry.get("collapsed_states") or []):
+        name = _text(state, f"board.collapsed_states[{index}]")
+        if name.lower() not in states:
+            raise SeedError(
+                f"board.collapsed_states[{index}]: '{name}' is not a state of {kind.name}"
+            )
+        collapsed.append(states[name.lower()])
+    match = _REFRESH.match(str(entry.get("refresh", "5s")).strip())
+    seconds = int(match.group(1)) if match else 0
+    if not REFRESH_RANGE[0] <= seconds <= REFRESH_RANGE[1]:
+        raise SeedError(
+            f"board.refresh must be <seconds>s between {REFRESH_RANGE[0]}s and {REFRESH_RANGE[1]}s"
+        )
+    return BoardSettings(kind.name, tuple(card_fields), tuple(collapsed), seconds)
 
 
 def read_seed(path: Path) -> Seed:
@@ -334,7 +383,18 @@ def load_seed(db: Database, path: Path) -> Seed:
                 )
         for identity in seed.identities:
             conn.execute(
-                "INSERT INTO identity (id, display_name, unique_name) VALUES (?, ?, ?)",
-                (identity.id, identity.display_name, identity.unique_name),
+                "INSERT INTO identity (id, display_name, unique_name, is_service)"
+                " VALUES (?, ?, ?, ?)",
+                (identity.id, identity.display_name, identity.unique_name, int(identity.service)),
             )
+        if seed.board is not None:
+            for key, value in (
+                ("type", seed.board.type),
+                ("card_fields", list(seed.board.card_fields)),
+                ("collapsed_states", list(seed.board.collapsed_states)),
+                ("refresh_seconds", seed.board.refresh_seconds),
+            ):
+                conn.execute(
+                    "INSERT INTO board_setting (key, value) VALUES (?, ?)", (key, json.dumps(value))
+                )
     return seed

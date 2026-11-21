@@ -97,7 +97,12 @@ sim token issue adlc-platform@adlc.demo        # printed once; store it where th
 sim token list                                 # ids, identities, labels; never the tokens
 sim token revoke <id>
 sim reset --yes                                # remove all simulator data and seed again
+sim password set --all                         # page passwords for every demo user (017); asked twice
 ```
+
+The board page is at `http://localhost:${ADO_SIM_PORT:-8600}/`: sign in as a demo user with the
+page password (or a personal access token). `ADO_SIM_DEMO_PASSWORD` in `.env` turns on a shared
+demo password for rehearsals; leave it empty for the demo.
 
 Removing the `ado-sim-data` volume (`make reset` removes every volume) loses the simulator's work
 items and tokens; the next start seeds a fresh board. Known differences from real ADO are listed

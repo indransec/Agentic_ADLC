@@ -8,6 +8,7 @@ import pytest
 
 from ado_sim.db import Database
 from ado_sim.process import Identity, identity_by_name
+from tests.pages.conftest import client  # noqa: F401 - the page client fixture for 017's properties
 
 MEASUREMENTS: dict[str, str] = {}
 

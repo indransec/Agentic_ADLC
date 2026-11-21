@@ -35,7 +35,7 @@ When it is up:
 | Web application | `http://127.0.0.1:8501` (`ADLC_UI_PORT`) |
 | Platform API | `http://127.0.0.1:8000` (`ADLC_API_PORT`), `GET /health` |
 | Traces (Phoenix UI) | `http://127.0.0.1:6006`, project `adlc-platform`; `pilot-triage-<env>` per pilot environment |
-| ADO simulator | `http://127.0.0.1:8600` (`ADO_SIM_PORT`), `GET /health`; data in `data/local/ado_sim/` |
+| ADO simulator | `http://127.0.0.1:8600` (`ADO_SIM_PORT`): the board page (sign in as a demo user), `GET /health`; data in `data/local/ado_sim/` |
 | Orchestrator health | `set -a; source .env; source deploy/local.env; set +a; uv run adlc-orchestrator health` |
 
 ## Settings
@@ -104,6 +104,13 @@ set -a; source .env; source deploy/local.env; set +a
 
    ```bash
    cd ado_sim && ADO_SIM_DB_PATH=../data/local/ado_sim/ado_sim.db uv run ado-sim token issue adlc-platform@adlc.demo
+   ```
+
+   For the board page (feature 017), give the demo users a page password once, then open
+   `http://127.0.0.1:8600/` and sign in:
+
+   ```bash
+   cd ado_sim && ADO_SIM_DB_PATH=../data/local/ado_sim/ado_sim.db uv run ado-sim password set --all
    ```
 
 6. Board engagement (feature 016): the `board` line of `deploy/Procfile.local`. It is off until

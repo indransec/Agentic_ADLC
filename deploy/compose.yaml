@@ -519,6 +519,9 @@ services:
       ADO_SIM_HOST: 0.0.0.0
       ADO_SIM_PORT: "8600"
       ADO_SIM_OTLP_ENDPOINT: http://phoenix:6006
+      # 017 pages: empty = no shared demo password (personal page passwords or tokens only)
+      ADO_SIM_DEMO_PASSWORD: ${ADO_SIM_DEMO_PASSWORD:-}
+      ADO_SIM_PAGE_SESSION_TTL: ${ADO_SIM_PAGE_SESSION_TTL:-8h}
     ports:
       - "${ADO_SIM_PORT:-8600}:8600"
     volumes:

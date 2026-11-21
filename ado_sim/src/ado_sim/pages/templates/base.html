@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Board{% endblock %} · ADO simulator</title>
+  <meta name="htmx-config" content='{"includeIndicatorStyles": false}'>
+  <link rel="stylesheet" href="/_static/board.css">
+  <script src="/_static/htmx.min.js" defer></script>
+  <script src="/_static/board.js" defer></script>
+</head>
+<body{% if csrf %} hx-headers='{"X-CSRF-Token": "{{ csrf }}"}'{% endif %}>
+  <header class="top">
+    <span class="brand">ADO simulator</span>
+    {% if user %}
+    <nav aria-label="Account">
+      <span class="who">Signed in as <strong>{{ user }}</strong></span>
+      <form method="post" action="/_signout" class="inline">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button type="submit">Sign out</button>
+      </form>
+    </nav>
+    {% else %}
+    <nav aria-label="Account"><span class="who">Not signed in</span></nav>
+    {% endif %}
+  </header>
+  <main id="main">
+    {% block main %}{% endblock %}
+  </main>
+</body>
+</html>

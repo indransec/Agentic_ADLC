@@ -86,3 +86,48 @@ def test_export_openapi(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> N
     assert run(["export-openapi", "--output", str(output)]) == OK
     assert run(["export-openapi", "--check", "--output", str(output)]) == OK
     assert '"openapi"' in output.read_text(encoding="utf-8")
+
+
+# ------------------------------------------------------------------ 017 page passwords
+
+
+def test_page_passwords_and_session_revocation(
+    env: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import io
+
+    from ado_sim.pages import sessions
+    from ado_sim.pages.signin import sign_in
+    from ado_sim.process import identity_by_name
+
+    assert run(["migrate"]) == OK
+    assert run(["seed", "--file", str(SEED)]) == OK
+    monkeypatch.setattr("sys.stdin", io.StringIO("rehearsal-pass-1\n"))
+    assert run(["password", "set", "--all", "--stdin"]) == OK
+    monkeypatch.setattr("sys.stdin", io.StringIO("short\n"))
+    assert run(["password", "set", OWNER, "--stdin"]) == INVALID
+    monkeypatch.setattr("sys.stdin", io.StringIO("rehearsal-pass-1\n"))
+    assert run(["password", "set", "adlc-platform@adlc.demo", "--stdin"]) == REFUSED
+    db = Database(env)
+    try:
+        identity = sign_in(db, KEY, OWNER, "rehearsal-pass-1", demo_password=None)
+        session = sessions.create(db, identity, ttl_seconds=3600)
+        assert run(["password", "clear", OWNER]) == OK
+        assert sessions.read(db, session) is None  # clearing ends the user's sessions
+        assert run(["password", "clear", OWNER]) == REFUSED
+        capsys.readouterr()
+        assert run(["token", "issue", OWNER]) == OK
+        token = capsys.readouterr().out.strip().splitlines()[-1]
+        again = sessions.create(
+            db, sign_in(db, KEY, OWNER, token, demo_password=None), ttl_seconds=3600
+        )
+        with db.read() as conn:
+            owner = identity_by_name(conn, OWNER)
+            token_id = conn.execute(
+                "SELECT max(id) FROM access_token WHERE identity_id = ?",
+                (owner.id,),  # type: ignore[union-attr]
+            ).fetchone()[0]
+        assert run(["token", "revoke", str(token_id)]) == OK
+        assert sessions.read(db, again) is None  # revoking a token ends them too (FR-004a)
+    finally:
+        db.close()

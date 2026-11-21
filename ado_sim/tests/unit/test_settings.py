@@ -80,3 +80,43 @@ def test_refusals_name_the_variable_not_the_value(env: dict[str, str], name: str
 def test_duration_units() -> None:
     assert parse_duration("X", "2m") == 120.0
     assert parse_duration("X", "15s") == 15.0
+
+
+# ------------------------------------------------------------------ 017 pages
+
+
+def _env(**extra: str) -> dict[str, str]:
+    return {"ADO_SIM_DB_PATH": "x.db", "ADO_SIM_TOKEN_KEY": "k" * 32, **extra}
+
+
+def test_page_defaults() -> None:
+    settings = load_settings(_env())
+    assert settings.page_session_ttl_seconds == 8 * 3600
+    assert settings.demo_password is None
+    assert settings.secure_cookies is False
+
+
+def test_page_settings() -> None:
+    settings = load_settings(
+        _env(
+            ADO_SIM_PAGE_SESSION_TTL="2h",
+            ADO_SIM_DEMO_PASSWORD="rehearsal-pass-01",
+            ADO_SIM_SECURE_COOKIES="true",
+        )
+    )
+    assert settings.page_session_ttl_seconds == 7200
+    assert settings.demo_password == "rehearsal-pass-01"
+    assert settings.secure_cookies is True
+    assert "rehearsal-pass-01" not in repr(settings)
+
+
+def test_a_short_demo_password_is_refused_without_its_value() -> None:
+    with pytest.raises(SettingsError) as raised:
+        load_settings(_env(ADO_SIM_DEMO_PASSWORD="short-pw"))
+    assert "ADO_SIM_DEMO_PASSWORD" in str(raised.value) and "short-pw" not in str(raised.value)
+
+
+@pytest.mark.parametrize("value", ["yes", "1x"])
+def test_secure_cookies_must_be_a_boolean(value: str) -> None:
+    with pytest.raises(SettingsError, match="ADO_SIM_SECURE_COOKIES"):
+        load_settings(_env(ADO_SIM_SECURE_COOKIES=value))

@@ -14,7 +14,14 @@ from adlc.config.settings import (
 )
 
 ENV_EXAMPLE = Path(__file__).resolve().parents[2] / ".env.example"
-COMPOSE_ONLY = {"ADLC_PHOENIX_UI_PORT", "ADLC_UI_PORT", "ADO_SIM_TOKEN_KEY", "ADO_SIM_PORT"}
+COMPOSE_ONLY = {
+    "ADLC_PHOENIX_UI_PORT",
+    "ADLC_UI_PORT",
+    "ADO_SIM_TOKEN_KEY",
+    "ADO_SIM_PORT",
+    "ADO_SIM_DEMO_PASSWORD",  # 017
+    "ADO_SIM_PAGE_SESSION_TTL",  # 017
+}
 # 015: the ADO simulator's own secret, read only by the simulator (not a platform setting)
 SIMULATOR_SECRETS = {"ADO_SIM_TOKEN_KEY"}
 
@@ -84,3 +91,8 @@ def test_board_token_is_empty() -> None:
     entries = _entries()
     assert entries["ADLC_BOARD_TOKEN"] == ""
     assert entries["ADLC_BOARD_ENABLED"] == "false"
+
+
+def test_the_simulator_demo_password_is_empty() -> None:
+    """017: a shared demo password is opt-in; the example never ships one."""
+    assert _entries()["ADO_SIM_DEMO_PASSWORD"] == ""

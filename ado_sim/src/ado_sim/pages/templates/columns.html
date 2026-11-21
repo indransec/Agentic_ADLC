@@ -1,0 +1,17 @@
+<div id="columns" class="columns"{% if refresh %} hx-get="{{ cards_url }}" hx-trigger="every {{ refresh }}s" hx-include="[name='open']" hx-swap="outerHTML"{% endif %}>
+  <p id="stale" class="stale" hidden>The board is not current: the last refresh failed. It will try again.</p>
+  {% for column in board.columns %}
+  <section class="column{% if column.other %} other{% endif %}" aria-labelledby="col-{{ loop.index }}">
+    {% if column.collapsed %}
+    <details{% if column.state in open %} open{% endif %}>
+      <summary><h2 id="col-{{ loop.index }}">{{ column.state }} <span class="count">({{ column.count }})</span></h2></summary>
+      {% if column.state in open %}<input type="hidden" name="open" value="{{ column.state }}">{% endif %}
+      {% include "cards.html" %}
+    </details>
+    {% else %}
+    <h2 id="col-{{ loop.index }}">{{ column.state }} <span class="count">({{ column.count }})</span></h2>
+    {% include "cards.html" %}
+    {% endif %}
+  </section>
+  {% endfor %}
+</div>

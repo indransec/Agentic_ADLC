@@ -51,6 +51,8 @@ curl -s -u ":$TOKEN" "$BASE/workitems/1/updates?api-version=7.1"
 | `ado-sim token revoke <token-id>` | revoke a token |
 | `ado-sim token list [<unique-name>]` | list token ids, identities, labels and times (never the tokens) |
 | `ado-sim serve` | run the API |
+| `ado-sim password set <user> \| --all [--stdin]` | set a page password (017), stored as a hash |
+| `ado-sim password clear <user>` | remove it and end the user's page sessions |
 | `ado-sim export-openapi [--check]` | write `contract/openapi.json`, or fail if it differs from what the app serves |
 
 Exit codes: 0 done, 1 refused, 2 settings or invalid input.
@@ -101,6 +103,44 @@ invalidates every token. A missing, unknown or revoked token gets `401` with an 
 returned item's updates and de-duplicate by (id, rev). Changed dates increase in commit order
 across all items and `asOf` is the latest change the query saw, so no change is missed
 (research R-06).
+
+## Pages (feature 017)
+
+The simulator also serves pages for people, at the addresses ADO uses:
+
+| Page | Address |
+| --- | --- |
+| Sign in | `/_signin` (the start page redirects there without a session) |
+| The board | `/{organization}/{project}/_boards/board` (`?area=<path>` filters) |
+| A work item | `/{organization}/{project}/_workitems/edit/{id}` (read-only until feature 018) |
+
+**Signing in.** Pick a seeded user (the platform's service account, `service: true` in the seed, is
+never offered) and give one of: a page password (`ado-sim password set <user>`, or `--all` for
+every demo user; stored only as an scrypt hash), the shared demo password when
+`ADO_SIM_DEMO_PASSWORD` is set (off by default; a warning is logged at start), or one of the user's
+personal access tokens. Every refusal has the same message. Sessions last
+`ADO_SIM_PAGE_SESSION_TTL` (8h) from sign-in; signing out, clearing the password
+(`ado-sim password clear <user>`) or revoking a token ends them. Everything a person does on a
+page is recorded as theirs, exactly as through the API.
+
+**The board** shows one column per state of the seed's board type (`board:` in the seed: type,
+card fields, collapsed states, refresh interval), one card per item, and refreshes its columns
+every few seconds. Cards cannot be moved: columns belong to the platform (feature 016). A person
+can create an Epic from the board, which the platform registers as a use case.
+
+The pages use Jinja2 templates (autoescaped), HTMX 2.0.4 and one stylesheet, all served by the
+simulator itself (`/_static/`); no external network. They send a strict content security policy.
+
+## Dependencies
+
+| Dependency | Licence | Use |
+| --- | --- | --- |
+| FastAPI, uvicorn, pydantic | MIT, BSD-3-Clause, MIT | API |
+| Jinja2 3.1.6 (MarkupSafe) | BSD-3-Clause | page templates (017) |
+| python-multipart 0.0.32 | Apache-2.0 | page forms (017) |
+| htmx 2.0.4 (vendored, `pages/static/`) | 0BSD | board refresh (017) |
+| ruamel.yaml | MIT | seed file |
+| OpenTelemetry | Apache-2.0 | optional traces |
 
 ## Checks
 

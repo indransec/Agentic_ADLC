@@ -151,3 +151,22 @@ def test_no_token_or_value_leaks(
         hashes = {row[0] for row in conn.execute("SELECT token_hash FROM access_token")}
     db.close()
     assert {auth.hash_token(KEY, token) for token in tokens.values()} <= hashes
+
+
+def test_page_tables_hold_only_hashes(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """017 T033: page passwords and session ids are stored only as hashes."""
+    from ado_sim.pages import sessions, signin
+
+    data = tmp_path / "sim.db"
+    monkeypatch.setenv("ADO_SIM_DB_PATH", str(data))
+    monkeypatch.setenv("ADO_SIM_TOKEN_KEY", KEY)
+    assert run(["migrate"]) == OK
+    assert run(["seed", "--file", str(SEED)]) == OK
+    db = Database(data)
+    password = "page-password-marker-1"
+    signin.set_password(db, "product.owner@adlc.demo", password)
+    identity = signin.sign_in(db, KEY, "product.owner@adlc.demo", password, demo_password=None)
+    session_id = sessions.create(db, identity, ttl_seconds=60)
+    db.close()
+    stored = b"".join(p.read_bytes() for p in (data, Path(f"{data}-wal")) if p.exists())
+    assert password.encode() not in stored and session_id.encode() not in stored

@@ -1,0 +1,9 @@
+<ul class="cards">
+  {% for card in column.cards %}
+  <li class="card">
+    <a href="{{ item_base }}{{ card.id }}"><span class="id">{{ card.id }}</span> {{ card.title }}</a>
+    {% for name, value in card.fields %}<p class="field"><span class="label">{{ name }}:</span> {{ value }}</p>{% endfor %}
+    {% if card.changed_by %}<p class="by">Changed by {{ card.changed_by }}</p>{% endif %}
+  </li>
+  {% endfor %}
+</ul>

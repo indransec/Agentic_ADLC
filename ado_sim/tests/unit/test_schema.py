@@ -53,3 +53,15 @@ def test_state_category_is_checked(db: Database) -> None:
             " VALUES ('Task', 'Odd', 'Elsewhere', 0)"
         )
     db.close()
+
+
+def test_pages_schema(db: Database) -> None:
+    """017 T005: page passwords, sessions, board settings and the service flag."""
+    from ado_sim.db import LATEST_VERSION, schema_version
+
+    assert schema_version(db) == LATEST_VERSION >= 2
+    with db.read() as conn:
+        tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+        columns = {r[1] for r in conn.execute("PRAGMA table_info(identity)")}
+    assert {"page_password", "page_session", "board_setting"} <= tables
+    assert "is_service" in columns
