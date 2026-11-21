@@ -555,6 +555,11 @@ class BoardSettings(RuntimeSettings):
         json_schema_extra=_when_enabled("http(s) URL the run id is appended to"),
         validate_default=True,
     )
+    board_public_url: str | None = Field(
+        default=None,
+        pattern=r"^https?://",
+        json_schema_extra=_meta("http(s) URL of the board for browsers; default the board URL"),
+    )
     board_mapping_file: Path = Field(
         default=Path("adlc-specs/tracker_mapping.yaml"),
         json_schema_extra=_meta("path to the tracker mapping file"),
@@ -579,3 +584,8 @@ class BoardSettings(RuntimeSettings):
     def identities_url(self) -> str | None:
         """The identities base URL (the board's own URL unless set, as for the simulator)."""
         return self.board_identities_url or self.board_url
+
+    def public_url(self) -> str | None:
+        """019: the board's address for browsers (the board URL unless set): inside Docker the
+        sync reaches the board by its service name, a browser by the host's address."""
+        return self.board_public_url or self.board_url

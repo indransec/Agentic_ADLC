@@ -39,6 +39,26 @@ def test_create_with_parent_and_get(board: Boards) -> None:
     assert board.service.get(epic.id).parent_id is None
 
 
+def test_item_url_names_the_item(board: Boards) -> None:
+    """019: the address a browser opens for an item (the console links to it)."""
+    epic = board.service.create(EPIC, {TITLE: "Linked"})
+    url = board.service.item_url(epic.id)
+    assert url.startswith(("http://", "https://")) and url.endswith(f"/{epic.id}")
+    if board.kind == "ado":  # the simulator serves it as a page: sign-in first, then the item
+        import urllib.parse
+
+        import httpx
+
+        answer = httpx.get(url, follow_redirects=False)
+        assert answer.status_code == 303
+        target = urllib.parse.urlsplit(answer.headers["location"])
+        assert target.path == "/_signin"
+        wanted = urllib.parse.unquote(urllib.parse.urlsplit(url).path)
+        assert [urllib.parse.unquote(n) for n in urllib.parse.parse_qs(target.query)["next"]] == [
+            wanted
+        ]
+
+
 def test_get_at_an_older_revision(board: Boards) -> None:
     item = board.service.create(TASK, {TITLE: "first"})
     board.service.update(item.id, ItemWrite(set={TITLE: "second"}, expected_rev=item.rev))

@@ -15,6 +15,7 @@ from typing import Any
 import streamlit as st
 
 from adlc.ui import format as fmt
+from adlc.ui import mode
 from adlc.ui.client import ApiClient, ApiError
 from adlc.ui.render import (
     STATUS,
@@ -48,7 +49,10 @@ def render(api: ApiClient) -> None:
         artifacts(api, data, seen)
     with right:
         review(data)
-        decision_form(api, data, seen)
+        if mode.is_console(api):
+            board_decision(api, data)  # 019: people decide on the board
+        else:
+            decision_form(api, data, seen)
     details(api, data)
 
 
@@ -246,6 +250,17 @@ def controls_section(results: list[Any]) -> None:
 
 
 # ------------------------------------------------------------------------------ decision
+
+
+def board_decision(api: ApiClient, data: dict[str, Any]) -> None:
+    """019 (research R-06): the decision is made on the board; link to the run's work item."""
+    st.subheader("Decision", anchor=False)
+    st.info("The decision on this run is made on the board.", icon=":material/view_kanban:")
+    url = mode.item_url(api, "run", str(data["run"]["run_id"]))
+    if url:
+        st.link_button("Decide on the board", url, type="primary", icon=":material/open_in_new:")
+    else:
+        empty("This run is not on the board yet; the board sync will add it shortly.")
 
 
 def decision_form(api: ApiClient, data: dict[str, Any], seen: int) -> None:

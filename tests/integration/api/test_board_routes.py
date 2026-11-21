@@ -4,12 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pydantic import SecretStr
-
-from adlc.config.settings import BoardSettings
-from adlc.engagement.wiring import build
 from tests.support.api import Api
-from tests.support.board import EVIDENCE, MAPPING_FILE, SERVICE, fake_board, mapping
+from tests.support.board import enable_board
 from tests.support.lifecycle import walk_to
 from tests.support.orchestration import Harness
 
@@ -17,24 +13,7 @@ COE = "adlc_coe"
 
 
 def _enable(api: Api, tmp_path: Path) -> None:
-    """Give the API an engagement layer over a FakeBoard (as the board process builds it)."""
-    services = api.app.state.services
-    accounts = services.settings.accounts_file
-    settings = BoardSettings(
-        env="dev",
-        db_path=services.settings.db_path,
-        accounts_file=accounts,
-        deadletter_role=COE,
-        board_enabled=True,
-        board_url="http://board.test",
-        board_organization="org",
-        board_project="project",
-        board_token=SecretStr("t" * 32),
-        board_service_identity=SERVICE,
-        board_evidence_url=EVIDENCE,
-        board_mapping_file=MAPPING_FILE,
-    )
-    api.app.state.engagement = build(settings, services=services, board=fake_board(mapping()))
+    enable_board(api, COE)
 
 
 def test_health_is_for_the_coe_only(api: Api) -> None:
@@ -63,3 +42,35 @@ def test_reconcile_requeue_and_reports(h: Harness, api: Api, tmp_path: Path) -> 
     assert api.post(COE, f"/board/requeue/{usecase}").status_code == 404  # not dead-lettered
     health = api.get(COE, "/board/health").json()
     assert health["last_reconciliation"]["id"] == report["id"]
+
+
+# ------------------------------------------------------------------ 019 the console's mode and links
+
+
+def test_mode_is_inbox_when_the_sync_is_disabled(api: Api) -> None:
+    body = api.get("product_owner", "/board/mode").json()
+    assert body == {"mode": "inbox", "board_url": None, "can_operate": False}
+    assert api.get(COE, "/board/mode").json()["can_operate"] is True
+    assert api.client.get("/board/mode").status_code == 401  # signed out
+
+
+def test_mode_is_console_when_the_sync_is_enabled(api: Api, tmp_path: Path) -> None:
+    _enable(api, tmp_path)
+    body = api.get("sre", "/board/mode").json()
+    assert body == {"mode": "console", "board_url": "http://board.test", "can_operate": False}
+
+
+def test_board_items_of_use_cases_and_runs(h: Harness, api: Api, tmp_path: Path) -> None:
+    usecase, run_id = walk_to(h, "T1")
+    assert "/" in run_id
+    assert api.get("sre", f"/board/items/run/{run_id}").status_code == 404  # disabled
+    _enable(api, tmp_path)
+    assert api.get("sre", f"/board/items/run/{run_id}").status_code == 404  # not projected yet
+    api.post(COE, "/board/reconciliations")
+    for kind, object_id in (("usecase", usecase), ("run", run_id)):
+        answer = api.get("sre", f"/board/items/{kind}/{object_id}")
+        assert answer.status_code == 200, answer.text
+        body = answer.json()
+        assert body["url"] == f"http://board.test/items/{body['work_item_id']}"
+    assert api.get("sre", "/board/items/sprint/1").status_code == 422
+    assert api.client.get(f"/board/items/run/{run_id}").status_code == 401

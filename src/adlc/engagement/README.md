@@ -83,6 +83,15 @@ pending and dead-lettered deliveries, refusals by reason, reverts, the last reco
 platform (platform-written fields only; a person's unread decision is left alone) and store a
 report of every difference.
 
+## Links for the console (019)
+
+`BoardAdapter.item_url(id)` is the address a browser opens for an item. The ADO adapter forms
+ADO's `{ADLC_BOARD_PUBLIC_URL}/{organization}/{project}/_workitems/edit/{id}` (the public URL
+defaults to `ADLC_BOARD_URL`; inside Docker the sync reaches the board by its service name, a
+browser by the host). The API serves it as `GET /board/items/{kind}/{object_id}` for every
+signed-in person, with `GET /board/mode` (console or inbox, the board's address, whether the person
+operates the sync).
+
 ## Pointing it at real Azure DevOps
 
 Settings only: `ADLC_BOARD_URL=https://dev.azure.com`, `ADLC_BOARD_IDENTITIES_URL=https://vssps.dev.azure.com`,

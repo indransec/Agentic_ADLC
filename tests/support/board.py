@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from adlc.config.settings import DEFAULT_ATTACHMENT_TYPES
 from adlc.engagement.fake import FakeBoard
@@ -14,6 +15,9 @@ from adlc.inbox.service import InboxService
 from adlc.ledger.service import LedgerService
 from adlc.ledger.storage import FileStore, LedgerContentStore
 from tests.support.db import REPO_ROOT
+
+if TYPE_CHECKING:
+    from tests.support.api import Api
 from tests.support.orchestration import DEADLETTER_ROLE, Harness
 
 MAPPING_FILE = REPO_ROOT / "adlc-specs" / "tracker_mapping.yaml"
@@ -176,3 +180,29 @@ def board_pass(rig: Rig, run_id: str, fields: dict[str, str] | None = None) -> N
         rig.as_role(role).update(rig.item("run", run_id), ItemWrite(set=write))
         rig.cycle()
     assert h.run(run_id).state == "closed", h.run(run_id).state
+
+
+def enable_board(api: Api, coe: str = DEADLETTER_ROLE) -> None:
+    """Give the API an engagement layer over a FakeBoard (as the board process builds it), so
+    the API answers as when ``ADLC_BOARD_ENABLED`` is true (016 API tests, 019 console tests)."""
+    from pydantic import SecretStr
+
+    from adlc.config.settings import BoardSettings
+    from adlc.engagement.wiring import build
+
+    services = api.app.state.services
+    settings = BoardSettings(
+        env="dev",
+        db_path=services.settings.db_path,
+        accounts_file=services.settings.accounts_file,
+        deadletter_role=coe,
+        board_enabled=True,
+        board_url="http://board.test",
+        board_organization="org",
+        board_project="project",
+        board_token=SecretStr("t" * 32),
+        board_service_identity=SERVICE,
+        board_evidence_url=EVIDENCE,
+        board_mapping_file=MAPPING_FILE,
+    )
+    api.app.state.engagement = build(settings, services=services, board=fake_board(mapping()))

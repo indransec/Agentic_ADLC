@@ -416,3 +416,25 @@ def test_board_token_too_short_names_the_form(
     output = _board_error()
     assert "ADLC_BOARD_TOKEN" in output
     assert "short-token-xyz" not in output
+
+
+# ------------------------------------------------------------------ 019 the board's public address
+
+
+def test_board_public_url_defaults_to_the_board_url(board_env: None) -> None:
+    from adlc.config.settings import BoardSettings
+
+    settings = BoardSettings()  # type: ignore[call-arg]
+    assert settings.public_url() == "http://127.0.0.1:8600"
+
+
+def test_board_public_url_when_set(board_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    from adlc.config.settings import BoardSettings
+
+    monkeypatch.setenv("ADLC_BOARD_PUBLIC_URL", "http://localhost:8600")
+    assert BoardSettings().public_url() == "http://localhost:8600"  # type: ignore[call-arg]
+
+
+def test_board_public_url_must_be_http(board_env: None, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("ADLC_BOARD_PUBLIC_URL", "javascript:alert(1)")
+    assert "ADLC_BOARD_PUBLIC_URL" in _board_error()

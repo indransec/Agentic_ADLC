@@ -38,6 +38,24 @@ the person may not take is a convenience; the API enforces every rule.
 | Journey | 013: lanes per terminal, a bar per run, arrows for reworks, reroutes, exceptions, events and re-entry; KPI strip; escalations and exceptions. Refreshes every `ADLC_UI_DASHBOARD_REFRESH`. |
 | Activity | 013: the activity feed, filterable by use case, terminal, actor and step; filters survive refreshes. |
 | Portfolio | 013: the KPIs across use cases, by risk tier and status. |
+| Sync status | 019: the board sync's health (last poll, watermark age, pending and dead-lettered board deliveries, refusals by reason, reverts), the last reconciliation's differences, "Reconcile now" behind a confirmation, and re-queue of a board delivery. Offered only to the people who operate the sync (the API's answer, the CoE role). |
+
+## Inbox or operations console (feature 019)
+
+The web app is the **operations console** when the board sync is enabled (`ADLC_BOARD_ENABLED`),
+and the **inbox** otherwise. It does not choose: it asks the API (`GET /board/mode`) at sign-in and
+again at most every 60 s (`adlc.ui.mode`), and keeps the last answer if the API cannot be asked
+(the sidebar says so). Turning the sync off and restarting the API brings the inbox back.
+
+In console mode people decide on the board. The sidebar lists Use cases (the start page), Journey,
+Activity, Portfolio, Dead letters and, for operators, Sync status. Inbox, New use case,
+Clarification, Escalation and Waiver stay registered (old addresses resolve) but say the action is
+made on the board, with a link to it. The Run page keeps every evidence section and artifact
+editing before sign-off; in place of the decision form it links to the run's board item ("Decide
+on the board", `GET /board/items/run/{run_id}`), or says the run is not on the board yet.
+
+The board's evidence link (`ADLC_BOARD_EVIDENCE_URL`, `…/?run=<run id>`) opens the Run page on that
+run, after sign-in (a link always opens a new session).
 
 ## Rendering rules
 

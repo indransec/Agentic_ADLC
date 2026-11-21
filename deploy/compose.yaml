@@ -10,6 +10,21 @@ x-db-settings: &db-settings
   ADLC_DB_PATH: /var/lib/adlc/db/adlc.db
   ADLC_DB_BUSY_TIMEOUT: ${ADLC_DB_BUSY_TIMEOUT:-30s}
 
+# Board engagement (016, 019): the board process syncs; the API answers the console's mode, links
+# to board items and runs reconciliation, so both read the same values.
+x-board-settings: &board-settings
+  ADLC_BOARD_ENABLED: ${ADLC_BOARD_ENABLED:-false}
+  ADLC_BOARD_URL: ${ADLC_BOARD_URL:-http://ado-sim:8600}
+  ADLC_BOARD_IDENTITIES_URL: ${ADLC_BOARD_IDENTITIES_URL:-}
+  ADLC_BOARD_ORGANIZATION: ${ADLC_BOARD_ORGANIZATION:-adlc-demo}
+  ADLC_BOARD_PROJECT: ${ADLC_BOARD_PROJECT:-Agentic ADLC}
+  ADLC_BOARD_TOKEN: ${ADLC_BOARD_TOKEN:-}
+  ADLC_BOARD_SERVICE_IDENTITY: ${ADLC_BOARD_SERVICE_IDENTITY:-adlc-platform@adlc.demo}
+  ADLC_BOARD_EVIDENCE_URL: ${ADLC_BOARD_EVIDENCE_URL:-http://localhost:8501/?run=}
+  ADLC_BOARD_START_FROM: ${ADLC_BOARD_START_FROM:-}
+  # 019: the board's address for browsers (links from the console to work items)
+  ADLC_BOARD_PUBLIC_URL: ${ADLC_BOARD_PUBLIC_URL:-http://localhost:8600}
+
 services:
   # Trace collector and viewer (Arize Phoenix, Python): OTLP at :6006/v1/traces, UI and REST API
   # on the same port. The only service besides the bridge on both networks: the pilot exports to it.
@@ -73,7 +88,7 @@ services:
     image: adlc-api:0.1.0
     environment:
       ADLC_TIME_SCALE: ${ADLC_TIME_SCALE:-1.0}  # 013: shown beside dashboard durations
-      <<: *db-settings
+      <<: [*db-settings, *board-settings]  # 019: the console's mode and board links
       ADLC_DB_CONNECT_TIMEOUT: ${ADLC_DB_CONNECT_TIMEOUT:-60s}
       ADLC_SESSION_SECRET: ${ADLC_SESSION_SECRET:?ADLC_SESSION_SECRET is required}
       ADLC_SESSION_TTL: ${ADLC_SESSION_TTL:-8h}
@@ -238,7 +253,7 @@ services:
     image: adlc-api:0.1.0
     command: ["adlc-board", "run"]
     environment:
-      <<: *db-settings
+      <<: [*db-settings, *board-settings]
       ADLC_DB_CONNECT_TIMEOUT: ${ADLC_DB_CONNECT_TIMEOUT:-60s}
       ADLC_ROLE_CATALOGUE: adlc-specs/shared/roles.yaml
       ADLC_OTLP_ENDPOINT: http://phoenix:6006
@@ -248,15 +263,6 @@ services:
       ADLC_DEADLETTER_ROLE: ${ADLC_DEADLETTER_ROLE:?ADLC_DEADLETTER_ROLE is required}
       ADLC_ACCOUNTS_FILE: /run/adlc/accounts.yaml
       ADLC_FILE_STORE_DIR: /var/lib/adlc/files
-      ADLC_BOARD_ENABLED: ${ADLC_BOARD_ENABLED:-false}
-      ADLC_BOARD_URL: ${ADLC_BOARD_URL:-http://ado-sim:8600}
-      ADLC_BOARD_IDENTITIES_URL: ${ADLC_BOARD_IDENTITIES_URL:-}
-      ADLC_BOARD_ORGANIZATION: ${ADLC_BOARD_ORGANIZATION:-adlc-demo}
-      ADLC_BOARD_PROJECT: ${ADLC_BOARD_PROJECT:-Agentic ADLC}
-      ADLC_BOARD_TOKEN: ${ADLC_BOARD_TOKEN:-}
-      ADLC_BOARD_SERVICE_IDENTITY: ${ADLC_BOARD_SERVICE_IDENTITY:-adlc-platform@adlc.demo}
-      ADLC_BOARD_EVIDENCE_URL: ${ADLC_BOARD_EVIDENCE_URL:-http://localhost:8501/?run=}
-      ADLC_BOARD_START_FROM: ${ADLC_BOARD_START_FROM:-}
       ADLC_BOARD_PORT: "8050"
     volumes:
       - ${ADLC_ACCOUNTS_FILE:?ADLC_ACCOUNTS_FILE is required}:/run/adlc/accounts.yaml:ro

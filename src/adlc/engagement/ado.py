@@ -62,11 +62,15 @@ class AdoBoard:
         project: str,
         token: str,
         identities_url: str | None = None,
+        public_url: str | None = None,
         client: httpx.Client | None = None,
         timeout_s: float = TIMEOUT_S,
     ) -> None:
         self._org_url = f"{base_url.rstrip('/')}/{quote(organization)}"
         self._wit = f"{self._org_url}/{quote(project)}/_apis/wit"
+        # 019: the board's address for browsers (inside Docker the sync uses the service name)
+        public = (public_url or base_url).rstrip("/")
+        self._edit = f"{public}/{quote(organization)}/{quote(project)}/_workitems/edit"
         self._identities = f"{(identities_url or base_url).rstrip('/')}/{quote(organization)}"
         credentials = base64.b64encode(f":{token}".encode()).decode()
         self._headers = {"Authorization": f"Basic {credentials}"}
@@ -76,6 +80,9 @@ class AdoBoard:
         return f"AdoBoard({self._wit!r})"
 
     # ------------------------------------------------------------------ port
+
+    def item_url(self, item_id: int) -> str:
+        return f"{self._edit}/{item_id}"
 
     def check(self) -> BoardInfo:
         kinds = self._call("GET", f"{self._wit}/workitemtypes")["value"]

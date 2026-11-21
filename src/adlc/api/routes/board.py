@@ -10,9 +10,11 @@ from fastapi import APIRouter, Request
 from pydantic import ValidationError
 
 from adlc.api.deps import ActorDep, Services, ServicesDep
-from adlc.api.errors import NotFound
+from adlc.api.errors import Invalid, NotFound
 from adlc.config.settings import BoardSettings
+from adlc.engagement import store
 from adlc.engagement.health import health
+from adlc.engagement.mapping import KINDS
 from adlc.engagement.wiring import BoardDisabled, Engagement, build
 from adlc.orchestration.service import Actor, InvalidDecision, NotAuthorised
 
@@ -44,6 +46,44 @@ def _engagement(request: Request, services: Services) -> Engagement:
             raise InvalidDecision(str(error)) from None
         request.app.state.engagement = built
     return built
+
+
+def _current(request: Request) -> BoardSettings | None:
+    built: Engagement | None = getattr(request.app.state, "engagement", None)
+    return built.settings if built is not None else _settings()
+
+
+@router.get("/mode")
+def board_mode(request: Request, actor: ActorDep, services: ServicesDep) -> dict[str, Any]:
+    """019: whether the web app is the console (the board drives decisions) or the inbox, for
+    every signed-in person; read-only."""
+    settings = _current(request)
+    enabled = settings is not None and settings.board_enabled
+    role = services.settings.deadletter_role
+    return {
+        "mode": "console" if enabled else "inbox",
+        "board_url": settings.public_url() if enabled and settings is not None else None,
+        "can_operate": bool(role) and role in actor.roles,
+    }
+
+
+@router.get("/items/{kind}/{object_id:path}")
+def board_item(
+    kind: str, object_id: str, request: Request, actor: ActorDep, services: ServicesDep
+) -> dict[str, Any]:
+    """019: the board work item that shows a use case, run or clarification, and its address
+    for browsers; read-only, for every signed-in person."""
+    if kind not in KINDS:
+        raise Invalid(f"kind must be one of {', '.join(KINDS)}", "kind")
+    settings = _current(request)
+    if settings is None or not settings.board_enabled:
+        raise NotFound("board sync is disabled")
+    with services.engine.connect() as conn:
+        link = store.get_link(conn, kind, object_id)
+    if link is None:
+        raise NotFound(f"{kind} {object_id} is not on the board yet")
+    board = _engagement(request, services).board
+    return {"work_item_id": link.work_item_id, "url": board.item_url(link.work_item_id)}
 
 
 @router.get("/health")

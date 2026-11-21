@@ -91,6 +91,11 @@ class FakeBoard:
 
     # ------------------------------------------------------------------ test controls
 
+    PUBLIC_URL = "http://board.test"  # 019: where a browser would open an item
+
+    def item_url(self, item_id: int) -> str:
+        return f"{self.PUBLIC_URL}/items/{item_id}"
+
     def as_user(self, unique_name: str) -> FakeBoard:
         """The same board, acting as another identity (a person using the board)."""
         return FakeBoard(

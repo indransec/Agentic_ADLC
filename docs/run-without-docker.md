@@ -130,6 +130,12 @@ set -a; source .env; source deploy/local.env; set +a
    `deploy/local.env` already points it at `http://127.0.0.1:8600`. `uv run adlc-board health`
    shows sync health; `uv run adlc-board reconcile --as <coe account>` corrects drift.
 
+   With the sync on, restart the API too: it reads the same settings, and the web app becomes the
+   operations console (feature 019): decisions on the board, the evidence and Sync status in the
+   web app. `ADLC_BOARD_PUBLIC_URL` (the board's address for browsers) defaults to
+   `ADLC_BOARD_URL`, which is right without Docker. Set `ADLC_BOARD_ENABLED=false` and restart the
+   API for the inbox again.
+
 ## What differs from compose
 
 - **One host, no network separation.** Compose puts the pilot on its own network, reachable only

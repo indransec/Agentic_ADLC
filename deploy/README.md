@@ -131,7 +131,12 @@ docker compose -f deploy/compose.yaml --env-file .env exec board adlc-board chec
 
 The defaults point at the simulator (`ADLC_BOARD_URL=http://ado-sim:8600`, organisation
 `adlc-demo`, project `Agentic ADLC`, service identity `adlc-platform@adlc.demo`); see
-`.env.example`. The CoE (`ADLC_DEADLETTER_ROLE`) reads sync health and reconciles:
+`.env.example`. The `board` and `api` services read the same board settings (`x-board-settings`):
+the API answers the web app's mode, links to board items and runs reconciliation. With the sync
+on, the web app is the operations console and people decide on the board (feature 019); a link
+from the console to a work item uses `ADLC_BOARD_PUBLIC_URL` (default `http://localhost:8600`,
+the address a browser on the host reaches). To fall back to the inbox, set
+`ADLC_BOARD_ENABLED=false` and `make up` again. The CoE (`ADLC_DEADLETTER_ROLE`) reads sync health and reconciles:
 
 ```bash
 board() { docker compose -f deploy/compose.yaml --env-file .env exec board adlc-board "$@"; }

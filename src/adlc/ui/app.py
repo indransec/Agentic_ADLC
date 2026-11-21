@@ -1,6 +1,11 @@
 """ADLC web application (feature 007): sign-in, navigation, sign-out.
 
 Run with ``streamlit run src/adlc/ui/app.py``. Every page talks to the platform API only.
+
+019: when the board sync is enabled (the API says so, ``adlc.ui.mode``) the app is the operations
+console: the pages whose action is made on the board say so, the sidebar lists the console's pages
+and the default page is Use cases. Every page stays registered, so old addresses resolve. The
+board's evidence link (``?run=``) opens the Run page, after sign-in if needed.
 """
 
 from collections.abc import Callable
@@ -9,6 +14,7 @@ from pathlib import Path
 import streamlit as st
 
 from adlc.config.settings import UiSettings
+from adlc.ui import mode
 from adlc.ui.client import ApiClient, ApiError
 from adlc.ui.render import GOTO, Colour, error
 from adlc.ui.views import (
@@ -19,8 +25,10 @@ from adlc.ui.views import (
     inbox,
     intake,
     journey,
+    moved,
     portfolio,
     run,
+    sync,
     usecases,
     waiver,
 )
@@ -59,6 +67,12 @@ DETAIL: tuple[Entry, ...] = (
     ("Waiver", ":material/gpp_maybe:", waiver.render),
 )
 HOME = "Inbox"
+CONSOLE_HOME = "Use cases"  # 019
+# 019: actions made on the board in console mode (the pages render a notice instead)
+ON_THE_BOARD = frozenset({"Inbox", "New use case", "Clarification", "Escalation", "Waiver"})
+# 019: offered in the sidebar's Operations section to the people who operate the board sync
+OPERATOR: tuple[Entry, ...] = (("Sync status", ":material/sync:", sync.render),)
+DEEP_LINK = "deep_link_routed"
 
 
 def client() -> ApiClient:
@@ -88,11 +102,16 @@ def runner(render: Render) -> Callable[[], None]:
     return page
 
 
-def build_pages() -> dict[str, st.Page]:
-    entries = [e for section in SECTIONS.values() for e in section] + list(DETAIL)
+def build_pages(console: bool = False) -> dict[str, st.Page]:
+    entries = [e for section in SECTIONS.values() for e in section] + list(DETAIL) + list(OPERATOR)
+    home = CONSOLE_HOME if console else HOME
     return {
         title: st.Page(
-            runner(render), title=title, icon=icon, url_path=slug(title), default=title == HOME
+            runner(moved.renderer(title) if console and title in ON_THE_BOARD else render),
+            title=title,
+            icon=icon,
+            url_path=slug(title),
+            default=title == home,
         )
         for title, icon, render in entries
     }
@@ -133,13 +152,22 @@ def sign_out(api: ApiClient) -> None:
             del st.session_state[key]
 
 
-def sidebar(api: ApiClient, built: dict[str, st.Page]) -> None:
+def sidebar(api: ApiClient, built: dict[str, st.Page], console: bool = False) -> None:
     person = api.person or {}
     with st.sidebar:
         environment_badge()
+        if mode.stale():
+            st.caption(
+                ":material/warning: The board mode could not be read; showing the last known."
+            )
         for section, entries in SECTIONS.items():
+            titles = [t for t, _, _ in entries if not (console and t in ON_THE_BOARD)]
+            if section == "Operations" and mode.can_operate(api):
+                titles += [t for t, _, _ in OPERATOR]
+            if not titles:
+                continue
             st.caption(section)
-            for title, _, _ in entries:
+            for title in titles:
                 st.page_link(built[title])
         st.divider()
         with st.container(border=True):
@@ -157,12 +185,22 @@ def main() -> None:
     if api.token is None:
         sign_in(api)
         return
-    built = build_pages()
+    try:
+        console = mode.is_console(api)
+    except ApiError:  # signed out meanwhile: sign in again, keep nothing else
+        sign_out(api)
+        st.rerun()
+    built = build_pages(console)
     current = st.navigation(list(built.values()), position="hidden")
+    if DEEP_LINK not in st.session_state:  # 019: the board's evidence link opens the run
+        st.session_state[DEEP_LINK] = True
+        if (linked := st.query_params.get("run")) and current.title != "Run":
+            st.session_state["run_id"] = linked
+            st.switch_page(built["Run"])
     if (goto := st.session_state.pop(GOTO, None)) in built and goto != current.title:
         st.switch_page(built[goto])  # a page asked for by name (render.navigate)
     st.session_state["page"] = current.title
-    sidebar(api, built)
+    sidebar(api, built, console)
     current.run()
 
 

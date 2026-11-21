@@ -54,6 +54,7 @@ def ado_board(settings: BoardSettings) -> AdoBoard:
         project=str(settings.board_project),
         token=settings.board_token.get_secret_value(),
         identities_url=settings.identities_url(),
+        public_url=settings.public_url(),
     )
 
 
