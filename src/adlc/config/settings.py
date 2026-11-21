@@ -489,3 +489,93 @@ class UiSettings(BaseSettings):
     )
     # The environment's name, shown as a badge so nobody mistakes a dev stack for the demo
     env: Literal["dev", "demo"] | None = Field(default=None, json_schema_extra=_meta("dev or demo"))
+
+
+_BOARD_REQUIRED = (
+    "board_url",
+    "board_organization",
+    "board_project",
+    "board_token",
+    "board_service_identity",
+    "board_evidence_url",
+)
+
+
+def _when_enabled(form: str, *, secret: bool = False) -> dict[str, Any]:
+    return _meta(f"{form}; required when ADLC_BOARD_ENABLED is true", secret=secret)
+
+
+class BoardSettings(RuntimeSettings):
+    """Settings for the board engagement process (feature 016, contracts/api-cli-settings.md).
+
+    It applies board changes as platform commands, so it reads the accounts file and the role
+    catalogue like the API, but needs no session secret. Every ``board_*`` value except the flag
+    is required only when ``board_enabled`` is true; the error names each missing one.
+    """
+
+    accounts_file: Path = Field(json_schema_extra=_meta("path to a readable file"))
+    time_scale: float = Field(
+        default=1.0, gt=0, json_schema_extra=_meta("number greater than zero")
+    )
+
+    board_enabled: bool = Field(default=False, json_schema_extra=_meta("true or false"))
+    board_url: str | None = Field(
+        default=None,
+        pattern=r"^https?://",
+        json_schema_extra=_when_enabled("http(s) URL of the board"),
+        validate_default=True,
+    )
+    board_identities_url: str | None = Field(
+        default=None,
+        pattern=r"^https?://",
+        json_schema_extra=_meta("http(s) URL of the identities service; default the board URL"),
+    )
+    board_organization: str | None = Field(
+        default=None,
+        json_schema_extra=_when_enabled("the board organisation"),
+        validate_default=True,
+    )
+    board_project: str | None = Field(
+        default=None, json_schema_extra=_when_enabled("the board project"), validate_default=True
+    )
+    board_token: SecretStr | None = Field(
+        default=None,
+        min_length=20,
+        json_schema_extra=_when_enabled("at least 20 characters", secret=True),
+        validate_default=True,
+    )
+    board_service_identity: str | None = Field(
+        default=None,
+        json_schema_extra=_when_enabled("the service account's board unique name"),
+        validate_default=True,
+    )
+    board_evidence_url: str | None = Field(
+        default=None,
+        pattern=r"^https?://",
+        json_schema_extra=_when_enabled("http(s) URL the run id is appended to"),
+        validate_default=True,
+    )
+    board_mapping_file: Path = Field(
+        default=Path("adlc-specs/tracker_mapping.yaml"),
+        json_schema_extra=_meta("path to the tracker mapping file"),
+    )
+    board_start_from: str | None = Field(
+        default=None, json_schema_extra=_meta("an ISO 8601 UTC time, or unset")
+    )
+    board_port: int = Field(default=8050, gt=0, lt=65536, json_schema_extra=_meta("port"))
+
+    @field_validator("accounts_file")
+    @classmethod
+    def _readable_accounts(cls, value: Path) -> Path:
+        return _readable(value)
+
+    @field_validator(*_BOARD_REQUIRED)
+    @classmethod
+    def _required_when_enabled(cls, value: object, info: ValidationInfo) -> object:
+        if value is None and info.data.get("board_enabled"):
+            raise ValueError("required when the board is enabled")
+        return value
+
+    def identities_url(self) -> str | None:
+        """The identities base URL (the board's own URL unless set, as for the simulator)."""
+        return self.board_identities_url or self.board_url

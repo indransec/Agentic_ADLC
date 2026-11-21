@@ -231,6 +231,54 @@ services:
       start_period: 15s
     restart: unless-stopped
 
+  # Board engagement (feature 016): syncs the platform with the board (the ADO simulator). Off
+  # unless ADLC_BOARD_ENABLED=true; disabled it only answers /health, so `make up --wait` passes.
+  board:
+    networks: [platform]
+    image: adlc-api:0.1.0
+    command: ["adlc-board", "run"]
+    environment:
+      <<: *db-settings
+      ADLC_DB_CONNECT_TIMEOUT: ${ADLC_DB_CONNECT_TIMEOUT:-60s}
+      ADLC_ROLE_CATALOGUE: adlc-specs/shared/roles.yaml
+      ADLC_OTLP_ENDPOINT: http://phoenix:6006
+      OTEL_RESOURCE_ATTRIBUTES: openinference.project.name=adlc-platform
+      ADLC_LOG_LEVEL: ${ADLC_LOG_LEVEL:-INFO}
+      ADLC_TIME_SCALE: ${ADLC_TIME_SCALE:-1.0}
+      ADLC_DEADLETTER_ROLE: ${ADLC_DEADLETTER_ROLE:?ADLC_DEADLETTER_ROLE is required}
+      ADLC_ACCOUNTS_FILE: /run/adlc/accounts.yaml
+      ADLC_FILE_STORE_DIR: /var/lib/adlc/files
+      ADLC_BOARD_ENABLED: ${ADLC_BOARD_ENABLED:-false}
+      ADLC_BOARD_URL: ${ADLC_BOARD_URL:-http://ado-sim:8600}
+      ADLC_BOARD_IDENTITIES_URL: ${ADLC_BOARD_IDENTITIES_URL:-}
+      ADLC_BOARD_ORGANIZATION: ${ADLC_BOARD_ORGANIZATION:-adlc-demo}
+      ADLC_BOARD_PROJECT: ${ADLC_BOARD_PROJECT:-Agentic ADLC}
+      ADLC_BOARD_TOKEN: ${ADLC_BOARD_TOKEN:-}
+      ADLC_BOARD_SERVICE_IDENTITY: ${ADLC_BOARD_SERVICE_IDENTITY:-adlc-platform@adlc.demo}
+      ADLC_BOARD_EVIDENCE_URL: ${ADLC_BOARD_EVIDENCE_URL:-http://localhost:8501/?run=}
+      ADLC_BOARD_START_FROM: ${ADLC_BOARD_START_FROM:-}
+      ADLC_BOARD_PORT: "8050"
+    volumes:
+      - ${ADLC_ACCOUNTS_FILE:?ADLC_ACCOUNTS_FILE is required}:/run/adlc/accounts.yaml:ro
+      - adlc-files:/var/lib/adlc/files
+      - adlc-db:/var/lib/adlc/db
+    depends_on:
+      register:
+        condition: service_completed_successfully
+      ado-sim:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8050/health', timeout=2).status == 200 else 1)"
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
+    restart: unless-stopped
+
   # Tools MCP server (feature 010): the eval store and the enterprise mocks (ITSM, CMDB, agent
   # registry, IAM, GRC, control library). Platform network only; app database role; no ports.
   tools:

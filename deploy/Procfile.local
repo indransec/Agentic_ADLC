@@ -22,3 +22,6 @@ pilot-lab: cd pilot && env -u VIRTUAL_ENV PILOT_TEMPLATE=template PILOT_REGISTRY
 
 # ADO simulator (feature 015, its own uv project in ado_sim/): the ADO REST subset on :8600
 ado-sim: cd ado_sim && env -u VIRTUAL_ENV ADO_SIM_DB_PATH=../data/local/ado_sim/ado_sim.db uv run ado-sim serve
+
+# Board engagement (feature 016): off unless ADLC_BOARD_ENABLED=true; /health on :8050
+board: uv run adlc-board run

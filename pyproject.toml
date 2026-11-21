@@ -42,6 +42,7 @@ adlc-tools = "adlc.tools.enterprise.__main__:main"
 adlc-pilot-bridge = "adlc.tools.bridge.__main__:main"
 adlc-tools-probe = "adlc.tools.probe:app"
 adlc-demo = "adlc.demo.__main__:app"
+adlc-board = "adlc.engagement.cli:app"
 
 [build-system]
 requires = ["hatchling"]
@@ -90,6 +91,7 @@ testpaths = ["tests"]
 markers = [
     "integration: runs against a real SQLite platform database",
     "litellm_contract: LiteLLM request/response mapping over mocked HTTP (respx)",
+    "board_contract: the board port suite against an ADO simulator started from ado_sim/ (016)",
 ]
 addopts = "-ra --cov=adlc --cov-report=term:skip-covered"
 filterwarnings = ["ignore:Using `httpx` with `starlette.testclient` is deprecated:DeprecationWarning"]

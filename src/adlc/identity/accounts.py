@@ -14,7 +14,9 @@ from ruamel.yaml.error import YAMLError
 from adlc.identity.hashing import is_placeholder
 
 ACCOUNT_NAME = re.compile(r"^[a-z][a-z0-9._-]{1,39}$")
-FIELDS = frozenset({"account_name", "display_name", "roles", "credential_hash"})
+FIELDS = frozenset({"account_name", "display_name", "roles", "credential_hash", "board_identity"})
+# 016: the account's unique name on the board (a tracker identity), compared lower-cased.
+BOARD_IDENTITY = re.compile(r"^\S+$")
 
 
 class AccountFileError(ValueError):
@@ -27,6 +29,7 @@ class Account:
     display_name: str
     roles: frozenset[str]
     credential_hash: str
+    board_identity: str | None = None
 
     @property
     def can_sign_in(self) -> bool:
@@ -62,6 +65,12 @@ def _problems_for(
         problems.append("credential_hash is missing")
     elif env == "demo" and is_placeholder(credential):
         problems.append("credential_hash is a placeholder (run: adlc-account hash)")
+    if "board_identity" in entry:
+        identity = entry["board_identity"]
+        if not isinstance(identity, str) or not BOARD_IDENTITY.match(identity):
+            problems.append(
+                "board_identity must be one word without spaces (the board unique name)"
+            )
     return label, problems
 
 
@@ -78,6 +87,7 @@ def load_accounts(
 
     problems: list[str] = []
     accounts: dict[str, Account] = {}
+    identities: dict[str, str] = {}
     for index, entry in enumerate(entries):
         if not isinstance(entry, dict):
             problems.append(f"accounts[{index}]: not a mapping")
@@ -85,13 +95,23 @@ def load_accounts(
         label, entry_problems = _problems_for(entry, role_ids, env)
         if label in accounts:
             entry_problems.append(f"duplicate account_name {label}")
+        identity = entry.get("board_identity")
+        identity = identity.lower() if isinstance(identity, str) else None
+        if identity is not None and identity in identities:
+            entry_problems.append(
+                f"board_identity is also used by {identities[identity]}; each board user maps to "
+                "one account"
+            )
         problems.extend(f"{label}: {problem}" for problem in entry_problems)
         if not entry_problems:
+            if identity is not None:
+                identities[identity] = label
             accounts[label] = Account(
                 account_name=label,
                 display_name=str(entry["display_name"]),
                 roles=frozenset(entry["roles"]),
                 credential_hash=str(entry["credential_hash"]),
+                board_identity=identity,
             )
     if problems:
         raise AccountFileError(f"{path}:\n  " + "\n  ".join(problems))

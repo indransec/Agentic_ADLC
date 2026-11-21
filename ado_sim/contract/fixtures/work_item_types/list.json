@@ -105,6 +105,30 @@
               "alwaysRequired": false
             },
             {
+              "referenceName": "Custom.AdlcEvidenceLink",
+              "name": "ADLC Evidence Link",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "Custom.AdlcReason",
+              "name": "ADLC Reason",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "Custom.AdlcReworkTarget",
+              "name": "ADLC Rework Target",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "Custom.AdlcRootCause",
+              "name": "ADLC Root Cause",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
               "referenceName": "Custom.AdlcRunId",
               "name": "ADLC Run Id",
               "url": "<url>",
@@ -119,6 +143,12 @@
             {
               "referenceName": "Custom.AdlcUseCaseId",
               "name": "ADLC Use Case Id",
+              "url": "<url>",
+              "alwaysRequired": false
+            },
+            {
+              "referenceName": "Custom.AdlcValues",
+              "name": "ADLC Values",
               "url": "<url>",
               "alwaysRequired": false
             },

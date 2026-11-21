@@ -38,6 +38,8 @@ REQUIRED_CATALOGUES: tuple[str, ...] = (
     "agents",  # feature 006
 )
 TERMINAL_FILE = re.compile(r"^T[0-9]+\.yaml$")
+# 016: how the platform appears on a tracker board; optional, validated by V-32..V-36.
+TRACKER_MAPPING = "tracker_mapping.yaml"
 CHECKLIST_FILE = re.compile(r"^t[0-9]+\.yaml$")
 FRONT_MATTER = re.compile(r"\A---\n(.*?)\n---\n?(.*)\Z", re.DOTALL)
 
@@ -64,10 +66,13 @@ class SpecBundle:
     checklists: dict[str, LoadedFile] = field(default_factory=dict)
     playbooks: dict[str, LoadedFile] = field(default_factory=dict)
     prompts: dict[str, LoadedFile] = field(default_factory=dict)  # feature 006
+    # 016: the tracker mapping, an optional top-level file (TRACKER_MAPPING)
+    tracker_mapping: LoadedFile | None = None
     findings: list[Finding] = field(default_factory=list)
 
     def files(self) -> list[LoadedFile]:
         return [
+            *([self.tracker_mapping] if self.tracker_mapping is not None else []),
             *self.catalogues.values(),
             *self.terminals.values(),
             *self.checklists.values(),
@@ -211,6 +216,12 @@ def load_bundle(root: Path) -> SpecBundle:
     for path in sorted((root / "shared").glob("*.yaml")):
         if path.stem not in REQUIRED_CATALOGUES:
             bundle.findings.append(_p02(rel(path), f"{rel(path)}: unknown catalogue file"))
+
+    mapping = root / TRACKER_MAPPING
+    if mapping.is_file():
+        loaded = LoadedFile(rel(mapping), "catalogue", mapping.read_text())
+        _parse(yaml, loaded, loaded.text, bundle.findings)
+        bundle.tracker_mapping = loaded
 
     for path in sorted((root / "checklists").glob("*.yaml")):
         if not CHECKLIST_FILE.match(path.name):

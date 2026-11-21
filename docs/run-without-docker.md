@@ -69,6 +69,7 @@ In `.env`, beyond the `REPLACE_ME` values of `.env.example`:
 | `pilot-traffic` | `cd pilot && uv run pilot-traffic --port 8200` | 8200 |
 | `pilot-lab` | `cd pilot && uv run pilot-lab --port 8300` | 8300 |
 | `ado-sim` | `cd ado_sim && uv run ado-sim serve` (`ADO_SIM_DB_PATH=../data/local/ado_sim/ado_sim.db`) | 8600 |
+| `board` | `uv run adlc-board run` (off unless `ADLC_BOARD_ENABLED=true`) | 8050 |
 
 Platform processes run from the repository root (they read `adlc-specs/` and `data/` by relative
 path); pilot processes run from `pilot/`, its own uv project. The pilot's operator commands take a
@@ -104,6 +105,22 @@ set -a; source .env; source deploy/local.env; set +a
    ```bash
    cd ado_sim && ADO_SIM_DB_PATH=../data/local/ado_sim/ado_sim.db uv run ado-sim token issue adlc-platform@adlc.demo
    ```
+
+6. Board engagement (feature 016): the `board` line of `deploy/Procfile.local`. It is off until
+   `ADLC_BOARD_ENABLED=true`. To turn it on, issue the service account's token in the simulator
+   and put it in `.env` with the flag, and give each account that acts on the board a
+   `board_identity` (its simulator user, e.g. `product.owner@adlc.demo`):
+
+   ```bash
+   cd ado_sim && ADO_SIM_DB_PATH=../data/local/ado_sim/ado_sim.db uv run ado-sim token issue adlc-platform@adlc.demo
+   # .env: ADLC_BOARD_ENABLED=true, ADLC_BOARD_TOKEN=<token>, ADLC_BOARD_ORGANIZATION=adlc-demo,
+   #       ADLC_BOARD_PROJECT=Agentic ADLC, ADLC_BOARD_SERVICE_IDENTITY=adlc-platform@adlc.demo
+   set -a; source .env; source deploy/local.env; set +a
+   uv run adlc-board check-mapping          # -> the tracker mapping fits the board
+   ```
+
+   `deploy/local.env` already points it at `http://127.0.0.1:8600`. `uv run adlc-board health`
+   shows sync health; `uv run adlc-board reconcile --as <coe account>` corrects drift.
 
 ## What differs from compose
 

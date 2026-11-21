@@ -334,3 +334,85 @@ def test_knowledge_settings(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> 
     monkeypatch.setenv("ADLC_KNOWLEDGE_DIR", str(tmp_path / "missing"))
     with pytest.raises(ValidationError):
         KnowledgeSettings()  # type: ignore[call-arg]
+
+
+# ---------------------------------------------------------------- 016 board settings
+
+BOARD_TOKEN = "board-token-value-000000000001"
+BOARD_REQUIRED = (
+    "ADLC_BOARD_URL",
+    "ADLC_BOARD_ORGANIZATION",
+    "ADLC_BOARD_PROJECT",
+    "ADLC_BOARD_TOKEN",
+    "ADLC_BOARD_SERVICE_IDENTITY",
+    "ADLC_BOARD_EVIDENCE_URL",
+)
+
+
+@pytest.fixture
+def board_env(valid_env: dict[str, str], monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("ADLC_SESSION_SECRET")
+    values = {
+        "ADLC_BOARD_ENABLED": "true",
+        "ADLC_BOARD_URL": "http://127.0.0.1:8600",
+        "ADLC_BOARD_ORGANIZATION": "org",
+        "ADLC_BOARD_PROJECT": "Project",
+        "ADLC_BOARD_TOKEN": BOARD_TOKEN,
+        "ADLC_BOARD_SERVICE_IDENTITY": "service@example.test",
+        "ADLC_BOARD_EVIDENCE_URL": "http://127.0.0.1:8501/run?id=",
+    }
+    for key, value in values.items():
+        monkeypatch.setenv(key, value)
+
+
+def _board_error() -> str:
+    from adlc.config.settings import BoardSettings
+
+    try:
+        BoardSettings()  # type: ignore[call-arg]
+    except ValidationError as exc:
+        return format_settings_error(exc, BoardSettings)
+    raise AssertionError("expected a validation error")
+
+
+def test_board_disabled_needs_no_board_settings(
+    valid_env: dict[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from adlc.config.settings import BoardSettings
+
+    monkeypatch.delenv("ADLC_SESSION_SECRET")
+    settings = BoardSettings()  # type: ignore[call-arg]
+    assert settings.board_enabled is False
+    assert settings.board_port == 8050
+    assert settings.board_mapping_file == Path("adlc-specs/tracker_mapping.yaml")
+
+
+def test_board_enabled_loads(board_env: None) -> None:
+    from adlc.config.settings import BoardSettings
+
+    settings = BoardSettings()  # type: ignore[call-arg]
+    assert settings.board_enabled
+    assert settings.identities_url() == settings.board_url
+    assert settings.board_token is not None
+    assert settings.board_token.get_secret_value() == BOARD_TOKEN
+    for text in (repr(settings), str(settings), settings.model_dump_json()):
+        assert BOARD_TOKEN not in text
+
+
+@pytest.mark.parametrize("name", BOARD_REQUIRED)
+def test_board_enabled_names_each_missing_setting(
+    board_env: None, monkeypatch: pytest.MonkeyPatch, name: str
+) -> None:
+    monkeypatch.delenv(name)
+    output = _board_error()
+    assert name in output
+    assert BOARD_TOKEN not in output
+
+
+def test_board_token_too_short_names_the_form(
+    board_env: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("ADLC_BOARD_TOKEN", "short-token-xyz")
+    output = _board_error()
+    assert "ADLC_BOARD_TOKEN" in output
+    assert "short-token-xyz" not in output

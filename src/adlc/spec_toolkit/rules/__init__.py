@@ -131,6 +131,7 @@ _RULE_MODULES = (
     "adlc.spec_toolkit.rules.cross_spec",
     "adlc.spec_toolkit.rules.versioning",
     "adlc.spec_toolkit.rules.agents",
+    "adlc.spec_toolkit.rules.tracker_mapping",  # feature 016
 )
 
 

@@ -103,6 +103,41 @@ Removing the `ado-sim-data` volume (`make reset` removes every volume) loses the
 items and tokens; the next start seeds a fresh board. Known differences from real ADO are listed
 in `ado_sim/contract/differences.md`.
 
+## Board engagement (feature 016)
+
+The `board` service (platform image, `adlc-board run`) keeps the board (the `ado-sim` service) and
+the platform in step: it projects use cases, runs and clarifications onto the board, and turns
+people's board changes (decisions, answers, new Epics) into platform requests, applied with the
+same checks as the inbox. It is **off** until `ADLC_BOARD_ENABLED=true`; off, it only answers
+`/health` (`disabled`), so `make up --wait` is unaffected. Its state is in the platform database
+(tables `board_*` and `inbound_*`), so the `adlc-db` backup covers it.
+
+Turning it on for the demo:
+
+```bash
+sim() { docker compose -f deploy/compose.yaml --env-file .env exec ado-sim ado-sim "$@"; }
+sim token issue adlc-platform@adlc.demo      # the service account's token
+# .env: ADLC_BOARD_ENABLED=true and ADLC_BOARD_TOKEN=<that token>
+# accounts file: board_identity: <user>@adlc.demo on each account that acts on the board
+#   (the simulator's seeded users, e.g. product.owner@adlc.demo)
+make up
+docker compose -f deploy/compose.yaml --env-file .env exec board adlc-board check-mapping
+```
+
+The defaults point at the simulator (`ADLC_BOARD_URL=http://ado-sim:8600`, organisation
+`adlc-demo`, project `Agentic ADLC`, service identity `adlc-platform@adlc.demo`); see
+`.env.example`. The CoE (`ADLC_DEADLETTER_ROLE`) reads sync health and reconciles:
+
+```bash
+board() { docker compose -f deploy/compose.yaml --env-file .env exec board adlc-board "$@"; }
+board health                                 # watermark age, pending deliveries, refusals
+board reconcile --as <coe account>           # make the board match the platform; prints the report
+board requeue UC-0001 --as <coe account>     # a dead-lettered projection
+```
+
+The same are served by the API: `GET /board/health`, `POST /board/reconciliations`,
+`GET /board/reconciliations/{id}`, `POST /board/requeue/{usecase_id}` (CoE only).
+
 ## Traces (Arize Phoenix)
 
 The `phoenix` service (`deploy/phoenix`, its own locked uv project, image `adlc-phoenix:0.1.0`)

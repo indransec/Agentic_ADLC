@@ -35,6 +35,11 @@ process:
         - Custom.AdlcDecision
         - Custom.AdlcComment
         - Custom.AdlcClarificationAnswer
+        - Custom.AdlcRootCause
+        - Custom.AdlcReason
+        - Custom.AdlcReworkTarget
+        - Custom.AdlcValues
+        - Custom.AdlcEvidenceLink
     Feature: {color: 773B93, states: agile, fields: *adlc_fields}
     User Story: {color: 009CCC, states: agile, fields: *adlc_fields}
     Task: {color: F2CB1D, states: agile, fields: *adlc_fields}
@@ -46,6 +51,12 @@ process:
     Custom.AdlcDecision: {type: string, name: ADLC Decision}
     Custom.AdlcComment: {type: plainText, name: ADLC Comment}
     Custom.AdlcClarificationAnswer: {type: plainText, name: ADLC Clarification Answer}
+    # 016: the inputs a decision may need (spec FR-028) and the run's evidence link
+    Custom.AdlcRootCause: {type: string, name: ADLC Root Cause}
+    Custom.AdlcReason: {type: plainText, name: ADLC Reason}
+    Custom.AdlcReworkTarget: {type: string, name: ADLC Rework Target}
+    Custom.AdlcValues: {type: plainText, name: ADLC Values}
+    Custom.AdlcEvidenceLink: {type: string, name: ADLC Evidence Link}
 identities:
   - {unique_name: adlc-platform@adlc.demo, display_name: ADLC Platform}
   - {unique_name: business.owner@adlc.demo, display_name: Business Owner}

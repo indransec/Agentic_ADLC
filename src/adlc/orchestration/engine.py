@@ -1038,6 +1038,7 @@ def _detail(signal: Signal) -> dict[str, Any]:
         "approve",
         "clarification_id",
         "edited",
+        "source",  # 016: the board update a person's request came from
     )
     return json_dict({k: signal.payload[k] for k in keep if k in signal.payload})
 

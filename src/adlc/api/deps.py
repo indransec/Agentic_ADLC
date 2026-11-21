@@ -14,7 +14,7 @@ from opentelemetry import trace
 from sqlalchemy import Engine
 
 from adlc.api.auth import current_person
-from adlc.config.settings import Settings
+from adlc.config.settings import BoardSettings, Settings
 from adlc.identity.protocol import Person
 from adlc.ledger.service import LedgerService
 from adlc.ledger.storage import FileStore, LedgerContentStore
@@ -35,7 +35,8 @@ if TYPE_CHECKING:
 
 @dataclass
 class Services:
-    settings: Settings
+    # 016: the board process builds the same services from its own settings
+    settings: Settings | BoardSettings
     engine: Engine
     clock: Clock = field(default_factory=SystemClock)  # tests share the harness clock
 

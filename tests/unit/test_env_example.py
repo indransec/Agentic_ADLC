@@ -3,6 +3,7 @@
 from pathlib import Path
 
 from adlc.config.settings import (
+    BoardSettings,
     BridgeSettings,
     KnowledgeSettings,
     OrchestratorSettings,
@@ -45,6 +46,7 @@ def test_keys_match_settings() -> None:
         | set(KnowledgeSettings.model_fields)
         | set(ToolsSettings.model_fields)
         | set(BridgeSettings.model_fields)
+        | set(BoardSettings.model_fields)
     )
     expected = {env_name(name) for name in fields} | COMPOSE_ONLY
     platform = {k for k in _entries() if not k.startswith(PILOT_PREFIX)}
@@ -75,3 +77,10 @@ def test_provider_keys_are_empty() -> None:
     entries = _entries()
     for name in ("ADLC_ANTHROPIC_API_KEY", "ADLC_OPENAI_API_KEY", "ADLC_GEMINI_API_KEY"):
         assert entries[name] == "", name
+
+
+def test_board_token_is_empty() -> None:
+    """016: the board is off by default; an empty token means "not issued yet"."""
+    entries = _entries()
+    assert entries["ADLC_BOARD_TOKEN"] == ""
+    assert entries["ADLC_BOARD_ENABLED"] == "false"

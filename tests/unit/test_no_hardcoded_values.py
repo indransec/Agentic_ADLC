@@ -1,12 +1,18 @@
 """Constitution I and II: no terminal, event or role values hard-coded in platform code (FR-028)."""
 
+from __future__ import annotations
+
 import ast
 import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 
 from adlc.identity.catalogue import load_role_ids
+
+if TYPE_CHECKING:
+    from adlc.engagement.mapping import TrackerMapping
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCES = sorted((ROOT / "src" / "adlc").rglob("*.py"))
@@ -179,3 +185,60 @@ def test_grounding_names_no_knowledge_source(path: Path) -> None:
         if value in ids or any(f"mcp:{source}" in value for source in ids)
     ]
     assert hits == []
+
+
+def _tracker_mapping() -> TrackerMapping:
+    from adlc.engagement.mapping import TrackerMapping
+
+    return TrackerMapping.load(ROOT / "adlc-specs" / "tracker_mapping.yaml")
+
+
+def _identifiers(mapping: TrackerMapping) -> set[str]:
+    """The board's own identifiers: item types, field references, columns and the area. (State
+    labels and decision values are also everyday words of the platform's own UI.)"""
+    from adlc.engagement.mapping import KINDS
+
+    found = {mapping.area, mapping.decision_field, mapping.comment_field}
+    for kind in KINDS:
+        item = mapping.item(kind)
+        found |= {item.type, *item.fields.values()}
+    found |= set(mapping._data["items"]["usecase"]["columns"].values())  # noqa: SLF001
+    found |= {spec.field for spec in mapping.inputs().values()}
+    return found
+
+
+ENGAGEMENT = sorted(
+    [*(ROOT / "src" / "adlc" / "engagement").rglob("*.py"), ROOT / "src/adlc/api/routes/board.py"]
+)
+
+
+def _board_literals(path: Path, names: set[str]) -> list[str]:
+    tree = ast.parse(path.read_text(), filename=str(path))
+    return [
+        f"{path.name}:{node.lineno}: {node.value!r}"
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Constant) and isinstance(node.value, str) and node.value in names
+    ]
+
+
+@pytest.mark.parametrize("path", ENGAGEMENT, ids=lambda p: str(p.relative_to(ROOT)))
+def test_engagement_names_nothing_on_the_board(path: Path) -> None:
+    """016 FR-003: the engagement layer names no board type, state, column, sub-stage, field or
+    decision value; all come from adlc-specs/tracker_mapping.yaml (string literals checked)."""
+    assert _board_literals(path, _tracker_mapping().names()) == []
+
+
+@pytest.mark.parametrize("path", SOURCES, ids=lambda p: str(p.relative_to(ROOT)))
+def test_no_board_identifiers(path: Path) -> None:
+    """016 FR-003: no platform module names a board type, field, column or area."""
+    assert _board_literals(path, _identifiers(_tracker_mapping())) == []
+
+
+def test_only_the_ado_adapter_imports_httpx_in_engagement() -> None:
+    """016 T053: the engagement layer reaches the board only through the port."""
+    importers = [
+        p.name
+        for p in sorted((ROOT / "src" / "adlc" / "engagement").rglob("*.py"))
+        if re.search(r"^\s*(import httpx|from httpx)", p.read_text(), re.MULTILINE)
+    ]
+    assert importers == ["ado.py"]

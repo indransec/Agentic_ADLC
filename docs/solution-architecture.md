@@ -662,6 +662,29 @@ Rules:
 - Inbound sync must not lose intermediate changes between two reads; it reads revisions, not only current state.
 - The board user is mapped to a platform identity and role before any decision right is checked. An unmapped user's change is refused and reverted.
 
+**Built in 016 (2026-11-21).** Package `src/adlc/engagement/`, process `adlc-board`
+(compose service `board`, off unless `ADLC_BOARD_ENABLED=true`). Decisions made while building it,
+recorded in `specs/016-engagement-layer/research.md`:
+
+- Projection is state-based: the desired board state of a use case is recomputed from the
+  platform's records and only differences are written. It uses the outbox's retry schedule and
+  dead-letter rule with its own per-use-case delivery state, because the outbox delivers inside
+  the router's write transaction and a board call must never hold the database (R-03).
+- The sync runs in its own process, so board latency and outages never touch the orchestrator
+  loop (R-02).
+- A board change is identified by work item and update number (an update on a link's other side
+  keeps the revision); each is claimed before it is applied and the platform records its source
+  in the run activity, so a change is applied exactly once across overlaps and restarts (R-04, R-07).
+- Board users map to accounts through an optional `board_identity` in the accounts file (R-11).
+- On the very first start, existing board history is marked as read, not replayed (FR-010a).
+- A refused request clears the decision (or answer) on the board rather than restoring an earlier
+  value; the comment and inputs stay for the person to complete (T041).
+- Decision inputs (root cause, reason, rework target, values) come from their own board fields or,
+  when empty, from `<label>: <value>` lines of the decision comment; the console stays available.
+
+This section supersedes the parts of §8 and §13 that described the inbox as the only place to
+decide; the inbox remains available until feature 020.
+
 ### 22.4 Commands and the operations console
 
 The platform API accepts these commands from the inbound sync (and from tests): `RegisterUseCase` (emits the existing `usecase.submitted`), `PullCard` (hold point), `ApprovePlan`, `RejectPlan`, `EditPlan`, `DecideAmendment`, `AcceptStory`, `RejectStory`, `AnswerClarification`, `SignOff`, `Decide` (rework, exception, escalate completion, terminate). Each is checked for decision rights, recorded in `run_activity`, and applied by the existing services. Option A uses only the commands the existing services already implement: `RegisterUseCase`, `AnswerClarification`, `SignOff` and `Decide`, plus the waiver decision and escalation completion; `PullCard` and the plan and story commands arrive with Option B.

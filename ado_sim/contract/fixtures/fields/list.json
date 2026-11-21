@@ -15,7 +15,7 @@
   "expected": {
     "status": 200,
     "body": {
-      "count": 23,
+      "count": 28,
       "value": [
         {
           "referenceName": "Custom.AdlcClarificationAnswer",

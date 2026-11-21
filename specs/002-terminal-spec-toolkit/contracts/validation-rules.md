@@ -43,6 +43,11 @@ code list the same ids. Ids V-01 to V-10 keep their TDS Annex B.5 meaning.
 | V-29 | L4 | error | Every agent prompt reference resolves to a prompt file written for that agent (feature 006) | `prompt common-terminal-reviewer@1.0.0 not found` |
 | V-30 | L4 | error | Agent tool permissions use a known permission verb, or an MCP scope from the MCP registry (feature 006) | `permission frobnicate:kb uses an unknown verb or MCP scope` |
 | V-31 | L4 | error | A data-class resolver's `source` names a declared terminal artifact column (feature 006) | `resolver source T2.data_plan.class is not a declared artifact column` |
+| V-32 | L2 | error | `tracker_mapping.yaml` matches `schema/catalogues/tracker_mapping.schema.json` (feature 016) | `Additional properties are not allowed ('webhooks' was unexpected)` |
+| V-33 | L4 | error | Every terminal has a column in the tracker mapping, and columns are distinct (feature 016) | `terminal T4 has no column` |
+| V-34 | L4 | error | Every run state of the state machine has an item state and a sub-stage in the tracker mapping (feature 016) | `run state escalated has no sub-stage` |
+| V-35 | L4 | error | Every human outcome a terminal grants, and every board action (approve or reject a waiver, complete an escalation), has a distinct decision value (feature 016) | `rework (needed by terminal T1) has no decision value` |
+| V-36 | L4 | error | Tracker mapping fields are distinct (decision, comment, each input), input labels are distinct, and platform-written fields are mapped (feature 016) | `field Custom.AdlcDecision is also used for decision` |
 
 Registration-time refusals (database or register code, not validation findings):
 

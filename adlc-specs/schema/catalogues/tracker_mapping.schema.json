@@ -1,0 +1,150 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://adlc.local/schema/catalogues/tracker_mapping.schema.json",
+  "title": "ADLC tracker mapping (feature 016)",
+  "description": "How platform objects and decisions appear on a tracker board. Every tracker name the platform uses comes from here (specs/016-engagement-layer/contracts/tracker-mapping.md).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["catalogue", "version", "inbound", "area", "identities", "items", "sub_stages", "decision", "platform_written"],
+  "$defs": {
+    "name": {"type": "string", "minLength": 1, "maxLength": 200},
+    "fieldRef": {"type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_]*(\\.[A-Za-z][A-Za-z0-9_]*)+$"},
+    "fields": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/fieldRef"},
+      "propertyNames": {"pattern": "^[a-z][a-z0-9_]*$"}
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "label"],
+      "properties": {
+        "field": {"$ref": "#/$defs/fieldRef"},
+        "label": {"type": "string", "pattern": "^[a-z][a-z ]*[a-z]$"}
+      }
+    },
+    "stateMap": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {"pattern": "^[a-z][a-z0-9_]*$"},
+      "additionalProperties": {"$ref": "#/$defs/name"}
+    }
+  },
+  "properties": {
+    "catalogue": {"const": "tracker_mapping"},
+    "version": {"type": "string", "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"},
+    "description": {"type": "string", "minLength": 1},
+    "inbound": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode", "poll_interval"],
+      "properties": {
+        "mode": {"enum": ["polling"]},
+        "poll_interval": {"type": "string", "pattern": "^[0-9]+(s|min|h|d)$"}
+      }
+    },
+    "area": {"$ref": "#/$defs/name"},
+    "identities": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["match"],
+      "properties": {"match": {"enum": ["board_identity"]}}
+    },
+    "items": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["usecase", "run", "clarification"],
+      "properties": {
+        "usecase": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "fields", "columns", "closed", "terminated"],
+          "properties": {
+            "type": {"$ref": "#/$defs/name"},
+            "fields": {
+              "allOf": [
+                {"$ref": "#/$defs/fields"},
+                {"required": ["title", "description", "state", "sub_stage", "usecase_id"]}
+              ]
+            },
+            "columns": {
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": {"pattern": "^[A-Z][0-9]+$"},
+              "additionalProperties": {"$ref": "#/$defs/name"}
+            },
+            "closed": {"$ref": "#/$defs/name"},
+            "terminated": {"$ref": "#/$defs/name"}
+          }
+        },
+        "run": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "parent", "fields", "states", "terminated"],
+          "properties": {
+            "type": {"$ref": "#/$defs/name"},
+            "parent": {"const": "usecase"},
+            "fields": {
+              "allOf": [
+                {"$ref": "#/$defs/fields"},
+                {"required": ["title", "description", "state", "run_id", "evidence"]}
+              ]
+            },
+            "states": {"$ref": "#/$defs/stateMap"},
+            "terminated": {"$ref": "#/$defs/name"}
+          }
+        },
+        "clarification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "parent", "fields", "open", "answered"],
+          "properties": {
+            "type": {"$ref": "#/$defs/name"},
+            "parent": {"const": "run"},
+            "fields": {
+              "allOf": [
+                {"$ref": "#/$defs/fields"},
+                {"required": ["title", "description", "state", "clarification_id", "answer"]}
+              ]
+            },
+            "open": {"$ref": "#/$defs/name"},
+            "answered": {"$ref": "#/$defs/name"}
+          }
+        }
+      }
+    },
+    "sub_stages": {"$ref": "#/$defs/stateMap"},
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["field", "comment", "values", "inputs"],
+      "properties": {
+        "field": {"$ref": "#/$defs/fieldRef"},
+        "comment": {"$ref": "#/$defs/fieldRef"},
+        "values": {"$ref": "#/$defs/stateMap"},
+        "inputs": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["root_cause", "reason", "target_terminal", "values"],
+          "properties": {
+            "root_cause": {"$ref": "#/$defs/input"},
+            "reason": {"$ref": "#/$defs/input"},
+            "target_terminal": {"$ref": "#/$defs/input"},
+            "values": {"$ref": "#/$defs/input"}
+          }
+        }
+      }
+    },
+    "platform_written": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["usecase", "run", "clarification"],
+      "properties": {
+        "usecase": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "run": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "clarification": {"type": "array", "items": {"type": "string"}, "uniqueItems": true}
+      }
+    }
+  }
+}

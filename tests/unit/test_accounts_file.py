@@ -73,3 +73,41 @@ def test_error_never_contains_credential_hash(tmp_path: Path) -> None:
     with pytest.raises(AccountFileError) as excinfo:
         load_accounts(path, ROLES, "dev")
     assert HASH not in str(excinfo.value)
+
+
+# ------------------------------------------------------------------ 016 board identity
+
+
+def _with_identity(name: str, identity: str) -> str:
+    return _account(name) + f"    board_identity: {identity}\n"
+
+
+def test_board_identity_is_optional(tmp_path: Path) -> None:
+    accounts = load_accounts(_write(tmp_path, "accounts:\n" + _account()), ROLES, "dev")
+    assert accounts["owner.business"].board_identity is None
+
+
+def test_board_identity_loads_lower_cased(tmp_path: Path) -> None:
+    body = "accounts:\n" + _with_identity("owner.business", "Business.Owner@Example.Test")
+    account = load_accounts(_write(tmp_path, body), ROLES, "dev")["owner.business"]
+    assert account.board_identity == "business.owner@example.test"
+
+
+@pytest.mark.parametrize("identity", ["''", "'two words'", "[a, b]"])
+def test_invalid_board_identity_is_named(tmp_path: Path, identity: str) -> None:
+    body = "accounts:\n" + _with_identity("owner.business", identity)
+    with pytest.raises(AccountFileError, match="owner.business: board_identity"):
+        load_accounts(_write(tmp_path, body), ROLES, "dev")
+
+
+def test_duplicate_board_identity_names_both_accounts(tmp_path: Path) -> None:
+    body = (
+        "accounts:\n"
+        + _with_identity("owner.business", "same@example.test")
+        + _with_identity("owner.product", "SAME@example.test")
+    )
+    with pytest.raises(AccountFileError) as raised:
+        load_accounts(_write(tmp_path, body), ROLES, "dev")
+    message = str(raised.value)
+    assert "owner.business" in message and "owner.product" in message
+    assert "board_identity" in message

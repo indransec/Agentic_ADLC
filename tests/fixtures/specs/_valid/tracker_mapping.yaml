@@ -1,0 +1,92 @@
+# yaml-language-server: $schema=schema/catalogues/tracker_mapping.schema.json
+# Test bundle copy of the tracker mapping (T0 and T1 only). Source: (feature 016; specs/016-engagement-layer/contracts/tracker-mapping.md).
+# How the platform's use cases, runs, clarifications and decisions appear on the board (the ADO
+# simulator's demo process, ado_sim/seed/demo.yaml). Every tracker name the platform uses comes
+# from this file; none is written in platform code.
+catalogue: tracker_mapping
+version: 1.0.0
+description: >-
+  The ADO simulator's demo board: one Epic per use case in the column of its current terminal,
+  one Feature per terminal run, one Task per clarification round.
+inbound:
+  mode: polling
+  poll_interval: 10s
+area: "Agentic ADLC\\Use cases"
+identities:
+  match: board_identity
+items:
+  usecase:
+    type: Epic
+    fields:
+      title: System.Title
+      description: System.Description
+      state: System.State
+      sub_stage: Custom.AdlcSubStage
+      usecase_id: Custom.AdlcUseCaseId
+      area: System.AreaPath
+    columns:
+      T0: "T0 Intake & Qualification"
+      T1: "T1 Requirements & Outcome"
+    closed: Closed
+    terminated: Removed
+  run:
+    type: Feature
+    parent: usecase
+    fields:
+      title: System.Title
+      description: System.Description
+      state: System.State
+      run_id: Custom.AdlcRunId
+      evidence: Custom.AdlcEvidenceLink
+    states:
+      opened: Active
+      blocked: Active
+      building: Active
+      awaiting_clarification: Active
+      checking: Active
+      reviewing: Active
+      awaiting_sign_off: Active
+      escalated: Active
+      closed: Closed
+    terminated: Removed
+  clarification:
+    type: Task
+    parent: run
+    fields:
+      title: System.Title
+      description: System.Description
+      state: System.State
+      clarification_id: Custom.AdlcRunId
+      answer: Custom.AdlcClarificationAnswer
+    open: Active
+    answered: Closed
+sub_stages:
+  opened: Opened
+  blocked: Blocked
+  building: Building
+  awaiting_clarification: Awaiting clarification
+  checking: Checking
+  reviewing: Reviewing
+  awaiting_sign_off: Awaiting sign-off
+  escalated: Escalated
+  closed: Closed
+decision:
+  field: Custom.AdlcDecision
+  comment: Custom.AdlcComment
+  values:
+    pass: Pass
+    rework: Rework
+    exception: Exception
+    terminate: Terminate
+    approve_waiver: Approve waiver
+    reject_waiver: Reject waiver
+    complete_escalation: Complete escalation
+  inputs:
+    root_cause: {field: Custom.AdlcRootCause, label: root cause}
+    reason: {field: Custom.AdlcReason, label: reason}
+    target_terminal: {field: Custom.AdlcReworkTarget, label: rework target}
+    values: {field: Custom.AdlcValues, label: value}
+platform_written:
+  usecase: [state, sub_stage, usecase_id]
+  run: [title, description, state, run_id, evidence]
+  clarification: [title, description, state, clarification_id]

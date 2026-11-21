@@ -103,7 +103,15 @@ class OrchestratorService:
 
     # -------------------------------------------------------------- use cases
 
-    def submit_usecase(self, actor: Actor, name: str, intake_text: str) -> str:
+    def submit_usecase(
+        self,
+        actor: Actor,
+        name: str,
+        intake_text: str,
+        *,
+        source: Mapping[str, Any] | None = None,
+    ) -> str:
+        """``source`` (016): where a board request came from; kept in the event's payload."""
         self._human(actor)
         if not name.strip() or len(name) > 200:
             raise InvalidDecision("name must be 1 to 200 characters")
@@ -125,7 +133,11 @@ class OrchestratorService:
                 usecase_id=usecase,
                 correlation_id=ids.correlation_id(usecase),
                 causation_run_id=None,
-                payload={"usecase_id": usecase, "submitted_by": actor.account_name},
+                payload={
+                    "usecase_id": usecase,
+                    "submitted_by": actor.account_name,
+                    **_source(source),
+                },
                 now=self._now,
             )
         return usecase
@@ -166,7 +178,9 @@ class OrchestratorService:
         fields: Mapping[str, Any] | None = None,
         target_terminal: str | None = None,
         expected_version: int | None = None,
+        source: Mapping[str, Any] | None = None,
     ) -> RunRow:
+        """``source`` (016): where a board request came from; kept in the run activity."""
         self._human(actor)
         fields = dict(fields or {})
         with self.runs.engine.begin() as conn:
@@ -187,6 +201,7 @@ class OrchestratorService:
                 "reason": reason,
                 "fields": fields,
                 "target_terminal": target_terminal,
+                **_source(source),
             }
             return self.runs.apply_in(
                 conn,
@@ -335,7 +350,13 @@ class OrchestratorService:
         return tuple(str(i["id"]) for i in items)
 
     def decide_waiver(
-        self, actor: Actor, waiver_id: str, approve: bool, comment: str | None = None
+        self,
+        actor: Actor,
+        waiver_id: str,
+        approve: bool,
+        comment: str | None = None,
+        *,
+        source: Mapping[str, Any] | None = None,
     ) -> RunRow:
         self._human(actor)
         with self.runs.engine.begin() as conn:
@@ -358,13 +379,20 @@ class OrchestratorService:
                     SignalKind.WAIVER_DECISION,
                     ActorType.HUMAN,
                     actor.account_name,
-                    {"approve": approve, "comment": comment},
+                    {"approve": approve, "comment": comment, **_source(source)},
                 ),
             )
 
     # -------------------------------------------------------------- clarifications and escalations
 
-    def answer_clarification(self, actor: Actor, clarification_id: str, answers: Any) -> RunRow:
+    def answer_clarification(
+        self,
+        actor: Actor,
+        clarification_id: str,
+        answers: Any,
+        *,
+        source: Mapping[str, Any] | None = None,
+    ) -> RunRow:
         self._human(actor)
         with self.runs.engine.begin() as conn:
             round_ = store.load_clarification(conn, clarification_id)
@@ -382,7 +410,7 @@ class OrchestratorService:
                     SignalKind.CLARIFICATION_ANSWERED,
                     ActorType.HUMAN,
                     actor.account_name,
-                    {"clarification_id": clarification_id},
+                    {"clarification_id": clarification_id, **_source(source)},
                 ),
             )
 
@@ -392,6 +420,8 @@ class OrchestratorService:
         run_id: str,
         artifacts: Mapping[str, Any],
         expected_version: int | None = None,
+        *,
+        source: Mapping[str, Any] | None = None,
     ) -> RunRow:
         self._human(actor)
         with self.runs.engine.begin() as conn:
@@ -409,7 +439,7 @@ class OrchestratorService:
                     SignalKind.ESCALATION_COMPLETED,
                     ActorType.HUMAN,
                     actor.account_name,
-                    {"artifacts": merged},
+                    {"artifacts": merged, **_source(source)},
                 ),
                 expected_version=expected_version,
             )
@@ -486,3 +516,8 @@ class OrchestratorService:
         with self.runs.engine.begin() as conn:
             if not store.requeue(conn, event_id, actor.account_name, self._now):
                 raise NotDeadLettered(str(event_id))
+
+
+def _source(source: Mapping[str, Any] | None) -> dict[str, Any]:
+    """016: a board request's origin (``{"board_item": id, "update": n}``), when there is one."""
+    return {} if source is None else {"source": dict(source)}
