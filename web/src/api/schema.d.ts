@@ -11,7 +11,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Me */
+        /**
+         * Who is signed in
+         * @description Any signed-in person. The person's account, name and roles; for a cookie session also `csrf_token`, the value every changing request must send in `X-ADLC-CSRF`.
+         */
         get: operations["me_auth_me_get"];
         put?: never;
         post?: never;
@@ -30,7 +33,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Sign In */
+        /**
+         * Sign in
+         * @description Public. With `session` omitted or `"bearer"`, answers a bearer token for the `Authorization` header (tools, tests, pilot processes). With `"cookie"` (the browser application) the request must carry `X-ADLC-CSRF: sign-in`; the answer sets the HttpOnly, SameSite=Strict cookie `adlc_session` and carries the session's CSRF value instead of the token. A wrong account or password answers `401` without saying which.
+         */
         post: operations["sign_in_auth_sign_in_post"];
         delete?: never;
         options?: never;
@@ -47,7 +53,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Sign Out */
+        /**
+         * Sign out
+         * @description Revokes the session. For a cookie session the answer also clears the cookie.
+         */
         post: operations["sign_out_auth_sign_out_post"];
         delete?: never;
         options?: never;
@@ -62,7 +71,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Changes */
+        /**
+         * Change requests waiting for a decision
+         * @description The ITSM approver role named in the tool registry; empty for anyone else.
+         */
         get: operations["changes_changes_get"];
         put?: never;
         post?: never;
@@ -81,7 +93,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Decide */
+        /**
+         * Approve or reject a change request
+         * @description The ITSM approver role. Records the decision as a new version of the change record; runs whose controls wait for it re-run them.
+         */
         post: operations["decide_changes__change_id__decision_post"];
         delete?: never;
         options?: never;
@@ -98,7 +113,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Answer */
+        /**
+         * Answer a clarification
+         * @description A person in the role the agent addressed. One answer per question; the same run resumes (it does not count as rework). Answered once.
+         */
         post: operations["answer_clarifications__clarification_id__answers_post"];
         delete?: never;
         options?: never;
@@ -113,7 +131,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Activity */
+        /**
+         * The activity feed
+         * @description Any signed-in person. What agents, reviewers, people and the orchestrator did, newest first; filter by `usecase_id`, `terminal_id`, `actor_type` and `step`; `limit` 1 to 1000 (default 200).
+         */
         get: operations["activity_dashboard_activity_get"];
         put?: never;
         post?: never;
@@ -130,7 +151,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Portfolio */
+        /**
+         * KPIs across use cases
+         * @description Any signed-in person. Counts and times summed, rates pooled; filter by `risk_tier` and `status`.
+         */
         get: operations["portfolio_dashboard_portfolio_get"];
         put?: never;
         post?: never;
@@ -147,7 +171,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Timeline */
+        /**
+         * A run's step timeline
+         * @description Any signed-in person. Each step with its duration, and each agent attempt with its model and tool calls.
+         */
         get: operations["timeline_dashboard_runs__run_id__timeline_get"];
         put?: never;
         post?: never;
@@ -164,7 +191,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Journey */
+        /**
+         * A use case's journey view
+         * @description Any signed-in person. Lanes per pinned terminal with a bar per run, arrows for reworks, reroutes, exceptions, events and re-entry with their causes, and the escalations and exceptions panel.
+         */
         get: operations["journey_dashboard_usecases__usecase_id__journey_get"];
         put?: never;
         post?: never;
@@ -181,7 +211,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Kpis */
+        /**
+         * A use case's KPIs
+         * @description Any signed-in person. Every KPI with its definition and value (`null` where it is not yet defined).
+         */
         get: operations["kpis_dashboard_usecases__usecase_id__kpis_get"];
         put?: never;
         post?: never;
@@ -198,7 +231,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Dead Letters */
+        /**
+         * List dead-lettered events
+         * @description The CoE role (`ADLC_DEADLETTER_ROLE`). Events the router could not deliver after its retries, with attempts, last error and how often each was re-queued.
+         */
         get: operations["dead_letters_dead_letters_get"];
         put?: never;
         post?: never;
@@ -215,7 +251,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Dead Letter */
+        /**
+         * A dead letter's payload and history
+         * @description The CoE role. The event's payload and its re-queue history.
+         */
         get: operations["dead_letter_dead_letters__event_id__get"];
         put?: never;
         post?: never;
@@ -234,7 +273,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Requeue */
+        /**
+         * Re-queue a dead letter
+         * @description The CoE role. Puts the event back in the outbox for delivery and records who did it.
+         */
         post: operations["requeue_dead_letters__event_id__requeue_post"];
         delete?: never;
         options?: never;
@@ -249,7 +291,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Proposed */
+        /**
+         * Proposed events waiting for me
+         * @description Events an agent proposed in a run's artifact, for a person in the terminal's accountable roles; empty for anyone else.
+         */
         get: operations["proposed_events_proposed_get"];
         put?: never;
         post?: never;
@@ -268,7 +313,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Decide */
+        /**
+         * Confirm or dismiss a proposed event
+         * @description A person in the terminal's accountable roles. Confirming raises the event (and its route runs); dismissing records it. Each proposal is decided once. The run is named by its three parts (`UC-0001`, `T<n>`, `run-1`).
+         */
         post: operations["decide_events_proposed__usecase_id___terminal_id___run_number___event_id__post"];
         delete?: never;
         options?: never;
@@ -283,7 +331,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Health */
+        /**
+         * Service health
+         * @description Public. `200` with every check `ok`, or `503` with the failing check `unavailable`.
+         */
         get: operations["health_health_get"];
         put?: never;
         post?: never;
@@ -300,7 +351,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Inbox */
+        /**
+         * What is waiting for me
+         * @description Any signed-in person. Sign-offs, clarifications, escalations, waivers and blocked runs addressed to one of the person's roles (and dead letters for the CoE role), soonest due first.
+         */
         get: operations["inbox_inbox_get"];
         put?: never;
         post?: never;
@@ -317,7 +371,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Detail */
+        /**
+         * A run's detail and decision form
+         * @description Any signed-in person. Everything SA §8.2 asks for on one page: the run, its artifacts and versions, prerequisites, control results, the reviewer's recommendation, prior rework, clarifications, approvals, waiver, timer, cost, timeline and evidence; and `form`, what this person may decide and what each outcome needs (built from the pinned spec).
+         */
         get: operations["detail_runs__run_id__get"];
         put?: never;
         post?: never;
@@ -335,7 +392,10 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Edit */
+        /**
+         * Edit an artifact
+         * @description A person in a sign-off or accountable role of the run, while it awaits sign-off or is escalated. Replaces the artifact's rows with a new version (the run's controls re-run); `changed` is false when the rows were identical. Sends `expected_version`.
+         */
         put: operations["edit_runs__run_id__artifacts__artifact_id__put"];
         post?: never;
         delete?: never;
@@ -353,7 +413,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Attach */
+        /**
+         * Attach a file to an artifact
+         * @description Same rights as editing. A multipart upload (`file`, `expected_version`) of an allowed type (`ADLC_ATTACHMENT_TYPES`) and size (`ADLC_ATTACHMENT_MAX`), stored content-addressed with the artifact's current version. The file name is reduced to its last path segment.
+         */
         post: operations["attach_runs__run_id__artifacts__artifact_id__attachments_post"];
         delete?: never;
         options?: never;
@@ -368,7 +431,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** History */
+        /**
+         * An artifact's versions
+         * @description Any signed-in person. Every version of the artifact on this run: who produced it, when, its hash, the version it was derived from, and its attachments.
+         */
         get: operations["history_runs__run_id__artifacts__artifact_id__history_get"];
         put?: never;
         post?: never;
@@ -387,7 +453,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Spreadsheet */
+        /**
+         * Replace a table from a spreadsheet
+         * @description Same rights as editing. A multipart `.xlsx` upload (`file`, `expected_version`); its rows become the artifact's new version.
+         */
         post: operations["spreadsheet_runs__run_id__artifacts__artifact_id__spreadsheet_post"];
         delete?: never;
         options?: never;
@@ -402,7 +471,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Download */
+        /**
+         * Download an attachment
+         * @description Any signed-in person. Only an attachment recorded on this run. Always a download: `Content-Disposition: attachment`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; sandbox`, `Cache-Control: private, no-store`.
+         */
         get: operations["download_runs__run_id__attachments__content_hash__get"];
         put?: never;
         post?: never;
@@ -421,7 +493,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Decide */
+        /**
+         * Decide on a run
+         * @description A person in a sign-off role of the run (the spec's status rights); `terminate` also for the roles the spec allows to terminate. Sends `expected_version`, the version the person saw. `rework` needs `root_cause` (and `target_terminal` where the cause's route resolves a terminal); `exception` needs the spec's waiver fields and opens a waiver; `pass` needs the emitted values the spec asks people to type. A decision that differs from the reviewer's recommendation needs a `reason`. Rights are checked on every decision.
+         */
         post: operations["decide_runs__run_id__decisions_post"];
         delete?: never;
         options?: never;
@@ -438,7 +513,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Complete Escalation */
+        /**
+         * Complete an escalated run
+         * @description A person in one of the terminal's accountable roles, while the run is escalated. Supplies the artifacts the agents could not finish; the run then goes to normal sign-off. Sends `expected_version`.
+         */
         post: operations["complete_escalation_runs__run_id__escalation_post"];
         delete?: never;
         options?: never;
@@ -453,10 +531,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Usecases */
+        /**
+         * List use cases
+         * @description Any signed-in person. Newest first, with each one's count of open runs. `mine=true`: those the person submitted or takes part in through a role of one of its runs.
+         */
         get: operations["list_usecases_usecases_get"];
         put?: never;
-        /** Submit */
+        /**
+         * Submit a use case
+         * @description A person in a role allowed to submit (the role catalogue's submitters; anyone when none is configured). Pins the active terminal specs and opens the first terminal's run.
+         */
         post: operations["submit_usecases_post"];
         delete?: never;
         options?: never;
@@ -471,7 +555,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Journey */
+        /**
+         * A use case's journey
+         * @description Any signed-in person. The use case, all its runs, per-terminal time and rework summary, and model cost.
+         */
         get: operations["journey_usecases__usecase_id__get"];
         put?: never;
         post?: never;
@@ -491,8 +578,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Verify
-         * @description Any signed-in person may verify a use case's chain; the run is recorded under them.
+         * Verify the use case's evidence ledger
+         * @description Any signed-in person. Re-computes the hash chain of the use case's ledger records and lists any break. The verification is itself recorded, under the person.
          */
         post: operations["verify_usecases__usecase_id__verify_post"];
         delete?: never;
@@ -510,7 +597,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Decide Waiver */
+        /**
+         * Approve or reject a waiver
+         * @description A person in a role allowed to set the exception (or the terminal's accountable roles), and not the person who proposed it. Approval closes the run as an exception; rejection returns it to sign-off.
+         */
         post: operations["decide_waiver_waivers__waiver_id__decision_post"];
         delete?: never;
         options?: never;
@@ -568,7 +658,10 @@ export interface components {
         };
         /** Answers */
         Answers: {
-            /** Answers */
+            /**
+             * Answers
+             * @description One answer per question, in order
+             */
             answers: string[];
         };
         /** Approval */
@@ -670,9 +763,15 @@ export interface components {
         };
         /** ChangeDecision */
         ChangeDecision: {
-            /** Approve */
+            /**
+             * Approve
+             * @description true approves the change, false rejects it
+             */
             approve: boolean;
-            /** Comment */
+            /**
+             * Comment
+             * @description Why
+             */
             comment?: string | null;
         };
         /**
@@ -698,13 +797,19 @@ export interface components {
         };
         /** Completion */
         Completion: {
-            /** Artifacts */
+            /**
+             * Artifacts
+             * @description Rows per artifact id, for the artifacts the agents could not finish
+             */
             artifacts: {
                 [key: string]: {
                     [key: string]: unknown;
                 }[];
             };
-            /** Expected Version */
+            /**
+             * Expected Version
+             * @description The run version the person saw
+             */
             expected_version: number;
         };
         /**
@@ -769,24 +874,43 @@ export interface components {
          *     (FR-002): the decision is always the signed-in person's.
          */
         Decision: {
-            /** Comment */
+            /**
+             * Comment
+             * @description Why (rework and terminate)
+             */
             comment?: string | null;
             /**
              * Decision
+             * @description The outcome; offered per person in the run detail's `form.outcomes`
              * @enum {string}
              */
             decision: "pass" | "rework" | "exception" | "terminate";
-            /** Expected Version */
+            /**
+             * Expected Version
+             * @description The run version the person saw
+             */
             expected_version: number;
-            /** Fields */
+            /**
+             * Fields
+             * @description Values the outcome needs (`form.requires`, `form.typed_fields`, or `alternative` on pass)
+             */
             fields?: {
                 [key: string]: unknown;
             };
-            /** Reason */
+            /**
+             * Reason
+             * @description Needed when the decision differs from the reviewer's recommendation
+             */
             reason?: string | null;
-            /** Root Cause */
+            /**
+             * Root Cause
+             * @description Rework only: one of `form.root_causes`
+             */
             root_cause?: string | null;
-            /** Target Terminal */
+            /**
+             * Target Terminal
+             * @description Rework only, for causes in `form.target_terminal_for`: the owning terminal
+             */
             target_terminal?: string | null;
         };
         /**
@@ -796,57 +920,125 @@ export interface components {
          *     Every value comes from the pinned spec and catalogues, so none is a literal here.
          */
         DecisionForm: {
-            /** Alternatives */
+            /**
+             * Alternatives
+             * @description Alternative routes a pass may take
+             */
             alternatives: string[];
-            /** Can Complete Escalation */
+            /**
+             * Can Complete Escalation
+             * @description May complete the escalation
+             */
             can_complete_escalation: boolean;
-            /** Can Decide */
+            /**
+             * Can Decide
+             * @description May decide now (not while controls re-run or a waiver is pending)
+             */
             can_decide: boolean;
-            /** Can Edit */
+            /**
+             * Can Edit
+             * @description May edit the artifacts
+             */
             can_edit: boolean;
-            /** Can Terminate */
+            /**
+             * Can Terminate
+             * @description May terminate the run
+             */
             can_terminate: boolean;
-            /** Controls Pending */
+            /**
+             * Controls Pending
+             * @description Controls are re-running after an edit
+             */
             controls_pending: boolean;
-            /** Outcomes */
+            /**
+             * Outcomes
+             * @description What this person may decide now
+             */
             outcomes: string[];
-            /** Reason Required Unless */
+            /**
+             * Reason Required Unless
+             * @description The reviewer's recommendation: any other decision needs a `reason`
+             */
             reason_required_unless: string | null;
-            /** Requires */
+            /**
+             * Requires
+             * @description Per outcome, the fields it needs
+             */
             requires: {
                 [key: string]: string[];
             };
-            /** Root Causes */
+            /**
+             * Root Causes
+             * @description Rework root causes to choose from
+             */
             root_causes: string[];
-            /** Sign Off Role */
+            /**
+             * Sign Off Role
+             * @description The role this person signs under
+             */
             sign_off_role: string | null;
-            /** Target Terminal For */
+            /**
+             * Target Terminal For
+             * @description Root causes that also need `target_terminal`
+             */
             target_terminal_for: string[];
-            /** Target Terminals */
+            /**
+             * Target Terminals
+             * @description The use case's pinned terminals
+             */
             target_terminals: string[];
-            /** Typed Fields */
+            /**
+             * Typed Fields
+             * @description Values a pass needs the person to type
+             */
             typed_fields: string[];
-            /** Waiver Pending */
+            /**
+             * Waiver Pending
+             * @description A waiver awaits its approver
+             */
             waiver_pending: boolean;
         };
         /** Edit */
         Edit: {
-            /** Expected Version */
+            /**
+             * Expected Version
+             * @description The run version the person saw
+             */
             expected_version: number;
-            /** Rows */
+            /**
+             * Rows
+             * @description The artifact's new rows (a table) or text
+             */
             rows: unknown;
+        };
+        /**
+         * ErrorBody
+         * @description Every refusal (``adlc.api.errors``): a kind the client can act on, the reason in words, and
+         *     the field it concerns when the input was invalid. Never a stack trace.
+         */
+        ErrorBody: {
+            /** Detail */
+            detail: string;
+            /**
+             * Field
+             * @default null
+             */
+            field: string | null;
+            /** Kind */
+            kind: string;
         };
         /** EventDecision */
         EventDecision: {
-            /** Comment */
+            /**
+             * Comment
+             * @description Why
+             */
             comment?: string | null;
-            /** Confirm */
+            /**
+             * Confirm
+             * @description true raises the event, false dismisses it
+             */
             confirm: boolean;
-        };
-        /** HTTPValidationError */
-        HTTPValidationError: {
-            /** Detail */
-            detail?: components["schemas"]["ValidationError"][];
         };
         /** Health */
         Health: {
@@ -866,17 +1058,29 @@ export interface components {
             /** Controls Pending */
             controls_pending: boolean;
             due_at: components["schemas"]["Timestamp"] | null;
-            /** Id */
+            /**
+             * Id
+             * @description The run, clarification, waiver or event it is about
+             */
             id: string;
-            /** Kind */
+            /**
+             * Kind
+             * @description sign_off, clarification, escalation, waiver, blocked or dead_letter
+             */
             kind: string;
-            /** Role */
+            /**
+             * Role
+             * @description The person's role it is addressed to
+             */
             role: string | null;
             /** Run Id */
             run_id: string | null;
             /** Terminal Id */
             terminal_id: string | null;
-            /** Title */
+            /**
+             * Title
+             * @description Platform words for the item
+             */
             title: string;
             /** Usecase Id */
             usecase_id: string | null;
@@ -988,6 +1192,7 @@ export interface components {
             /** Roles */
             roles: string[];
         };
+        /** @description US dollars as a decimal string, such as "0.0125" */
         Money: string;
         /** Panel */
         Panel: {
@@ -1077,6 +1282,7 @@ export interface components {
             /** Raised Event Id */
             raised_event_id?: string | null;
         };
+        /** @description A record as the platform stored it (a sign-off, a clarification round, a waiver, a check, the reviewer's output…): its keys are the store's */
         Record: {
             [key: string]: unknown;
         };
@@ -1105,33 +1311,71 @@ export interface components {
         };
         /** RunDetail */
         RunDetail: {
-            /** Approvals */
+            /**
+             * Approvals
+             * @description Passes recorded so far
+             */
             approvals: components["schemas"]["Approval"][];
-            /** Artifacts */
+            /**
+             * Artifacts
+             * @description Every artifact the spec declares
+             */
             artifacts: components["schemas"]["RunArtifact"][];
-            /** Checklist Results */
+            /**
+             * Checklist Results
+             * @description The checklist scores recorded
+             */
             checklist_results: components["schemas"]["Record"][];
-            /** Checks */
+            /**
+             * Checks
+             * @description The policy engine's decisions
+             */
             checks: components["schemas"]["Record"][];
-            /** Clarifications */
+            /**
+             * Clarifications
+             * @description Clarification rounds of this run
+             */
             clarifications: components["schemas"]["Record"][];
-            /** Control Results */
+            /**
+             * Control Results
+             * @description The controls' latest results
+             */
             control_results: components["schemas"]["Record"][];
+            /** @description Model usage and cost of this run */
             cost: components["schemas"]["CostTotals"];
-            /** Decisions */
+            /**
+             * Decisions
+             * @description Every sign-off decision on this run
+             */
             decisions: components["schemas"]["Record"][];
+            /** @description What this person may decide and what it needs */
             form: components["schemas"]["DecisionForm"];
+            /** @description The evidence ledger record, once the run closed */
             ledger_record: components["schemas"]["Record"] | null;
-            /** Prerequisites */
+            /**
+             * Prerequisites
+             * @description Each prerequisite with its latest result and reason
+             */
             prerequisites: components["schemas"]["Record"][];
-            /** Prior Rework */
+            /**
+             * Prior Rework
+             * @description Earlier runs of this terminal sent to rework, newest first
+             */
             prior_rework: components["schemas"]["PriorRework"][];
+            /** @description The reviewer agent's recommendation, with its checklist `items` */
             recommendation: components["schemas"]["Record"] | null;
+            /** @description The run at a glance */
             run: components["schemas"]["RunSummary"];
+            /** @description The pinned terminal spec */
             spec: components["schemas"]["SpecRef"];
-            /** Timeline */
+            /**
+             * Timeline
+             * @description The run's steps (`run_activity`)
+             */
             timeline: components["schemas"]["Record"][];
+            /** @description When the run is due, and whether it is overdue */
             timer: components["schemas"]["Timer"];
+            /** @description The pending waiver, if any */
             waiver: components["schemas"]["Record"] | null;
         };
         /**
@@ -1140,23 +1384,39 @@ export interface components {
          */
         RunSummary: {
             closed_at: components["schemas"]["Timestamp"] | null;
-            /** Controls Pending */
+            /**
+             * Controls Pending
+             * @description Controls are re-running after an edit
+             */
             controls_pending: boolean;
+            /** @description When the current wait is due */
             due_at: components["schemas"]["Timestamp"] | null;
-            /** Final Status */
+            /**
+             * Final Status
+             * @description The outcome once closed (pass, rework…)
+             */
             final_status: string | null;
             opened_at: components["schemas"]["Timestamp"];
-            /** Run Id */
+            /**
+             * Run Id
+             * @description `<use case>/<terminal>/run-<n>`
+             */
             run_id: string;
             /** Run Number */
             run_number: number;
-            /** State */
+            /**
+             * State
+             * @description The run state (opened, building, awaiting_sign_off, …)
+             */
             state: string;
             /** Terminal Id */
             terminal_id: string;
             /** Usecase Id */
             usecase_id: string;
-            /** Version */
+            /**
+             * Version
+             * @description Send it back as `expected_version` when acting
+             */
             version: number;
         };
         /** RunTimeline */
@@ -1179,6 +1439,7 @@ export interface components {
             password: string;
             /**
              * Session
+             * @description `bearer`: answer a token. `cookie` (the browser): set the HttpOnly session cookie; needs the header `X-ADLC-CSRF: sign-in`
              * @default bearer
              * @enum {string}
              */
@@ -1210,9 +1471,15 @@ export interface components {
         };
         /** Submission */
         Submission: {
-            /** Intake Text */
+            /**
+             * Intake Text
+             * @description The problem, the people involved and the outcome wanted, in the submitter's words
+             */
             intake_text: string;
-            /** Name */
+            /**
+             * Name
+             * @description A short name
+             */
             name: string;
         };
         /** Submitted */
@@ -1258,6 +1525,7 @@ export interface components {
             /** Overdue */
             overdue: boolean;
         };
+        /** @description A time, ISO 8601 in UTC */
         Timestamp: string;
         /** UseCase */
         UseCase: {
@@ -1307,19 +1575,6 @@ export interface components {
             /** Usecase Id */
             usecase_id: string;
         };
-        /** ValidationError */
-        ValidationError: {
-            /** Context */
-            ctx?: Record<string, never>;
-            /** Input */
-            input?: unknown;
-            /** Location */
-            loc: (string | number)[];
-            /** Message */
-            msg: string;
-            /** Error Type */
-            type: string;
-        };
         /**
          * Verification
          * @description A hash-chain verification (``adlc.ledger.verify.Report``).
@@ -1340,9 +1595,15 @@ export interface components {
         };
         /** WaiverDecision */
         WaiverDecision: {
-            /** Approve */
+            /**
+             * Approve
+             * @description true approves the waiver, false rejects it
+             */
             approve: boolean;
-            /** Comment */
+            /**
+             * Comment
+             * @description Why
+             */
             comment?: string | null;
         };
     };
@@ -1363,13 +1624,22 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1387,7 +1657,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1396,13 +1666,31 @@ export interface operations {
                     "application/json": components["schemas"]["SignInResponse"] | components["schemas"]["BrowserSignInResponse"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1416,12 +1704,30 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description Done; no body */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
             };
         };
     };
@@ -1434,13 +1740,22 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["ChangeRequest"][];
+                };
+            };
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1450,6 +1765,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A change request, such as `CHG-1` */
                 change_id: string;
             };
             cookie?: never;
@@ -1460,7 +1776,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1469,13 +1785,49 @@ export interface operations {
                     "application/json": components["schemas"]["ChangeRequest"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1485,6 +1837,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A clarification: `<run id>/clar-<n>` (contains `/`) */
                 clarification_id: string;
             };
             cookie?: never;
@@ -1495,7 +1848,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1504,13 +1857,49 @@ export interface operations {
                     "application/json": components["schemas"]["RunSummary"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1518,10 +1907,15 @@ export interface operations {
     activity_dashboard_activity_get: {
         parameters: {
             query?: {
+                /** @description Only this use case */
                 usecase_id?: string | null;
+                /** @description Only this terminal */
                 terminal_id?: string | null;
+                /** @description agent, reviewer, human, orchestrator or system */
                 actor_type?: string | null;
+                /** @description Only this run step */
                 step?: string | null;
+                /** @description At most this many actions (1 to 1000) */
                 limit?: number;
             };
             header?: never;
@@ -1530,7 +1924,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1539,13 +1933,22 @@ export interface operations {
                     "application/json": components["schemas"]["ActivityEntry"][];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1553,7 +1956,9 @@ export interface operations {
     portfolio_dashboard_portfolio_get: {
         parameters: {
             query?: {
+                /** @description Only use cases of this risk tier */
                 risk_tier?: string | null;
+                /** @description Only use cases in this status */
                 status?: string | null;
             };
             header?: never;
@@ -1562,7 +1967,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1571,13 +1976,22 @@ export interface operations {
                     "application/json": components["schemas"]["Portfolio"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1587,13 +2001,14 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`) */
                 run_id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1602,13 +2017,31 @@ export interface operations {
                     "application/json": components["schemas"]["RunTimeline"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1618,13 +2051,14 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A use case, such as `UC-0001` */
                 usecase_id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1633,13 +2067,31 @@ export interface operations {
                     "application/json": components["schemas"]["Journey"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1649,13 +2101,14 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A use case, such as `UC-0001` */
                 usecase_id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1664,13 +2117,31 @@ export interface operations {
                     "application/json": components["schemas"]["Kpis"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1684,13 +2155,31 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["DeadLetter"][];
+                };
+            };
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1700,13 +2189,14 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description The event's id (a dead letter's UUID, or a proposed event's id in its artifact) */
                 event_id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1715,13 +2205,40 @@ export interface operations {
                     "application/json": components["schemas"]["DeadLetterDetail"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1731,26 +2248,54 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description The event's id (a dead letter's UUID, or a proposed event's id in its artifact) */
                 event_id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description Done; no body */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1764,13 +2309,22 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["ProposedEvent"][];
+                };
+            };
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1780,9 +2334,13 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A use case, such as `UC-0001` */
                 usecase_id: string;
+                /** @description A terminal id from the pinned specs, `T<n>` */
                 terminal_id: string;
+                /** @description The run's last part, such as `run-1` */
                 run_number: string;
+                /** @description The event's id (a dead letter's UUID, or a proposed event's id in its artifact) */
                 event_id: string;
             };
             cookie?: never;
@@ -1793,7 +2351,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1802,13 +2360,49 @@ export interface operations {
                     "application/json": components["schemas"]["ProposedEventDecided"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1822,8 +2416,17 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Health"];
+                };
+            };
+            /** @description A check failed: the body says which */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -1842,13 +2445,22 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["InboxItem"][];
+                };
+            };
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1858,13 +2470,14 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`) */
                 run_id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1873,13 +2486,31 @@ export interface operations {
                     "application/json": components["schemas"]["RunDetail"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1889,7 +2520,9 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`) */
                 run_id: string;
+                /** @description An artifact id of the run's terminal spec, such as `kpis` */
                 artifact_id: string;
             };
             cookie?: never;
@@ -1900,7 +2533,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1909,13 +2542,49 @@ export interface operations {
                     "application/json": components["schemas"]["ArtifactSaved"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1925,7 +2594,9 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`) */
                 run_id: string;
+                /** @description An artifact id of the run's terminal spec, such as `kpis` */
                 artifact_id: string;
             };
             cookie?: never;
@@ -1936,7 +2607,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1945,13 +2616,49 @@ export interface operations {
                     "application/json": components["schemas"]["RunChanged"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1961,14 +2668,16 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`) */
                 run_id: string;
+                /** @description An artifact id of the run's terminal spec, such as `kpis` */
                 artifact_id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -1977,13 +2686,31 @@ export interface operations {
                     "application/json": components["schemas"]["ArtifactHistoryEntry"][];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -1993,7 +2720,9 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`) */
                 run_id: string;
+                /** @description An artifact id of the run's terminal spec, such as `kpis` */
                 artifact_id: string;
             };
             cookie?: never;
@@ -2004,7 +2733,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2013,13 +2742,49 @@ export interface operations {
                     "application/json": components["schemas"]["RunChanged"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -2029,7 +2794,9 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`) */
                 run_id: string;
+                /** @description The attachment's SHA-256, from the artifact's `attachments` */
                 content_hash: string;
             };
             cookie?: never;
@@ -2045,13 +2812,31 @@ export interface operations {
                     "application/octet-stream": unknown;
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -2061,6 +2846,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`) */
                 run_id: string;
             };
             cookie?: never;
@@ -2071,7 +2857,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2080,13 +2866,49 @@ export interface operations {
                     "application/json": components["schemas"]["RunSummary"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -2096,6 +2918,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`) */
                 run_id: string;
             };
             cookie?: never;
@@ -2106,7 +2929,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2115,13 +2938,49 @@ export interface operations {
                     "application/json": components["schemas"]["RunSummary"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -2129,6 +2988,7 @@ export interface operations {
     list_usecases_usecases_get: {
         parameters: {
             query?: {
+                /** @description Only those I submitted or take part in through a role */
                 mine?: boolean;
             };
             header?: never;
@@ -2137,7 +2997,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2146,13 +3006,22 @@ export interface operations {
                     "application/json": components["schemas"]["UseCaseListItem"][];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -2170,7 +3039,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description Created */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -2179,13 +3048,40 @@ export interface operations {
                     "application/json": components["schemas"]["Submitted"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -2195,13 +3091,14 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A use case, such as `UC-0001` */
                 usecase_id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2210,13 +3107,31 @@ export interface operations {
                     "application/json": components["schemas"]["UseCaseJourney"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -2226,13 +3141,14 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A use case, such as `UC-0001` */
                 usecase_id: string;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2241,13 +3157,40 @@ export interface operations {
                     "application/json": components["schemas"]["Verification"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };
@@ -2257,6 +3200,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
+                /** @description A waiver, such as `WVR-0001` */
                 waiver_id: string;
             };
             cookie?: never;
@@ -2267,7 +3211,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description OK */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -2276,13 +3220,49 @@ export interface operations {
                     "application/json": components["schemas"]["RunSummary"];
                 };
             };
-            /** @description Validation Error */
+            /** @description `not_signed_in`: no session, or it expired or was revoked */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `not_found`: no such use case, run, request, event or file */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorBody"];
+                };
+            };
+            /** @description `invalid`: the input was refused; `field` names it when one field is at fault */
             422: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
+                    "application/json": components["schemas"]["ErrorBody"];
                 };
             };
         };

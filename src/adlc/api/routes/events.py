@@ -13,8 +13,8 @@ router = APIRouter()
 
 
 class EventDecision(BaseModel):
-    confirm: bool
-    comment: str | None = Field(default=None, max_length=2000)
+    confirm: bool = Field(description="true raises the event, false dismisses it")
+    comment: str | None = Field(default=None, max_length=2000, description="Why")
 
 
 @router.get(

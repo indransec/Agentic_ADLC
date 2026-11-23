@@ -8,16 +8,18 @@ exactly, so a model that drops, renames or re-serialises a field fails here.
 Record the goldens with ``pytest tests/integration/api/test_response_shapes.py --update-golden``.
 """
 
+import io
 import json
 import re
-from datetime import timedelta
+import zipfile
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
 import pytest
+from openpyxl import Workbook
 
 from adlc.orchestration.interfaces import Clarification
-from tests.integration.api.test_artifacts import xlsx
 from tests.integration.api.test_changes_api import APPROVER, _raise
 from tests.integration.api.test_dead_letters_admin import COE, _dead_letter
 from tests.integration.api.test_proposed_events import OWNER, _propose
@@ -32,6 +34,38 @@ ARTIFACT = "kpis"  # a T1 artifact in adlc-specs (as in test_artifacts.py)
 _TIME = re.compile(r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?")
 _UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
 _SHA = re.compile(r"\b[0-9a-f]{64}\b")
+
+
+FIXED_TIME = datetime(2026, 1, 1, tzinfo=UTC).replace(tzinfo=None)
+_W3C_TIME = re.compile(rb"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z")
+
+
+def xlsx(rows: list[list[object]]) -> bytes:
+    """The same bytes every time: openpyxl stamps the current time into a workbook, and the
+    recorded attachment's size would vary with it."""
+    book = Workbook()
+    book.properties.created = FIXED_TIME
+    book.properties.modified = FIXED_TIME
+    sheet = book.active
+    assert sheet is not None
+    sheet.title = ARTIFACT
+    for row in rows:
+        sheet.append(row)
+    out = io.BytesIO()
+    book.save(out)
+    fixed = io.BytesIO()  # repack: every zip entry carries its own time as well
+    with (
+        zipfile.ZipFile(io.BytesIO(out.getvalue())) as source,
+        zipfile.ZipFile(fixed, "w", zipfile.ZIP_DEFLATED) as target,
+    ):
+        for entry in source.infolist():
+            stamped = zipfile.ZipInfo(entry.filename, date_time=(2026, 1, 1, 0, 0, 0))
+            stamped.compress_type = zipfile.ZIP_DEFLATED
+            data = source.read(entry.filename)
+            if entry.filename == "docProps/core.xml":  # openpyxl sets "modified" at save time
+                data = _W3C_TIME.sub(b"2026-01-01T00:00:00Z", data)
+            target.writestr(stamped, data)
+    return fixed.getvalue()
 
 
 def normalise(value: Any) -> Any:

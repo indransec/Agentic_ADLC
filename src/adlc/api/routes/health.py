@@ -29,7 +29,11 @@ def _database(engine: Engine) -> CheckState:
     return "ok"
 
 
-@router.get("/health", response_model=Health)
+@router.get(
+    "/health",
+    response_model=Health,
+    responses={503: {"model": Health, "description": "A check failed: the body says which"}},
+)
 def health(request: Request, response: Response) -> Health:
     checks: dict[str, CheckState] = {"database": _database(request.app.state.engine)}
     healthy = all(state == "ok" for state in checks.values())

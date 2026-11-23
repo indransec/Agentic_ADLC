@@ -27,8 +27,8 @@ FALLBACK_TYPE = "application/octet-stream"
 
 class Edit(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    rows: Any
-    expected_version: int = Field(ge=0)
+    rows: Any = Field(description="The artifact's new rows (a table) or text")
+    expected_version: int = Field(ge=0, description="The run version the person saw")
 
 
 VersionField = Annotated[int, Form(ge=0)]

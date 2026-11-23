@@ -12,8 +12,8 @@ router = APIRouter()
 
 
 class ChangeDecision(BaseModel):
-    approve: bool
-    comment: str | None = Field(default=None, max_length=2000)
+    approve: bool = Field(description="true approves the change, false rejects it")
+    comment: str | None = Field(default=None, max_length=2000, description="Why")
 
 
 @router.get("/changes", response_model=list[ChangeRequest], response_model_exclude_unset=True)

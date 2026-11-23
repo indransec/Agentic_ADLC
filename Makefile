@@ -16,7 +16,7 @@ GITLEAKS_IMAGE := ghcr.io/gitleaks/gitleaks:v8.30.1
 .PHONY: help install up down status reset local local-setup migrate migrate-down phoenix lint typecheck test \
         migration-check secret-scan check spec-validate spec-register \
         demo demo-auto demo-live demo-reset resilience trace \
-        web-install web-browsers web-build web-dev web-lint web-typecheck web-test web-e2e web-check openapi
+        web-install web-browsers web-build web-dev web-lint web-typecheck web-test web-e2e web-check openapi api-docs
 
 # L5 spec validation compares with this git ref (override in the environment).
 ADLC_SPEC_BASELINE_REF ?= origin/main
@@ -197,11 +197,18 @@ web-check:
 	@$(MAKE) --no-print-directory web-test
 	@$(MAKE) --no-print-directory web-e2e
 
-# The platform contract: the API's OpenAPI document and the web application's types from it
+# The platform contract: the API's OpenAPI document, the web application's types from it, and
+# the API reference (docs/api-reference.md)
 openapi:
 	@echo "==> openapi"
 	$(UV) python -m scripts.export_openapi web/src/api/openapi.json
 	$(PNPM) exec openapi-typescript src/api/openapi.json -o src/api/schema.d.ts
+	@$(MAKE) --no-print-directory api-docs
+
+# The API reference, generated from the API's own OpenAPI document (never edited by hand)
+api-docs:
+	@echo "==> api-docs"
+	$(UV) python -m scripts.api_docs docs/api-reference.md
 
 # ------------------------------------------------------------------ demo (feature 014)
 FROM_STEP ?= 1

@@ -32,7 +32,7 @@
         "content_hash": "sha256:<sha256>",
         "media_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "name": "kpis.xlsx",
-        "size": 5000
+        "size": 4997
       }
     ],
     "attempt": null,

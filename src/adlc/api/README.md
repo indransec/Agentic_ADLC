@@ -5,6 +5,9 @@ only way people, and the web application, reach the platform: the web applicatio
 database connection (007 FR-020). Contracts: `specs/007-human-inbox/contracts/api.md`,
 `specs/022-react-web-app/contracts/session.md` and `contracts/platform-contract.md`.
 
+**The API reference, operation by operation: [`docs/api-reference.md`](../../../docs/api-reference.md)**,
+generated from this package by `make api-docs` (part of `make openapi`).
+
 ## Modules
 
 | Module | Purpose |
@@ -13,6 +16,7 @@ database connection (007 FR-020). Contracts: `specs/007-human-inbox/contracts/ap
 | `auth.py` | Sessions, deny by default: every path needs one except `PUBLIC_PATHS` (`/health`, `/auth/sign-in`, unchanged by 022). A session arrives as `Authorization: Bearer` (tools, tests, pilot processes; wins when both are present) or as the browser's HttpOnly `adlc_session` cookie. A changing request (not GET, HEAD or OPTIONS) made with the cookie needs `X-ADLC-CSRF`, the session's HMAC value (`csrf_value`); otherwise `403 not_allowed`. |
 | `schemas/` | 022: the answer models, one module per router. `ApiModel` refuses undeclared keys (`extra="forbid"`), so a service returning a new key fails in the tests instead of the key being dropped. Rows passed through from the store are `Record`; routes use `response_model_exclude_unset`, so keys sometimes absent stay absent. |
 | `deps.py` | `Services`, built on first use: `SqlTerminalRun` with the real policy engine and stub agent and reviewer (the API never advances runs; the orchestrator worker does), `OrchestratorService`, `LedgerService` and `InboxService`. `current_actor` turns the session's person into the acting actor. |
+| `docs.py` | 022: every operation's contract (area, summary, who may call it, what it does, the errors it can give), applied to the OpenAPI document as it is generated. Generating the document fails on an undocumented operation. Errors are declared as `ErrorBody`, the shape actually answered. |
 | `errors.py` | One error body for every operation. |
 | `routes/` | `auth` (sign-in in bearer or cookie mode, me, sign-out), `usecases` (submit, list, journey, verify), `inbox`, `runs` (detail, decisions, escalation completion), `artifacts` (edit, spreadsheet, attachments, history, download), `requests` (clarification answers, waiver decisions, dead letters), `changes`, `events`, `dashboard`. |
 
@@ -59,7 +63,8 @@ database connection (007 FR-020). Contracts: `specs/007-human-inbox/contracts/ap
 - `make openapi` writes `web/src/api/openapi.json` (built in-process, so `/openapi.json` stays
   behind the session) and generates the web application's types from it.
 - `tests/unit/api/test_openapi_fresh.py` fails when the committed document is stale, and when any
-  JSON answer is not a named model.
+  JSON answer is not a named model; `tests/unit/api/test_api_docs_fresh.py` does the same for
+  `docs/api-reference.md`.
 - `tests/integration/api/test_response_shapes.py` compares every typed route's JSON with goldens
   recorded before the models existed. Re-record only for an intended change:
   `pytest tests/integration/api/test_response_shapes.py --update-golden`.

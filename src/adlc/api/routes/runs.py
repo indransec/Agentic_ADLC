@@ -22,19 +22,39 @@ class Decision(BaseModel):
     (FR-002): the decision is always the signed-in person's."""
 
     model_config = ConfigDict(extra="forbid")
-    decision: Literal["pass", "rework", "exception", "terminate"]
-    comment: str | None = Field(default=None, max_length=4000)
-    root_cause: str | None = Field(default=None, max_length=100)
-    reason: str | None = Field(default=None, max_length=2000)
-    fields: dict[str, Any] = Field(default_factory=dict)
-    target_terminal: str | None = Field(default=None, max_length=20)
-    expected_version: int = Field(ge=0)
+    decision: Literal["pass", "rework", "exception", "terminate"] = Field(
+        description="The outcome; offered per person in the run detail's `form.outcomes`"
+    )
+    comment: str | None = Field(
+        default=None, max_length=4000, description="Why (rework and terminate)"
+    )
+    root_cause: str | None = Field(
+        default=None, max_length=100, description="Rework only: one of `form.root_causes`"
+    )
+    reason: str | None = Field(
+        default=None,
+        max_length=2000,
+        description="Needed when the decision differs from the reviewer's recommendation",
+    )
+    fields: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Values the outcome needs (`form.requires`, `form.typed_fields`, or "
+        "`alternative` on pass)",
+    )
+    target_terminal: str | None = Field(
+        default=None,
+        max_length=20,
+        description="Rework only, for causes in `form.target_terminal_for`: the owning terminal",
+    )
+    expected_version: int = Field(ge=0, description="The run version the person saw")
 
 
 class Completion(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    artifacts: dict[str, list[dict[str, Any]]]
-    expected_version: int = Field(ge=0)
+    artifacts: dict[str, list[dict[str, Any]]] = Field(
+        description="Rows per artifact id, for the artifacts the agents could not finish"
+    )
+    expected_version: int = Field(ge=0, description="The run version the person saw")
 
 
 @router.post(

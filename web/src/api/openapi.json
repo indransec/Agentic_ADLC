@@ -166,6 +166,7 @@
         "additionalProperties": false,
         "properties": {
           "answers": {
+            "description": "One answer per question, in order",
             "items": {
               "type": "string"
             },
@@ -461,6 +462,7 @@
       "ChangeDecision": {
         "properties": {
           "approve": {
+            "description": "true approves the change, false rejects it",
             "title": "Approve",
             "type": "boolean"
           },
@@ -474,6 +476,7 @@
                 "type": "null"
               }
             ],
+            "description": "Why",
             "title": "Comment"
           }
         },
@@ -555,10 +558,12 @@
               },
               "type": "array"
             },
+            "description": "Rows per artifact id, for the artifacts the agents could not finish",
             "title": "Artifacts",
             "type": "object"
           },
           "expected_version": {
+            "description": "The run version the person saw",
             "minimum": 0.0,
             "title": "Expected Version",
             "type": "integer"
@@ -817,9 +822,11 @@
                 "type": "null"
               }
             ],
+            "description": "Why (rework and terminate)",
             "title": "Comment"
           },
           "decision": {
+            "description": "The outcome; offered per person in the run detail's `form.outcomes`",
             "enum": [
               "pass",
               "rework",
@@ -830,12 +837,14 @@
             "type": "string"
           },
           "expected_version": {
+            "description": "The run version the person saw",
             "minimum": 0.0,
             "title": "Expected Version",
             "type": "integer"
           },
           "fields": {
             "additionalProperties": true,
+            "description": "Values the outcome needs (`form.requires`, `form.typed_fields`, or `alternative` on pass)",
             "title": "Fields",
             "type": "object"
           },
@@ -849,6 +858,7 @@
                 "type": "null"
               }
             ],
+            "description": "Needed when the decision differs from the reviewer's recommendation",
             "title": "Reason"
           },
           "root_cause": {
@@ -861,6 +871,7 @@
                 "type": "null"
               }
             ],
+            "description": "Rework only: one of `form.root_causes`",
             "title": "Root Cause"
           },
           "target_terminal": {
@@ -873,6 +884,7 @@
                 "type": "null"
               }
             ],
+            "description": "Rework only, for causes in `form.target_terminal_for`: the owning terminal",
             "title": "Target Terminal"
           }
         },
@@ -888,6 +900,7 @@
         "description": "What this person may decide and what each outcome needs (``adlc.inbox.forms``).\n\nEvery value comes from the pinned spec and catalogues, so none is a literal here.",
         "properties": {
           "alternatives": {
+            "description": "Alternative routes a pass may take",
             "items": {
               "type": "string"
             },
@@ -895,26 +908,32 @@
             "type": "array"
           },
           "can_complete_escalation": {
+            "description": "May complete the escalation",
             "title": "Can Complete Escalation",
             "type": "boolean"
           },
           "can_decide": {
+            "description": "May decide now (not while controls re-run or a waiver is pending)",
             "title": "Can Decide",
             "type": "boolean"
           },
           "can_edit": {
+            "description": "May edit the artifacts",
             "title": "Can Edit",
             "type": "boolean"
           },
           "can_terminate": {
+            "description": "May terminate the run",
             "title": "Can Terminate",
             "type": "boolean"
           },
           "controls_pending": {
+            "description": "Controls are re-running after an edit",
             "title": "Controls Pending",
             "type": "boolean"
           },
           "outcomes": {
+            "description": "What this person may decide now",
             "items": {
               "type": "string"
             },
@@ -930,6 +949,7 @@
                 "type": "null"
               }
             ],
+            "description": "The reviewer's recommendation: any other decision needs a `reason`",
             "title": "Reason Required Unless"
           },
           "requires": {
@@ -939,10 +959,12 @@
               },
               "type": "array"
             },
+            "description": "Per outcome, the fields it needs",
             "title": "Requires",
             "type": "object"
           },
           "root_causes": {
+            "description": "Rework root causes to choose from",
             "items": {
               "type": "string"
             },
@@ -958,9 +980,11 @@
                 "type": "null"
               }
             ],
+            "description": "The role this person signs under",
             "title": "Sign Off Role"
           },
           "target_terminal_for": {
+            "description": "Root causes that also need `target_terminal`",
             "items": {
               "type": "string"
             },
@@ -968,6 +992,7 @@
             "type": "array"
           },
           "target_terminals": {
+            "description": "The use case's pinned terminals",
             "items": {
               "type": "string"
             },
@@ -975,6 +1000,7 @@
             "type": "array"
           },
           "typed_fields": {
+            "description": "Values a pass needs the person to type",
             "items": {
               "type": "string"
             },
@@ -982,6 +1008,7 @@
             "type": "array"
           },
           "waiver_pending": {
+            "description": "A waiver awaits its approver",
             "title": "Waiver Pending",
             "type": "boolean"
           }
@@ -1010,11 +1037,13 @@
         "additionalProperties": false,
         "properties": {
           "expected_version": {
+            "description": "The run version the person saw",
             "minimum": 0.0,
             "title": "Expected Version",
             "type": "integer"
           },
           "rows": {
+            "description": "The artifact's new rows (a table) or text",
             "title": "Rows"
           }
         },
@@ -1023,6 +1052,38 @@
           "expected_version"
         ],
         "title": "Edit",
+        "type": "object"
+      },
+      "ErrorBody": {
+        "additionalProperties": false,
+        "description": "Every refusal (``adlc.api.errors``): a kind the client can act on, the reason in words, and\nthe field it concerns when the input was invalid. Never a stack trace.",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Field"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "detail"
+        ],
+        "title": "ErrorBody",
         "type": "object"
       },
       "EventDecision": {
@@ -1037,9 +1098,11 @@
                 "type": "null"
               }
             ],
+            "description": "Why",
             "title": "Comment"
           },
           "confirm": {
+            "description": "true raises the event, false dismisses it",
             "title": "Confirm",
             "type": "boolean"
           }
@@ -1048,19 +1111,6 @@
           "confirm"
         ],
         "title": "EventDecision",
-        "type": "object"
-      },
-      "HTTPValidationError": {
-        "properties": {
-          "detail": {
-            "items": {
-              "$ref": "#/components/schemas/ValidationError"
-            },
-            "title": "Detail",
-            "type": "array"
-          }
-        },
-        "title": "HTTPValidationError",
         "type": "object"
       },
       "Health": {
@@ -1120,10 +1170,12 @@
             ]
           },
           "id": {
+            "description": "The run, clarification, waiver or event it is about",
             "title": "Id",
             "type": "string"
           },
           "kind": {
+            "description": "sign_off, clarification, escalation, waiver, blocked or dead_letter",
             "title": "Kind",
             "type": "string"
           },
@@ -1136,6 +1188,7 @@
                 "type": "null"
               }
             ],
+            "description": "The person's role it is addressed to",
             "title": "Role"
           },
           "run_id": {
@@ -1161,6 +1214,7 @@
             "title": "Terminal Id"
           },
           "title": {
+            "description": "Platform words for the item",
             "title": "Title",
             "type": "string"
           },
@@ -1524,6 +1578,7 @@
         "type": "object"
       },
       "Money": {
+        "description": "US dollars as a decimal string, such as \"0.0125\"",
         "type": "string"
       },
       "Panel": {
@@ -1791,6 +1846,7 @@
       },
       "Record": {
         "additionalProperties": true,
+        "description": "A record as the platform stored it (a sign-off, a clarification round, a waiver, a check, the reviewer's output…): its keys are the store's",
         "type": "object"
       },
       "RunArtifact": {
@@ -1868,6 +1924,7 @@
         "additionalProperties": false,
         "properties": {
           "approvals": {
+            "description": "Passes recorded so far",
             "items": {
               "$ref": "#/components/schemas/Approval"
             },
@@ -1875,6 +1932,7 @@
             "type": "array"
           },
           "artifacts": {
+            "description": "Every artifact the spec declares",
             "items": {
               "$ref": "#/components/schemas/RunArtifact"
             },
@@ -1882,6 +1940,7 @@
             "type": "array"
           },
           "checklist_results": {
+            "description": "The checklist scores recorded",
             "items": {
               "$ref": "#/components/schemas/Record"
             },
@@ -1889,6 +1948,7 @@
             "type": "array"
           },
           "checks": {
+            "description": "The policy engine's decisions",
             "items": {
               "$ref": "#/components/schemas/Record"
             },
@@ -1896,6 +1956,7 @@
             "type": "array"
           },
           "clarifications": {
+            "description": "Clarification rounds of this run",
             "items": {
               "$ref": "#/components/schemas/Record"
             },
@@ -1903,6 +1964,7 @@
             "type": "array"
           },
           "control_results": {
+            "description": "The controls' latest results",
             "items": {
               "$ref": "#/components/schemas/Record"
             },
@@ -1910,9 +1972,11 @@
             "type": "array"
           },
           "cost": {
-            "$ref": "#/components/schemas/CostTotals"
+            "$ref": "#/components/schemas/CostTotals",
+            "description": "Model usage and cost of this run"
           },
           "decisions": {
+            "description": "Every sign-off decision on this run",
             "items": {
               "$ref": "#/components/schemas/Record"
             },
@@ -1920,7 +1984,8 @@
             "type": "array"
           },
           "form": {
-            "$ref": "#/components/schemas/DecisionForm"
+            "$ref": "#/components/schemas/DecisionForm",
+            "description": "What this person may decide and what it needs"
           },
           "ledger_record": {
             "anyOf": [
@@ -1930,9 +1995,11 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "The evidence ledger record, once the run closed"
           },
           "prerequisites": {
+            "description": "Each prerequisite with its latest result and reason",
             "items": {
               "$ref": "#/components/schemas/Record"
             },
@@ -1940,6 +2007,7 @@
             "type": "array"
           },
           "prior_rework": {
+            "description": "Earlier runs of this terminal sent to rework, newest first",
             "items": {
               "$ref": "#/components/schemas/PriorRework"
             },
@@ -1954,15 +2022,19 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "The reviewer agent's recommendation, with its checklist `items`"
           },
           "run": {
-            "$ref": "#/components/schemas/RunSummary"
+            "$ref": "#/components/schemas/RunSummary",
+            "description": "The run at a glance"
           },
           "spec": {
-            "$ref": "#/components/schemas/SpecRef"
+            "$ref": "#/components/schemas/SpecRef",
+            "description": "The pinned terminal spec"
           },
           "timeline": {
+            "description": "The run's steps (`run_activity`)",
             "items": {
               "$ref": "#/components/schemas/Record"
             },
@@ -1970,7 +2042,8 @@
             "type": "array"
           },
           "timer": {
-            "$ref": "#/components/schemas/Timer"
+            "$ref": "#/components/schemas/Timer",
+            "description": "When the run is due, and whether it is overdue"
           },
           "waiver": {
             "anyOf": [
@@ -1980,7 +2053,8 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "The pending waiver, if any"
           }
         },
         "required": [
@@ -2021,6 +2095,7 @@
             ]
           },
           "controls_pending": {
+            "description": "Controls are re-running after an edit",
             "title": "Controls Pending",
             "type": "boolean"
           },
@@ -2032,7 +2107,8 @@
               {
                 "type": "null"
               }
-            ]
+            ],
+            "description": "When the current wait is due"
           },
           "final_status": {
             "anyOf": [
@@ -2043,12 +2119,14 @@
                 "type": "null"
               }
             ],
+            "description": "The outcome once closed (pass, rework…)",
             "title": "Final Status"
           },
           "opened_at": {
             "$ref": "#/components/schemas/Timestamp"
           },
           "run_id": {
+            "description": "`<use case>/<terminal>/run-<n>`",
             "title": "Run Id",
             "type": "string"
           },
@@ -2057,6 +2135,7 @@
             "type": "integer"
           },
           "state": {
+            "description": "The run state (opened, building, awaiting_sign_off, …)",
             "title": "State",
             "type": "string"
           },
@@ -2069,6 +2148,7 @@
             "type": "string"
           },
           "version": {
+            "description": "Send it back as `expected_version` when acting",
             "title": "Version",
             "type": "integer"
           }
@@ -2137,6 +2217,7 @@
           },
           "session": {
             "default": "bearer",
+            "description": "`bearer`: answer a token. `cookie` (the browser): set the HttpOnly session cookie; needs the header `X-ADLC-CSRF: sign-in`",
             "enum": [
               "bearer",
               "cookie"
@@ -2204,12 +2285,14 @@
         "additionalProperties": false,
         "properties": {
           "intake_text": {
+            "description": "The problem, the people involved and the outcome wanted, in the submitter's words",
             "maxLength": 20000,
             "minLength": 1,
             "title": "Intake Text",
             "type": "string"
           },
           "name": {
+            "description": "A short name",
             "maxLength": 200,
             "minLength": 1,
             "title": "Name",
@@ -2368,7 +2451,8 @@
           {
             "type": "string"
           }
-        ]
+        ],
+        "description": "A time, ISO 8601 in UTC"
       },
       "UseCase": {
         "additionalProperties": false,
@@ -2520,46 +2604,6 @@
         "title": "UseCaseListItem",
         "type": "object"
       },
-      "ValidationError": {
-        "properties": {
-          "ctx": {
-            "title": "Context",
-            "type": "object"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "loc": {
-            "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "integer"
-                }
-              ]
-            },
-            "title": "Location",
-            "type": "array"
-          },
-          "msg": {
-            "title": "Message",
-            "type": "string"
-          },
-          "type": {
-            "title": "Error Type",
-            "type": "string"
-          }
-        },
-        "required": [
-          "loc",
-          "msg",
-          "type"
-        ],
-        "title": "ValidationError",
-        "type": "object"
-      },
       "Verification": {
         "additionalProperties": false,
         "description": "A hash-chain verification (``adlc.ledger.verify.Report``).",
@@ -2606,6 +2650,7 @@
         "additionalProperties": false,
         "properties": {
           "approve": {
+            "description": "true approves the waiver, false rejects it",
             "title": "Approve",
             "type": "boolean"
           },
@@ -2619,6 +2664,7 @@
                 "type": "null"
               }
             ],
+            "description": "Why",
             "title": "Comment"
           }
         },
@@ -2638,6 +2684,7 @@
   "paths": {
     "/auth/me": {
       "get": {
+        "description": "Any signed-in person. The person's account, name and roles; for a cookie session also `csrf_token`, the value every changing request must send in `X-ADLC-CSRF`.",
         "operationId": "me_auth_me_get",
         "responses": {
           "200": {
@@ -2648,14 +2695,28 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
           }
         },
-        "summary": "Me"
+        "summary": "Who is signed in",
+        "tags": [
+          "Sessions"
+        ]
       }
     },
     "/auth/sign-in": {
       "post": {
+        "description": "Public. With `session` omitted or `\"bearer\"`, answers a bearer token for the `Authorization` header (tools, tests, pilot processes). With `\"cookie\"` (the browser application) the request must carry `X-ADLC-CSRF: sign-in`; the answer sets the HttpOnly, SameSite=Strict cookie `adlc_session` and carries the session's CSRF value instead of the token. A wrong account or password answers `401` without saying which.",
         "operationId": "sign_in_auth_sign_in_post",
         "requestBody": {
           "content": {
@@ -2684,35 +2745,83 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Sign In"
+        "summary": "Sign in",
+        "tags": [
+          "Sessions"
+        ]
       }
     },
     "/auth/sign-out": {
       "post": {
+        "description": "Revokes the session. For a cookie session the answer also clears the cookie.",
         "operationId": "sign_out_auth_sign_out_post",
         "responses": {
           "204": {
-            "description": "Successful Response"
+            "description": "Done; no body"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
           }
         },
-        "summary": "Sign Out"
+        "summary": "Sign out",
+        "tags": [
+          "Sessions"
+        ]
       }
     },
     "/changes": {
       "get": {
+        "description": "The ITSM approver role named in the tool registry; empty for anyone else.",
         "operationId": "changes_changes_get",
         "responses": {
           "200": {
@@ -2727,17 +2836,32 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
           }
         },
-        "summary": "Changes"
+        "summary": "Change requests waiting for a decision",
+        "tags": [
+          "Changes"
+        ]
       }
     },
     "/changes/{change_id}/decision": {
       "post": {
+        "description": "The ITSM approver role. Records the decision as a new version of the change record; runs whose controls wait for it re-run them.",
         "operationId": "decide_changes__change_id__decision_post",
         "parameters": [
           {
+            "description": "A change request, such as `CHG-1`",
             "in": "path",
             "name": "change_id",
             "required": true,
@@ -2766,27 +2890,72 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided)"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Decide"
+        "summary": "Approve or reject a change request",
+        "tags": [
+          "Changes"
+        ]
       }
     },
     "/clarifications/{clarification_id}/answers": {
       "post": {
+        "description": "A person in the role the agent addressed. One answer per question; the same run resumes (it does not count as rework). Answered once.",
         "operationId": "answer_clarifications__clarification_id__answers_post",
         "parameters": [
           {
+            "description": "A clarification: `<run id>/clar-<n>` (contains `/`)",
             "in": "path",
             "name": "clarification_id",
             "required": true,
@@ -2815,27 +2984,72 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided)"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Answer"
+        "summary": "Answer a clarification",
+        "tags": [
+          "Requests"
+        ]
       }
     },
     "/dashboard/activity": {
       "get": {
+        "description": "Any signed-in person. What agents, reviewers, people and the orchestrator did, newest first; filter by `usecase_id`, `terminal_id`, `actor_type` and `step`; `limit` 1 to 1000 (default 200).",
         "operationId": "activity_dashboard_activity_get",
         "parameters": [
           {
+            "description": "Only this use case",
             "in": "query",
             "name": "usecase_id",
             "required": false,
@@ -2848,10 +3062,12 @@
                   "type": "null"
                 }
               ],
+              "description": "Only this use case",
               "title": "Usecase Id"
             }
           },
           {
+            "description": "Only this terminal",
             "in": "query",
             "name": "terminal_id",
             "required": false,
@@ -2864,10 +3080,12 @@
                   "type": "null"
                 }
               ],
+              "description": "Only this terminal",
               "title": "Terminal Id"
             }
           },
           {
+            "description": "agent, reviewer, human, orchestrator or system",
             "in": "query",
             "name": "actor_type",
             "required": false,
@@ -2880,10 +3098,12 @@
                   "type": "null"
                 }
               ],
+              "description": "agent, reviewer, human, orchestrator or system",
               "title": "Actor Type"
             }
           },
           {
+            "description": "Only this run step",
             "in": "query",
             "name": "step",
             "required": false,
@@ -2896,15 +3116,18 @@
                   "type": "null"
                 }
               ],
+              "description": "Only this run step",
               "title": "Step"
             }
           },
           {
+            "description": "At most this many actions (1 to 1000)",
             "in": "query",
             "name": "limit",
             "required": false,
             "schema": {
               "default": 200,
+              "description": "At most this many actions (1 to 1000)",
               "title": "Limit",
               "type": "integer"
             }
@@ -2923,27 +3146,42 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Activity"
+        "summary": "The activity feed",
+        "tags": [
+          "Dashboard"
+        ]
       }
     },
     "/dashboard/portfolio": {
       "get": {
+        "description": "Any signed-in person. Counts and times summed, rates pooled; filter by `risk_tier` and `status`.",
         "operationId": "portfolio_dashboard_portfolio_get",
         "parameters": [
           {
+            "description": "Only use cases of this risk tier",
             "in": "query",
             "name": "risk_tier",
             "required": false,
@@ -2956,10 +3194,12 @@
                   "type": "null"
                 }
               ],
+              "description": "Only use cases of this risk tier",
               "title": "Risk Tier"
             }
           },
           {
+            "description": "Only use cases in this status",
             "in": "query",
             "name": "status",
             "required": false,
@@ -2972,6 +3212,7 @@
                   "type": "null"
                 }
               ],
+              "description": "Only use cases in this status",
               "title": "Status"
             }
           }
@@ -2985,27 +3226,42 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Portfolio"
+        "summary": "KPIs across use cases",
+        "tags": [
+          "Dashboard"
+        ]
       }
     },
     "/dashboard/runs/{run_id}/timeline": {
       "get": {
+        "description": "Any signed-in person. Each step with its duration, and each agent attempt with its model and tool calls.",
         "operationId": "timeline_dashboard_runs__run_id__timeline_get",
         "parameters": [
           {
+            "description": "A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`)",
             "in": "path",
             "name": "run_id",
             "required": true,
@@ -3024,27 +3280,52 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Timeline"
+        "summary": "A run's step timeline",
+        "tags": [
+          "Dashboard"
+        ]
       }
     },
     "/dashboard/usecases/{usecase_id}/journey": {
       "get": {
+        "description": "Any signed-in person. Lanes per pinned terminal with a bar per run, arrows for reworks, reroutes, exceptions, events and re-entry with their causes, and the escalations and exceptions panel.",
         "operationId": "journey_dashboard_usecases__usecase_id__journey_get",
         "parameters": [
           {
+            "description": "A use case, such as `UC-0001`",
             "in": "path",
             "name": "usecase_id",
             "required": true,
@@ -3063,27 +3344,52 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Journey"
+        "summary": "A use case's journey view",
+        "tags": [
+          "Dashboard"
+        ]
       }
     },
     "/dashboard/usecases/{usecase_id}/kpis": {
       "get": {
+        "description": "Any signed-in person. Every KPI with its definition and value (`null` where it is not yet defined).",
         "operationId": "kpis_dashboard_usecases__usecase_id__kpis_get",
         "parameters": [
           {
+            "description": "A use case, such as `UC-0001`",
             "in": "path",
             "name": "usecase_id",
             "required": true,
@@ -3102,24 +3408,48 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Kpis"
+        "summary": "A use case's KPIs",
+        "tags": [
+          "Dashboard"
+        ]
       }
     },
     "/dead-letters": {
       "get": {
+        "description": "The CoE role (`ADLC_DEADLETTER_ROLE`). Events the router could not deliver after its retries, with attempts, last error and how often each was re-queued.",
         "operationId": "dead_letters_dead_letters_get",
         "responses": {
           "200": {
@@ -3134,17 +3464,42 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
           }
         },
-        "summary": "Dead Letters"
+        "summary": "List dead-lettered events",
+        "tags": [
+          "Requests"
+        ]
       }
     },
     "/dead-letters/{event_id}": {
       "get": {
+        "description": "The CoE role. The event's payload and its re-queue history.",
         "operationId": "dead_letter_dead_letters__event_id__get",
         "parameters": [
           {
+            "description": "The event's id (a dead letter's UUID, or a proposed event's id in its artifact)",
             "in": "path",
             "name": "event_id",
             "required": true,
@@ -3164,27 +3519,62 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Dead Letter"
+        "summary": "A dead letter's payload and history",
+        "tags": [
+          "Requests"
+        ]
       }
     },
     "/dead-letters/{event_id}/requeue": {
       "post": {
+        "description": "The CoE role. Puts the event back in the outbox for delivery and records who did it.",
         "operationId": "requeue_dead_letters__event_id__requeue_post",
         "parameters": [
           {
+            "description": "The event's id (a dead letter's UUID, or a proposed event's id in its artifact)",
             "in": "path",
             "name": "event_id",
             "required": true,
@@ -3197,24 +3587,58 @@
         ],
         "responses": {
           "204": {
-            "description": "Successful Response"
+            "description": "Done; no body"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Requeue"
+        "summary": "Re-queue a dead letter",
+        "tags": [
+          "Requests"
+        ]
       }
     },
     "/events/proposed": {
       "get": {
+        "description": "Events an agent proposed in a run's artifact, for a person in the terminal's accountable roles; empty for anyone else.",
         "operationId": "proposed_events_proposed_get",
         "responses": {
           "200": {
@@ -3229,17 +3653,32 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
           }
         },
-        "summary": "Proposed"
+        "summary": "Proposed events waiting for me",
+        "tags": [
+          "Proposed events"
+        ]
       }
     },
     "/events/proposed/{usecase_id}/{terminal_id}/{run_number}/{event_id}": {
       "post": {
+        "description": "A person in the terminal's accountable roles. Confirming raises the event (and its route runs); dismissing records it. Each proposal is decided once. The run is named by its three parts (`UC-0001`, `T<n>`, `run-1`).",
         "operationId": "decide_events_proposed__usecase_id___terminal_id___run_number___event_id__post",
         "parameters": [
           {
+            "description": "A use case, such as `UC-0001`",
             "in": "path",
             "name": "usecase_id",
             "required": true,
@@ -3249,6 +3688,7 @@
             }
           },
           {
+            "description": "A terminal id from the pinned specs, `T<n>`",
             "in": "path",
             "name": "terminal_id",
             "required": true,
@@ -3258,6 +3698,7 @@
             }
           },
           {
+            "description": "The run's last part, such as `run-1`",
             "in": "path",
             "name": "run_number",
             "required": true,
@@ -3267,6 +3708,7 @@
             }
           },
           {
+            "description": "The event's id (a dead letter's UUID, or a proposed event's id in its artifact)",
             "in": "path",
             "name": "event_id",
             "required": true,
@@ -3295,24 +3737,68 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided)"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Decide"
+        "summary": "Confirm or dismiss a proposed event",
+        "tags": [
+          "Proposed events"
+        ]
       }
     },
     "/health": {
       "get": {
+        "description": "Public. `200` with every check `ok`, or `503` with the failing check `unavailable`.",
         "operationId": "health_health_get",
         "responses": {
           "200": {
@@ -3323,14 +3809,28 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "A check failed: the body says which"
           }
         },
-        "summary": "Health"
+        "summary": "Service health",
+        "tags": [
+          "Health"
+        ]
       }
     },
     "/inbox": {
       "get": {
+        "description": "Any signed-in person. Sign-offs, clarifications, escalations, waivers and blocked runs addressed to one of the person's roles (and dead letters for the CoE role), soonest due first.",
         "operationId": "inbox_inbox_get",
         "responses": {
           "200": {
@@ -3345,17 +3845,32 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
           }
         },
-        "summary": "Inbox"
+        "summary": "What is waiting for me",
+        "tags": [
+          "Inbox"
+        ]
       }
     },
     "/runs/{run_id}": {
       "get": {
+        "description": "Any signed-in person. Everything SA §8.2 asks for on one page: the run, its artifacts and versions, prerequisites, control results, the reviewer's recommendation, prior rework, clarifications, approvals, waiver, timer, cost, timeline and evidence; and `form`, what this person may decide and what each outcome needs (built from the pinned spec).",
         "operationId": "detail_runs__run_id__get",
         "parameters": [
           {
+            "description": "A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`)",
             "in": "path",
             "name": "run_id",
             "required": true,
@@ -3374,27 +3889,52 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Detail"
+        "summary": "A run's detail and decision form",
+        "tags": [
+          "Runs"
+        ]
       }
     },
     "/runs/{run_id}/artifacts/{artifact_id}": {
       "put": {
+        "description": "A person in a sign-off or accountable role of the run, while it awaits sign-off or is escalated. Replaces the artifact's rows with a new version (the run's controls re-run); `changed` is false when the rows were identical. Sends `expected_version`.",
         "operationId": "edit_runs__run_id__artifacts__artifact_id__put",
         "parameters": [
           {
+            "description": "A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`)",
             "in": "path",
             "name": "run_id",
             "required": true,
@@ -3404,6 +3944,7 @@
             }
           },
           {
+            "description": "An artifact id of the run's terminal spec, such as `kpis`",
             "in": "path",
             "name": "artifact_id",
             "required": true,
@@ -3432,27 +3973,72 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided)"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Edit"
+        "summary": "Edit an artifact",
+        "tags": [
+          "Artifacts"
+        ]
       }
     },
     "/runs/{run_id}/artifacts/{artifact_id}/attachments": {
       "post": {
+        "description": "Same rights as editing. A multipart upload (`file`, `expected_version`) of an allowed type (`ADLC_ATTACHMENT_TYPES`) and size (`ADLC_ATTACHMENT_MAX`), stored content-addressed with the artifact's current version. The file name is reduced to its last path segment.",
         "operationId": "attach_runs__run_id__artifacts__artifact_id__attachments_post",
         "parameters": [
           {
+            "description": "A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`)",
             "in": "path",
             "name": "run_id",
             "required": true,
@@ -3462,6 +4048,7 @@
             }
           },
           {
+            "description": "An artifact id of the run's terminal spec, such as `kpis`",
             "in": "path",
             "name": "artifact_id",
             "required": true,
@@ -3490,27 +4077,72 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided)"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Attach"
+        "summary": "Attach a file to an artifact",
+        "tags": [
+          "Artifacts"
+        ]
       }
     },
     "/runs/{run_id}/artifacts/{artifact_id}/history": {
       "get": {
+        "description": "Any signed-in person. Every version of the artifact on this run: who produced it, when, its hash, the version it was derived from, and its attachments.",
         "operationId": "history_runs__run_id__artifacts__artifact_id__history_get",
         "parameters": [
           {
+            "description": "A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`)",
             "in": "path",
             "name": "run_id",
             "required": true,
@@ -3520,6 +4152,7 @@
             }
           },
           {
+            "description": "An artifact id of the run's terminal spec, such as `kpis`",
             "in": "path",
             "name": "artifact_id",
             "required": true,
@@ -3542,27 +4175,52 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "History"
+        "summary": "An artifact's versions",
+        "tags": [
+          "Artifacts"
+        ]
       }
     },
     "/runs/{run_id}/artifacts/{artifact_id}/spreadsheet": {
       "post": {
+        "description": "Same rights as editing. A multipart `.xlsx` upload (`file`, `expected_version`); its rows become the artifact's new version.",
         "operationId": "spreadsheet_runs__run_id__artifacts__artifact_id__spreadsheet_post",
         "parameters": [
           {
+            "description": "A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`)",
             "in": "path",
             "name": "run_id",
             "required": true,
@@ -3572,6 +4230,7 @@
             }
           },
           {
+            "description": "An artifact id of the run's terminal spec, such as `kpis`",
             "in": "path",
             "name": "artifact_id",
             "required": true,
@@ -3600,27 +4259,72 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided)"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Spreadsheet"
+        "summary": "Replace a table from a spreadsheet",
+        "tags": [
+          "Artifacts"
+        ]
       }
     },
     "/runs/{run_id}/attachments/{content_hash}": {
       "get": {
+        "description": "Any signed-in person. Only an attachment recorded on this run. Always a download: `Content-Disposition: attachment`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: default-src 'none'; sandbox`, `Cache-Control: private, no-store`.",
         "operationId": "download_runs__run_id__attachments__content_hash__get",
         "parameters": [
           {
+            "description": "A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`)",
             "in": "path",
             "name": "run_id",
             "required": true,
@@ -3630,6 +4334,7 @@
             }
           },
           {
+            "description": "The attachment's SHA-256, from the artifact's `attachments`",
             "in": "path",
             "name": "content_hash",
             "required": true,
@@ -3646,25 +4351,50 @@
             },
             "description": "The file, as a download (Content-Disposition: attachment)"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
+          },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Download"
+        "summary": "Download an attachment",
+        "tags": [
+          "Artifacts"
+        ]
       }
     },
     "/runs/{run_id}/decisions": {
       "post": {
+        "description": "A person in a sign-off role of the run (the spec's status rights); `terminate` also for the roles the spec allows to terminate. Sends `expected_version`, the version the person saw. `rework` needs `root_cause` (and `target_terminal` where the cause's route resolves a terminal); `exception` needs the spec's waiver fields and opens a waiver; `pass` needs the emitted values the spec asks people to type. A decision that differs from the reviewer's recommendation needs a `reason`. Rights are checked on every decision.",
         "operationId": "decide_runs__run_id__decisions_post",
         "parameters": [
           {
+            "description": "A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`)",
             "in": "path",
             "name": "run_id",
             "required": true,
@@ -3693,27 +4423,72 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided)"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Decide"
+        "summary": "Decide on a run",
+        "tags": [
+          "Runs"
+        ]
       }
     },
     "/runs/{run_id}/escalation": {
       "post": {
+        "description": "A person in one of the terminal's accountable roles, while the run is escalated. Supplies the artifacts the agents could not finish; the run then goes to normal sign-off. Sends `expected_version`.",
         "operationId": "complete_escalation_runs__run_id__escalation_post",
         "parameters": [
           {
+            "description": "A run, `<use case>/<terminal>/run-<n>`: `UC-0001/T<n>/run-2` (contains `/`)",
             "in": "path",
             "name": "run_id",
             "required": true,
@@ -3742,32 +4517,78 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided)"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Complete Escalation"
+        "summary": "Complete an escalated run",
+        "tags": [
+          "Runs"
+        ]
       }
     },
     "/usecases": {
       "get": {
+        "description": "Any signed-in person. Newest first, with each one's count of open runs. `mine=true`: those the person submitted or takes part in through a role of one of its runs.",
         "operationId": "list_usecases_usecases_get",
         "parameters": [
           {
+            "description": "Only those I submitted or take part in through a role",
             "in": "query",
             "name": "mine",
             "required": false,
             "schema": {
               "default": false,
+              "description": "Only those I submitted or take part in through a role",
               "title": "Mine",
               "type": "boolean"
             }
@@ -3786,22 +4607,36 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "List Usecases"
+        "summary": "List use cases",
+        "tags": [
+          "Use cases"
+        ]
       },
       "post": {
+        "description": "A person in a role allowed to submit (the role catalogue's submitters; anyone when none is configured). Pins the active terminal specs and opens the first terminal's run.",
         "operationId": "submit_usecases_post",
         "requestBody": {
           "content": {
@@ -3822,27 +4657,62 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "Created"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided)"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Submit"
+        "summary": "Submit a use case",
+        "tags": [
+          "Use cases"
+        ]
       }
     },
     "/usecases/{usecase_id}": {
       "get": {
+        "description": "Any signed-in person. The use case, all its runs, per-terminal time and rework summary, and model cost.",
         "operationId": "journey_usecases__usecase_id__get",
         "parameters": [
           {
+            "description": "A use case, such as `UC-0001`",
             "in": "path",
             "name": "usecase_id",
             "required": true,
@@ -3861,28 +4731,52 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Journey"
+        "summary": "A use case's journey",
+        "tags": [
+          "Use cases"
+        ]
       }
     },
     "/usecases/{usecase_id}/verify": {
       "post": {
-        "description": "Any signed-in person may verify a use case's chain; the run is recorded under them.",
+        "description": "Any signed-in person. Re-computes the hash chain of the use case's ledger records and lists any break. The verification is itself recorded, under the person.",
         "operationId": "verify_usecases__usecase_id__verify_post",
         "parameters": [
           {
+            "description": "A use case, such as `UC-0001`",
             "in": "path",
             "name": "usecase_id",
             "required": true,
@@ -3901,27 +4795,62 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Verify"
+        "summary": "Verify the use case's evidence ledger",
+        "tags": [
+          "Use cases"
+        ]
       }
     },
     "/waivers/{waiver_id}/decision": {
       "post": {
+        "description": "A person in a role allowed to set the exception (or the terminal's accountable roles), and not the person who proposed it. Approval closes the run as an exception; rejection returns it to sign-off.",
         "operationId": "decide_waiver_waivers__waiver_id__decision_post",
         "parameters": [
           {
+            "description": "A waiver, such as `WVR-0001`",
             "in": "path",
             "name": "waiver_id",
             "required": true,
@@ -3950,21 +4879,106 @@
                 }
               }
             },
-            "description": "Successful Response"
+            "description": "OK"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_signed_in`: no session, or it expired or was revoked"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_allowed`: the person may not do this (or a cookie session's change came without its CSRF value)"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`not_found`: no such use case, run, request, event or file"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            },
+            "description": "`stale` (the run changed since the version sent) or `wrong_state` (not possible in the current state, or already decided)"
           },
           "422": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "$ref": "#/components/schemas/ErrorBody"
                 }
               }
             },
-            "description": "Validation Error"
+            "description": "`invalid`: the input was refused; `field` names it when one field is at fault"
           }
         },
-        "summary": "Decide Waiver"
+        "summary": "Approve or reject a waiver",
+        "tags": [
+          "Requests"
+        ]
       }
     }
-  }
+  },
+  "tags": [
+    {
+      "description": "Is the API up and can it reach its database.",
+      "name": "Health"
+    },
+    {
+      "description": "Sign in (a bearer token, or the browser's HttpOnly cookie), who is signed in, sign out.",
+      "name": "Sessions"
+    },
+    {
+      "description": "Submit a use case, list them, follow one, verify its evidence ledger.",
+      "name": "Use cases"
+    },
+    {
+      "description": "Everything waiting for the signed-in person.",
+      "name": "Inbox"
+    },
+    {
+      "description": "A terminal run's detail and the decisions people take on it.",
+      "name": "Runs"
+    },
+    {
+      "description": "Edit a run's artifacts, upload spreadsheets, attach and download files, see versions.",
+      "name": "Artifacts"
+    },
+    {
+      "description": "Clarifications, waivers and dead-lettered events.",
+      "name": "Requests"
+    },
+    {
+      "description": "Change requests waiting for the ITSM approver (feature 012).",
+      "name": "Changes"
+    },
+    {
+      "description": "Lifecycle events an agent proposed, waiting for a person (feature 012).",
+      "name": "Proposed events"
+    },
+    {
+      "description": "Read-only views over the platform's records (feature 013).",
+      "name": "Dashboard"
+    }
+  ]
 }

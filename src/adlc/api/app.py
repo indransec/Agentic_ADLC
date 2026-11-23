@@ -5,6 +5,7 @@ from opentelemetry.sdk.trace.export import SpanExporter
 
 from adlc.api.auth import install_auth
 from adlc.api.deps import Services
+from adlc.api.docs import document
 from adlc.api.errors import install_errors
 from adlc.api.routes import (
     artifacts,
@@ -45,15 +46,19 @@ def create_app(settings: Settings, span_exporter: SpanExporter | None = None) ->
     install_errors(app)
     app.state.services = Services(settings, app.state.engine)  # built on first use
     app.include_router(health.router)
-    app.include_router(auth.router)
-    app.include_router(usecases.router)
-    app.include_router(inbox.router)
-    app.include_router(runs.router)
-    app.include_router(artifacts.router)
-    app.include_router(requests.router)
-    app.include_router(changes.router)  # 012
-    app.include_router(events.router)  # 012
-    app.include_router(dashboard.router)  # 013
-    app.include_router(runs.detail_router())  # last: its run-id path matches anything
+    for router in (
+        auth.router,
+        usecases.router,
+        inbox.router,
+        runs.router,
+        artifacts.router,
+        requests.router,
+        changes.router,  # 012
+        events.router,  # 012
+        dashboard.router,  # 013
+        runs.detail_router(),  # last: its run-id path matches anything
+    ):
+        app.include_router(router)
+    document(app)  # 022: every route's contract (docs/api-reference.md)
     setup_tracing(app, settings, span_exporter)
     return app

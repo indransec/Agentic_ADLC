@@ -20,13 +20,15 @@ router = APIRouter()
 
 class Answers(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    answers: list[str] = Field(min_length=1, max_length=50)
+    answers: list[str] = Field(
+        min_length=1, max_length=50, description="One answer per question, in order"
+    )
 
 
 class WaiverDecision(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    approve: bool
-    comment: str | None = Field(default=None, max_length=4000)
+    approve: bool = Field(description="true approves the waiver, false rejects it")
+    comment: str | None = Field(default=None, max_length=4000, description="Why")
 
 
 @router.post(

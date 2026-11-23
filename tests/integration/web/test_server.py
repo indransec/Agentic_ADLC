@@ -256,6 +256,7 @@ def test_no_cors(ui: TestClient, stub: StubApi) -> None:
 def test_logs_hold_no_headers_query_or_bodies(
     ui: TestClient, stub: StubApi, caplog: pytest.LogCaptureFixture
 ) -> None:
+    caplog.set_level(logging.INFO)  # every logger at INFO, as in production (httpx too)
     with caplog.at_level(logging.INFO, logger="adlc.web"):
         ui.post(
             "/api/usecases?token=q-secret",

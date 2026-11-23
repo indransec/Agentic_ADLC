@@ -1,9 +1,9 @@
 """``/dashboard`` (feature 013, contracts/api-dashboard.md): read-only lifecycle views. Every
 signed-in person may read every use case (FR-009)."""
 
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 
 from adlc.api.deps import ActorDep, ServicesDep
 from adlc.api.schemas.dashboard import (
@@ -33,8 +33,8 @@ def kpis(usecase_id: str, actor: ActorDep, services: ServicesDep) -> dict[str, A
 def portfolio(
     actor: ActorDep,
     services: ServicesDep,
-    risk_tier: str | None = None,
-    status: str | None = None,
+    risk_tier: Annotated[str | None, Query(description="Only use cases of this risk tier")] = None,
+    status: Annotated[str | None, Query(description="Only use cases in this status")] = None,
 ) -> dict[str, Any]:
     return services.dashboard.portfolio(risk_tier, status)
 
@@ -43,11 +43,13 @@ def portfolio(
 def activity(
     actor: ActorDep,
     services: ServicesDep,
-    usecase_id: str | None = None,
-    terminal_id: str | None = None,
-    actor_type: str | None = None,
-    step: str | None = None,
-    limit: int = 200,
+    usecase_id: Annotated[str | None, Query(description="Only this use case")] = None,
+    terminal_id: Annotated[str | None, Query(description="Only this terminal")] = None,
+    actor_type: Annotated[
+        str | None, Query(description="agent, reviewer, human, orchestrator or system")
+    ] = None,
+    step: Annotated[str | None, Query(description="Only this run step")] = None,
+    limit: Annotated[int, Query(description="At most this many actions (1 to 1000)")] = 200,
 ) -> list[dict[str, Any]]:
     return services.dashboard.activity(usecase_id, terminal_id, actor_type, step, limit)
 

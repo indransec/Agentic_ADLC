@@ -1,8 +1,8 @@
 """``/usecases`` (007 contracts/api.md): submit, list, journey, verify."""
 
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from pydantic import BaseModel, ConfigDict, Field
 
 from adlc.api.deps import ActorDep, ServicesDep, traced
@@ -19,8 +19,13 @@ router = APIRouter(prefix="/usecases")
 
 class Submission(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    name: str = Field(min_length=1, max_length=200)
-    intake_text: str = Field(min_length=1, max_length=20_000)
+    name: str = Field(min_length=1, max_length=200, description="A short name")
+    intake_text: str = Field(
+        min_length=1,
+        max_length=20_000,
+        description="The problem, the people involved and the outcome wanted, in the "
+        "submitter's words",
+    )
 
 
 @router.post("", status_code=201, response_model=Submitted, response_model_exclude_unset=True)
@@ -32,7 +37,11 @@ def submit(body: Submission, actor: ActorDep, services: ServicesDep) -> dict[str
 
 @router.get("", response_model=list[UseCaseListItem], response_model_exclude_unset=True)
 def list_usecases(
-    actor: ActorDep, services: ServicesDep, mine: bool = False
+    actor: ActorDep,
+    services: ServicesDep,
+    mine: Annotated[
+        bool, Query(description="Only those I submitted or take part in through a role")
+    ] = False,
 ) -> list[dict[str, Any]]:
     return services.inbox.usecases(actor, mine)
 

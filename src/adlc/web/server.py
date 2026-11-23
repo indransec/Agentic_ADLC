@@ -27,6 +27,9 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 from adlc.config.settings import UiSettings
 
 log = logging.getLogger("adlc.web")
+# httpx logs every request's full URL, query string included, at INFO: kept to warnings, so the
+# logs hold only what SecurityHeaders records (method, path, status)
+QUIET_LOGGERS = ("httpx", "httpcore")
 
 CSP = (
     "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
@@ -105,6 +108,8 @@ def create_app(
     settings: UiSettings, transport: httpx.AsyncBaseTransport | None = None
 ) -> Starlette:
     """The ui process. ``transport`` replaces the network to the API (tests only)."""
+    for name in QUIET_LOGGERS:
+        logging.getLogger(name).setLevel(logging.WARNING)
     dist = Path(settings.ui_dist_dir)
     index = dist / "index.html"
     api_url = settings.api_url.rstrip("/")

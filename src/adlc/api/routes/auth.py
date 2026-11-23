@@ -32,7 +32,11 @@ class SignInRequest(BaseModel):
     account_name: str = Field(min_length=1, max_length=40)
     password: SecretStr = Field(min_length=1)
     # 022: "cookie" for the browser application; the default keeps every existing client as is
-    session: Literal["bearer", "cookie"] = "bearer"
+    session: Literal["bearer", "cookie"] = Field(
+        default="bearer",
+        description="`bearer`: answer a token. `cookie` (the browser): set the HttpOnly "
+        "session cookie; needs the header `X-ADLC-CSRF: sign-in`",
+    )
 
 
 class PersonOut(BaseModel):
