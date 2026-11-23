@@ -41,8 +41,15 @@ DIST = REPO_ROOT / "web" / "dist"
 
 def seed(h: Harness) -> dict[str, Any]:
     """Known states for the end-to-end tests (more are added as stories need them)."""
-    usecase, sign_off_run = walk_to(h, "T1")
-    return {"usecase": usecase, "sign_off_run": sign_off_run}
+    usecase, sign_off_run = walk_to(h, "T1")  # deep links (session), then passed (sign-off)
+    _, rework_run = walk_to(h, "T1")  # sent to rework (sign-off)
+    _, stale_run = walk_to(h, "T1")  # changed behind the page (stale)
+    return {
+        "usecase": usecase,
+        "sign_off_run": sign_off_run,
+        "rework_run": rework_run,
+        "stale_run": stale_run,
+    }
 
 
 def serve(app: Any, port: int) -> uvicorn.Server:

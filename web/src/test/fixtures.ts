@@ -55,3 +55,12 @@ export const HOSTILE = [
   "<script>alert(1)</script><b>bold</b>[click](http://evil.example)",
   "<img src=x onerror=alert(1)>[c](javascript:x).md",
 ] as const;
+
+export type RunDetail = S["RunDetail"];
+
+/** A deep copy of the run detail fixture with changes, for one test. */
+export function runDetail(change: (detail: RunDetail) => void = () => undefined): RunDetail {
+  const copy = structuredClone(fixtures.runDetail) as RunDetail;
+  change(copy);
+  return copy;
+}

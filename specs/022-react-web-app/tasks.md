@@ -341,7 +341,7 @@ terminated.
 
 ### Tests
 
-- [ ] T036 [P] [US2] `web/src/pages/run/decision-form.test.tsx` (P-05, P-06), driven only by a
+- [X] T036 [P] [US2] `web/src/pages/run/decision-form.test.tsx` (P-05, P-06), driven only by a
   `form` fixture:
   - the outcomes offered are exactly `form.outcomes`, or only `terminate` when only
     `can_terminate`;
@@ -353,7 +353,7 @@ terminated.
   - the controls-pending and waiver-pending notices; "You have no decision to make on this run";
   - the stale answer gives a reload and the message "This run changed since you opened it. It
     has been reloaded; check it and act again.", with nothing recorded.
-- [ ] T037 [P] [US2] `web/src/pages/run/run-page.test.tsx` (P-07, P-14, P-19 evidence tab):
+- [X] T037 [P] [US2] `web/src/pages/run/run-page.test.tsx` (P-07, P-14, P-19 evidence tab):
   - summary bar fields (run, version, terminal and spec version, state and final status, due
     with overdue badge, model cost, "Controls are being re-run");
   - the blocked notice "Blocked by an unmet prerequisite (see Prerequisites). Supply the
@@ -364,26 +364,39 @@ terminated.
 
 ### Implementation
 
-- [ ] T038 [P] [US2] `web/src/pages/run/summary-bar.tsx` and `web/src/pages/run/review-panel.tsx`
+- [X] T038 [P] [US2] `web/src/pages/run/summary-bar.tsx` and `web/src/pages/run/review-panel.tsx`
   (the reviewer recommendation and findings via `<Literal>`).
-- [ ] T039 [P] [US2] `web/src/pages/run/control-results.tsx`: counts of passed and blocking-failed
+- [X] T039 [P] [US2] `web/src/pages/run/control-results.tsx`: counts of passed and blocking-failed
   controls, as platform words, plus the results table via `DataTable` with "No controls have run
   yet.".
-- [ ] T040 [P] [US2] `web/src/pages/run/detail-tabs.tsx`: Prerequisites, Citations (from each
+- [X] T040 [P] [US2] `web/src/pages/run/detail-tabs.tsx`: Prerequisites, Citations (from each
   artifact's `citations`), Prior rework, Clarifications, Approvals, Waiver, Activity, Timeline
   (`GET /dashboard/runs/{id}/timeline`) and Evidence, each a `DataTable` or `<Literal>` block.
-- [ ] T041 [US2] `web/src/pages/run/decision-form.tsx`: per T036, built only from `run.form`. It
+- [X] T041 [US2] `web/src/pages/run/decision-form.tsx`: per T036, built only from `run.form`. It
   submits `{decision, expected_version: seen, fields, comment?, root_cause?, target_terminal?,
   reason?}` to `POST /runs/{id}/decisions` and shows "Decision recorded".
-- [ ] T042 [US2] `web/src/pages/run/run-page.tsx`: reads `?run=` from the address and loads
+- [X] T042 [US2] `web/src/pages/run/run-page.tsx`: reads `?run=` from the address and loads
   `GET /runs/{id}`. It keeps the *seen* version in a ref updated after each render, not on
   background refetch (research R-08). On `stale` it refetches, sets the seen version and shows the
   message. Layout: summary bar; artifacts (slot for US3) beside the review, controls and decision
   form; then the tabs. Register it in `registry.ts`. T036 and T037 pass.
-- [ ] T043 [US2] `web/e2e/sign-off.spec.ts`: open a seeded run by link, pass it, see "Decision
+- [X] T043 [US2] `web/e2e/sign-off.spec.ts`: open a seeded run by link, pass it, see "Decision
   recorded" and the new state; rework with comment and root cause. Then `web/e2e/stale.spec.ts`:
   open a run, change it through the stack's API helper, decide, and get the stale message with
   nothing recorded (P-06).
+
+### Implementation notes (2026-11-23, US2)
+
+- **"Decision recorded" lives on the page, not in the form.** The form remounts when the run's
+  version changes, which it does right after a decision, so the page keeps the notice.
+- **The run is not refreshed in the background.** The version shown is therefore always the
+  version the person acts on (research R-08). Only the person's own decision or a stale answer
+  reloads it.
+- **Artifacts are read-only here** (`artifacts-read-only.tsx`); US3 replaces this with the
+  editing panel.
+- **Parity, kept:** the rework `requires` list includes `owner_comment`, which the platform
+  satisfies from the decision's comment. Like the Streamlit form, the form shows it as its own
+  input.
 
 **Checkpoint**: an approver can decide any seeded run from a link; parity rows P-05, P-06, P-07
 and P-14 are `passing`.

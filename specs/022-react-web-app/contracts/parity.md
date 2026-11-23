@@ -14,16 +14,16 @@ Every row must be `passing` before the cutover commit (research R-14).
 | P-02 | `test_intake.py::test_sign_out_and_expired_session` | E2E `session.spec.ts` (sign-out, expired cookie → sign-in with `next`) | passing |
 | P-03 | `test_intake.py::test_refused_submission_shows_the_reason` | Component `intake-page.test.tsx` (422 `field` beside the field) | open |
 | P-04 | `test_sign_off.py::test_inbox_detail_and_pass` | E2E `sign-off.spec.ts`; Component `pages/inbox/inbox-page.test.tsx` | open |
-| P-05 | `test_sign_off.py::test_reason_field_follows_the_recommendation` | Component `pages/run/decision-form.test.tsx` | open |
-| P-06 | `test_sign_off.py::test_stale_answer_reloads_with_a_message` | E2E `stale.spec.ts`; Component `decision-form.test.tsx` | open |
-| P-07 | `test_sign_off.py::test_plain_text_for_agent_text` | Component `pages/run/run-page.test.tsx` (rendering samples) | open |
+| P-05 | `test_sign_off.py::test_reason_field_follows_the_recommendation` | Component `pages/run/decision-form.test.tsx` | passing |
+| P-06 | `test_sign_off.py::test_stale_answer_reloads_with_a_message` | E2E `stale.spec.ts`; Component `decision-form.test.tsx` | passing |
+| P-07 | `test_sign_off.py::test_plain_text_for_agent_text` | Component `pages/run/run-page.test.tsx` (rendering samples) | passing |
 | P-08 | `test_sign_off.py::test_inbox_groups_by_kind_and_marks_controls_being_rerun` | Component `inbox-page.test.tsx` | open |
 | P-09 | `test_artifacts.py::test_editor_saves_a_change` | E2E `artifacts.spec.ts`; Component `pages/run/artifact-panel.test.tsx` | open |
 | P-10 | `test_artifacts.py::test_read_only_for_non_editors` | Component `artifact-panel.test.tsx` | open |
 | P-11 | `test_artifacts.py::test_large_tables_are_read_only_with_upload_offered` | E2E `artifacts.spec.ts` (1,000 editable, 1,001 read-only); Component `artifact-panel.test.tsx` | open |
 | P-12 | `test_artifacts.py::test_attach_and_download_only` | E2E `artifacts.spec.ts` (download event, no inline render) | open |
 | P-13 | `test_rendering.py::test_text_from_agents_and_people_is_plain` | Component `ui/literal.test.tsx` and every page test's markup and script samples; E2E `rendering.spec.ts` (no script runs, no CSP violation) | open |
-| P-14 | `test_blocked.py::test_blocked_run_shows_why_and_can_be_terminated` | Component `run-page.test.tsx` | open |
+| P-14 | `test_blocked.py::test_blocked_run_shows_why_and_can_be_terminated` | Component `run-page.test.tsx` | passing |
 | P-15 | `test_requests.py::test_answer_a_clarification` | Component `pages/requests/clarification-page.test.tsx`; E2E `requests.spec.ts` | open |
 | P-16 | `test_requests.py::test_complete_an_escalation` | Component `escalation-page.test.tsx`; E2E `requests.spec.ts` | open |
 | P-17 | `test_requests.py::test_decide_a_waiver` | Component `waiver-page.test.tsx`; E2E `requests.spec.ts` | open |

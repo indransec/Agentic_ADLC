@@ -3,7 +3,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 
-import { test as base, expect, type Page } from "@playwright/test";
+import { test as base, expect, type APIRequestContext, type Page } from "@playwright/test";
 
 export interface Stack {
   base_url: string;
@@ -11,6 +11,8 @@ export interface Stack {
   password: string;
   usecase: string;
   sign_off_run: string;
+  rework_run: string;
+  stale_run: string;
 }
 
 export function stack(): Stack {
@@ -22,6 +24,17 @@ export async function signIn(page: Page, role: string): Promise<void> {
   await page.getByLabel("Account").fill(`${role}-person`);
   await page.getByLabel("Password").fill(stack().password);
   await page.getByRole("button", { name: "Sign in" }).click();
+}
+
+export const runPath = (run: string): string => `/run?run=${encodeURIComponent(run)}`;
+
+/** A bearer session straight to the platform API, as another client would hold. */
+export async function bearer(request: APIRequestContext, role: string): Promise<string> {
+  const answer = await request.post(`${stack().api_url}/auth/sign-in`, {
+    data: { account_name: `${role}-person`, password: stack().password },
+  });
+  expect(answer.status()).toBe(200);
+  return ((await answer.json()) as { token: string }).token;
 }
 
 export const test = base.extend<{ pageProblems: string[] }>({

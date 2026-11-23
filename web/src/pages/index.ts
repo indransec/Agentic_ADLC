@@ -1,2 +1,5 @@
 // Pages register their components here as they are rebuilt (US2 to US6).
-export {};
+import { registerPage } from "../nav/registry";
+import { RunPage } from "./run/run-page";
+
+registerPage("run", RunPage);
