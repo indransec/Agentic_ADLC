@@ -18,10 +18,10 @@ Every row must be `passing` before the cutover commit (research R-14).
 | P-06 | `test_sign_off.py::test_stale_answer_reloads_with_a_message` | E2E `stale.spec.ts`; Component `decision-form.test.tsx` | passing |
 | P-07 | `test_sign_off.py::test_plain_text_for_agent_text` | Component `pages/run/run-page.test.tsx` (rendering samples) | passing |
 | P-08 | `test_sign_off.py::test_inbox_groups_by_kind_and_marks_controls_being_rerun` | Component `inbox-page.test.tsx` | open |
-| P-09 | `test_artifacts.py::test_editor_saves_a_change` | E2E `artifacts.spec.ts`; Component `pages/run/artifact-panel.test.tsx` | open |
-| P-10 | `test_artifacts.py::test_read_only_for_non_editors` | Component `artifact-panel.test.tsx` | open |
-| P-11 | `test_artifacts.py::test_large_tables_are_read_only_with_upload_offered` | E2E `artifacts.spec.ts` (1,000 editable, 1,001 read-only); Component `artifact-panel.test.tsx` | open |
-| P-12 | `test_artifacts.py::test_attach_and_download_only` | E2E `artifacts.spec.ts` (download event, no inline render) | open |
+| P-09 | `test_artifacts.py::test_editor_saves_a_change` | E2E `artifacts.spec.ts`; Component `pages/run/artifact-panel.test.tsx` | passing |
+| P-10 | `test_artifacts.py::test_read_only_for_non_editors` | Component `artifact-panel.test.tsx` | passing |
+| P-11 | `test_artifacts.py::test_large_tables_are_read_only_with_upload_offered` | E2E `artifacts.spec.ts` (1,000 editable, 1,001 read-only); Component `artifact-panel.test.tsx` | passing |
+| P-12 | `test_artifacts.py::test_attach_and_download_only` | E2E `artifacts.spec.ts` (download event, no inline render) | passing |
 | P-13 | `test_rendering.py::test_text_from_agents_and_people_is_plain` | Component `ui/literal.test.tsx` and every page test's markup and script samples; E2E `rendering.spec.ts` (no script runs, no CSP violation) | open |
 | P-14 | `test_blocked.py::test_blocked_run_shows_why_and_can_be_terminated` | Component `run-page.test.tsx` | passing |
 | P-15 | `test_requests.py::test_answer_a_clarification` | Component `pages/requests/clarification-page.test.tsx`; E2E `requests.spec.ts` | open |

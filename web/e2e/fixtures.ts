@@ -13,6 +13,12 @@ export interface Stack {
   sign_off_run: string;
   rework_run: string;
   stale_run: string;
+  large_run: string;
+  larger_run: string;
+  sheet_run: string;
+  table: string;
+  sheet_table: string;
+  spreadsheet: string;
 }
 
 export function stack(): Stack {

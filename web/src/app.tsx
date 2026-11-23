@@ -1,6 +1,6 @@
 // The application: providers, then routes built from the page registry (FR-002).
 import { QueryClientProvider } from "@tanstack/react-query";
-import { useMemo, useState, type ComponentType } from "react";
+import { Suspense, useMemo, useState, type ComponentType } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useSearchParams } from "react-router";
 
 import { createQueryClient } from "./api/queries";
@@ -27,7 +27,9 @@ function Shell() {
       <div className="shell">
         <Sidebar />
         <main>
-          <Outlet />
+          <Suspense fallback={<p className="caption">Loading…</p>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </RequireSession>

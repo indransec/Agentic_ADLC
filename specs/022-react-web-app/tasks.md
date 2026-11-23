@@ -413,7 +413,7 @@ upload offered; upload a spreadsheet; attach a file and download it.
 
 ### Tests
 
-- [ ] T044 [P] [US3] `web/src/pages/run/artifact-panel.test.tsx` (P-09, P-10, P-11):
+- [X] T044 [P] [US3] `web/src/pages/run/artifact-panel.test.tsx` (P-09, P-10, P-11):
   - edit a cell and Save sends `{rows, expected_version}` to `PUT /runs/{id}/artifacts/{aid}` and
     shows "Saved";
   - add and remove rows;
@@ -427,14 +427,14 @@ upload offered; upload a spreadsheet; attach a file and download it.
 
 ### Implementation
 
-- [ ] T045 [US3] `web/src/pages/run/artifact-grid.tsx`: AG Grid Community.
+- [X] T045 [US3] `web/src/pages/run/artifact-grid.tsx`: AG Grid Community.
   - When editable and `rows.length <= 1000`: editable text cells, add and remove row controls
     with visible labels, keyboard navigation.
   - Otherwise: read-only.
   - Columns come from `artifact.columns`, or else the row keys.
   - The default text renderer only; no HTML cell renderers. Export the constant
     `MAX_EDIT_ROWS = 1000`, the platform-wide editor limit from 007, not a terminal value.
-- [ ] T046 [US3] `web/src/pages/run/artifact-panel.tsx`:
+- [X] T046 [US3] `web/src/pages/run/artifact-panel.tsx`:
   - artifact id and version, or "Not built yet"; the grid; "Save <id>";
   - attachments listed with the file name via `<Literal>` and a "Download" button using
     `downloadAttachment` (never inline);
@@ -443,10 +443,22 @@ upload offered; upload a spreadsheet; attach a file and download it.
   - a History toggle.
 
   Plug it into the `run-page.tsx` slot. T044 passes.
-- [ ] T047 [US3] `web/e2e/artifacts.spec.ts` (P-09, P-11, P-12): edit and save the seeded
+- [X] T047 [US3] `web/e2e/artifacts.spec.ts` (P-09, P-11, P-12): edit and save the seeded
   1,000-row artifact within 5 s (SC-007); the 1,001-row artifact is read-only with upload; upload
   a spreadsheet fixture (`web/e2e/fixtures/artifact.xlsx`); attach an HTML file and click
   Download, which gives a download event and no new page or frame rendering it.
+
+### Implementation notes (2026-11-23, US3)
+
+- **Grid stand-in for component tests.** The panel's component tests replace the grid with a
+  stand-in, as the Streamlit tests replaced `st.data_editor`: AG Grid needs a real browser to lay
+  out. `e2e/artifacts.spec.ts` drives the real grid (edit and save 1,000 rows in under 5 s,
+  1,001 read-only, spreadsheet upload, SVG attachment downloaded and never rendered).
+- **Uploads checked at the typed client.** In jsdom, Node's fetch cannot send jsdom's
+  `FormData`, so the upload component tests check the form the panel builds; the browser test
+  sends it for real.
+- **Lazy loading.** The Run page loads on first use, so AG Grid (about 346 KB gzipped) is not
+  in the shell's bundle.
 
 **Checkpoint**: parity rows P-09 to P-12 are `passing`.
 

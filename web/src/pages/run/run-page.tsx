@@ -11,7 +11,7 @@ import { keys } from "../../api/queries";
 import { pagePath } from "../../nav/navigate";
 import { ErrorMessage } from "../../ui/error-message";
 import { PageHeader } from "../../ui/page-header";
-import { ArtifactsReadOnly } from "./artifacts-read-only";
+import { ArtifactPanel } from "./artifact-panel";
 import { ControlResults } from "./control-results";
 import { DecisionForm } from "./decision-form";
 import { DetailTabs } from "./detail-tabs";
@@ -92,7 +92,13 @@ export function RunPage() {
       )}
       <div className="run-columns">
         <div>
-          <ArtifactsReadOnly detail={detail} />
+          <ArtifactPanel
+            detail={detail}
+            onStale={reloadStale}
+            onChanged={() => {
+              setNotice(null);
+            }}
+          />
         </div>
         <div>
           <ReviewPanel recommendation={detail.recommendation} />
