@@ -22,6 +22,7 @@ from typing import Any
 import uvicorn
 from openpyxl import Workbook
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from sqlalchemy import text
 
 from adlc.api.app import create_app
 from adlc.config.settings import UiSettings
@@ -113,6 +114,17 @@ def seed(h: Harness, ledger: Any, work: Path) -> dict[str, Any]:
         },
     )
     h.drain()
+    dead_usecase = h.submit("Dead letter case")
+    with h.owner.begin() as conn:  # one event, dead-lettered as the router would after its retries
+        dead_letter = conn.execute(
+            text(
+                "UPDATE outbox_event SET dead_lettered_at = now(), attempts = 5, "
+                "last_error = 'route failed: subscriber unavailable' WHERE event_id = ("
+                "SELECT event_id FROM outbox_event WHERE event_type = 'usecase.submitted' "
+                "AND json_extract(payload, '$.usecase_id') = :u) RETURNING event_id"
+            ),
+            {"u": dead_usecase},
+        ).scalar_one()
     return {
         "usecase": usecase,
         "sign_off_run": sign_off_run,
@@ -126,6 +138,7 @@ def seed(h: Harness, ledger: Any, work: Path) -> dict[str, Any]:
         "clarification": f"{clarification_run}/clar-1",
         "waiver_run": waiver_run,
         "waiver": h.run(waiver_run).pending_waiver_id,
+        "dead_letter": str(dead_letter),
         "table": TABLE,
         "sheet_table": SHEET_TABLE,
         "spreadsheet": str(spreadsheet(work / f"{SHEET_TABLE}.xlsx", SHEET_TABLE, sheet_rows)),

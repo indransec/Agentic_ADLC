@@ -27,7 +27,7 @@ Every row must be `passing` before the cutover commit (research R-14).
 | P-15 | `test_requests.py::test_answer_a_clarification` | Component `pages/requests/clarification-page.test.tsx`; E2E `requests.spec.ts` | passing |
 | P-16 | `test_requests.py::test_complete_an_escalation` | Component `escalation-page.test.tsx`; E2E `requests.spec.ts` | passing |
 | P-17 | `test_requests.py::test_decide_a_waiver` | Component `waiver-page.test.tsx`; E2E `requests.spec.ts` | passing |
-| P-18 | `test_requests.py::test_dead_letters_for_the_coe` | Component `pages/dead-letters/dead-letters-page.test.tsx` (CoE and non-CoE) | open |
+| P-18 | `test_requests.py::test_dead_letters_for_the_coe` | Component `pages/dead-letters/dead-letters-page.test.tsx` (CoE and non-CoE) | passing |
 | P-19 | `test_evidence.py::test_evidence_and_verify` | Component `pages/use-cases/use-cases-page.test.tsx`; `run-page.test.tsx` (evidence tab) | passing |
 | P-20 | `test_changes.py::test_approver_decides_a_change_in_the_inbox` | Component `inbox-page.test.tsx` | passing |
 | P-21 | `test_changes.py::test_others_see_no_change_requests` | Component `inbox-page.test.tsx` | passing |
@@ -35,7 +35,7 @@ Every row must be `passing` before the cutover commit (research R-14).
 | P-23 | `test_dashboard.py::test_refresh_follows_the_setting` | Component `journey-page.test.tsx` (fake timers, `/config.json`); API `tests/integration/web/test_server.py` | passing |
 | P-24 | `test_dashboard.py::test_activity_filters_survive_a_refresh` | Component `pages/activity/activity-page.test.tsx` | passing |
 | P-25 | `test_dashboard.py::test_portfolio_page` | Component `pages/portfolio/portfolio-page.test.tsx` | passing |
-| P-26 | `test_dashboard.py::test_dead_letter_payload_for_the_coe` | Component `dead-letters-page.test.tsx` | open |
+| P-26 | `test_dashboard.py::test_dead_letter_payload_for_the_coe` | Component `dead-letters-page.test.tsx` | passing |
 | P-27 | `tests/unit/test_ui_boundary.py` | ESLint rules (R-11) plus a boundary test retargeted to `adlc.web` | passing |
 
 ## Rows new to the rebuild

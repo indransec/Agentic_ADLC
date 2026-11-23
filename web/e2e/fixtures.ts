@@ -24,6 +24,7 @@ export interface Stack {
   clarification: string;
   waiver_run: string;
   waiver: string;
+  dead_letter: string;
 }
 
 export function stack(): Stack {

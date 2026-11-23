@@ -46,3 +46,9 @@ registerPage(
   "portfolio",
   lazy(() => import("./portfolio/portfolio-page").then((m) => ({ default: m.PortfolioPage }))),
 );
+registerPage(
+  "dead-letters",
+  lazy(() =>
+    import("./dead-letters/dead-letters-page").then((m) => ({ default: m.DeadLettersPage })),
+  ),
+);

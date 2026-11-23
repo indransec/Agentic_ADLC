@@ -589,12 +589,12 @@ refresh; Journey refreshes on the configured interval.
 **Independent Test**: as CoE, open a payload and re-queue; as another role, see the notice and no
 action.
 
-- [ ] T063 [P] [US6] `web/src/pages/dead-letters/dead-letters-page.test.tsx` (P-18, P-26): the list
+- [X] T063 [P] [US6] `web/src/pages/dead-letters/dead-letters-page.test.tsx` (P-18, P-26): the list
   with attempts, error and re-queue count; event pick in `?event=`; payload and re-queue history
   on request; re-queue for the CoE; others see "Dead letters are handled by the CoE role." and no
   action. Whether the person is CoE is decided by the API's answer (403 or the list), never by a
   role name in code.
-- [ ] T064 [US6] `web/src/pages/dead-letters/dead-letters-page.tsx`: port
+- [X] T064 [US6] `web/src/pages/dead-letters/dead-letters-page.tsx`: port
   `src/adlc/ui/views/dead_letters.py`, then register it. T063 passes.
 
 **Checkpoint**: parity rows P-18 and P-26 are `passing`.

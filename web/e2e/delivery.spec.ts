@@ -34,3 +34,17 @@ test("Portfolio: KPIs and time per terminal", async ({ page }) => {
   const chart = page.getByRole("img", { name: /Time per terminal/ });
   await expect(chart.locator("svg.main-svg").first()).toBeVisible();
 });
+
+test("Dead letters: the CoE inspects and re-queues; others see the notice", async ({ page }) => {
+  await page.goto(`/dead-letters?event=${stack().dead_letter}`);
+  await signIn(page, "adlc_coe");
+  await expect(page.getByLabel("Event")).toHaveValue(stack().dead_letter);
+  await page.getByRole("button", { name: "Show payload and history" }).click();
+  await expect(page.getByText("Never re-queued.")).toBeVisible();
+  await page.getByRole("button", { name: "Re-queue" }).click();
+  await expect(page.getByText("Re-queued")).toBeVisible();
+  await page.getByRole("button", { name: "Sign out" }).click();
+  await page.goto("/dead-letters");
+  await signIn(page, "sre");
+  await expect(page.getByText("Dead letters are handled by the CoE role.")).toBeVisible();
+});
