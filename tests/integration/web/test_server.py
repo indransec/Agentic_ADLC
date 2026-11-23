@@ -39,6 +39,7 @@ def dist(tmp_path: Path) -> Path:
     (folder / "assets").mkdir(parents=True)
     (folder / "index.html").write_text("<!doctype html><title>ADLC</title>")
     (folder / "assets" / "index-abc123.js").write_text("console.log('app')")
+    (folder / "logo.svg").write_text("<svg>logo</svg>")
     (tmp_path / "secret.txt").write_text("outside the build")
     return folder
 
@@ -179,6 +180,13 @@ def test_hashed_assets_are_cached_and_missing_ones_are_not_found(ui: TestClient)
     assert answer.status_code == 200 and "console.log" in answer.text
     assert answer.headers["cache-control"] == "public, max-age=31536000, immutable"
     assert ui.get("/assets/missing.js").status_code == 404
+
+
+def test_the_builds_top_level_files_are_served(ui: TestClient) -> None:
+    answer = ui.get("/logo.svg")
+    assert answer.status_code == 200 and answer.text == "<svg>logo</svg>"
+    assert answer.headers["content-type"].startswith("image/svg+xml")
+    assert ui.get("/nested/logo.svg").text.startswith("<!doctype html>")  # a route, not a file
 
 
 def test_nothing_outside_the_build_is_served(ui: TestClient) -> None:

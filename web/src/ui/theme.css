@@ -148,6 +148,8 @@ main {
 .data-table th {
   background: var(--bg-2);
   font-weight: 600;
+  white-space: nowrap;
+  overflow-wrap: normal;
 }
 button,
 .button {
@@ -193,4 +195,93 @@ select {
   max-width: 24rem;
   margin: 10vh auto;
   padding: 0 1rem;
+}
+h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.5rem;
+}
+h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 1rem 0 0.4rem;
+}
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+}
+.summary-bar {
+  display: grid;
+  grid-template-columns: 3fr 2fr 2fr 2fr 1.5fr;
+  gap: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+}
+.summary-bar .field > .caption {
+  font-size: 0.8rem;
+}
+.run-columns {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 2rem;
+  align-items: start;
+}
+.badge.good {
+  color: var(--green);
+}
+.badge.warn,
+.badge.overdue {
+  color: var(--orange);
+}
+.badge.bad {
+  color: var(--red);
+}
+fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+label.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-right: 1rem;
+  font-weight: 400;
+}
+label.inline input {
+  width: auto;
+}
+.tabs [role="tablist"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--border);
+  margin-top: 2rem;
+}
+.tabs [role="tab"] {
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+}
+.tabs [role="tab"][aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+.tabs [role="tabpanel"] {
+  padding: 1rem 0;
+}
+pre.json {
+  background: var(--bg-2);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  overflow-x: auto;
 }

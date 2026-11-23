@@ -153,7 +153,12 @@ def create_app(
             return JSONResponse({"status": "ok"})
         return JSONResponse({"status": "missing build"}, status_code=503)
 
+    top_level = {f.name for f in dist.iterdir() if f.is_file()} if dist.is_dir() else set()
+
     async def page(request: Request) -> Response:
+        name = request.path_params["path"]
+        if name in top_level and name != "index.html":  # the build's own files (logo, icon)
+            return FileResponse(dist / name, headers={"cache-control": "no-cache"})
         if not index.is_file():
             return JSONResponse({"status": "missing build"}, status_code=503)
         return FileResponse(index, headers={"cache-control": "no-cache"})
