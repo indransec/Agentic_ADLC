@@ -16,7 +16,17 @@ export default defineConfig({
     baseURL: `http://127.0.0.1:${UI_PORT}`,
     trace: "retain-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  // Chromium always (CI). E2E_ALL_BROWSERS=1 adds Firefox and WebKit (Safari's engine) for the
+  // cross-browser check (T069); Edge is Chromium.
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    ...(process.env["E2E_ALL_BROWSERS"] === "1"
+      ? [
+          { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+          { name: "webkit", use: { ...devices["Desktop Safari"] } },
+        ]
+      : []),
+  ],
   webServer: {
     command: `env -u VIRTUAL_ENV uv run python -m tests.e2e.stack --ui-port ${UI_PORT} --api-port ${API_PORT} --state web/e2e/.stack.json`,
     cwd: "..",

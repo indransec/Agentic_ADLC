@@ -670,14 +670,14 @@ action.
   model (HttpOnly cookie plus HMAC CSRF, bearer kept for tools).
 - [ ] T073 [P] `docs/solution-architecture.md` §8: the experience layer as built. Pages,
   addresses, rendering rules, and that the session never reaches page scripts.
-- [ ] T074 [P] `web/README.md`: layout, commands, the page registry, rendering and boundary rules
+- [X] T074 [P] `web/README.md`: layout, commands, the page registry, rendering and boundary rules
   and their lint enforcement, file naming (kebab-case files, PascalCase component identifiers;
   constitution XIII), and how to regenerate the contract.
 - [ ] T075 [P] `docs/run-without-docker.md`: the Node 24 and corepack prerequisite, `make
   web-build`, `make web-dev`, and the ports. `docs/user-manual.md`: the rebuilt pages (same
   actions; new addresses; the grid's add and remove row controls).
 - [ ] T076 [P] `README.md` (repository): prerequisites and the `make` targets list.
-- [ ] T077 [P] `src/adlc/api/README.md`: the `auth.py` row covers bearer *or* cookie sessions,
+- [X] T077 [P] `src/adlc/api/README.md`: the `auth.py` row covers bearer *or* cookie sessions,
   the CSRF rule for cookie requests and cookie-mode sign-in, and the unchanged `PUBLIC_PATHS`.
   Add rows for `schemas/` (`ApiModel`, `extra="forbid"`, one module per router) and for
   `make openapi` and the freshness test (constitution Definition of Done: module README updated).

@@ -43,12 +43,15 @@ test("no serious accessibility problems on any page", async ({ page }) => {
   }
 });
 
+// Safari moves Tab between text fields only by default; Option+Tab reaches every control
+let TAB = "Tab";
+
 async function tabTo(
   page: Page,
   matches: (el: { tag: string; text: string; type: string }) => boolean,
 ) {
   for (let i = 0; i < 120; i++) {
-    await page.keyboard.press("Tab");
+    await page.keyboard.press(TAB);
     const focused = await page.evaluate(() => {
       const el = document.activeElement as HTMLElement | null;
       return {
@@ -63,7 +66,11 @@ async function tabTo(
   throw new Error("not reachable with Tab");
 }
 
-test("sign in, open an Inbox item and pass a run with the keyboard only", async ({ page }) => {
+test("sign in, open an Inbox item and pass a run with the keyboard only", async ({
+  page,
+  browserName,
+}) => {
+  TAB = browserName === "webkit" ? "Alt+Tab" : "Tab";
   const s = stack();
   await page.goto("/sign-in");
   await page.getByLabel("Account").focus();
