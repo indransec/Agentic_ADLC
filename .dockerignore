@@ -18,3 +18,10 @@ htmlcov/
 .DS_Store
 data/local/
 **/.venv/
+# 022: the web application's local install, build and test output (the image builds its own)
+web/node_modules/
+web/dist/
+web/coverage/
+web/test-results/
+web/playwright-report/
+web/e2e/.stack.json

@@ -1,0 +1,17 @@
+{
+  "at": "2026-11-23T09:00:00.000000+00:00",
+  "change_id": "CHG-1",
+  "comment": "ok",
+  "decided_at": "2026-11-23T09:00:00.000000+00:00",
+  "decided_by": "release_manager-person",
+  "plan": "shadow, canary, full",
+  "record_version": 2,
+  "risk": "low",
+  "run_id": "UC-0001/T6/run-1",
+  "state": "approved",
+  "summary": "Release the triage agent",
+  "terminal_id": "T6",
+  "usecase_id": "UC-0001",
+  "window_end": "2026-11-23T09:00:00+00:00",
+  "window_start": "2026-11-23T09:00:00+00:00"
+}

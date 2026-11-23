@@ -41,7 +41,7 @@ def create_app(settings: Settings, span_exporter: SpanExporter | None = None) ->
     app = FastAPI(title="ADLC Platform API", version="0.1.0")
     app.state.settings = settings
     app.state.engine = open_engine(settings)
-    install_auth(app, provider)
+    install_auth(app, provider, settings.session_secret.get_secret_value())
     install_errors(app)
     app.state.services = Services(settings, app.state.engine)  # built on first use
     app.include_router(health.router)

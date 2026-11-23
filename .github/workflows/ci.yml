@@ -25,5 +25,5 @@ jobs:
         with:
           node-version-file: web/.nvmrc
       - run: make install
-      - run: pnpm -C web exec playwright install --with-deps chromium
+      - run: make web-browsers
       - run: make check

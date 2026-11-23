@@ -1,0 +1,127 @@
+{
+  "kpis": [
+    {
+      "definition": "Use case submitted to closed, or now",
+      "definition_note": "mean per use case",
+      "headline": true,
+      "id": "elapsed",
+      "name": "Lifecycle elapsed time",
+      "unit": "seconds",
+      "value": 0.5
+    },
+    {
+      "definition": "Agent working, reviewer, waiting for clarification, waiting for people, blocked",
+      "headline": false,
+      "id": "time_split",
+      "name": "Time per terminal, split",
+      "per_terminal": {
+        "T0": {
+          "agent": 0.5,
+          "blocked": 0.5,
+          "clarification": 0.5,
+          "other": 0.5,
+          "people": 0.5,
+          "reviewer": 0.5
+        },
+        "T1": {
+          "agent": 0.5,
+          "blocked": 0.5,
+          "clarification": 0.5,
+          "other": 0.5,
+          "people": 0.5,
+          "reviewer": 0.5
+        }
+      },
+      "unit": "split",
+      "value": {
+        "agent": 0.5,
+        "blocked": 0.5,
+        "clarification": 0.5,
+        "other": 0.5,
+        "people": 0.5,
+        "reviewer": 0.5
+      }
+    },
+    {
+      "definition": "Rework decisions, per terminal by root cause",
+      "headline": true,
+      "id": "reworks",
+      "name": "Reworks",
+      "per_terminal": {
+        "T1": {
+          "requirement": 1
+        }
+      },
+      "unit": "count",
+      "value": 1
+    },
+    {
+      "definition": "Clarification rounds, per terminal by addressed role",
+      "headline": true,
+      "id": "clarifications",
+      "name": "Clarifications",
+      "per_terminal": {},
+      "unit": "count",
+      "value": 0
+    },
+    {
+      "definition": "Mean time from question to answer (answered rounds)",
+      "headline": false,
+      "id": "clarification_wait",
+      "name": "Clarification wait",
+      "per_terminal": {},
+      "unit": "seconds",
+      "value": null
+    },
+    {
+      "definition": "Terminals whose first run closed pass or exception / terminals whose first run closed",
+      "headline": true,
+      "id": "first_pass_yield",
+      "name": "First-pass yield",
+      "unit": "ratio",
+      "value": 0.5
+    },
+    {
+      "definition": "Escalations, with terminal, run and trigger",
+      "detail": [],
+      "headline": true,
+      "id": "escalations",
+      "name": "Escalations",
+      "unit": "count",
+      "value": 0
+    },
+    {
+      "definition": "Decisions equal to the reviewer's recommendation / decisions where it recommended an outcome a person can decide (an escalate recommendation is not counted)",
+      "headline": false,
+      "id": "reviewer_agreement",
+      "name": "Reviewer\u2013human agreement",
+      "unit": "ratio",
+      "value": 0.5
+    },
+    {
+      "definition": "Agent artifacts a person changed in the same run / agent artifacts",
+      "headline": false,
+      "id": "human_edit_rate",
+      "name": "Human edit rate",
+      "unit": "ratio",
+      "value": 0.5
+    },
+    {
+      "definition": "Blocking controls passed at the first attempt / blocking controls at the first attempt",
+      "headline": false,
+      "id": "control_first_pass",
+      "name": "Control first-time pass rate",
+      "unit": "ratio",
+      "value": 0.5
+    },
+    {
+      "definition": "Closed runs within the terminal's expected duration for the tier / closed runs with one",
+      "headline": true,
+      "id": "sla_adherence",
+      "name": "SLA adherence",
+      "unit": "ratio",
+      "value": 0.5
+    }
+  ],
+  "usecases": 1
+}

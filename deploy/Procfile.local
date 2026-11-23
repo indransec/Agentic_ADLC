@@ -11,7 +11,10 @@ orchestrator: OTEL_RESOURCE_ATTRIBUTES=openinference.project.name=adlc-platform 
 knowledge: uv run adlc-knowledge
 tools: uv run adlc-tools
 bridge: uv run adlc-pilot-bridge
-ui: ADLC_API_URL=http://127.0.0.1:${ADLC_API_PORT:-8000} uv run streamlit run src/adlc/ui/app.py --server.port ${ADLC_UI_PORT:-8501} --server.address 127.0.0.1 --server.headless true --browser.gatherUsageStats false
+# 022: adlc-web serves web/dist (make local builds it) and forwards /api; Streamlit stays beside
+# it on ADLC_LEGACY_UI_PORT until the 022 cutover
+ui: ADLC_API_URL=http://127.0.0.1:${ADLC_API_PORT:-8000} uv run adlc-web --host 127.0.0.1
+legacy-ui: ADLC_API_URL=http://127.0.0.1:${ADLC_API_PORT:-8000} uv run streamlit run src/adlc/ui/app.py --server.port ${ADLC_LEGACY_UI_PORT:-8502} --server.address 127.0.0.1 --server.headless true --browser.gatherUsageStats false
 
 # Pilot (its own uv project in pilot/): three environment hosts, traffic and the lab
 pilot-dev: cd pilot && env -u VIRTUAL_ENV OTEL_RESOURCE_ATTRIBUTES=openinference.project.name=pilot-triage-dev PILOT_OTLP_ENDPOINT=http://127.0.0.1:6006 PILOT_TEMPLATE=template PILOT_REGISTRY=../data/local/pilot/packages PILOT_RECORDS=../data/local/pilot/records/dev PILOT_WORK=../data/local/pilot/work/dev uv run pilot-host --env dev --port 8101

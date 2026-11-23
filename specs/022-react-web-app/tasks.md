@@ -157,7 +157,7 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
 
 ### Web foundations
 
-- [ ] T018 `web/src/api/client.ts`:
+- [X] T018 `web/src/api/client.ts`:
   - `openapi-fetch` client with `baseUrl: "/api"` and `credentials: "same-origin"`.
   - Middleware adds `X-ADLC-CSRF` from the session store on non-GET, HEAD or OPTIONS requests.
   - Answers map to `ApiError {status, kind, detail, field?}`. A network failure becomes
@@ -170,26 +170,26 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
   Add `web/src/api/errors.ts`, which maps each kind to behaviour per the data-model table, and
   `web/src/api/client.test.ts` (each kind, the CSRF header present and absent, unavailable
   keeping input: N-06).
-- [ ] T019 [P] `web/src/api/queries.ts`: typed query keys and hooks per route (TanStack Query),
+- [X] T019 [P] `web/src/api/queries.ts`: typed query keys and hooks per route (TanStack Query),
   and mutation helpers that invalidate the run, inbox and use-case keys (research R-07).
   `refetchIntervalInBackground: false`.
-- [ ] T020 [P] `web/src/ui/literal.tsx` (`white-space: pre-wrap; overflow-wrap: anywhere`, text
+- [X] T020 [P] `web/src/ui/literal.tsx` (`white-space: pre-wrap; overflow-wrap: anywhere`, text
   node only) and `web/src/ui/literal.test.tsx`. The test feeds markup and script samples (copy
   the samples from `tests/integration/ui/test_rendering.py`) and asserts each renders as literal
   text with no element created (P-13).
-- [ ] T021 [P] `web/src/ui/status.ts`: port `STATUS` and `STATUS_COLOURS` from
+- [X] T021 [P] `web/src/ui/status.ts`: port `STATUS` and `STATUS_COLOURS` from
   `src/adlc/ui/render.py`. Then `web/src/ui/status-badge.tsx` and `status-badge.test.tsx`: a known
   value shows the word and colour; an unknown one is plain text; the badge is never colour-only.
-- [ ] T022 [P] `web/src/ui/format.ts`: port `src/adlc/ui/format.py` (UTC times, durations,
+- [X] T022 [P] `web/src/ui/format.ts`: port `src/adlc/ui/format.py` (UTC times, durations,
   money, column names), with `format.test.ts` mirroring its behaviour.
-- [ ] T023 [P] `web/src/ui/data-table.tsx`: an AG Grid Community read-only wrapper with text cell
+- [X] T023 [P] `web/src/ui/data-table.tsx`: an AG Grid Community read-only wrapper with text cell
   renderer only, column labels via `format.ts`, and an empty-state text. Also
   `error-message.tsx` ("The platform refused this: <kind in words>", detail through `<Literal>`),
   `page-header.tsx` (focus on mount, FR-028), `env-badge.tsx` and `theme.css`, which ports the
   colours and fonts from `.streamlit/config.toml`.
-- [ ] T024 `web/src/config.ts`: load `/config.json` once (`env`, `dashboard_refresh_seconds`)
+- [X] T024 `web/src/config.ts`: load `/config.json` once (`env`, `dashboard_refresh_seconds`)
   and provide it through context.
-- [ ] T025 `web/src/nav/registry.ts`: every page in contracts/pages.md, in that order, with
+- [X] T025 `web/src/nav/registry.ts`: every page in contracts/pages.md, in that order, with
   fields `id`, `title`, `section`, `path`, `icon`, `inSidebar`, `params` and `component` (data-model
   "Page registry entry"). Pages not built yet use a lazy placeholder component.
 
@@ -201,10 +201,10 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
     `/run?run=` when `run` is present, otherwise `/inbox`.
   - `web/src/nav/registry.test.ts`: the sidebar shows exactly the `inSidebar` pages; every path
     is unique; `/?run=X` redirects (FR-002, FR-003).
-- [ ] T026 [P] `web/src/test/msw-handlers.ts` and `web/src/test/fixtures/*.json`: handlers typed
+- [X] T026 [P] `web/src/test/msw-handlers.ts` and `web/src/test/fixtures/*.json`: handlers typed
   with `paths` from `schema.d.ts`, with fixtures taken from the T008 goldens. The type check fails
   if a fixture or handler stops matching the contract.
-- [ ] T027 `tests/e2e/stack.py`: a Python entry point (`uv run python -m tests.e2e.stack`). It
+- [X] T027 `tests/e2e/stack.py`: a Python entry point (`uv run python -m tests.e2e.stack`). It
   builds a fresh harness database with stub agents (`tests/support/orchestration.py`), writes an
   accounts file with test roles, and seeds:
   - a run awaiting sign-off;
@@ -217,7 +217,7 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
   Add `web/playwright.config.ts` (Chromium; a `globalSetup` that starts the stack and reads the
   JSON; base URL from it) and `web/e2e/fixtures.ts` (sign-in helper, seeded ids,
   console-error/CSP-violation listener that fails the test).
-- [ ] T028 Running both ways (research R-13, R-14):
+- [X] T028 Running both ways (research R-13, R-14):
   - `deploy/Procfile.local`: `ui: uv run adlc-web --host 127.0.0.1`; the old Streamlit line
     renamed to `legacy-ui`, on `${ADLC_LEGACY_UI_PORT:-8502}`.
   - `deploy/api.Dockerfile`: add a first stage, `FROM node:24-slim AS web` (`corepack enable`,
@@ -248,17 +248,17 @@ expiry and deep links in the web application.
 
 ### Tests first (seen failing)
 
-- [ ] T029 [P] [US1] `tests/integration/api/test_cookie_session.py`: every sign-in, read,
+- [X] T029 [P] [US1] `tests/integration/api/test_cookie_session.py`: every sign-in, read,
   sign-out and public-path case in contracts/session.md "Tests". This includes `Secure` when
   `X-Forwarded-Proto: https`, and the token never appearing in a cookie-mode body.
-- [ ] T030 [P] [US1] `tests/integration/api/test_csrf.py` (N-02). A cookie POST is refused with
+- [X] T030 [P] [US1] `tests/integration/api/test_csrf.py` (N-02). A cookie POST is refused with
   403 `not_allowed` "cross-site request refused" when the header is missing, wrong, or from
   another session. A bearer POST without the header passes. Cookie-mode sign-in without
   `X-ADLC-CSRF: sign-in` is refused. Sign-out with the cookie needs the header.
 
 ### Implementation
 
-- [ ] T031 [US1] `src/adlc/api/auth.py`:
+- [X] T031 [US1] `src/adlc/api/auth.py`:
   - `session_cookie(request)`, and a `csrf_value(secret, token)` function computing
     `base64url(HMAC-SHA256(session_secret, "csrf\0" + token))`, compared with
     `hmac.compare_digest`.
@@ -267,7 +267,7 @@ expiry and deep links in the web application.
   - It sets `request.state.session_via = "bearer" | "cookie"`.
   - `install_auth` takes the session secret from `app.state.settings`.
   - `PUBLIC_PATHS` is unchanged.
-- [ ] T032 [US1] `src/adlc/api/routes/auth.py`:
+- [X] T032 [US1] `src/adlc/api/routes/auth.py`:
   - `SignInRequest.session: Literal["bearer", "cookie"] = "bearer"`.
   - In cookie mode, require the header `X-ADLC-CSRF: sign-in` (403 otherwise). Answer
     `BrowserSignInResponse {expires_at, person, csrf_token}` and set the cookie
@@ -278,13 +278,13 @@ expiry and deep links in the web application.
 
   Bearer answers stay byte-identical. Then run `make openapi`. T029 and T030 pass, and the
   existing `tests/integration/test_auth_api.py` passes unchanged.
-- [ ] T033 [US1] `web/src/auth/session-context.tsx`:
+- [X] T033 [US1] `web/src/auth/session-context.tsx`:
   - holds the person and the CSRF value in memory only;
   - at start calls `GET /auth/me` (401 means signed out);
   - offers `signIn(account, password)` (cookie mode with the `sign-in` header) and `signOut()`;
   - on any `not_signed_in` from the client, clears its state and navigates to
     `/sign-in?next=<current path and query>`.
-- [ ] T034 [US1] `web/src/auth/sign-in-page.tsx`: logo, tagline and environment badge; Account and
+- [X] T034 [US1] `web/src/auth/sign-in-page.tsx`: logo, tagline and environment badge; Account and
   Password fields with visible labels; "Sign in". A wrong password shows the platform's message.
   After sign-in, follow `next` only if it starts with exactly one `/`; otherwise go to `/inbox`.
 
@@ -292,7 +292,7 @@ expiry and deep links in the web application.
   button in `sidebar.tsx`. Add `web/src/auth/sign-in-page.test.tsx` and
   `require-session.test.tsx`: wrong password; `next` honoured; `//evil.example` and
   `https://evil.example` ignored; expiry during an action goes to sign-in without resending.
-- [ ] T035 [US1] `web/e2e/session.spec.ts` (P-02, N-01, N-02, N-03):
+- [X] T035 [US1] `web/e2e/session.spec.ts` (P-02, N-01, N-02, N-03):
   - sign in, then assert `document.cookie` lacks `adlc_session` and local and session storage
     hold no token, while the context's cookies show HttpOnly and SameSite Strict;
   - sign out and get sent back to sign-in;
@@ -302,6 +302,28 @@ expiry and deep links in the web application.
     `page.route` (no server). The page auto-submits a form POST to
     `<app>/api/usecases`. The answer must be 403 with `"kind": "not_allowed"` (asserted on the
     response, so a 422 cannot pass the test), and `GET /api/usecases` shows no new use case.
+
+### Implementation notes (2026-11-23)
+
+- **T001:** `ADLC_UI_PORT` became a `UiSettings` field, because `adlc-web` reads it.
+  `ADLC_LEGACY_UI_PORT` stayed deploy-only (compose and the Procfile), like `ADLC_PHOENIX_UI_PORT`,
+  because no Python reads it.
+- **T007:** CI runs only make targets (`tests/unit/test_build_contract.py`). The Playwright browser
+  install is therefore `make web-browsers`, a setup-only run beside `make install`.
+- **T012/T013:** strict models for every dict built in code. Rows passed through from the store
+  (sign-offs, clarifications, waiver, reviewer output, checks, timeline) are `Record`
+  (`dict[str, Any]`), because their values include datetimes and decimals and their keys follow
+  the store. Routes use `response_model_exclude_unset`, so keys that are sometimes absent stay
+  absent. All 25 goldens, the API, dashboard, Streamlit UI and scenario suites pass unchanged.
+- **T015:** the proxy's httpx client uses a cookie jar that stores nothing. The first e2e run
+  showed the default jar carrying one person's session to every later request; a regression test
+  in `test_server.py` covers it.
+- **T019:** query keys and the client defaults are in place; per-route hooks arrive with each page
+  (US2 to US6).
+- **T023:** read-only tables are a semantic `<table>` (accessible, testable in jsdom). AG Grid is
+  kept for the artifact editor and large tables (US3).
+- **T033:** the session records a deliberate sign-out, so sign-in then opens without a `next`
+  address.
 
 **Checkpoint**: US1's independent test passes; parity rows P-02, N-01, N-02 and N-03 are
 `passing`.

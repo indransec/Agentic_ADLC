@@ -1,0 +1,11 @@
+[
+  {
+    "name": "Claims triage",
+    "open_runs": 1,
+    "risk_tier": "medium",
+    "status": "active",
+    "submitted_at": "2026-11-23T09:00:00.000000Z",
+    "submitted_by": "business_owner-person",
+    "usecase_id": "UC-0001"
+  }
+]

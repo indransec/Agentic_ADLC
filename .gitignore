@@ -33,3 +33,4 @@ web/dist/
 web/coverage/
 web/test-results/
 web/playwright-report/
+web/e2e/.stack.json

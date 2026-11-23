@@ -16,7 +16,7 @@ GITLEAKS_IMAGE := ghcr.io/gitleaks/gitleaks:v8.30.1
 .PHONY: help install up down status reset local local-setup migrate migrate-down phoenix lint typecheck test \
         migration-check secret-scan check spec-validate spec-register \
         demo demo-auto demo-live demo-reset resilience trace \
-        web-install web-build web-dev web-lint web-typecheck web-test web-e2e web-check openapi
+        web-install web-browsers web-build web-dev web-lint web-typecheck web-test web-e2e web-check openapi
 
 # L5 spec validation compares with this git ref (override in the environment).
 ADLC_SPEC_BASELINE_REF ?= origin/main
@@ -151,6 +151,11 @@ web-install:
 	@echo "==> web-install"
 	corepack enable
 	$(PNPM) install --frozen-lockfile
+
+# The browser the end-to-end tests drive (CI and first-time setup; with its system libraries)
+web-browsers:
+	@echo "==> web-browsers"
+	$(PNPM) exec playwright install --with-deps chromium
 
 web-build:
 	@echo "==> web-build"

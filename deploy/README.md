@@ -18,12 +18,18 @@ The ledger records the content hash of every attached file (feature 005), so a f
 restored from a different point in time than the database shows up as `attachment` breaks in
 `adlc-ledger verify`.
 
-## Web application (feature 007)
+## Web application (features 007, 022)
 
-The `ui` service runs the Streamlit web application on `${ADLC_UI_PORT:-8501}`. It talks only to
-the `api` service (`ADLC_API_URL`) and holds no database settings or secrets. The API runs every
-human operation, so it now also needs `ADLC_DEADLETTER_ROLE`, `ADLC_SYNTHETIC_DIR` and
-`ADLC_SPEC_DIR`, the same values as the orchestrator.
+The `ui` service runs `adlc-web` on `${ADLC_UI_PORT:-8501}` (feature 022). It serves the browser
+application, which the image builds in a Node stage into `/app/web/dist`, and forwards `/api` to the
+`api` service (`ADLC_API_URL`). Node is used only to build the image, never to run it. The service
+holds no database settings, sessions or secrets. Its health check is `/health`.
+
+Until the 022 cutover, the previous Streamlit application runs beside it as `legacy-ui` on
+`${ADLC_LEGACY_UI_PORT:-8502}`.
+
+The API runs every human operation, so it also needs `ADLC_DEADLETTER_ROLE`, `ADLC_SYNTHETIC_DIR`
+and `ADLC_SPEC_DIR`, the same values as the orchestrator.
 
 ## Knowledge MCP server (feature 008)
 

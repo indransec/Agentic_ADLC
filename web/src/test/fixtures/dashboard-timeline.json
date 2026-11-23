@@ -1,0 +1,127 @@
+{
+  "activity": [
+    {
+      "actor": "orchestrator",
+      "actor_type": "orchestrator",
+      "at": "2026-11-23T09:00:00.000000+00:00",
+      "outcome": "opened",
+      "seconds": 0.5,
+      "step": "route"
+    },
+    {
+      "actor": "orchestrator",
+      "actor_type": "orchestrator",
+      "at": "2026-11-23T09:00:00.000000+00:00",
+      "outcome": "building",
+      "seconds": 0.5,
+      "step": "prerequisites"
+    },
+    {
+      "actor": "agent:UC-0001/T1/run-1",
+      "actor_type": "agent",
+      "at": "2026-11-23T09:00:00.000000+00:00",
+      "outcome": "checking",
+      "seconds": 0.5,
+      "step": "build"
+    },
+    {
+      "actor": "orchestrator",
+      "actor_type": "orchestrator",
+      "at": "2026-11-23T09:00:00.000000+00:00",
+      "outcome": "reviewing",
+      "seconds": 0.5,
+      "step": "controls"
+    },
+    {
+      "actor": "reviewer:UC-0001/T1/run-1",
+      "actor_type": "reviewer",
+      "at": "2026-11-23T09:00:00.000000+00:00",
+      "outcome": "awaiting_sign_off",
+      "seconds": 0.5,
+      "step": "review"
+    },
+    {
+      "actor": "product_owner-person",
+      "actor_type": "human",
+      "at": "2026-11-23T09:00:00.000000+00:00",
+      "outcome": "awaiting_sign_off",
+      "seconds": 0.5,
+      "step": "sign_off"
+    },
+    {
+      "actor": "orchestrator",
+      "actor_type": "orchestrator",
+      "at": "2026-11-23T09:00:00.000000+00:00",
+      "outcome": "awaiting_sign_off",
+      "seconds": 0.5,
+      "step": "controls"
+    },
+    {
+      "actor": "product_owner-person",
+      "actor_type": "human",
+      "at": "2026-11-23T09:00:00.000000+00:00",
+      "outcome": "awaiting_sign_off",
+      "seconds": 0.5,
+      "step": "sign_off"
+    },
+    {
+      "actor": "orchestrator",
+      "actor_type": "orchestrator",
+      "at": "2026-11-23T09:00:00.000000+00:00",
+      "outcome": "awaiting_sign_off",
+      "seconds": 0.5,
+      "step": "controls"
+    },
+    {
+      "actor": "product_owner-person",
+      "actor_type": "human",
+      "at": "2026-11-23T09:00:00.000000+00:00",
+      "outcome": "awaiting_sign_off",
+      "seconds": 0.5,
+      "step": "sign_off"
+    },
+    {
+      "actor": "orchestrator",
+      "actor_type": "orchestrator",
+      "at": "2026-11-23T09:00:00.000000+00:00",
+      "outcome": "awaiting_sign_off",
+      "seconds": 0.5,
+      "step": "controls"
+    },
+    {
+      "actor": "product_owner-person",
+      "actor_type": "human",
+      "at": "2026-11-23T09:00:00.000000+00:00",
+      "outcome": "closed",
+      "seconds": 0.5,
+      "step": "sign_off"
+    }
+  ],
+  "attempts": [
+    {
+      "agent_id": "t1-requirements-agent",
+      "attempt": 1,
+      "cost_usd": 0.5,
+      "implementation": "stub",
+      "kind": "build",
+      "model_calls": [],
+      "steps": 0,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "tool_calls": []
+    },
+    {
+      "agent_id": "common-terminal-reviewer",
+      "attempt": 1,
+      "cost_usd": 0.5,
+      "implementation": "stub",
+      "kind": "review",
+      "model_calls": [],
+      "steps": 0,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "tool_calls": []
+    }
+  ],
+  "run_id": "UC-0001/T1/run-1"
+}

@@ -1,0 +1,13 @@
+{
+  "closed_at": "2026-11-23T09:00:00.000000Z",
+  "controls_pending": false,
+  "due_at": "2026-11-23T09:00:00.000000Z",
+  "final_status": "exception",
+  "opened_at": "2026-11-23T09:00:00.000000Z",
+  "run_id": "UC-0001/T1/run-1",
+  "run_number": 1,
+  "state": "closed",
+  "terminal_id": "T1",
+  "usecase_id": "UC-0001",
+  "version": 6
+}

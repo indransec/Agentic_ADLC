@@ -119,6 +119,22 @@ def test_answer_headers_come_from_an_allowlist(ui: TestClient, stub: StubApi) ->
     assert answer.headers.get("server") != "uvicorn"
 
 
+def test_the_proxy_never_carries_one_persons_cookie_to_another(
+    ui: TestClient, stub: StubApi
+) -> None:
+    """A session cookie set by the API goes to that browser only; the proxy keeps none."""
+    stub.reply = lambda request: httpx.Response(
+        200,
+        json={},
+        headers={"set-cookie": "adlc_session=alice-token; HttpOnly; SameSite=Strict; Path=/"},
+    )
+    ui.post("/api/auth/sign-in", json={})
+    ui.cookies.clear()  # another browser: no cookie at all
+    stub.reply = lambda request: httpx.Response(200, json={})
+    ui.get("/api/auth/me")
+    assert "cookie" not in stub.seen[-1].headers
+
+
 def test_status_and_error_shape_pass_through(ui: TestClient, stub: StubApi) -> None:
     stub.reply = lambda request: httpx.Response(409, json={"kind": "stale", "detail": "changed"})
     answer = ui.put("/api/runs/UC-0001/T1/run-1/artifacts/kpis", json={})

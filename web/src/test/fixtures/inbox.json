@@ -1,0 +1,14 @@
+[
+  {
+    "arrived_at": "2026-11-23T09:00:00.000000Z",
+    "controls_pending": false,
+    "due_at": "2026-11-23T09:00:00.000000Z",
+    "id": "UC-0001/T1/run-1",
+    "kind": "sign_off",
+    "role": "product_owner",
+    "run_id": "UC-0001/T1/run-1",
+    "terminal_id": "T1",
+    "title": "Sign off T1 run 1",
+    "usecase_id": "UC-0001"
+  }
+]

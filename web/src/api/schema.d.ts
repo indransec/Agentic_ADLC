@@ -654,6 +654,20 @@ export interface components {
             /** File */
             file: string;
         };
+        /**
+         * BrowserSignInResponse
+         * @description Cookie-mode sign-in: the token went into the HttpOnly cookie, not here.
+         */
+        BrowserSignInResponse: {
+            /** Csrf Token */
+            csrf_token: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            person: components["schemas"]["PersonOut"];
+        };
         /** ChangeDecision */
         ChangeDecision: {
             /** Approve */
@@ -960,6 +974,20 @@ export interface components {
                 [key: string]: number;
             };
         };
+        /**
+         * MeOut
+         * @description The signed-in person; with the session's CSRF value when the session is the cookie.
+         */
+        MeOut: {
+            /** Account Name */
+            account_name: string;
+            /** Csrf Token */
+            csrf_token?: string | null;
+            /** Display Name */
+            display_name: string;
+            /** Roles */
+            roles: string[];
+        };
         Money: string;
         /** Panel */
         Panel: {
@@ -1149,6 +1177,12 @@ export interface components {
              * Format: password
              */
             password: string;
+            /**
+             * Session
+             * @default bearer
+             * @enum {string}
+             */
+            session: "bearer" | "cookie";
         };
         /** SignInResponse */
         SignInResponse: {
@@ -1335,7 +1369,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PersonOut"];
+                    "application/json": components["schemas"]["MeOut"];
                 };
             };
         };
@@ -1359,7 +1393,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["SignInResponse"];
+                    "application/json": components["schemas"]["SignInResponse"] | components["schemas"]["BrowserSignInResponse"];
                 };
             };
             /** @description Validation Error */

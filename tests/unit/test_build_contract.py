@@ -21,7 +21,7 @@ MAKE_TARGETS = {
     "spec-validate",
     "spec-register",
 }
-SETUP_ONLY_RUNS = {"make install"}
+SETUP_ONLY_RUNS = {"make install", "make web-browsers"}  # 022: Playwright's browser
 
 
 def _make_targets() -> set[str]:

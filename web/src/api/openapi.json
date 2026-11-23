@@ -434,6 +434,30 @@
         "title": "Body_spreadsheet_runs__run_id__artifacts__artifact_id__spreadsheet_post",
         "type": "object"
       },
+      "BrowserSignInResponse": {
+        "description": "Cookie-mode sign-in: the token went into the HttpOnly cookie, not here.",
+        "properties": {
+          "csrf_token": {
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "person": {
+            "$ref": "#/components/schemas/PersonOut"
+          }
+        },
+        "required": [
+          "expires_at",
+          "person",
+          "csrf_token"
+        ],
+        "title": "BrowserSignInResponse",
+        "type": "object"
+      },
       "ChangeDecision": {
         "properties": {
           "approve": {
@@ -1461,6 +1485,44 @@
         "title": "LaneBar",
         "type": "object"
       },
+      "MeOut": {
+        "description": "The signed-in person; with the session's CSRF value when the session is the cookie.",
+        "properties": {
+          "account_name": {
+            "title": "Account Name",
+            "type": "string"
+          },
+          "csrf_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Csrf Token"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "account_name",
+          "display_name",
+          "roles"
+        ],
+        "title": "MeOut",
+        "type": "object"
+      },
       "Money": {
         "type": "string"
       },
@@ -2072,6 +2134,15 @@
             "title": "Password",
             "type": "string",
             "writeOnly": true
+          },
+          "session": {
+            "default": "bearer",
+            "enum": [
+              "bearer",
+              "cookie"
+            ],
+            "title": "Session",
+            "type": "string"
           }
         },
         "required": [
@@ -2573,7 +2644,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PersonOut"
+                  "$ref": "#/components/schemas/MeOut"
                 }
               }
             },
@@ -2601,7 +2672,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SignInResponse"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/SignInResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/BrowserSignInResponse"
+                    }
+                  ],
+                  "title": "Response Sign In Auth Sign In Post"
                 }
               }
             },

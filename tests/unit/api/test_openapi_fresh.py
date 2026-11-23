@@ -26,7 +26,8 @@ def test_every_platform_answer_is_described() -> None:
                 schema = response.get("content", {}).get("application/json", {}).get("schema")
                 if schema is None:
                     continue  # raw answers (download) and 204s
-                named = "$ref" in schema or "$ref" in schema.get("items", {})
+                options = schema.get("anyOf", [schema])  # sign-in: bearer or cookie answer
+                named = all("$ref" in o or "$ref" in o.get("items", {}) for o in options)
                 if not named:
                     loose.append(f"{method.upper()} {path} {status}")
     assert loose == [], loose

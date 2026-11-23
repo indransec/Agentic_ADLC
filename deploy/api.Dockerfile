@@ -1,4 +1,16 @@
-# Platform API image (also used by the one-shot `migrate` service).
+# Platform API image (also used by the one-shot `migrate` service, and by `ui`, which serves the
+# browser application built in the first stage: Node builds it, the runtime stays Python only).
+
+# Stage 1 (feature 022): build web/ into web/dist.
+FROM node:24-slim AS web
+WORKDIR /web
+RUN corepack enable
+COPY web/package.json web/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY web/ ./
+RUN pnpm exec vite build
+
+# Stage 2: the platform's Python image.
 FROM python:3.12-slim
 
 COPY --from=ghcr.io/astral-sh/uv:0.10.7 /uv /usr/local/bin/uv
@@ -26,6 +38,7 @@ COPY alembic.ini ./
 COPY adlc-specs ./adlc-specs
 COPY data ./data
 COPY .streamlit ./.streamlit
+COPY --from=web /web/dist ./web/dist
 RUN uv sync --locked --no-dev
 
 RUN useradd --system --uid 10001 --no-create-home adlc \

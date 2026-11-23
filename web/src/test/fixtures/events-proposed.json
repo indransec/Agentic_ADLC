@@ -1,0 +1,11 @@
+[
+  {
+    "event_id": "EV-1",
+    "event_type": "drift",
+    "raised_at": "",
+    "routed_to": "T9",
+    "run_id": "UC-0001/T8/run-1",
+    "terminal_id": "T8",
+    "usecase_id": "UC-0001"
+  }
+]

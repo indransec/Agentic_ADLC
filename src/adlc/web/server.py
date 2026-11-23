@@ -11,6 +11,7 @@ no session and no secret; it imports only ``adlc.web`` and ``adlc.config``.
 import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from http.cookiejar import CookieJar, DefaultCookiePolicy
 from pathlib import Path
 from typing import Any
 
@@ -112,7 +113,11 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app: Starlette) -> AsyncIterator[None]:
-        async with httpx.AsyncClient(transport=transport, timeout=TIMEOUT) as client:
+        # The proxy must never remember a cookie: one person's session would be sent with
+        # everyone's requests. A jar whose policy accepts no domain stores nothing (passed
+        # as the CookieJar itself: httpx.Cookies(jar) would copy it into a default jar).
+        jar = CookieJar(policy=DefaultCookiePolicy(allowed_domains=[]))
+        async with httpx.AsyncClient(transport=transport, timeout=TIMEOUT, cookies=jar) as client:
             state["client"] = client
             yield
 
