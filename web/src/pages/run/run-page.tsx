@@ -2,11 +2,10 @@
 // reviewer's recommendation, the control results and the decision; the other sections as tabs.
 // The run is in the address (?run=). The run is not refreshed in the background, so the version
 // on the page is the version the person acts on (research R-08); a stale answer reloads it.
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSearchParams } from "react-router";
 
-import { api, call } from "../../api/client";
 import { keys } from "../../api/queries";
 import { pagePath } from "../../nav/navigate";
 import { ErrorMessage } from "../../ui/error-message";
@@ -17,6 +16,7 @@ import { DecisionForm } from "./decision-form";
 import { DetailTabs } from "./detail-tabs";
 import { ReviewPanel } from "./review-panel";
 import { SummaryBar } from "./summary-bar";
+import { useRun } from "./use-run";
 
 export const STALE_MESSAGE =
   "This run changed since you opened it. It has been reloaded; check it and act again.";
@@ -26,12 +26,7 @@ export function RunPage() {
   const runId = params.get("run") ?? "";
   const queryClient = useQueryClient();
   const [notice, setNotice] = useState<"stale" | "recorded" | null>(null);
-  const found = useQuery({
-    queryKey: keys.run(runId),
-    queryFn: () => call(api.GET("/runs/{run_id}", { params: { path: { run_id: runId } } })),
-    enabled: runId !== "",
-    staleTime: Infinity,
-  });
+  const found = useRun(runId);
 
   if (runId === "") {
     return (

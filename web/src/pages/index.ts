@@ -8,3 +8,25 @@ registerPage(
   "run",
   lazy(() => import("./run/run-page").then((m) => ({ default: m.RunPage }))),
 );
+registerPage(
+  "inbox",
+  lazy(() => import("./inbox/inbox-page").then((m) => ({ default: m.InboxPage }))),
+);
+registerPage(
+  "new-use-case",
+  lazy(() => import("./intake/intake-page").then((m) => ({ default: m.IntakePage }))),
+);
+registerPage(
+  "clarification",
+  lazy(() =>
+    import("./requests/clarification-page").then((m) => ({ default: m.ClarificationPage })),
+  ),
+);
+registerPage(
+  "escalation",
+  lazy(() => import("./requests/escalation-page").then((m) => ({ default: m.EscalationPage }))),
+);
+registerPage(
+  "waiver",
+  lazy(() => import("./requests/waiver-page").then((m) => ({ default: m.WaiverPage }))),
+);

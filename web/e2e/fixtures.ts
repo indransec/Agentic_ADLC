@@ -19,6 +19,11 @@ export interface Stack {
   table: string;
   sheet_table: string;
   spreadsheet: string;
+  escalated_run: string;
+  clarification_run: string;
+  clarification: string;
+  waiver_run: string;
+  waiver: string;
 }
 
 export function stack(): Stack {

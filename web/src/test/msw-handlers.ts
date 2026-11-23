@@ -29,4 +29,8 @@ export const handlers: RequestHandler[] = [
   http.get(new URL("/config.json", ORIGIN).href, () =>
     json({ env: "dev", dashboard_refresh_seconds: 10 }),
   ),
+  // An empty Inbox, so any test that lands on it needs no setup of its own
+  http.get(apiUrl("/inbox"), () => json([])),
+  http.get(apiUrl("/changes"), () => json([])),
+  http.get(apiUrl("/events/proposed"), () => json([])),
 ];

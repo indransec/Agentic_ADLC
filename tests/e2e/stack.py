@@ -15,6 +15,7 @@ import signal
 import tempfile
 import threading
 import time
+from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
@@ -24,6 +25,7 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 
 from adlc.api.app import create_app
 from adlc.config.settings import UiSettings
+from adlc.orchestration.interfaces import Clarification
 from adlc.web.server import create_app as create_web
 from tests.integration.conftest import settings_for
 from tests.support.api import PASSWORD, write_accounts
@@ -75,7 +77,14 @@ def spreadsheet(path: Path, artifact: str, rows: list[dict[str, Any]]) -> Path:
 
 
 def seed(h: Harness, ledger: Any, work: Path) -> dict[str, Any]:
-    """Known states for the end-to-end tests (more are added as stories need them)."""
+    """Known states for the end-to-end tests (more are added as stories need them).
+
+    The escalation is seeded first: it moves the harness clock past T1's escalation timer, and
+    runs opened afterwards are due from the new time.
+    """
+    _, escalated_run = walk_to(h, "T1")
+    h.clock.advance(timedelta(days=10, seconds=1))
+    h.drain()
     usecase, sign_off_run = walk_to(h, "T1")  # deep links (session), then passed (sign-off)
     _, rework_run = walk_to(h, "T1")  # sent to rework (sign-off)
     _, stale_run = walk_to(h, "T1")  # changed behind the page (stale)
@@ -87,6 +96,23 @@ def seed(h: Harness, ledger: Any, work: Path) -> dict[str, Any]:
         ledger.edit_artifact(owner, run, TABLE, requirements(count))
     h.drain()
     sheet_rows = h.run(sheet_run).artifacts[SHEET_TABLE]
+    h.agent.script = {"T2": {1: Clarification(("Which channels are in scope?",))}}
+    _, clarification_run = walk_to(h, "T2")
+    h.agent.script = {}
+    _, waiver_run = walk_to(h, "T1")
+    h.service.decide(
+        person("business_owner"),
+        waiver_run,
+        "exception",
+        reason="accepted with a control",
+        fields={
+            "waiver_owner": "product_owner-person",
+            "expiry": "2099-01-01",
+            "compensating_control": "weekly manual review",
+            "risk_acceptance": "accepted for the pilot only",
+        },
+    )
+    h.drain()
     return {
         "usecase": usecase,
         "sign_off_run": sign_off_run,
@@ -95,6 +121,11 @@ def seed(h: Harness, ledger: Any, work: Path) -> dict[str, Any]:
         "large_run": large_run,
         "larger_run": larger_run,
         "sheet_run": sheet_run,
+        "escalated_run": escalated_run,
+        "clarification_run": clarification_run,
+        "clarification": f"{clarification_run}/clar-1",
+        "waiver_run": waiver_run,
+        "waiver": h.run(waiver_run).pending_waiver_id,
         "table": TABLE,
         "sheet_table": SHEET_TABLE,
         "spreadsheet": str(spreadsheet(work / f"{SHEET_TABLE}.xlsx", SHEET_TABLE, sheet_rows)),

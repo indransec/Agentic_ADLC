@@ -27,3 +27,12 @@ test("send a run to rework with a comment and a root cause", async ({ page }) =>
   await expect(summary.getByText("Closed")).toBeVisible();
   await expect(summary.getByText("Rework")).toBeVisible();
 });
+
+test("open a sign-off from the Inbox (P-04)", async ({ page }) => {
+  await page.goto("/inbox");
+  await signIn(page, "product_owner");
+  const signOffs = page.getByRole("region", { name: "Sign-offs", exact: true });
+  await signOffs.getByRole("button", { name: /^Open/ }).first().click();
+  await expect(page).toHaveURL(/\/run\?run=UC-\d+%2FT\d+%2Frun-\d+$/);
+  await expect(page.getByRole("heading", { name: "Decision" })).toBeVisible();
+});

@@ -474,10 +474,10 @@ waiver; decide a change request and a proposed event. Each item leaves the Inbox
 
 ### Tests
 
-- [ ] T048 [P] [US4] `web/src/pages/intake/intake-page.test.tsx` (P-01, P-03): Name and
+- [X] T048 [P] [US4] `web/src/pages/intake/intake-page.test.tsx` (P-01, P-03): Name and
   Description; submit goes to Use cases with "Submitted"; a 422 with `field` is shown beside that
   field.
-- [ ] T049 [P] [US4] `web/src/pages/inbox/inbox-page.test.tsx` (P-04, P-08, P-20, P-21, N-05):
+- [X] T049 [P] [US4] `web/src/pages/inbox/inbox-page.test.tsx` (P-04, P-08, P-20, P-21, N-05):
   - "Decisions and requests waiting for you, oldest first.", grouped by kind as today;
   - a controls-being-rerun mark;
   - Open goes to the page for the kind (run, clarification, waiver, escalation, dead letters);
@@ -485,7 +485,7 @@ waiver; decide a change request and a proposed event. Each item leaves the Inbox
     any;
   - proposed events with a decision;
   - refresh every 30 s (fake timers) and on demand, without clearing a half-typed comment.
-- [ ] T050 [P] [US4] `web/src/pages/requests/clarification-page.test.tsx`,
+- [X] T050 [P] [US4] `web/src/pages/requests/clarification-page.test.tsx`,
   `escalation-page.test.tsx` and `waiver-page.test.tsx` (P-15, P-16, P-17):
   - one answer field per question;
   - the escalation notice "You cannot complete this run." when not allowed;
@@ -494,23 +494,35 @@ waiver; decide a change request and a proposed event. Each item leaves the Inbox
 
 ### Implementation
 
-- [ ] T051 [P] [US4] `web/src/pages/intake/intake-page.tsx`: `POST /usecases`, then
+- [X] T051 [P] [US4] `web/src/pages/intake/intake-page.tsx`: `POST /usecases`, then
   `navigate("use-cases", {usecase})` with a submitted notice.
-- [ ] T052 [P] [US4] `web/src/pages/inbox/inbox-page.tsx`: `GET /inbox` with `refetchInterval:
+- [X] T052 [P] [US4] `web/src/pages/inbox/inbox-page.tsx`: `GET /inbox` with `refetchInterval:
   30_000` and a Refresh button. Item selection labels use platform words (kind, id, time); the
   person-written text sits beside them in `<Literal>`. Change requests come from `GET /changes`,
   with a decision via `POST /changes/{id}/decision`. Proposed events come from
   `GET /events/proposed`, with a decision via
   `POST /events/proposed/{usecase}/{terminal}/{run}/{event}`.
-- [ ] T053 [P] [US4] `web/src/pages/requests/clarification-page.tsx`,
+- [X] T053 [P] [US4] `web/src/pages/requests/clarification-page.tsx`,
   `web/src/pages/requests/escalation-page.tsx` and `web/src/pages/requests/waiver-page.tsx`: port
   `src/adlc/ui/views/{clarification,escalation,waiver}.py`; ids from the address (`?run=&id=`);
   actions send `expected_version` where the API takes it.
-- [ ] T054 [US4] Register the five pages in `web/src/nav/registry.ts`. T048 to T050 pass.
-- [ ] T055 [US4] `web/e2e/intake.spec.ts` (P-01): submit a use case and follow it to Use cases.
+- [X] T054 [US4] Register the five pages in `web/src/nav/registry.ts`. T048 to T050 pass.
+- [X] T055 [US4] `web/e2e/intake.spec.ts` (P-01): submit a use case and follow it to Use cases.
   Then `web/e2e/requests.spec.ts` (P-15 to P-17): answer the seeded clarification, complete the
   escalation, decide the waiver; each leaves the Inbox. Extend `sign-off.spec.ts` with
   Inbox → Open → pass (P-04).
+
+### Implementation notes (2026-11-23, US4)
+
+- **Inbox rows open with their own "Open" button**, in place of Streamlit's pick-then-open. Every
+  word in the row is platform-written (kind, title, ids, role).
+- **Proposed events** are chosen by platform words (`Proposal n · run id`). The agent-written
+  event id and type are shown beside the list as literal text, never in an option or a label
+  (FR-010).
+- **Escalation** completes the artifacts in the same grid as the Run page. The run's review
+  sections follow, as in Streamlit.
+- **The e2e stack seeds the escalation first**, because it moves the harness clock past T1's
+  timer. Then it seeds a T2 clarification and a pending waiver.
 
 **Checkpoint**: parity rows P-01, P-03, P-04, P-08, P-15 to P-17, P-20, P-21 and N-05 are
 `passing`.
