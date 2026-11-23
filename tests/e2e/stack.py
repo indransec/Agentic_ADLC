@@ -26,6 +26,7 @@ from sqlalchemy import text
 
 from adlc.api.app import create_app
 from adlc.config.settings import UiSettings
+from adlc.orchestration import spec_view
 from adlc.orchestration.interfaces import Clarification
 from adlc.web.server import create_app as create_web
 from tests.integration.conftest import settings_for
@@ -45,6 +46,10 @@ from tests.support.orchestration import (
 DIST = REPO_ROOT / "web" / "dist"
 TABLE = "functional_requirements"  # a T1 artifact in adlc-specs (editable at sign-off)
 SHEET_TABLE = "non_functional_requirements"
+# 022 T067: markup and script that every page must show as text (no "/" in the file name: the
+# platform keeps only a name's last path segment)
+SCRIPT = "<script>window.__pwned=1</script><b>bold</b>[click](http://evil.example)"
+FILE_NAME = "<img src=x onerror=window.__pwned=1>[c](javascript:x).md"
 
 
 def requirements(count: int) -> list[dict[str, Any]]:
@@ -114,6 +119,8 @@ def seed(h: Harness, ledger: Any, work: Path) -> dict[str, Any]:
         },
     )
     h.drain()
+    hostile = hostile_seeds(h, ledger, owner)
+    _, keyboard_run = walk_to(h, "T1")  # passed with the keyboard only (a11y)
     dead_usecase = h.submit("Dead letter case")
     with h.owner.begin() as conn:  # one event, dead-lettered as the router would after its retries
         dead_letter = conn.execute(
@@ -139,9 +146,50 @@ def seed(h: Harness, ledger: Any, work: Path) -> dict[str, Any]:
         "waiver_run": waiver_run,
         "waiver": h.run(waiver_run).pending_waiver_id,
         "dead_letter": str(dead_letter),
+        "keyboard_run": keyboard_run,
+        "script": SCRIPT,
+        "file_name": FILE_NAME,
+        **hostile,
         "table": TABLE,
         "sheet_table": SHEET_TABLE,
         "spreadsheet": str(spreadsheet(work / f"{SHEET_TABLE}.xlsx", SHEET_TABLE, sheet_rows)),
+    }
+
+
+def hostile_seeds(h: Harness, ledger: Any, owner: Any) -> dict[str, Any]:
+    """Person- and agent-written text with markup in every kind of field (022 T067, P-13)."""
+    usecase = h.submit(f"{SCRIPT[:60]} case", " ".join([SCRIPT] * 4))
+    h.pass_run(h.active(usecase, "T0").run_id, {"risk_tier": "medium"})
+    run = h.active(usecase, "T1").run_id
+    rows = requirements(3)
+    rows[0]["description"] = SCRIPT
+    ledger.edit_artifact(owner, run, TABLE, rows)
+    ledger.attach_file(owner, run, TABLE, b"<svg/>", FILE_NAME, "image/svg+xml")
+    h.drain()
+    detail = h.run(run)
+    spec = h.orch.runs.entry(detail.terminal_id, detail.spec_version).spec
+    causes = [c for c in spec_view.rework_causes(spec)]
+    h.service.decide(
+        owner,
+        run,
+        "rework",
+        comment=SCRIPT,
+        root_cause=causes[0],
+        reason=SCRIPT,
+        fields={"owner_comment": SCRIPT},
+    )
+    h.drain()
+    reworked = [r.run_id for r in h.runs(usecase) if r.terminal_id == "T1" and r.run_id != run]
+    # the stub agent counts builds per terminal across runs: script this use case's T2 build
+    h.agent.script = {"T2": {h.agent.calls["T2"] + 1: Clarification((SCRIPT,))}}
+    _, asked = walk_to(h, "T2")
+    h.agent.script = {}
+    return {
+        "hostile_usecase": usecase,
+        "hostile_run": run,
+        "hostile_reworked_run": reworked[0] if reworked else None,
+        "hostile_clarification_run": asked,
+        "hostile_clarification": f"{asked}/clar-1",
     }
 
 

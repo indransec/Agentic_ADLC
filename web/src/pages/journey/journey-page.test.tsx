@@ -51,7 +51,7 @@ describe("Journey page", () => {
   it("draws the chart, the KPI strip and the panel (P-22)", async () => {
     serve();
     renderWithApp(<JourneyPage />, { route: "/journey?usecase=UC-0002" });
-    expect(await screen.findByRole("img", { name: /Journey of UC-0002/ })).toBeInTheDocument();
+    expect(await screen.findByRole("figure", { name: /Journey of UC-0002/ })).toBeInTheDocument();
     expect(screen.getByLabelText("Use case")).toHaveValue("UC-0002");
     expect(screen.getAllByText("no data").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Escalations and exceptions" })).toBeInTheDocument();
@@ -65,7 +65,7 @@ describe("Journey page", () => {
       route: "/journey?usecase=UC-0002",
       config: { env: null, dashboard_refresh_seconds: 7 },
     });
-    await screen.findByRole("img", { name: /Journey of UC-0002/ });
+    await screen.findByRole("figure", { name: /Journey of UC-0002/ });
     const before = calls();
     await act(async () => {
       await vi.advanceTimersByTimeAsync(7_100);

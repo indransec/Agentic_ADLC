@@ -22,7 +22,7 @@ Every row must be `passing` before the cutover commit (research R-14).
 | P-10 | `test_artifacts.py::test_read_only_for_non_editors` | Component `artifact-panel.test.tsx` | passing |
 | P-11 | `test_artifacts.py::test_large_tables_are_read_only_with_upload_offered` | E2E `artifacts.spec.ts` (1,000 editable, 1,001 read-only); Component `artifact-panel.test.tsx` | passing |
 | P-12 | `test_artifacts.py::test_attach_and_download_only` | E2E `artifacts.spec.ts` (download event, no inline render) | passing |
-| P-13 | `test_rendering.py::test_text_from_agents_and_people_is_plain` | Component `ui/literal.test.tsx` and every page test's markup and script samples; E2E `rendering.spec.ts` (no script runs, no CSP violation) | open |
+| P-13 | `test_rendering.py::test_text_from_agents_and_people_is_plain` | Component `ui/literal.test.tsx` and every page test's markup and script samples; E2E `rendering.spec.ts` (no script runs, no CSP violation) | passing |
 | P-14 | `test_blocked.py::test_blocked_run_shows_why_and_can_be_terminated` | Component `run-page.test.tsx` | passing |
 | P-15 | `test_requests.py::test_answer_a_clarification` | Component `pages/requests/clarification-page.test.tsx`; E2E `requests.spec.ts` | passing |
 | P-16 | `test_requests.py::test_complete_an_escalation` | Component `escalation-page.test.tsx`; E2E `requests.spec.ts` | passing |
@@ -45,10 +45,10 @@ Every row must be `passing` before the cutover commit (research R-14).
 | N-01 | Session not readable by scripts or storage (SC-003) | E2E `session.spec.ts` | passing |
 | N-02 | Cross-site change refused (SC-004) | API `test_csrf.py`; E2E `session.spec.ts` | passing |
 | N-03 | Deep link opens a run after sign-in | E2E `session.spec.ts` | passing |
-| N-04 | Back, forward and reload keep page, run and filters | E2E `navigation.spec.ts` | open |
+| N-04 | Back, forward and reload keep page, run and filters | E2E `navigation.spec.ts` | passing |
 | N-05 | Refresh does not discard typed input | Component `inbox-page.test.tsx`, `journey-page.test.tsx` | passing |
 | N-06 | Platform unreachable: message and input kept | Component `api/client.test.ts`; API `test_server.py` (502) | passing |
-| N-07 | Keyboard-only and axe scan on every page | E2E `a11y.spec.ts` | open |
+| N-07 | Keyboard-only and axe scan on every page | E2E `a11y.spec.ts` | passing |
 | N-08 | Answer shapes unchanged by models (SC-006) | API `test_response_shapes.py` | passing |
 | N-09 | Contract drift fails the check (SC-008) | `test_openapi_fresh.py`; `web-typecheck` | passing |
-| N-10 | Page timing on demo data (SC-007) | E2E `timing.spec.ts` | open |
+| N-10 | Page timing on demo data (SC-007) | E2E `timing.spec.ts` | passing |

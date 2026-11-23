@@ -43,6 +43,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const location = useLocation();
   const here = useRef("");
+  // Once the person signs in (or out), the start-up check's late answer must not override it.
+  const settled = useRef(false);
   useEffect(() => {
     here.current = `${location.pathname}${location.search}`;
   }, [location]);
@@ -71,7 +73,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     let live = true;
     call(api.GET("/auth/me"), { quietSignedOut: true })
       .then((me) => {
-        if (!live) return;
+        if (!live || settled.current) return;
         setCsrfToken(me.csrf_token ?? null);
         setPerson({
           account_name: me.account_name,
@@ -81,7 +83,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         setStatus("signed-in");
       })
       .catch((error: unknown) => {
-        if (!live) return;
+        if (!live || settled.current) return;
         if (!(isApiError(error) && error.kind === "not_signed_in")) setProblem(error);
         setStatus("signed-out");
       });
@@ -101,6 +103,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (!("csrf_token" in answer)) {
       throw new Error("the platform answered a bearer session to a cookie sign-in");
     }
+    settled.current = true;
     setCsrfToken(answer.csrf_token);
     setPerson(answer.person);
     setProblem(null);
@@ -114,6 +117,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     } catch {
       // signed out either way: the cookie is gone or the session already ended
     }
+    settled.current = true;
     setSignedOutByChoice(true);
     forget(); // the session guard then opens sign-in, without a page to come back to
   }, [forget]);

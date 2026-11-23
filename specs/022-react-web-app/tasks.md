@@ -607,17 +607,17 @@ action.
 
 **Independent Test**: quickstart §2, §3, §6 and §7.
 
-- [ ] T065 [P] [US7] `web/e2e/navigation.spec.ts` (N-04): back, forward and reload keep the page,
+- [X] T065 [P] [US7] `web/e2e/navigation.spec.ts` (N-04): back, forward and reload keep the page,
   run, use case and Activity filters; an unknown path gives "page not found"; a run without
   `?run=` gives "not found".
-- [ ] T066 [P] [US7] `web/e2e/a11y.spec.ts` (N-07): for every registry page, an axe scan finds no
+- [X] T066 [P] [US7] `web/e2e/a11y.spec.ts` (N-07): for every registry page, an axe scan finds no
   serious or critical issues; one keyboard-only flow (sign in, open an Inbox item, pass a run)
   works with Tab, Enter and Space only; focus lands on the page heading after navigation.
-- [ ] T067 [P] [US7] `web/e2e/rendering.spec.ts` (P-13): the stack seeds intake, comment,
+- [X] T067 [P] [US7] `web/e2e/rendering.spec.ts` (P-13): the stack seeds intake, comment,
   question, file name and artifact cell values with script and markup samples. Every page that
   shows them renders them literally, no script runs (`window.__pwned` stays undefined) and no CSP
   violation is reported.
-- [ ] T068 [P] [US7] `web/e2e/timing.spec.ts` (N-10, SC-007): each page shows its heading and
+- [X] T068 [P] [US7] `web/e2e/timing.spec.ts` (N-10, SC-007): each page shows its heading and
   first data within 2 s on the seeded stack.
 - [ ] T069 [US7] Manual check of the quickstart §3 and §5 demo walk (D-1 to D-9) in current
   Chrome, Edge, Firefox and Safari. Record the result and any fixes in `contracts/parity.md`
@@ -641,6 +641,21 @@ action.
   (`tests/integration/api`, `tests/integration/web`, `tests/unit/api`, the three boundary tests);
   CI runs the full `make check`. Then run `make local` and `make up` per quickstart §3 and §6
   (`docker compose exec ui which node` finds nothing).
+
+### Implementation notes (2026-11-23, US7 automated checks)
+
+- **Accessibility fixes from axe and the keyboard test:**
+  - the muted text grey and the green, orange and grey badge text were darkened to at least
+    4.8:1 (WCAG AA), with chart colours unchanged;
+  - charts are captioned `<figure>`s, because Plotly's toolbar controls may not sit inside an
+    "image";
+  - each artifact grid is one Tab stop (the ARIA grid pattern: arrow keys inside, Tab leaves),
+    so the decision is reachable from the keyboard.
+- **Two real defects found and fixed, each with a regression test:**
+  - a late answer to the start-up session check could undo a sign-in made meanwhile;
+  - the Escalation page lost "completed" when the run reloaded with its new version.
+- **Seeding:** the stub agent counts builds per terminal across runs, so the hostile
+  clarification is scripted for the next T2 build.
 
 **Checkpoint**: Streamlit is gone; the quickstart passes end to end.
 

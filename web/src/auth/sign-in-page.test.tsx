@@ -128,3 +128,27 @@ describe("sign-in", () => {
     expect(await screen.findByRole("heading", { name: "Sign in" })).toBeInTheDocument();
   });
 });
+
+describe("sign-in race", () => {
+  it("a late answer to the start-up check does not undo a sign-in", async () => {
+    const gate: { release?: () => void } = {};
+    server.use(
+      http.get(apiUrl("/auth/me"), async () => {
+        await new Promise<void>((resolve) => {
+          gate.release = resolve;
+        });
+        return refusal(401, "not_signed_in", "not authenticated");
+      }),
+      signInAnswers({}),
+    );
+    renderApp({ route: "/sign-in" });
+    await signInWith("product_owner-person", "secret");
+    await waitFor(() => {
+      expect(screen.getByTestId("where")).toHaveTextContent("/inbox");
+    });
+    gate.release?.(); // the start-up check answers only now
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.getByTestId("where")).toHaveTextContent("/inbox");
+    expect(await screen.findByText("Product Owner")).toBeInTheDocument();
+  });
+});

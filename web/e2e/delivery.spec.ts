@@ -14,7 +14,7 @@ test("Use cases: the journey of a use case and its ledger verification (D-6)", a
 test("Journey: lanes and bars are drawn (D-8)", async ({ page }) => {
   await page.goto(`/journey?usecase=${stack().usecase}`);
   await signIn(page, "sre");
-  const chart = page.getByRole("img", { name: new RegExp(`Journey of ${stack().usecase}`) });
+  const chart = page.getByRole("figure", { name: new RegExp(`Journey of ${stack().usecase}`) });
   await expect(chart.locator("svg.main-svg").first()).toBeVisible();
   await expect(chart.locator(".barlayer .point").first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Escalations and exceptions" })).toBeVisible();
@@ -31,7 +31,7 @@ test("Portfolio: KPIs and time per terminal", async ({ page }) => {
   await page.goto("/portfolio");
   await signIn(page, "adlc_coe");
   await expect(page.getByText(/^\d+ use case\(s\)$/)).toBeVisible();
-  const chart = page.getByRole("img", { name: /Time per terminal/ });
+  const chart = page.getByRole("figure", { name: /Time per terminal/ });
   await expect(chart.locator("svg.main-svg").first()).toBeVisible();
 });
 

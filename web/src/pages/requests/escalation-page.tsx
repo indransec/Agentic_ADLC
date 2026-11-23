@@ -30,7 +30,14 @@ function Sections({ detail }: { detail: RunDetail }) {
   );
 }
 
-function Escalation({ detail }: { detail: RunDetail }) {
+interface EscalationProps {
+  detail: RunDetail;
+  /** Kept by the page: the run reloads (a new version) once the escalation is completed. */
+  completed: boolean;
+  onCompleted: () => void;
+}
+
+function Escalation({ detail, completed: done, onCompleted }: EscalationProps) {
   const queryClient = useQueryClient();
   const runId = detail.run.run_id;
   const [completed, setCompleted] = useState<Record<string, Row[]>>(() =>
@@ -40,7 +47,6 @@ function Escalation({ detail }: { detail: RunDetail }) {
         .map((a) => [a.id, rowsOf(a.rows)]),
     ),
   );
-  const [done, setDone] = useState(false);
   const [stale, setStale] = useState(false);
   const complete = useMutation({
     mutationFn: () =>
@@ -51,7 +57,7 @@ function Escalation({ detail }: { detail: RunDetail }) {
         }),
       ),
     onSuccess: () => {
-      setDone(true);
+      onCompleted();
       void queryClient.invalidateQueries({ queryKey: keys.inbox });
       void queryClient.invalidateQueries({ queryKey: keys.run(runId) });
     },
@@ -128,13 +134,23 @@ function Escalation({ detail }: { detail: RunDetail }) {
 }
 
 export function EscalationPage() {
+  const [completed, setCompleted] = useState(false);
   return (
     <RequestFrame
       title="Escalation"
       caption="The agents could not finish this run. Supply the artifacts; the run then goes to normal sign-off."
       openFrom="Open an escalation from your inbox."
     >
-      {(detail) => <Escalation key={detail.run.version} detail={detail} />}
+      {(detail) => (
+        <Escalation
+          key={detail.run.version}
+          detail={detail}
+          completed={completed}
+          onCompleted={() => {
+            setCompleted(true);
+          }}
+        />
+      )}
     </RequestFrame>
   );
 }

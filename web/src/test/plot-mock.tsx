@@ -6,5 +6,5 @@ export const drawn: Figure[] = [];
 
 export function MockPlot({ figure, label }: { figure: Figure; label: string }) {
   drawn.push(figure);
-  return <div role="img" aria-label={label} />;
+  return <figure aria-label={label} />;
 }

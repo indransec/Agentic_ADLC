@@ -10,6 +10,9 @@ async function openFirst(page: import("@playwright/test").Page, section: string)
 test("answer a clarification (D-9)", async ({ page }) => {
   await page.goto("/inbox");
   await signIn(page, "engineering_lead");
+  const waiting = page.getByRole("region", { name: "Clarifications", exact: true });
+  await expect(waiting.getByRole("button", { name: /^Open/ }).first()).toBeVisible();
+  const before = await waiting.getByRole("button", { name: /^Open/ }).count();
   await openFirst(page, "Clarifications");
   await expect(page).toHaveURL(/\/clarification\?run=.+&id=.+/);
   await expect(page.getByText("Which channels are in scope?")).toBeVisible();
@@ -18,7 +21,8 @@ test("answer a clarification (D-9)", async ({ page }) => {
   await expect(page.getByText("Answers sent")).toBeVisible();
   await page.getByRole("link", { name: "Inbox" }).click();
   await expect(page.getByRole("heading", { name: "Inbox" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Clarifications", exact: true })).toHaveCount(0);
+  // the answered clarification has left the Inbox (others, seeded for other tests, may remain)
+  await expect(waiting.getByRole("button", { name: /^Open/ })).toHaveCount(before - 1);
 });
 
 test("complete an escalation (D-4)", async ({ page }) => {

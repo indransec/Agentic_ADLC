@@ -118,6 +118,36 @@ describe("Escalation (P-16)", () => {
     );
   });
 
+  it("says it was completed after the run reloads with its new version", async () => {
+    let version = fixtures.runDetail.run.version;
+    let escalated = true;
+    server.use(
+      signedIn(),
+      http.get(apiUrl(`/runs/${encodeURIComponent(RUN)}`), () =>
+        json(
+          runDetail((d) => {
+            d.run.version = version;
+            d.form.can_complete_escalation = escalated;
+          }),
+        ),
+      ),
+      http.get(apiUrl(`/dashboard/runs/${encodeURIComponent(RUN)}/timeline`), () =>
+        json(fixtures.timeline),
+      ),
+      http.post(apiUrl(`/runs/${encodeURIComponent(RUN)}/escalation`), () => {
+        version += 1;
+        escalated = false;
+        return json(fixtures.runSummary);
+      }),
+    );
+    renderWithApp(<EscalationPage />, { route: at("escalation") });
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("button", { name: "Complete escalation" }));
+    expect(await screen.findByText(`Version ${String(version)}`)).toBeInTheDocument();
+    expect(screen.getByText("Escalation completed")).toBeInTheDocument();
+    expect(screen.queryByText("You cannot complete this run.")).toBeNull();
+  });
+
   it("someone who may not complete it is told so", async () => {
     serve(runDetail((d) => (d.form.can_complete_escalation = false)));
     renderWithApp(<EscalationPage />, { route: at("escalation") });

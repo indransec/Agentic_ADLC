@@ -31,5 +31,12 @@ export function Plot({ figure, label }: { figure: Figure; label: string }) {
       live = false;
     };
   }, [figure]);
-  return <div ref={element} className="plot" role="img" aria-label={label} />;
+  // A figure named by its caption: Plotly's own toolbar buttons sit inside, so the chart is not
+  // an "image" (which may not contain controls).
+  return (
+    <figure className="plot-figure" aria-label={label}>
+      <figcaption className="visually-hidden">{label}</figcaption>
+      <div ref={element} className="plot" />
+    </figure>
+  );
 }

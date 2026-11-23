@@ -63,6 +63,9 @@ export function ArtifactGrid({ artifactId, rows, columns, editable, onChange }: 
           domLayout={large ? "normal" : "autoHeight"}
           {...(editable ? { rowSelection: { mode: "multiRow" as const } } : {})}
           stopEditingWhenCellsLoseFocus
+          // One Tab stop per grid (the ARIA grid pattern): arrow keys move between cells, Tab
+          // leaves the grid, so the decision is not hundreds of Tab presses away (FR-028).
+          tabToNextCell={() => false}
           onGridReady={(event) => {
             grid.current = event.api;
           }}

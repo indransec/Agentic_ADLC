@@ -3,6 +3,7 @@
 
 export type Colour = "blue" | "green" | "orange" | "red" | "violet" | "gray";
 
+/** The status colours, as the charts and the previous application used them. */
 export const COLOURS: Record<Colour, string> = {
   blue: "#2F5DAA",
   green: "#2E7D4F",
@@ -14,6 +15,15 @@ export const COLOURS: Record<Colour, string> = {
 
 /** Chart fills (lighter grey than the badge text grey, as in the Streamlit charts). */
 export const CHART_COLOURS: Record<Colour, string> = { ...COLOURS, gray: "#9AA3B2" };
+
+/** Badge text: the same hues, dark enough for small text on white and the sidebar
+ *  (at least 4.8:1, WCAG AA). */
+export const TEXT_COLOURS: Record<Colour, string> = {
+  ...COLOURS,
+  green: "#2C794C",
+  orange: "#A15617",
+  gray: "#616A7B",
+};
 
 export const STATUS: Readonly<Record<string, readonly [string, Colour]>> = {
   // run states

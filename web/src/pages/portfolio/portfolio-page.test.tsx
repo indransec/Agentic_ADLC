@@ -30,7 +30,7 @@ describe("Portfolio page", () => {
     renderWithApp(<PortfolioPage />, { route: "/portfolio" });
     expect(await screen.findByText("2 use case(s)")).toBeInTheDocument();
     expect(screen.getAllByText("First-pass yield").length).toBeGreaterThan(0);
-    expect(screen.getByRole("img", { name: /Time per terminal/ })).toBeInTheDocument();
+    expect(screen.getByRole("figure", { name: /Time per terminal/ })).toBeInTheDocument();
     const user = userEvent.setup();
     await user.selectOptions(screen.getByLabelText("Risk tier"), "low");
     expect(await screen.findByText("1 use case(s)")).toBeInTheDocument();

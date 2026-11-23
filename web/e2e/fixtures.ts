@@ -25,6 +25,14 @@ export interface Stack {
   waiver_run: string;
   waiver: string;
   dead_letter: string;
+  keyboard_run: string;
+  script: string;
+  file_name: string;
+  hostile_usecase: string;
+  hostile_run: string;
+  hostile_reworked_run: string | null;
+  hostile_clarification_run: string;
+  hostile_clarification: string;
 }
 
 export function stack(): Stack {
