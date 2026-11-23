@@ -12,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from adlc.api.deps import ActorDep, ServicesDep, traced
 from adlc.api.errors import Invalid, NotFound
+from adlc.api.schemas.artifacts import ArtifactHistoryEntry, ArtifactSaved, RunChanged
 from adlc.inbox.service import run_summary
 
 router = APIRouter(prefix="/runs")
@@ -54,7 +55,11 @@ def _read(upload: UploadFile, limit: int) -> bytes:
     return data
 
 
-@router.put("/{run_id:path}/artifacts/{artifact_id}")
+@router.put(
+    "/{run_id:path}/artifacts/{artifact_id}",
+    response_model=ArtifactSaved,
+    response_model_exclude_unset=True,
+)
 def edit(
     run_id: str, artifact_id: str, body: Edit, actor: ActorDep, services: ServicesDep
 ) -> dict[str, Any]:
@@ -65,7 +70,11 @@ def edit(
     return {"changed": run.version != body.expected_version, "run": run_summary(run)}
 
 
-@router.post("/{run_id:path}/artifacts/{artifact_id}/spreadsheet")
+@router.post(
+    "/{run_id:path}/artifacts/{artifact_id}/spreadsheet",
+    response_model=RunChanged,
+    response_model_exclude_unset=True,
+)
 def spreadsheet(
     run_id: str,
     artifact_id: str,
@@ -87,7 +96,11 @@ def spreadsheet(
     return {"run": run_summary(run)}
 
 
-@router.post("/{run_id:path}/artifacts/{artifact_id}/attachments")
+@router.post(
+    "/{run_id:path}/artifacts/{artifact_id}/attachments",
+    response_model=RunChanged,
+    response_model_exclude_unset=True,
+)
 def attach(
     run_id: str,
     artifact_id: str,
@@ -110,7 +123,11 @@ def attach(
     return {"run": run_summary(run)}
 
 
-@router.get("/{run_id:path}/artifacts/{artifact_id}/history")
+@router.get(
+    "/{run_id:path}/artifacts/{artifact_id}/history",
+    response_model=list[ArtifactHistoryEntry],
+    response_model_exclude_unset=True,
+)
 def history(
     run_id: str, artifact_id: str, actor: ActorDep, services: ServicesDep
 ) -> list[dict[str, Any]]:
@@ -120,7 +137,16 @@ def history(
     return services.ledger.artifact_history(run_id, artifact_id)
 
 
-@router.get("/{run_id:path}/attachments/{content_hash}")
+@router.get(
+    "/{run_id:path}/attachments/{content_hash}",
+    response_class=Response,
+    responses={
+        200: {
+            "description": "The file, as a download (Content-Disposition: attachment)",
+            "content": {"application/octet-stream": {}},
+        }
+    },
+)
 def download(run_id: str, content_hash: str, actor: ActorDep, services: ServicesDep) -> Response:
     traced(run_id=run_id)
     found = services.inbox.attachment(run_id, content_hash)

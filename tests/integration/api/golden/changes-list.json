@@ -1,0 +1,16 @@
+[
+  {
+    "at": "0000-00-00T00:00:00.000000+00:00",
+    "change_id": "CHG-1",
+    "plan": "shadow, canary, full",
+    "record_version": 1,
+    "risk": "low",
+    "run_id": "UC-0001/T6/run-1",
+    "state": "new",
+    "summary": "Release the triage agent",
+    "terminal_id": "T6",
+    "usecase_id": "UC-0001",
+    "window_end": "0000-00-00T00:00:00+00:00",
+    "window_start": "0000-00-00T00:00:00+00:00"
+  }
+]

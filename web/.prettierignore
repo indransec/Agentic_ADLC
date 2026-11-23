@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+pnpm-lock.yaml
+src/api/openapi.json
+src/api/schema.d.ts
+src/test/lint-fixtures/

@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
 from adlc.api.deps import ActorDep, ServicesDep
+from adlc.api.schemas.events import ProposedEvent, ProposedEventDecided
 
 router = APIRouter()
 
@@ -16,12 +17,18 @@ class EventDecision(BaseModel):
     comment: str | None = Field(default=None, max_length=2000)
 
 
-@router.get("/events/proposed")
+@router.get(
+    "/events/proposed", response_model=list[ProposedEvent], response_model_exclude_unset=True
+)
 def proposed(actor: ActorDep, services: ServicesDep) -> list[dict[str, Any]]:
     return services.proposed_events.waiting(actor)
 
 
-@router.post("/events/proposed/{usecase_id}/{terminal_id}/{run_number}/{event_id}")
+@router.post(
+    "/events/proposed/{usecase_id}/{terminal_id}/{run_number}/{event_id}",
+    response_model=ProposedEventDecided,
+    response_model_exclude_unset=True,
+)
 def decide(
     usecase_id: str,
     terminal_id: str,

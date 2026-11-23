@@ -1,0 +1,68 @@
+[
+  {
+    "artifact_id": "kpis",
+    "attachments": [],
+    "attempt": 1,
+    "content_hash": "sha256:<sha256>",
+    "created_at": "0000-00-00T00:00:00.000000Z",
+    "derived_from_version": null,
+    "producer_id": "agent:UC-0001/T1/run-1",
+    "producer_type": "agent",
+    "run_id": "UC-0001/T1/run-1",
+    "schema_valid": true,
+    "version": 1
+  },
+  {
+    "artifact_id": "kpis",
+    "attachments": [],
+    "attempt": null,
+    "content_hash": "sha256:<sha256>",
+    "created_at": "0000-00-00T00:00:00.000000Z",
+    "derived_from_version": 1,
+    "producer_id": "product_owner-person",
+    "producer_type": "person",
+    "run_id": "UC-0001/T1/run-1",
+    "schema_valid": true,
+    "version": 2
+  },
+  {
+    "artifact_id": "kpis",
+    "attachments": [
+      {
+        "content_hash": "sha256:<sha256>",
+        "media_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "name": "kpis.xlsx",
+        "size": 5000
+      }
+    ],
+    "attempt": null,
+    "content_hash": "sha256:<sha256>",
+    "created_at": "0000-00-00T00:00:00.000000Z",
+    "derived_from_version": 2,
+    "producer_id": "product_owner-person",
+    "producer_type": "person",
+    "run_id": "UC-0001/T1/run-1",
+    "schema_valid": true,
+    "version": 3
+  },
+  {
+    "artifact_id": "kpis",
+    "attachments": [
+      {
+        "content_hash": "sha256:<sha256>",
+        "media_type": "text/markdown",
+        "name": "kpi notes.md",
+        "size": 12
+      }
+    ],
+    "attempt": null,
+    "content_hash": "sha256:<sha256>",
+    "created_at": "0000-00-00T00:00:00.000000Z",
+    "derived_from_version": 3,
+    "producer_id": "product_owner-person",
+    "producer_type": "person",
+    "run_id": "UC-0001/T1/run-1",
+    "schema_valid": true,
+    "version": 4
+  }
+]

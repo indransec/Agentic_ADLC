@@ -1,0 +1,13 @@
+{
+  "closed_at": null,
+  "controls_pending": false,
+  "due_at": "0000-00-00T00:00:00.000000Z",
+  "final_status": null,
+  "opened_at": "0000-00-00T00:00:00.000000Z",
+  "run_id": "UC-0001/T2/run-1",
+  "run_number": 1,
+  "state": "building",
+  "terminal_id": "T2",
+  "usecase_id": "UC-0001",
+  "version": 3
+}

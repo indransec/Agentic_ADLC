@@ -1,0 +1,12 @@
+[
+  {
+    "attempts": 5,
+    "causation_run_id": null,
+    "dead_lettered_at": "0000-00-00T00:00:00.000000Z",
+    "event_id": "<uuid>",
+    "event_type": "usecase.submitted",
+    "last_error": "route failed: subscriber unavailable",
+    "requeues": 0,
+    "usecase_id": "UC-0001"
+  }
+]

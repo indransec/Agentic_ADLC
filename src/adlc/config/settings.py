@@ -473,8 +473,9 @@ class BridgeSettings(BaseSettings):
 
 
 class UiSettings(BaseSettings):
-    """Settings for the web application process (feature 007). It reaches the platform only
-    through the API, so it needs no database or secret settings."""
+    """Settings for the web application process (feature 007; since 022 ``adlc-web``, which
+    serves the built browser application and forwards ``/api`` to the platform API). It reaches
+    the platform only through the API, so it needs no database or secret settings."""
 
     model_config = SettingsConfigDict(env_prefix=ENV_PREFIX, env_ignore_empty=True, extra="ignore")
 
@@ -482,6 +483,12 @@ class UiSettings(BaseSettings):
         default="http://api:8000",
         pattern=r"^https?://",
         json_schema_extra=_meta("http(s) URL of the platform API"),
+    )
+    # 022: the port adlc-web listens on, and the folder holding the built browser application
+    ui_port: int = Field(default=8501, gt=0, lt=65536, json_schema_extra=_meta("port"))
+    ui_dist_dir: Path = Field(
+        default=Path("web/dist"),
+        json_schema_extra=_meta("path to the built web application (web/dist)"),
     )
     # 013: how often the dashboard views refresh themselves (SC-003 needs 15 s)
     ui_dashboard_refresh: Duration = Field(

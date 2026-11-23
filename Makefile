@@ -15,7 +15,8 @@ GITLEAKS_IMAGE := ghcr.io/gitleaks/gitleaks:v8.30.1
 
 .PHONY: help install up down status reset local local-setup migrate migrate-down phoenix lint typecheck test \
         migration-check secret-scan check spec-validate spec-register \
-        demo demo-auto demo-live demo-reset resilience trace
+        demo demo-auto demo-live demo-reset resilience trace \
+        web-install web-build web-dev web-lint web-typecheck web-test web-e2e web-check openapi
 
 # L5 spec validation compares with this git ref (override in the environment).
 ADLC_SPEC_BASELINE_REF ?= origin/main
@@ -26,6 +27,7 @@ help:
 install:
 	@echo "==> install"
 	uv sync --locked
+	@$(MAKE) --no-print-directory web-install
 
 up: .env
 	@echo "==> up"
@@ -61,6 +63,7 @@ local-setup: .env
 	  env -u VIRTUAL_ENV uv run adlc-spec register adlc-specs && \
 	  (cd pilot && env -u VIRTUAL_ENV uv sync --locked -q) && \
 	  (cd deploy/phoenix && env -u VIRTUAL_ENV uv sync --locked -q)
+	@$(MAKE) --no-print-directory web-build
 
 # Every process of deploy/Procfile.local in the foreground; Ctrl-C stops them all.
 local: local-setup
@@ -134,9 +137,66 @@ check:
 	@$(MAKE) --no-print-directory spec-validate
 	@$(MAKE) --no-print-directory test
 	@$(MAKE) --no-print-directory pilot-check
+	@$(MAKE) --no-print-directory web-check
 	@$(MAKE) --no-print-directory migration-check
 	@$(MAKE) --no-print-directory secret-scan
 	@echo "==> check passed"
+
+# ------------------------------------------------------------------ web application (feature 022)
+# The browser application in web/ (Node 24 with corepack; pnpm version pinned in package.json).
+# Node is needed to build and check it only: adlc-web, a Python process, serves web/dist.
+PNPM := pnpm -C web
+
+web-install:
+	@echo "==> web-install"
+	corepack enable
+	$(PNPM) install --frozen-lockfile
+
+web-build:
+	@echo "==> web-build"
+	$(PNPM) build
+
+# Vite on :5173, forwarding /api and /config.json to adlc-web on ADLC_UI_PORT
+web-dev:
+	@echo "==> web-dev"
+	$(PNPM) dev
+
+web-lint:
+	@echo "==> web-lint"
+	$(PNPM) lint
+	$(PNPM) format:check
+
+# Type check, then the contract types must match the committed OpenAPI document (FR-021)
+web-typecheck:
+	@echo "==> web-typecheck"
+	$(PNPM) typecheck
+	@tmp=$$(mktemp -d); \
+	  $(PNPM) exec openapi-typescript src/api/openapi.json -o $$tmp/schema.d.ts >/dev/null; \
+	  diff -q web/src/api/schema.d.ts $$tmp/schema.d.ts >/dev/null \
+	    || { echo "web/src/api/schema.d.ts is stale: run make openapi" >&2; rm -rf $$tmp; exit 1; }; \
+	  rm -rf $$tmp
+
+web-test:
+	@echo "==> web-test"
+	$(PNPM) test
+
+# Always against a fresh build: the end-to-end stack serves web/dist
+web-e2e: web-build
+	@echo "==> web-e2e"
+	$(PNPM) e2e
+
+web-check:
+	@echo "==> web-check"
+	@$(MAKE) --no-print-directory web-lint
+	@$(MAKE) --no-print-directory web-typecheck
+	@$(MAKE) --no-print-directory web-test
+	@$(MAKE) --no-print-directory web-e2e
+
+# The platform contract: the API's OpenAPI document and the web application's types from it
+openapi:
+	@echo "==> openapi"
+	$(UV) python -m scripts.export_openapi web/src/api/openapi.json
+	$(PNPM) exec openapi-typescript src/api/openapi.json -o src/api/schema.d.ts
 
 # ------------------------------------------------------------------ demo (feature 014)
 FROM_STEP ?= 1

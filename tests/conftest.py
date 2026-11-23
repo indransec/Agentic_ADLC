@@ -36,3 +36,13 @@ def _no_model_network(request: pytest.FixtureRequest, monkeypatch: pytest.Monkey
         )
 
     monkeypatch.setattr(gateway, "_litellm", blocked)
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """022 T008: re-record the answer-shape goldens (off by default, so CI only compares)."""
+    parser.addoption(
+        "--update-golden",
+        action="store_true",
+        default=False,
+        help="re-record tests/integration/api/golden/*.json",
+    )

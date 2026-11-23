@@ -1,0 +1,3891 @@
+{
+  "components": {
+    "schemas": {
+      "ActivityEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "actor_type": {
+            "title": "Actor Type",
+            "type": "string"
+          },
+          "at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "seconds": {
+            "title": "Seconds",
+            "type": "number"
+          },
+          "step": {
+            "title": "Step",
+            "type": "string"
+          },
+          "terminal_id": {
+            "title": "Terminal Id",
+            "type": "string"
+          },
+          "usecase_id": {
+            "title": "Usecase Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "usecase_id",
+          "run_id",
+          "terminal_id",
+          "actor_type",
+          "actor",
+          "step",
+          "outcome",
+          "seconds"
+        ],
+        "title": "ActivityEntry",
+        "type": "object"
+      },
+      "AgentAttempt": {
+        "additionalProperties": false,
+        "properties": {
+          "agent_id": {
+            "title": "Agent Id",
+            "type": "string"
+          },
+          "attempt": {
+            "title": "Attempt",
+            "type": "integer"
+          },
+          "cost_usd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cost Usd"
+          },
+          "implementation": {
+            "title": "Implementation",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "model_calls": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "Model Calls",
+            "type": "array"
+          },
+          "steps": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Steps"
+          },
+          "tokens_in": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tokens In"
+          },
+          "tokens_out": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tokens Out"
+          },
+          "tool_calls": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "Tool Calls",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "attempt",
+          "agent_id",
+          "implementation",
+          "steps",
+          "tokens_in",
+          "tokens_out",
+          "cost_usd",
+          "model_calls",
+          "tool_calls"
+        ],
+        "title": "AgentAttempt",
+        "type": "object"
+      },
+      "Answers": {
+        "additionalProperties": false,
+        "properties": {
+          "answers": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Answers",
+            "type": "array"
+          }
+        },
+        "required": [
+          "answers"
+        ],
+        "title": "Answers",
+        "type": "object"
+      },
+      "Approval": {
+        "additionalProperties": false,
+        "properties": {
+          "person": {
+            "title": "Person",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "signed_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          }
+        },
+        "required": [
+          "person",
+          "role",
+          "signed_at"
+        ],
+        "title": "Approval",
+        "type": "object"
+      },
+      "Arrow": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor"
+          },
+          "at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At"
+          },
+          "cause": {
+            "additionalProperties": true,
+            "title": "Cause",
+            "type": "object"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "from_run": {
+            "title": "From Run",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "to_run": {
+            "title": "To Run",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_run",
+          "to_run",
+          "kind",
+          "event_type",
+          "cause",
+          "actor",
+          "at"
+        ],
+        "title": "Arrow",
+        "type": "object"
+      },
+      "ArtifactHistoryEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "Attachments",
+            "type": "array"
+          },
+          "attempt": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attempt"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "created_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "derived_from_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Derived From Version"
+          },
+          "producer_id": {
+            "title": "Producer Id",
+            "type": "string"
+          },
+          "producer_type": {
+            "title": "Producer Type",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_valid": {
+            "title": "Schema Valid",
+            "type": "boolean"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run_id",
+          "artifact_id",
+          "version",
+          "attempt",
+          "content_hash",
+          "derived_from_version",
+          "producer_type",
+          "producer_id",
+          "schema_valid",
+          "created_at",
+          "attachments"
+        ],
+        "title": "ArtifactHistoryEntry",
+        "type": "object"
+      },
+      "ArtifactSaved": {
+        "additionalProperties": false,
+        "properties": {
+          "changed": {
+            "title": "Changed",
+            "type": "boolean"
+          },
+          "run": {
+            "$ref": "#/components/schemas/RunSummary"
+          }
+        },
+        "required": [
+          "changed",
+          "run"
+        ],
+        "title": "ArtifactSaved",
+        "type": "object"
+      },
+      "ArtifactVersion": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "producer_id": {
+            "title": "Producer Id",
+            "type": "string"
+          },
+          "producer_type": {
+            "title": "Producer Type",
+            "type": "string"
+          },
+          "schema_valid": {
+            "title": "Schema Valid",
+            "type": "boolean"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version",
+          "producer_type",
+          "producer_id",
+          "schema_valid",
+          "created_at"
+        ],
+        "title": "ArtifactVersion",
+        "type": "object"
+      },
+      "Body_attach_runs__run_id__artifacts__artifact_id__attachments_post": {
+        "properties": {
+          "expected_version": {
+            "minimum": 0.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "expected_version"
+        ],
+        "title": "Body_attach_runs__run_id__artifacts__artifact_id__attachments_post",
+        "type": "object"
+      },
+      "Body_spreadsheet_runs__run_id__artifacts__artifact_id__spreadsheet_post": {
+        "properties": {
+          "expected_version": {
+            "minimum": 0.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file",
+          "expected_version"
+        ],
+        "title": "Body_spreadsheet_runs__run_id__artifacts__artifact_id__spreadsheet_post",
+        "type": "object"
+      },
+      "ChangeDecision": {
+        "properties": {
+          "approve": {
+            "title": "Approve",
+            "type": "boolean"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          }
+        },
+        "required": [
+          "approve"
+        ],
+        "title": "ChangeDecision",
+        "type": "object"
+      },
+      "ChangeRequest": {
+        "additionalProperties": true,
+        "description": "A change request: the record's own fields (summary, window, risk, plan, state, and the\ndecision once made) are the ITSM body, open by nature; the fields below are the platform's.",
+        "properties": {
+          "at": {
+            "title": "At",
+            "type": "string"
+          },
+          "change_id": {
+            "title": "Change Id",
+            "type": "string"
+          },
+          "record_version": {
+            "title": "Record Version",
+            "type": "integer"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "terminal_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terminal Id"
+          },
+          "usecase_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usecase Id"
+          }
+        },
+        "required": [
+          "change_id",
+          "record_version",
+          "usecase_id",
+          "run_id",
+          "terminal_id",
+          "at"
+        ],
+        "title": "ChangeRequest",
+        "type": "object"
+      },
+      "Completion": {
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "additionalProperties": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array"
+            },
+            "title": "Artifacts",
+            "type": "object"
+          },
+          "expected_version": {
+            "minimum": 0.0,
+            "title": "Expected Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "artifacts",
+          "expected_version"
+        ],
+        "title": "Completion",
+        "type": "object"
+      },
+      "CostTotals": {
+        "additionalProperties": false,
+        "description": "Model usage and cost (``adlc.agents.cost``).",
+        "properties": {
+          "calls": {
+            "title": "Calls",
+            "type": "integer"
+          },
+          "cost_usd": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Money"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fallback_answers": {
+            "title": "Fallback Answers",
+            "type": "integer"
+          },
+          "tokens_in": {
+            "title": "Tokens In",
+            "type": "integer"
+          },
+          "tokens_out": {
+            "title": "Tokens Out",
+            "type": "integer"
+          },
+          "unknown_cost_calls": {
+            "title": "Unknown Cost Calls",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "calls",
+          "tokens_in",
+          "tokens_out",
+          "cost_usd",
+          "unknown_cost_calls",
+          "fallback_answers"
+        ],
+        "title": "CostTotals",
+        "type": "object"
+      },
+      "DeadLetter": {
+        "additionalProperties": false,
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "causation_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Causation Run Id"
+          },
+          "dead_lettered_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "requeues": {
+            "title": "Requeues",
+            "type": "integer"
+          },
+          "usecase_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usecase Id"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_type",
+          "usecase_id",
+          "causation_run_id",
+          "attempts",
+          "last_error",
+          "dead_lettered_at",
+          "requeues"
+        ],
+        "title": "DeadLetter",
+        "type": "object"
+      },
+      "DeadLetterDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "attempts": {
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "causation_run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Causation Run Id"
+          },
+          "dead_lettered_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "event_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Event Id"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "history": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "History",
+            "type": "array"
+          },
+          "last_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Error"
+          },
+          "payload": {
+            "title": "Payload"
+          },
+          "processed_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "usecase_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usecase Id"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_type",
+          "usecase_id",
+          "causation_run_id",
+          "attempts",
+          "last_error",
+          "dead_lettered_at",
+          "processed_at",
+          "payload",
+          "history"
+        ],
+        "title": "DeadLetterDetail",
+        "type": "object"
+      },
+      "Decision": {
+        "additionalProperties": false,
+        "description": "A sign-off decision. Extra keys are refused, so a body cannot name another actor or role\n(FR-002): the decision is always the signed-in person's.",
+        "properties": {
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "decision": {
+            "enum": [
+              "pass",
+              "rework",
+              "exception",
+              "terminate"
+            ],
+            "title": "Decision",
+            "type": "string"
+          },
+          "expected_version": {
+            "minimum": 0.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "fields": {
+            "additionalProperties": true,
+            "title": "Fields",
+            "type": "object"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "root_cause": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Root Cause"
+          },
+          "target_terminal": {
+            "anyOf": [
+              {
+                "maxLength": 20,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Terminal"
+          }
+        },
+        "required": [
+          "decision",
+          "expected_version"
+        ],
+        "title": "Decision",
+        "type": "object"
+      },
+      "DecisionForm": {
+        "additionalProperties": false,
+        "description": "What this person may decide and what each outcome needs (``adlc.inbox.forms``).\n\nEvery value comes from the pinned spec and catalogues, so none is a literal here.",
+        "properties": {
+          "alternatives": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Alternatives",
+            "type": "array"
+          },
+          "can_complete_escalation": {
+            "title": "Can Complete Escalation",
+            "type": "boolean"
+          },
+          "can_decide": {
+            "title": "Can Decide",
+            "type": "boolean"
+          },
+          "can_edit": {
+            "title": "Can Edit",
+            "type": "boolean"
+          },
+          "can_terminate": {
+            "title": "Can Terminate",
+            "type": "boolean"
+          },
+          "controls_pending": {
+            "title": "Controls Pending",
+            "type": "boolean"
+          },
+          "outcomes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Outcomes",
+            "type": "array"
+          },
+          "reason_required_unless": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Required Unless"
+          },
+          "requires": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Requires",
+            "type": "object"
+          },
+          "root_causes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Root Causes",
+            "type": "array"
+          },
+          "sign_off_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sign Off Role"
+          },
+          "target_terminal_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Target Terminal For",
+            "type": "array"
+          },
+          "target_terminals": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Target Terminals",
+            "type": "array"
+          },
+          "typed_fields": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Typed Fields",
+            "type": "array"
+          },
+          "waiver_pending": {
+            "title": "Waiver Pending",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "outcomes",
+          "requires",
+          "root_causes",
+          "target_terminal_for",
+          "target_terminals",
+          "typed_fields",
+          "alternatives",
+          "reason_required_unless",
+          "sign_off_role",
+          "can_decide",
+          "can_terminate",
+          "can_edit",
+          "can_complete_escalation",
+          "controls_pending",
+          "waiver_pending"
+        ],
+        "title": "DecisionForm",
+        "type": "object"
+      },
+      "Edit": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_version": {
+            "minimum": 0.0,
+            "title": "Expected Version",
+            "type": "integer"
+          },
+          "rows": {
+            "title": "Rows"
+          }
+        },
+        "required": [
+          "rows",
+          "expected_version"
+        ],
+        "title": "Edit",
+        "type": "object"
+      },
+      "EventDecision": {
+        "properties": {
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "confirm": {
+            "title": "Confirm",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "confirm"
+        ],
+        "title": "EventDecision",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "Health": {
+        "properties": {
+          "checks": {
+            "additionalProperties": {
+              "enum": [
+                "ok",
+                "unavailable"
+              ],
+              "type": "string"
+            },
+            "title": "Checks",
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "checks"
+        ],
+        "title": "Health",
+        "type": "object"
+      },
+      "InboxItem": {
+        "additionalProperties": false,
+        "properties": {
+          "arrived_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "controls_pending": {
+            "title": "Controls Pending",
+            "type": "boolean"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Role"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "terminal_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Terminal Id"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "usecase_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usecase Id"
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "usecase_id",
+          "terminal_id",
+          "run_id",
+          "role",
+          "title",
+          "arrived_at",
+          "due_at",
+          "controls_pending"
+        ],
+        "title": "InboxItem",
+        "type": "object"
+      },
+      "Journey": {
+        "additionalProperties": false,
+        "properties": {
+          "arrows": {
+            "items": {
+              "$ref": "#/components/schemas/Arrow"
+            },
+            "title": "Arrows",
+            "type": "array"
+          },
+          "lanes": {
+            "items": {
+              "$ref": "#/components/schemas/Lane"
+            },
+            "title": "Lanes",
+            "type": "array"
+          },
+          "panel": {
+            "$ref": "#/components/schemas/Panel"
+          },
+          "time_scale": {
+            "title": "Time Scale",
+            "type": "number"
+          },
+          "usecase": {
+            "$ref": "#/components/schemas/JourneyUseCase"
+          }
+        },
+        "required": [
+          "usecase",
+          "lanes",
+          "arrows",
+          "panel",
+          "time_scale"
+        ],
+        "title": "Journey",
+        "type": "object"
+      },
+      "JourneyUseCase": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "risk_tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Tier"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "usecase_id": {
+            "title": "Usecase Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "usecase_id",
+          "name",
+          "risk_tier",
+          "status"
+        ],
+        "title": "JourneyUseCase",
+        "type": "object"
+      },
+      "Kpi": {
+        "additionalProperties": false,
+        "description": "One KPI (``adlc.dashboard.kpis``); its value's form depends on the KPI (a number, a\nbreakdown or nothing yet), and some KPIs add a per-terminal split, details or a note.",
+        "properties": {
+          "definition": {
+            "title": "Definition",
+            "type": "string"
+          },
+          "definition_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Definition Note"
+          },
+          "detail": {
+            "title": "Detail"
+          },
+          "headline": {
+            "title": "Headline",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "per_terminal": {
+            "title": "Per Terminal"
+          },
+          "unit": {
+            "title": "Unit",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "unit",
+          "headline",
+          "definition",
+          "value"
+        ],
+        "title": "Kpi",
+        "type": "object"
+      },
+      "Kpis": {
+        "additionalProperties": false,
+        "properties": {
+          "kpis": {
+            "items": {
+              "$ref": "#/components/schemas/Kpi"
+            },
+            "title": "Kpis",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kpis"
+        ],
+        "title": "Kpis",
+        "type": "object"
+      },
+      "Lane": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/LaneBar"
+            },
+            "title": "Runs",
+            "type": "array"
+          },
+          "terminal_id": {
+            "title": "Terminal Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "terminal_id",
+          "name",
+          "runs"
+        ],
+        "title": "Lane",
+        "type": "object"
+      },
+      "LaneBar": {
+        "additionalProperties": false,
+        "description": "A run in a lane, or several earlier runs collapsed into one bar (``collapsed`` set).",
+        "properties": {
+          "closed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          },
+          "collapsed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Collapsed"
+          },
+          "final_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mode"
+          },
+          "opened_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Opened At"
+          },
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "run_number": {
+            "title": "Run Number",
+            "type": "integer"
+          },
+          "seconds": {
+            "title": "Seconds",
+            "type": "number"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "terminal_id": {
+            "title": "Terminal Id",
+            "type": "string"
+          },
+          "time_split": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "title": "Time Split",
+            "type": "object"
+          }
+        },
+        "required": [
+          "run_id",
+          "terminal_id",
+          "run_number",
+          "state",
+          "final_status",
+          "opened_at",
+          "closed_at",
+          "seconds",
+          "owner",
+          "time_split"
+        ],
+        "title": "LaneBar",
+        "type": "object"
+      },
+      "Money": {
+        "type": "string"
+      },
+      "Panel": {
+        "additionalProperties": false,
+        "properties": {
+          "escalations": {
+            "items": {
+              "$ref": "#/components/schemas/PanelEscalation"
+            },
+            "title": "Escalations",
+            "type": "array"
+          },
+          "exceptions": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "Exceptions",
+            "type": "array"
+          },
+          "unlinked": {
+            "items": {
+              "$ref": "#/components/schemas/PanelUnlinked"
+            },
+            "title": "Unlinked",
+            "type": "array"
+          }
+        },
+        "required": [
+          "escalations",
+          "exceptions",
+          "unlinked"
+        ],
+        "title": "Panel",
+        "type": "object"
+      },
+      "PanelEscalation": {
+        "additionalProperties": false,
+        "properties": {
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "terminal_id": {
+            "title": "Terminal Id",
+            "type": "string"
+          },
+          "trigger": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger"
+          }
+        },
+        "required": [
+          "run_id",
+          "terminal_id",
+          "trigger"
+        ],
+        "title": "PanelEscalation",
+        "type": "object"
+      },
+      "PanelUnlinked": {
+        "additionalProperties": false,
+        "properties": {
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "event_type"
+        ],
+        "title": "PanelUnlinked",
+        "type": "object"
+      },
+      "PersonOut": {
+        "properties": {
+          "account_name": {
+            "title": "Account Name",
+            "type": "string"
+          },
+          "display_name": {
+            "title": "Display Name",
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "account_name",
+          "display_name",
+          "roles"
+        ],
+        "title": "PersonOut",
+        "type": "object"
+      },
+      "Portfolio": {
+        "additionalProperties": false,
+        "properties": {
+          "kpis": {
+            "items": {
+              "$ref": "#/components/schemas/Kpi"
+            },
+            "title": "Kpis",
+            "type": "array"
+          },
+          "usecases": {
+            "title": "Usecases",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "usecases",
+          "kpis"
+        ],
+        "title": "Portfolio",
+        "type": "object"
+      },
+      "PriorRework": {
+        "additionalProperties": false,
+        "properties": {
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "person": {
+            "title": "Person",
+            "type": "string"
+          },
+          "root_cause": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Root Cause"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "signed_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          }
+        },
+        "required": [
+          "run_id",
+          "person",
+          "signed_at",
+          "comment",
+          "root_cause"
+        ],
+        "title": "PriorRework",
+        "type": "object"
+      },
+      "ProposedEvent": {
+        "additionalProperties": false,
+        "description": "A proposal row of the run's artifact table (its values as the agent wrote them).",
+        "properties": {
+          "event_id": {
+            "title": "Event Id"
+          },
+          "event_type": {
+            "title": "Event Type"
+          },
+          "raised_at": {
+            "title": "Raised At"
+          },
+          "routed_to": {
+            "title": "Routed To"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "terminal_id": {
+            "title": "Terminal Id",
+            "type": "string"
+          },
+          "usecase_id": {
+            "title": "Usecase Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_type",
+          "raised_at",
+          "routed_to",
+          "run_id",
+          "usecase_id",
+          "terminal_id"
+        ],
+        "title": "ProposedEvent",
+        "type": "object"
+      },
+      "ProposedEventDecided": {
+        "additionalProperties": false,
+        "properties": {
+          "by": {
+            "title": "By",
+            "type": "string"
+          },
+          "comment": {
+            "title": "Comment",
+            "type": "string"
+          },
+          "confirmed": {
+            "title": "Confirmed",
+            "type": "boolean"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type"
+          },
+          "raised_event_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raised Event Id"
+          }
+        },
+        "required": [
+          "event_id",
+          "event_type",
+          "confirmed",
+          "by",
+          "comment"
+        ],
+        "title": "ProposedEventDecided",
+        "type": "object"
+      },
+      "Record": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "RunArtifact": {
+        "additionalProperties": false,
+        "description": "One artifact of the terminal: its rows as stored (a table, text or nothing yet).",
+        "properties": {
+          "attachments": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "Attachments",
+            "type": "array"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "Citations",
+            "type": "array"
+          },
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "condition": {
+            "title": "Condition"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "rows": {
+            "title": "Rows"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ArtifactVersion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "columns",
+          "condition",
+          "rows",
+          "version",
+          "attachments",
+          "citations"
+        ],
+        "title": "RunArtifact",
+        "type": "object"
+      },
+      "RunChanged": {
+        "additionalProperties": false,
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/RunSummary"
+          }
+        },
+        "required": [
+          "run"
+        ],
+        "title": "RunChanged",
+        "type": "object"
+      },
+      "RunDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "approvals": {
+            "items": {
+              "$ref": "#/components/schemas/Approval"
+            },
+            "title": "Approvals",
+            "type": "array"
+          },
+          "artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/RunArtifact"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "checklist_results": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "Checklist Results",
+            "type": "array"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "clarifications": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "Clarifications",
+            "type": "array"
+          },
+          "control_results": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "Control Results",
+            "type": "array"
+          },
+          "cost": {
+            "$ref": "#/components/schemas/CostTotals"
+          },
+          "decisions": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "Decisions",
+            "type": "array"
+          },
+          "form": {
+            "$ref": "#/components/schemas/DecisionForm"
+          },
+          "ledger_record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Record"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prerequisites": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "Prerequisites",
+            "type": "array"
+          },
+          "prior_rework": {
+            "items": {
+              "$ref": "#/components/schemas/PriorRework"
+            },
+            "title": "Prior Rework",
+            "type": "array"
+          },
+          "recommendation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Record"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "run": {
+            "$ref": "#/components/schemas/RunSummary"
+          },
+          "spec": {
+            "$ref": "#/components/schemas/SpecRef"
+          },
+          "timeline": {
+            "items": {
+              "$ref": "#/components/schemas/Record"
+            },
+            "title": "Timeline",
+            "type": "array"
+          },
+          "timer": {
+            "$ref": "#/components/schemas/Timer"
+          },
+          "waiver": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Record"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "run",
+          "spec",
+          "artifacts",
+          "prerequisites",
+          "control_results",
+          "recommendation",
+          "prior_rework",
+          "clarifications",
+          "approvals",
+          "decisions",
+          "waiver",
+          "timer",
+          "cost",
+          "timeline",
+          "checks",
+          "checklist_results",
+          "ledger_record",
+          "form"
+        ],
+        "title": "RunDetail",
+        "type": "object"
+      },
+      "RunSummary": {
+        "additionalProperties": false,
+        "description": "A run at a glance (``adlc.inbox.service.run_summary``); the answer of every run action.",
+        "properties": {
+          "closed_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "controls_pending": {
+            "title": "Controls Pending",
+            "type": "boolean"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "final_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Status"
+          },
+          "opened_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          },
+          "run_number": {
+            "title": "Run Number",
+            "type": "integer"
+          },
+          "state": {
+            "title": "State",
+            "type": "string"
+          },
+          "terminal_id": {
+            "title": "Terminal Id",
+            "type": "string"
+          },
+          "usecase_id": {
+            "title": "Usecase Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run_id",
+          "usecase_id",
+          "terminal_id",
+          "run_number",
+          "state",
+          "final_status",
+          "version",
+          "controls_pending",
+          "opened_at",
+          "closed_at",
+          "due_at"
+        ],
+        "title": "RunSummary",
+        "type": "object"
+      },
+      "RunTimeline": {
+        "additionalProperties": false,
+        "properties": {
+          "activity": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineActivity"
+            },
+            "title": "Activity",
+            "type": "array"
+          },
+          "attempts": {
+            "items": {
+              "$ref": "#/components/schemas/AgentAttempt"
+            },
+            "title": "Attempts",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "activity",
+          "attempts"
+        ],
+        "title": "RunTimeline",
+        "type": "object"
+      },
+      "SignInRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "account_name": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Account Name",
+            "type": "string"
+          },
+          "password": {
+            "format": "password",
+            "minLength": 1,
+            "title": "Password",
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "account_name",
+          "password"
+        ],
+        "title": "SignInRequest",
+        "type": "object"
+      },
+      "SignInResponse": {
+        "properties": {
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "person": {
+            "$ref": "#/components/schemas/PersonOut"
+          },
+          "token": {
+            "title": "Token",
+            "type": "string"
+          },
+          "token_type": {
+            "const": "bearer",
+            "default": "bearer",
+            "title": "Token Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "expires_at",
+          "person"
+        ],
+        "title": "SignInResponse",
+        "type": "object"
+      },
+      "SpecRef": {
+        "additionalProperties": false,
+        "properties": {
+          "terminal_id": {
+            "title": "Terminal Id",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "terminal_id",
+          "version"
+        ],
+        "title": "SpecRef",
+        "type": "object"
+      },
+      "Submission": {
+        "additionalProperties": false,
+        "properties": {
+          "intake_text": {
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Intake Text",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "intake_text"
+        ],
+        "title": "Submission",
+        "type": "object"
+      },
+      "Submitted": {
+        "additionalProperties": false,
+        "properties": {
+          "usecase_id": {
+            "title": "Usecase Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "usecase_id"
+        ],
+        "title": "Submitted",
+        "type": "object"
+      },
+      "TerminalSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "automatic_seconds": {
+            "title": "Automatic Seconds",
+            "type": "number"
+          },
+          "clarification_rounds": {
+            "title": "Clarification Rounds",
+            "type": "integer"
+          },
+          "escalations": {
+            "title": "Escalations",
+            "type": "integer"
+          },
+          "reworks": {
+            "title": "Reworks",
+            "type": "integer"
+          },
+          "runs": {
+            "title": "Runs",
+            "type": "integer"
+          },
+          "terminal_id": {
+            "title": "Terminal Id",
+            "type": "string"
+          },
+          "waiting_seconds": {
+            "title": "Waiting Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "terminal_id",
+          "runs",
+          "reworks",
+          "clarification_rounds",
+          "escalations",
+          "automatic_seconds",
+          "waiting_seconds"
+        ],
+        "title": "TerminalSummary",
+        "type": "object"
+      },
+      "TimelineActivity": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "actor_type": {
+            "title": "Actor Type",
+            "type": "string"
+          },
+          "at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At"
+          },
+          "outcome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Outcome"
+          },
+          "seconds": {
+            "title": "Seconds",
+            "type": "number"
+          },
+          "step": {
+            "title": "Step",
+            "type": "string"
+          }
+        },
+        "required": [
+          "at",
+          "step",
+          "actor_type",
+          "actor",
+          "outcome",
+          "seconds"
+        ],
+        "title": "TimelineActivity",
+        "type": "object"
+      },
+      "Timer": {
+        "additionalProperties": false,
+        "properties": {
+          "due_at": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Timestamp"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "overdue": {
+            "title": "Overdue",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "due_at",
+          "overdue"
+        ],
+        "title": "Timer",
+        "type": "object"
+      },
+      "Timestamp": {
+        "anyOf": [
+          {
+            "format": "date-time",
+            "type": "string"
+          },
+          {
+            "type": "string"
+          }
+        ]
+      },
+      "UseCase": {
+        "additionalProperties": false,
+        "properties": {
+          "intake_text": {
+            "title": "Intake Text",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "risk_tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Tier"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted_by": {
+            "title": "Submitted By",
+            "type": "string"
+          },
+          "usecase_id": {
+            "title": "Usecase Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "usecase_id",
+          "name",
+          "intake_text",
+          "submitted_by",
+          "risk_tier",
+          "status"
+        ],
+        "title": "UseCase",
+        "type": "object"
+      },
+      "UseCaseCost": {
+        "additionalProperties": false,
+        "properties": {
+          "terminals": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/CostTotals"
+            },
+            "title": "Terminals",
+            "type": "object"
+          },
+          "total": {
+            "$ref": "#/components/schemas/CostTotals"
+          }
+        },
+        "required": [
+          "total",
+          "terminals"
+        ],
+        "title": "UseCaseCost",
+        "type": "object"
+      },
+      "UseCaseJourney": {
+        "additionalProperties": false,
+        "properties": {
+          "cost": {
+            "$ref": "#/components/schemas/UseCaseCost"
+          },
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/RunSummary"
+            },
+            "title": "Runs",
+            "type": "array"
+          },
+          "summary": {
+            "items": {
+              "$ref": "#/components/schemas/TerminalSummary"
+            },
+            "title": "Summary",
+            "type": "array"
+          },
+          "usecase": {
+            "$ref": "#/components/schemas/UseCase"
+          }
+        },
+        "required": [
+          "usecase",
+          "runs",
+          "summary",
+          "cost"
+        ],
+        "title": "UseCaseJourney",
+        "type": "object"
+      },
+      "UseCaseListItem": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "open_runs": {
+            "title": "Open Runs",
+            "type": "integer"
+          },
+          "risk_tier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Tier"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "submitted_at": {
+            "$ref": "#/components/schemas/Timestamp"
+          },
+          "submitted_by": {
+            "title": "Submitted By",
+            "type": "string"
+          },
+          "usecase_id": {
+            "title": "Usecase Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "usecase_id",
+          "name",
+          "submitted_by",
+          "risk_tier",
+          "status",
+          "submitted_at",
+          "open_runs"
+        ],
+        "title": "UseCaseListItem",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "Verification": {
+        "additionalProperties": false,
+        "description": "A hash-chain verification (``adlc.ledger.verify.Report``).",
+        "properties": {
+          "breaks": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Breaks",
+            "type": "array"
+          },
+          "records_checked": {
+            "title": "Records Checked",
+            "type": "integer"
+          },
+          "scope": {
+            "title": "Scope",
+            "type": "string"
+          },
+          "unscoped": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unscoped",
+            "type": "array"
+          },
+          "verified": {
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "scope",
+          "records_checked",
+          "verified",
+          "breaks",
+          "unscoped"
+        ],
+        "title": "Verification",
+        "type": "object"
+      },
+      "WaiverDecision": {
+        "additionalProperties": false,
+        "properties": {
+          "approve": {
+            "title": "Approve",
+            "type": "boolean"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          }
+        },
+        "required": [
+          "approve"
+        ],
+        "title": "WaiverDecision",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "ADLC Platform API",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/auth/me": {
+      "get": {
+        "operationId": "me_auth_me_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PersonOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Me"
+      }
+    },
+    "/auth/sign-in": {
+      "post": {
+        "operationId": "sign_in_auth_sign_in_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignInRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignInResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Sign In"
+      }
+    },
+    "/auth/sign-out": {
+      "post": {
+        "operationId": "sign_out_auth_sign_out_post",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Sign Out"
+      }
+    },
+    "/changes": {
+      "get": {
+        "operationId": "changes_changes_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChangeRequest"
+                  },
+                  "title": "Response Changes Changes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Changes"
+      }
+    },
+    "/changes/{change_id}/decision": {
+      "post": {
+        "operationId": "decide_changes__change_id__decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "change_id",
+            "required": true,
+            "schema": {
+              "title": "Change Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeDecision"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeRequest"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide"
+      }
+    },
+    "/clarifications/{clarification_id}/answers": {
+      "post": {
+        "operationId": "answer_clarifications__clarification_id__answers_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clarification_id",
+            "required": true,
+            "schema": {
+              "title": "Clarification Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Answers"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Answer"
+      }
+    },
+    "/dashboard/activity": {
+      "get": {
+        "operationId": "activity_dashboard_activity_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "usecase_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Usecase Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "terminal_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Terminal Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "actor_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Actor Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "step",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Step"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 200,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ActivityEntry"
+                  },
+                  "title": "Response Activity Dashboard Activity Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Activity"
+      }
+    },
+    "/dashboard/portfolio": {
+      "get": {
+        "operationId": "portfolio_dashboard_portfolio_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "risk_tier",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Risk Tier"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Portfolio"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Portfolio"
+      }
+    },
+    "/dashboard/runs/{run_id}/timeline": {
+      "get": {
+        "operationId": "timeline_dashboard_runs__run_id__timeline_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunTimeline"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Timeline"
+      }
+    },
+    "/dashboard/usecases/{usecase_id}/journey": {
+      "get": {
+        "operationId": "journey_dashboard_usecases__usecase_id__journey_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "usecase_id",
+            "required": true,
+            "schema": {
+              "title": "Usecase Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Journey"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Journey"
+      }
+    },
+    "/dashboard/usecases/{usecase_id}/kpis": {
+      "get": {
+        "operationId": "kpis_dashboard_usecases__usecase_id__kpis_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "usecase_id",
+            "required": true,
+            "schema": {
+              "title": "Usecase Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Kpis"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Kpis"
+      }
+    },
+    "/dead-letters": {
+      "get": {
+        "operationId": "dead_letters_dead_letters_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DeadLetter"
+                  },
+                  "title": "Response Dead Letters Dead Letters Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Dead Letters"
+      }
+    },
+    "/dead-letters/{event_id}": {
+      "get": {
+        "operationId": "dead_letter_dead_letters__event_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeadLetterDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dead Letter"
+      }
+    },
+    "/dead-letters/{event_id}/requeue": {
+      "post": {
+        "operationId": "requeue_dead_letters__event_id__requeue_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Requeue"
+      }
+    },
+    "/events/proposed": {
+      "get": {
+        "operationId": "proposed_events_proposed_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProposedEvent"
+                  },
+                  "title": "Response Proposed Events Proposed Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Proposed"
+      }
+    },
+    "/events/proposed/{usecase_id}/{terminal_id}/{run_number}/{event_id}": {
+      "post": {
+        "operationId": "decide_events_proposed__usecase_id___terminal_id___run_number___event_id__post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "usecase_id",
+            "required": true,
+            "schema": {
+              "title": "Usecase Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "terminal_id",
+            "required": true,
+            "schema": {
+              "title": "Terminal Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "run_number",
+            "required": true,
+            "schema": {
+              "title": "Run Number",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "event_id",
+            "required": true,
+            "schema": {
+              "title": "Event Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventDecision"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposedEventDecided"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide"
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health"
+      }
+    },
+    "/inbox": {
+      "get": {
+        "operationId": "inbox_inbox_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InboxItem"
+                  },
+                  "title": "Response Inbox Inbox Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Inbox"
+      }
+    },
+    "/runs/{run_id}": {
+      "get": {
+        "operationId": "detail_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Detail"
+      }
+    },
+    "/runs/{run_id}/artifacts/{artifact_id}": {
+      "put": {
+        "operationId": "edit_runs__run_id__artifacts__artifact_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Edit"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtifactSaved"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Edit"
+      }
+    },
+    "/runs/{run_id}/artifacts/{artifact_id}/attachments": {
+      "post": {
+        "operationId": "attach_runs__run_id__artifacts__artifact_id__attachments_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_attach_runs__run_id__artifacts__artifact_id__attachments_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunChanged"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Attach"
+      }
+    },
+    "/runs/{run_id}/artifacts/{artifact_id}/history": {
+      "get": {
+        "operationId": "history_runs__run_id__artifacts__artifact_id__history_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ArtifactHistoryEntry"
+                  },
+                  "title": "Response History Runs  Run Id  Artifacts  Artifact Id  History Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "History"
+      }
+    },
+    "/runs/{run_id}/artifacts/{artifact_id}/spreadsheet": {
+      "post": {
+        "operationId": "spreadsheet_runs__run_id__artifacts__artifact_id__spreadsheet_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_spreadsheet_runs__run_id__artifacts__artifact_id__spreadsheet_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunChanged"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Spreadsheet"
+      }
+    },
+    "/runs/{run_id}/attachments/{content_hash}": {
+      "get": {
+        "operationId": "download_runs__run_id__attachments__content_hash__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "content_hash",
+            "required": true,
+            "schema": {
+              "title": "Content Hash",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/octet-stream": {}
+            },
+            "description": "The file, as a download (Content-Disposition: attachment)"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download"
+      }
+    },
+    "/runs/{run_id}/decisions": {
+      "post": {
+        "operationId": "decide_runs__run_id__decisions_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Decision"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide"
+      }
+    },
+    "/runs/{run_id}/escalation": {
+      "post": {
+        "operationId": "complete_escalation_runs__run_id__escalation_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Completion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Complete Escalation"
+      }
+    },
+    "/usecases": {
+      "get": {
+        "operationId": "list_usecases_usecases_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "mine",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Mine",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UseCaseListItem"
+                  },
+                  "title": "Response List Usecases Usecases Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Usecases"
+      },
+      "post": {
+        "operationId": "submit_usecases_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Submission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Submitted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit"
+      }
+    },
+    "/usecases/{usecase_id}": {
+      "get": {
+        "operationId": "journey_usecases__usecase_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "usecase_id",
+            "required": true,
+            "schema": {
+              "title": "Usecase Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UseCaseJourney"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Journey"
+      }
+    },
+    "/usecases/{usecase_id}/verify": {
+      "post": {
+        "description": "Any signed-in person may verify a use case's chain; the run is recorded under them.",
+        "operationId": "verify_usecases__usecase_id__verify_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "usecase_id",
+            "required": true,
+            "schema": {
+              "title": "Usecase Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Verification"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Verify"
+      }
+    },
+    "/waivers/{waiver_id}/decision": {
+      "post": {
+        "operationId": "decide_waiver_waivers__waiver_id__decision_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "waiver_id",
+            "required": true,
+            "schema": {
+              "title": "Waiver Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WaiverDecision"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSummary"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Decide Waiver"
+      }
+    }
+  }
+}

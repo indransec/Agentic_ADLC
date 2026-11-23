@@ -1,0 +1,154 @@
+{
+  "arrows": [
+    {
+      "actor": "business_owner-person",
+      "at": "0000-00-00T00:00:00.000000+00:00",
+      "cause": {
+        "decision": "pass"
+      },
+      "event_type": "T0.pass",
+      "from_run": "UC-0001/T0/run-1",
+      "kind": "pass",
+      "to_run": "UC-0001/T1/run-1"
+    },
+    {
+      "actor": "product_owner-person",
+      "at": "0000-00-00T00:00:00.000000+00:00",
+      "cause": {
+        "comment": "the KPI baseline is missing",
+        "decision": "rework",
+        "root_cause": "requirement"
+      },
+      "event_type": "T1.rework.requirement",
+      "from_run": "UC-0001/T1/run-1",
+      "kind": "rework",
+      "to_run": "UC-0001/T1/run-2"
+    }
+  ],
+  "lanes": [
+    {
+      "name": "Intake & Qualification",
+      "runs": [
+        {
+          "closed_at": "0000-00-00T00:00:00.000000+00:00",
+          "final_status": "pass",
+          "mode": "evolve",
+          "opened_at": "0000-00-00T00:00:00.000000+00:00",
+          "owner": null,
+          "run_id": "UC-0001/T0/run-1",
+          "run_number": 1,
+          "seconds": "<float>",
+          "state": "closed",
+          "terminal_id": "T0",
+          "time_split": {
+            "agent": "<float>",
+            "blocked": "<float>",
+            "clarification": "<float>",
+            "other": "<float>",
+            "people": "<float>",
+            "reviewer": "<float>"
+          }
+        }
+      ],
+      "terminal_id": "T0"
+    },
+    {
+      "name": "Requirements & Outcome",
+      "runs": [
+        {
+          "closed_at": "0000-00-00T00:00:00.000000+00:00",
+          "final_status": "rework",
+          "mode": "evolve",
+          "opened_at": "0000-00-00T00:00:00.000000+00:00",
+          "owner": null,
+          "run_id": "UC-0001/T1/run-1",
+          "run_number": 1,
+          "seconds": "<float>",
+          "state": "closed",
+          "terminal_id": "T1",
+          "time_split": {
+            "agent": "<float>",
+            "blocked": "<float>",
+            "clarification": "<float>",
+            "other": "<float>",
+            "people": "<float>",
+            "reviewer": "<float>"
+          }
+        },
+        {
+          "closed_at": null,
+          "final_status": null,
+          "mode": "evolve",
+          "opened_at": "0000-00-00T00:00:00.000000+00:00",
+          "owner": "sign-off: business_owner, product_owner",
+          "run_id": "UC-0001/T1/run-2",
+          "run_number": 2,
+          "seconds": "<float>",
+          "state": "awaiting_sign_off",
+          "terminal_id": "T1",
+          "time_split": {
+            "agent": "<float>",
+            "blocked": "<float>",
+            "clarification": "<float>",
+            "other": "<float>",
+            "people": "<float>",
+            "reviewer": "<float>"
+          }
+        }
+      ],
+      "terminal_id": "T1"
+    },
+    {
+      "name": "Architecture & Design",
+      "runs": [],
+      "terminal_id": "T2"
+    },
+    {
+      "name": "Build & Integration",
+      "runs": [],
+      "terminal_id": "T3"
+    },
+    {
+      "name": "Evaluation",
+      "runs": [],
+      "terminal_id": "T4"
+    },
+    {
+      "name": "Trust, Risk & Assurance",
+      "runs": [],
+      "terminal_id": "T5"
+    },
+    {
+      "name": "Release Readiness",
+      "runs": [],
+      "terminal_id": "T6"
+    },
+    {
+      "name": "Deployment & Transition",
+      "runs": [],
+      "terminal_id": "T7"
+    },
+    {
+      "name": "Operate & Observe",
+      "runs": [],
+      "terminal_id": "T8"
+    },
+    {
+      "name": "Evolve / Retire",
+      "runs": [],
+      "terminal_id": "T9"
+    }
+  ],
+  "panel": {
+    "escalations": [],
+    "exceptions": [],
+    "unlinked": []
+  },
+  "time_scale": "<float>",
+  "usecase": {
+    "name": "Claims triage",
+    "risk_tier": "medium",
+    "status": "active",
+    "usecase_id": "UC-0001"
+  }
+}

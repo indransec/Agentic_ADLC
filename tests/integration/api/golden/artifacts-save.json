@@ -1,0 +1,16 @@
+{
+  "changed": true,
+  "run": {
+    "closed_at": null,
+    "controls_pending": true,
+    "due_at": "0000-00-00T00:00:00.000000Z",
+    "final_status": null,
+    "opened_at": "0000-00-00T00:00:00.000000Z",
+    "run_id": "UC-0001/T1/run-1",
+    "run_number": 1,
+    "state": "awaiting_sign_off",
+    "terminal_id": "T1",
+    "usecase_id": "UC-0001",
+    "version": 5
+  }
+}

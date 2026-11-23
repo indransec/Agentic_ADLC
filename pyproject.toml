@@ -32,6 +32,7 @@ dependencies = [
 
 [project.scripts]
 adlc-api = "adlc.api.__main__:main"
+adlc-web = "adlc.web.__main__:main"  # 022: the ui process
 adlc-account = "adlc.cli.account:app"
 adlc-spec = "adlc.spec_toolkit.cli:app"
 adlc-orchestrator = "adlc.orchestration.__main__:main"

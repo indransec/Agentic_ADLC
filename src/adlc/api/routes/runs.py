@@ -10,6 +10,8 @@ from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
 
 from adlc.api.deps import ActorDep, ServicesDep, traced
+from adlc.api.schemas.base import RunSummary
+from adlc.api.schemas.runs import RunDetail
 from adlc.inbox.service import run_summary
 
 router = APIRouter(prefix="/runs")
@@ -35,7 +37,9 @@ class Completion(BaseModel):
     expected_version: int = Field(ge=0)
 
 
-@router.post("/{run_id:path}/decisions")
+@router.post(
+    "/{run_id:path}/decisions", response_model=RunSummary, response_model_exclude_unset=True
+)
 def decide(run_id: str, body: Decision, actor: ActorDep, services: ServicesDep) -> dict[str, Any]:
     traced(run_id=run_id)
     run = services.orchestration.decide(
@@ -52,7 +56,9 @@ def decide(run_id: str, body: Decision, actor: ActorDep, services: ServicesDep) 
     return run_summary(run)
 
 
-@router.post("/{run_id:path}/escalation")
+@router.post(
+    "/{run_id:path}/escalation", response_model=RunSummary, response_model_exclude_unset=True
+)
 def complete_escalation(
     run_id: str, body: Completion, actor: ActorDep, services: ServicesDep
 ) -> dict[str, Any]:
@@ -67,7 +73,7 @@ def detail_router() -> APIRouter:
     """Registered after every other ``/runs`` router so its catch-all path matches last."""
     last = APIRouter(prefix="/runs")
 
-    @last.get("/{run_id:path}")
+    @last.get("/{run_id:path}", response_model=RunDetail, response_model_exclude_unset=True)
     def detail(run_id: str, actor: ActorDep, services: ServicesDep) -> dict[str, Any]:
         traced(run_id=run_id)
         return services.inbox.detail(run_id, actor)

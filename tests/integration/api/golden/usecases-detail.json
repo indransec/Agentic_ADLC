@@ -1,0 +1,86 @@
+{
+  "cost": {
+    "terminals": {
+      "T0": {
+        "calls": 0,
+        "cost_usd": "0",
+        "fallback_answers": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "unknown_cost_calls": 0
+      },
+      "T1": {
+        "calls": 0,
+        "cost_usd": "0",
+        "fallback_answers": 0,
+        "tokens_in": 0,
+        "tokens_out": 0,
+        "unknown_cost_calls": 0
+      }
+    },
+    "total": {
+      "calls": 0,
+      "cost_usd": "0",
+      "fallback_answers": 0,
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "unknown_cost_calls": 0
+    }
+  },
+  "runs": [
+    {
+      "closed_at": "0000-00-00T00:00:00.000000Z",
+      "controls_pending": false,
+      "due_at": "0000-00-00T00:00:00.000000Z",
+      "final_status": "pass",
+      "opened_at": "0000-00-00T00:00:00.000000Z",
+      "run_id": "UC-0001/T0/run-1",
+      "run_number": 1,
+      "state": "closed",
+      "terminal_id": "T0",
+      "usecase_id": "UC-0001",
+      "version": 5
+    },
+    {
+      "closed_at": null,
+      "controls_pending": false,
+      "due_at": "0000-00-00T00:00:00.000000Z",
+      "final_status": null,
+      "opened_at": "0000-00-00T00:00:00.000000Z",
+      "run_id": "UC-0001/T1/run-1",
+      "run_number": 1,
+      "state": "awaiting_sign_off",
+      "terminal_id": "T1",
+      "usecase_id": "UC-0001",
+      "version": 4
+    }
+  ],
+  "summary": [
+    {
+      "automatic_seconds": "<float>",
+      "clarification_rounds": 0,
+      "escalations": 0,
+      "reworks": 0,
+      "runs": 1,
+      "terminal_id": "T0",
+      "waiting_seconds": "<float>"
+    },
+    {
+      "automatic_seconds": "<float>",
+      "clarification_rounds": 0,
+      "escalations": 0,
+      "reworks": 0,
+      "runs": 1,
+      "terminal_id": "T1",
+      "waiting_seconds": "<float>"
+    }
+  ],
+  "usecase": {
+    "intake_text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "name": "Claims triage",
+    "risk_tier": "medium",
+    "status": "active",
+    "submitted_by": "business_owner-person",
+    "usecase_id": "UC-0001"
+  }
+}

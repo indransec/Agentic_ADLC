@@ -27,3 +27,9 @@ build/
 data/files/
 demo-report/
 data/local/
+# 022 web application (web/): dependencies, build, test output
+web/node_modules/
+web/dist/
+web/coverage/
+web/test-results/
+web/playwright-report/

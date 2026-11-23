@@ -6,21 +6,30 @@ from typing import Any
 from fastapi import APIRouter
 
 from adlc.api.deps import ActorDep, ServicesDep
+from adlc.api.schemas.dashboard import (
+    ActivityEntry,
+    Journey,
+    Kpis,
+    Portfolio,
+    RunTimeline,
+)
 
 router = APIRouter(prefix="/dashboard")
 
 
-@router.get("/usecases/{usecase_id}/journey")
+@router.get(
+    "/usecases/{usecase_id}/journey", response_model=Journey, response_model_exclude_unset=True
+)
 def journey(usecase_id: str, actor: ActorDep, services: ServicesDep) -> dict[str, Any]:
     return services.dashboard.journey(usecase_id)
 
 
-@router.get("/usecases/{usecase_id}/kpis")
+@router.get("/usecases/{usecase_id}/kpis", response_model=Kpis, response_model_exclude_unset=True)
 def kpis(usecase_id: str, actor: ActorDep, services: ServicesDep) -> dict[str, Any]:
     return services.dashboard.kpis(usecase_id)
 
 
-@router.get("/portfolio")
+@router.get("/portfolio", response_model=Portfolio, response_model_exclude_unset=True)
 def portfolio(
     actor: ActorDep,
     services: ServicesDep,
@@ -30,7 +39,7 @@ def portfolio(
     return services.dashboard.portfolio(risk_tier, status)
 
 
-@router.get("/activity")
+@router.get("/activity", response_model=list[ActivityEntry], response_model_exclude_unset=True)
 def activity(
     actor: ActorDep,
     services: ServicesDep,
@@ -43,6 +52,8 @@ def activity(
     return services.dashboard.activity(usecase_id, terminal_id, actor_type, step, limit)
 
 
-@router.get("/runs/{run_id:path}/timeline")
+@router.get(
+    "/runs/{run_id:path}/timeline", response_model=RunTimeline, response_model_exclude_unset=True
+)
 def timeline(run_id: str, actor: ActorDep, services: ServicesDep) -> dict[str, Any]:
     return services.dashboard.run_timeline(run_id)

@@ -13,7 +13,8 @@ from adlc.config.settings import (
 )
 
 ENV_EXAMPLE = Path(__file__).resolve().parents[2] / ".env.example"
-COMPOSE_ONLY = {"ADLC_PHOENIX_UI_PORT", "ADLC_UI_PORT"}
+# Read only by compose and the Procfile; ADLC_LEGACY_UI_PORT goes at the 022 cutover
+COMPOSE_ONLY = {"ADLC_PHOENIX_UI_PORT", "ADLC_LEGACY_UI_PORT"}
 
 
 def _entries() -> dict[str, str]:

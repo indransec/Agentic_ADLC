@@ -11,6 +11,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from adlc.api.deps import ActorDep, ServicesDep, traced
 from adlc.api.errors import NotFound
+from adlc.api.schemas.base import RunSummary
+from adlc.api.schemas.requests import DeadLetter, DeadLetterDetail
 from adlc.inbox.service import run_summary
 
 router = APIRouter()
@@ -27,7 +29,11 @@ class WaiverDecision(BaseModel):
     comment: str | None = Field(default=None, max_length=4000)
 
 
-@router.post("/clarifications/{clarification_id:path}/answers")
+@router.post(
+    "/clarifications/{clarification_id:path}/answers",
+    response_model=RunSummary,
+    response_model_exclude_unset=True,
+)
 def answer(
     clarification_id: str, body: Answers, actor: ActorDep, services: ServicesDep
 ) -> dict[str, Any]:
@@ -38,7 +44,9 @@ def answer(
     return run_summary(run)
 
 
-@router.post("/waivers/{waiver_id}/decision")
+@router.post(
+    "/waivers/{waiver_id}/decision", response_model=RunSummary, response_model_exclude_unset=True
+)
 def decide_waiver(
     waiver_id: str, body: WaiverDecision, actor: ActorDep, services: ServicesDep
 ) -> dict[str, Any]:
@@ -49,12 +57,14 @@ def decide_waiver(
     return run_summary(run)
 
 
-@router.get("/dead-letters")
+@router.get("/dead-letters", response_model=list[DeadLetter], response_model_exclude_unset=True)
 def dead_letters(actor: ActorDep, services: ServicesDep) -> list[dict[str, Any]]:
     return [dict(d) for d in services.orchestration.list_dead_letters(actor)]
 
 
-@router.get("/dead-letters/{event_id}")
+@router.get(
+    "/dead-letters/{event_id}", response_model=DeadLetterDetail, response_model_exclude_unset=True
+)
 def dead_letter(event_id: UUID, actor: ActorDep, services: ServicesDep) -> dict[str, Any]:
     found = services.orchestration.dead_letter(actor, event_id)
     if found is None:

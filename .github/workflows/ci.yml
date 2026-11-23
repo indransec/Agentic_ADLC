@@ -20,5 +20,10 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
+      # 022: Node builds and checks the web application (web/); pnpm comes from corepack
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: web/.nvmrc
       - run: make install
+      - run: pnpm -C web exec playwright install --with-deps chromium
       - run: make check

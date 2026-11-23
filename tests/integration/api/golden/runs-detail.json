@@ -1,0 +1,994 @@
+{
+  "approvals": [],
+  "artifacts": [
+    {
+      "attachments": [],
+      "citations": [],
+      "columns": [
+        "req_id",
+        "description",
+        "priority",
+        "persona",
+        "acceptance_criteria"
+      ],
+      "condition": null,
+      "id": "functional_requirements",
+      "rows": [
+        {
+          "acceptance_criteria": "FR-01 passes its test",
+          "description": "Requirement FR-01",
+          "persona": "handler",
+          "priority": "must",
+          "req_id": "FR-01"
+        },
+        {
+          "acceptance_criteria": "FR-02 passes its test",
+          "description": "Requirement FR-02",
+          "persona": "handler",
+          "priority": "must",
+          "req_id": "FR-02"
+        },
+        {
+          "acceptance_criteria": "FR-03 passes its test",
+          "description": "Requirement FR-03",
+          "persona": "handler",
+          "priority": "must",
+          "req_id": "FR-03"
+        },
+        {
+          "acceptance_criteria": "FR-04 passes its test",
+          "description": "Requirement FR-04",
+          "persona": "handler",
+          "priority": "must",
+          "req_id": "FR-04"
+        },
+        {
+          "acceptance_criteria": "FR-05 passes its test",
+          "description": "Requirement FR-05",
+          "persona": "handler",
+          "priority": "must",
+          "req_id": "FR-05"
+        }
+      ],
+      "version": {
+        "created_at": "0000-00-00T00:00:00.000000Z",
+        "producer_id": "agent:UC-0001/T1/run-1",
+        "producer_type": "agent",
+        "schema_valid": true,
+        "version": 1
+      }
+    },
+    {
+      "attachments": [],
+      "citations": [],
+      "columns": [
+        "nfr_id",
+        "category",
+        "requirement",
+        "target",
+        "unit"
+      ],
+      "condition": null,
+      "id": "non_functional_requirements",
+      "rows": [
+        {
+          "category": "latency",
+          "nfr_id": "NFR-01",
+          "requirement": "p95 latency",
+          "target": 2000,
+          "unit": "ms"
+        },
+        {
+          "category": "cost",
+          "nfr_id": "NFR-02",
+          "requirement": "cost per task",
+          "target": "<float>",
+          "unit": "usd"
+        },
+        {
+          "category": "availability",
+          "nfr_id": "NFR-03",
+          "requirement": "availability",
+          "target": "<float>",
+          "unit": "pct"
+        }
+      ],
+      "version": {
+        "created_at": "0000-00-00T00:00:00.000000Z",
+        "producer_id": "agent:UC-0001/T1/run-1",
+        "producer_type": "agent",
+        "schema_valid": true,
+        "version": 1
+      }
+    },
+    {
+      "attachments": [],
+      "citations": [],
+      "columns": [
+        "beh_id",
+        "situation",
+        "expected_behaviour",
+        "prohibited_behaviour"
+      ],
+      "condition": null,
+      "id": "behavioural_requirements",
+      "rows": [
+        {
+          "beh_id": "B-01",
+          "expected_behaviour": "ask",
+          "prohibited_behaviour": "guess",
+          "situation": "unclear claim"
+        }
+      ],
+      "version": {
+        "created_at": "0000-00-00T00:00:00.000000Z",
+        "producer_id": "agent:UC-0001/T1/run-1",
+        "producer_type": "agent",
+        "schema_valid": true,
+        "version": 1
+      }
+    },
+    {
+      "attachments": [],
+      "citations": [],
+      "columns": [
+        "action",
+        "autonomy_level",
+        "hitl_required",
+        "boundary"
+      ],
+      "condition": null,
+      "id": "autonomy_levels",
+      "rows": [
+        {
+          "action": "lookup_claim",
+          "autonomy_level": 2,
+          "boundary": "read only",
+          "hitl_required": "no"
+        },
+        {
+          "action": "propose_triage",
+          "autonomy_level": 2,
+          "boundary": "human confirms",
+          "hitl_required": "yes"
+        }
+      ],
+      "version": {
+        "created_at": "0000-00-00T00:00:00.000000Z",
+        "producer_id": "agent:UC-0001/T1/run-1",
+        "producer_type": "agent",
+        "schema_valid": true,
+        "version": 1
+      }
+    },
+    {
+      "attachments": [],
+      "citations": [],
+      "columns": [
+        "kpi_id",
+        "kpi",
+        "baseline",
+        "target",
+        "unit",
+        "measurement_source"
+      ],
+      "condition": null,
+      "id": "kpis",
+      "rows": [
+        {
+          "baseline": 12,
+          "kpi": "claim_handling_minutes",
+          "kpi_id": "KPI-01",
+          "measurement_source": "claims_db",
+          "target": 8,
+          "unit": "minutes"
+        },
+        {
+          "baseline": "<float>",
+          "kpi": "first_contact_resolution",
+          "kpi_id": "KPI-02",
+          "measurement_source": "claims_db",
+          "target": "<float>",
+          "unit": "ratio"
+        }
+      ],
+      "version": {
+        "created_at": "0000-00-00T00:00:00.000000Z",
+        "producer_id": "agent:UC-0001/T1/run-1",
+        "producer_type": "agent",
+        "schema_valid": true,
+        "version": 1
+      }
+    },
+    {
+      "attachments": [],
+      "citations": [],
+      "columns": [
+        "metric",
+        "operator",
+        "threshold",
+        "dataset_scope"
+      ],
+      "condition": null,
+      "id": "eval_thresholds",
+      "rows": [
+        {
+          "dataset_scope": "golden",
+          "metric": "accuracy",
+          "operator": ">=",
+          "threshold": "<float>"
+        },
+        {
+          "dataset_scope": "golden",
+          "metric": "hallucination_rate",
+          "operator": "<=",
+          "threshold": "<float>"
+        }
+      ],
+      "version": {
+        "created_at": "0000-00-00T00:00:00.000000Z",
+        "producer_id": "agent:UC-0001/T1/run-1",
+        "producer_type": "agent",
+        "schema_valid": true,
+        "version": 1
+      }
+    },
+    {
+      "attachments": [],
+      "citations": [],
+      "columns": [
+        "metric",
+        "operator",
+        "threshold",
+        "slice"
+      ],
+      "condition": null,
+      "id": "rai_thresholds",
+      "rows": [
+        {
+          "metric": "toxicity",
+          "operator": "<=",
+          "slice": "all",
+          "threshold": "<float>"
+        }
+      ],
+      "version": {
+        "created_at": "0000-00-00T00:00:00.000000Z",
+        "producer_id": "agent:UC-0001/T1/run-1",
+        "producer_type": "agent",
+        "schema_valid": true,
+        "version": 1
+      }
+    },
+    {
+      "attachments": [],
+      "citations": [],
+      "columns": [
+        "journey",
+        "step",
+        "channel",
+        "expected_experience"
+      ],
+      "condition": null,
+      "id": "user_experience",
+      "rows": [
+        {
+          "channel": "web",
+          "expected_experience": "summary in 10s",
+          "journey": "triage",
+          "step": "1"
+        }
+      ],
+      "version": {
+        "created_at": "0000-00-00T00:00:00.000000Z",
+        "producer_id": "agent:UC-0001/T1/run-1",
+        "producer_type": "agent",
+        "schema_valid": true,
+        "version": 1
+      }
+    },
+    {
+      "attachments": [],
+      "citations": [],
+      "columns": [
+        "scenario_id",
+        "scenario",
+        "type",
+        "expected_outcome"
+      ],
+      "condition": null,
+      "id": "acceptance_and_failure",
+      "rows": [
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 1",
+          "scenario_id": "S-001",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 2",
+          "scenario_id": "S-002",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 3",
+          "scenario_id": "S-003",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 4",
+          "scenario_id": "S-004",
+          "type": "failure"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 5",
+          "scenario_id": "S-005",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 6",
+          "scenario_id": "S-006",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 7",
+          "scenario_id": "S-007",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 8",
+          "scenario_id": "S-008",
+          "type": "failure"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 9",
+          "scenario_id": "S-009",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 10",
+          "scenario_id": "S-010",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 11",
+          "scenario_id": "S-011",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 12",
+          "scenario_id": "S-012",
+          "type": "failure"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 13",
+          "scenario_id": "S-013",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 14",
+          "scenario_id": "S-014",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 15",
+          "scenario_id": "S-015",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 16",
+          "scenario_id": "S-016",
+          "type": "failure"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 17",
+          "scenario_id": "S-017",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 18",
+          "scenario_id": "S-018",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 19",
+          "scenario_id": "S-019",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 20",
+          "scenario_id": "S-020",
+          "type": "failure"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 21",
+          "scenario_id": "S-021",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 22",
+          "scenario_id": "S-022",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 23",
+          "scenario_id": "S-023",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 24",
+          "scenario_id": "S-024",
+          "type": "failure"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 25",
+          "scenario_id": "S-025",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 26",
+          "scenario_id": "S-026",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 27",
+          "scenario_id": "S-027",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 28",
+          "scenario_id": "S-028",
+          "type": "failure"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 29",
+          "scenario_id": "S-029",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 30",
+          "scenario_id": "S-030",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 31",
+          "scenario_id": "S-031",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 32",
+          "scenario_id": "S-032",
+          "type": "failure"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 33",
+          "scenario_id": "S-033",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 34",
+          "scenario_id": "S-034",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 35",
+          "scenario_id": "S-035",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 36",
+          "scenario_id": "S-036",
+          "type": "failure"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 37",
+          "scenario_id": "S-037",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 38",
+          "scenario_id": "S-038",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 39",
+          "scenario_id": "S-039",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 40",
+          "scenario_id": "S-040",
+          "type": "failure"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 41",
+          "scenario_id": "S-041",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 42",
+          "scenario_id": "S-042",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 43",
+          "scenario_id": "S-043",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 44",
+          "scenario_id": "S-044",
+          "type": "failure"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 45",
+          "scenario_id": "S-045",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 46",
+          "scenario_id": "S-046",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 47",
+          "scenario_id": "S-047",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 48",
+          "scenario_id": "S-048",
+          "type": "failure"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 49",
+          "scenario_id": "S-049",
+          "type": "positive"
+        },
+        {
+          "expected_outcome": "as specified",
+          "scenario": "Scenario 50",
+          "scenario_id": "S-050",
+          "type": "positive"
+        }
+      ],
+      "version": {
+        "created_at": "0000-00-00T00:00:00.000000Z",
+        "producer_id": "agent:UC-0001/T1/run-1",
+        "producer_type": "agent",
+        "schema_valid": true,
+        "version": 1
+      }
+    }
+  ],
+  "checklist_results": [
+    {
+      "attempt": 1,
+      "finding": null,
+      "item_id": "CHK-T1-01",
+      "recorded_at": "0000-00-00T00:00:00.000000Z",
+      "score": 1
+    },
+    {
+      "attempt": 1,
+      "finding": null,
+      "item_id": "CHK-T1-02",
+      "recorded_at": "0000-00-00T00:00:00.000000Z",
+      "score": 1
+    },
+    {
+      "attempt": 1,
+      "finding": null,
+      "item_id": "CHK-T1-03",
+      "recorded_at": "0000-00-00T00:00:00.000000Z",
+      "score": 1
+    },
+    {
+      "attempt": 1,
+      "finding": null,
+      "item_id": "CHK-T1-04",
+      "recorded_at": "0000-00-00T00:00:00.000000Z",
+      "score": 1
+    },
+    {
+      "attempt": 1,
+      "finding": null,
+      "item_id": "CHK-T1-05",
+      "recorded_at": "0000-00-00T00:00:00.000000Z",
+      "score": 1
+    }
+  ],
+  "checks": [
+    {
+      "attempt": null,
+      "check_id": "PRE-T1-01",
+      "decided_at": "0000-00-00T00:00:00.000000Z",
+      "fail_safe": false,
+      "passed": true,
+      "reason": "passed",
+      "recheck": 0,
+      "rule": "T0.status in [\"pass\", \"exception\"]",
+      "synthetic": false
+    },
+    {
+      "attempt": null,
+      "check_id": "PRE-T1-02",
+      "decided_at": "0000-00-00T00:00:00.000000Z",
+      "fail_safe": false,
+      "passed": true,
+      "reason": "passed",
+      "recheck": 0,
+      "rule": "evidence_exists(T0.risk_classification.tier)",
+      "synthetic": false
+    },
+    {
+      "attempt": null,
+      "check_id": "PRE-T1-03",
+      "decided_at": "0000-00-00T00:00:00.000000Z",
+      "fail_safe": false,
+      "passed": true,
+      "reason": "passed",
+      "recheck": 0,
+      "rule": "evidence_exists(T0.value_hypothesis)",
+      "synthetic": false
+    },
+    {
+      "attempt": 1,
+      "check_id": "CTL-T1-01",
+      "decided_at": "0000-00-00T00:00:00.000000Z",
+      "fail_safe": false,
+      "passed": true,
+      "reason": "passed",
+      "recheck": 0,
+      "rule": "all_rows_have(T1.functional_requirements, [\"req_id\", \"priority\", \"acceptance_criteria\"])",
+      "synthetic": false
+    },
+    {
+      "attempt": 1,
+      "check_id": "CTL-T1-02",
+      "decided_at": "0000-00-00T00:00:00.000000Z",
+      "fail_safe": false,
+      "passed": true,
+      "reason": "passed",
+      "recheck": 0,
+      "rule": "all_rows_numeric(T1.kpis, [\"baseline\", \"target\"])",
+      "synthetic": false
+    },
+    {
+      "attempt": 1,
+      "check_id": "CTL-T1-03",
+      "decided_at": "0000-00-00T00:00:00.000000Z",
+      "fail_safe": false,
+      "passed": true,
+      "reason": "passed",
+      "recheck": 0,
+      "rule": "all_rows_numeric(T1.eval_thresholds, [\"threshold\"]) && all_rows_have(T1.eval_thresholds, [\"operator\"]) && all_rows_numeric(T1.rai_thresholds, [\"threshold\"]) && all_rows_have(T1.rai_thresholds, [\"operator\"])",
+      "synthetic": false
+    },
+    {
+      "attempt": 1,
+      "check_id": "CTL-T1-04",
+      "decided_at": "0000-00-00T00:00:00.000000Z",
+      "fail_safe": false,
+      "passed": true,
+      "reason": "passed",
+      "recheck": 0,
+      "rule": "all_rows_have(T1.autonomy_levels, [\"autonomy_level\"])",
+      "synthetic": false
+    },
+    {
+      "attempt": 1,
+      "check_id": "CTL-T1-05",
+      "decided_at": "0000-00-00T00:00:00.000000Z",
+      "fail_safe": false,
+      "passed": true,
+      "reason": "passed",
+      "recheck": 0,
+      "rule": "column_max(T1.autonomy_levels, \"autonomy_level\") <= param.autonomy_level_max",
+      "synthetic": false
+    },
+    {
+      "attempt": 1,
+      "check_id": "CTL-T1-06",
+      "decided_at": "0000-00-00T00:00:00.000000Z",
+      "fail_safe": false,
+      "passed": true,
+      "reason": "passed",
+      "recheck": 0,
+      "rule": "size(T1.acceptance_and_failure) >= param.test_scenarios_min",
+      "synthetic": false
+    }
+  ],
+  "clarifications": [],
+  "control_results": [
+    {
+      "blocking": true,
+      "id": "CTL-T1-01",
+      "passed": true,
+      "reason": "passed",
+      "synthetic": false
+    },
+    {
+      "blocking": true,
+      "id": "CTL-T1-02",
+      "passed": true,
+      "reason": "passed",
+      "synthetic": false
+    },
+    {
+      "blocking": true,
+      "id": "CTL-T1-03",
+      "passed": true,
+      "reason": "passed",
+      "synthetic": false
+    },
+    {
+      "blocking": true,
+      "id": "CTL-T1-04",
+      "passed": true,
+      "reason": "passed",
+      "synthetic": false
+    },
+    {
+      "blocking": true,
+      "id": "CTL-T1-05",
+      "passed": true,
+      "reason": "passed",
+      "synthetic": false
+    },
+    {
+      "blocking": true,
+      "id": "CTL-T1-06",
+      "passed": true,
+      "reason": "passed",
+      "synthetic": false
+    }
+  ],
+  "cost": {
+    "calls": 0,
+    "cost_usd": "0",
+    "fallback_answers": 0,
+    "tokens_in": 0,
+    "tokens_out": 0,
+    "unknown_cost_calls": 0
+  },
+  "decisions": [],
+  "form": {
+    "alternatives": [],
+    "can_complete_escalation": false,
+    "can_decide": true,
+    "can_edit": true,
+    "can_terminate": false,
+    "controls_pending": false,
+    "outcomes": [
+      "pass",
+      "rework",
+      "exception",
+      "terminate"
+    ],
+    "reason_required_unless": "pass",
+    "requires": {
+      "exception": [
+        "waiver_owner",
+        "expiry",
+        "compensating_control"
+      ],
+      "pass": [],
+      "rework": [
+        "owner_comment"
+      ],
+      "terminate": [
+        "reason"
+      ]
+    },
+    "root_causes": [
+      "requirement",
+      "qualification"
+    ],
+    "sign_off_role": "product_owner",
+    "target_terminal_for": [],
+    "target_terminals": [
+      "T0",
+      "T1",
+      "T2",
+      "T3",
+      "T4",
+      "T5",
+      "T6",
+      "T7",
+      "T8",
+      "T9"
+    ],
+    "typed_fields": [],
+    "waiver_pending": false
+  },
+  "ledger_record": null,
+  "prerequisites": [
+    {
+      "description": "in [pass, exception]",
+      "evidence_ref": "T0.status",
+      "id": "PRE-T1-01",
+      "on_missing": "block",
+      "passed": true,
+      "reason": "passed",
+      "synthetic": false
+    },
+    {
+      "description": "exists",
+      "evidence_ref": "T0.risk_classification.tier",
+      "id": "PRE-T1-02",
+      "on_missing": "block",
+      "passed": true,
+      "reason": "passed",
+      "synthetic": false
+    },
+    {
+      "description": "exists",
+      "evidence_ref": "T0.value_hypothesis",
+      "id": "PRE-T1-03",
+      "on_missing": "block",
+      "passed": true,
+      "reason": "passed",
+      "synthetic": false
+    }
+  ],
+  "prior_rework": [],
+  "recommendation": {
+    "checklist_scores": {
+      "CHK-T1-01": 1,
+      "CHK-T1-02": 1,
+      "CHK-T1-03": 1,
+      "CHK-T1-04": 1,
+      "CHK-T1-05": 1
+    },
+    "findings": [],
+    "items": [
+      {
+        "id": "CHK-T1-01",
+        "score": 1,
+        "text": "Requirements traceable to T0 problem"
+      },
+      {
+        "id": "CHK-T1-02",
+        "score": 1,
+        "text": "Failure boundaries cover out-of-scope and unsafe requests"
+      },
+      {
+        "id": "CHK-T1-03",
+        "score": 1,
+        "text": "HITL points defined for irreversible actions"
+      },
+      {
+        "id": "CHK-T1-04",
+        "score": 1,
+        "text": "Thresholds realistic vs baseline"
+      },
+      {
+        "id": "CHK-T1-05",
+        "score": 1,
+        "text": "UX covers error and handoff states"
+      }
+    ],
+    "reason": "",
+    "reviewer": "stub",
+    "root_cause": null,
+    "status": "pass"
+  },
+  "run": {
+    "closed_at": null,
+    "controls_pending": false,
+    "due_at": "0000-00-00T00:00:00.000000Z",
+    "final_status": null,
+    "opened_at": "0000-00-00T00:00:00.000000Z",
+    "run_id": "UC-0001/T1/run-1",
+    "run_number": 1,
+    "state": "awaiting_sign_off",
+    "terminal_id": "T1",
+    "usecase_id": "UC-0001",
+    "version": 4
+  },
+  "spec": {
+    "terminal_id": "T1",
+    "version": "2.0.0"
+  },
+  "timeline": [
+    {
+      "actor_id": "orchestrator",
+      "actor_type": "orchestrator",
+      "duration_seconds": "<float>",
+      "ended_at": "0000-00-00T00:00:00.000000Z",
+      "outcome": "opened",
+      "started_at": "0000-00-00T00:00:00.000000Z",
+      "step": "route"
+    },
+    {
+      "actor_id": "orchestrator",
+      "actor_type": "orchestrator",
+      "duration_seconds": "<float>",
+      "ended_at": "0000-00-00T00:00:00.000000Z",
+      "outcome": "building",
+      "started_at": "0000-00-00T00:00:00.000000Z",
+      "step": "prerequisites"
+    },
+    {
+      "actor_id": "agent:UC-0001/T1/run-1",
+      "actor_type": "agent",
+      "duration_seconds": "<float>",
+      "ended_at": "0000-00-00T00:00:00.000000Z",
+      "outcome": "checking",
+      "started_at": "0000-00-00T00:00:00.000000Z",
+      "step": "build"
+    },
+    {
+      "actor_id": "orchestrator",
+      "actor_type": "orchestrator",
+      "duration_seconds": "<float>",
+      "ended_at": "0000-00-00T00:00:00.000000Z",
+      "outcome": "reviewing",
+      "started_at": "0000-00-00T00:00:00.000000Z",
+      "step": "controls"
+    },
+    {
+      "actor_id": "reviewer:UC-0001/T1/run-1",
+      "actor_type": "reviewer",
+      "duration_seconds": "<float>",
+      "ended_at": "0000-00-00T00:00:00.000000Z",
+      "outcome": "awaiting_sign_off",
+      "started_at": "0000-00-00T00:00:00.000000Z",
+      "step": "review"
+    }
+  ],
+  "timer": {
+    "due_at": "0000-00-00T00:00:00.000000Z",
+    "overdue": false
+  },
+  "waiver": null
+}

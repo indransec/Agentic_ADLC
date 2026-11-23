@@ -23,14 +23,14 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
 
 ## Phase 1: Setup
 
-- [ ] T001 Settings in `src/adlc/config/settings.py` `UiSettings`:
+- [X] T001 Settings in `src/adlc/config/settings.py` `UiSettings`:
   - `ui_dist_dir: Path`, default `web/dist` (`ADLC_UI_DIST_DIR`);
   - `legacy_ui_port: int`, default `8502` (`ADLC_LEGACY_UI_PORT`), with the comment "removed at
     the 022 cutover".
 
   Add both to `.env.example` and `deploy/local.env`, and update `tests/unit/test_env_example.py`
   if it lists variables.
-- [ ] T002 Scaffold `web/`:
+- [X] T002 Scaffold `web/`:
   - `package.json`: `"packageManager": "pnpm@<pinned>"`, `"engines": {"node": ">=24 <25"}`, and
     exact versions of every package in research R-06.
   - Scripts: `dev`, `build`, `lint`, `format:check`, `typecheck`, `test`, `e2e`, `openapi`.
@@ -41,7 +41,7 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
     chunks.
   - `src/main.tsx` rendering an empty `App`.
   - `.nvmrc` with `24`.
-- [ ] T003 [P] `web/eslint.config.js` and `web/.prettierrc`: typescript-eslint strict,
+- [X] T003 [P] `web/eslint.config.js` and `web/.prettierrc`: typescript-eslint strict,
   react-hooks, jsx-a11y recommended, and these errors (research R-11):
   - `react/no-danger`;
   - `no-restricted-properties` for `innerHTML` and `outerHTML`;
@@ -54,12 +54,12 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
   Add `web/src/lint-guard.test.ts`, which runs ESLint on fixture snippets
   (`web/src/test/lint-fixtures/`) and asserts each banned pattern, including a PascalCase file
   name, is reported (P-27).
-- [ ] T004 [P] Vitest and MSW setup: `web/vitest.config.ts` (jsdom, coverage),
+- [X] T004 [P] Vitest and MSW setup: `web/vitest.config.ts` (jsdom, coverage),
   `web/src/test/setup.ts` (jest-dom, MSW server lifecycle, `onUnhandledRequest: "error"`), and
   `web/src/test/render.tsx` (renders with router, query client and session providers).
-- [ ] T005 [P] `.gitignore`: `web/node_modules/`, `web/dist/`, `web/coverage/`,
+- [X] T005 [P] `.gitignore`: `web/node_modules/`, `web/dist/`, `web/coverage/`,
   `web/test-results/`, `web/playwright-report/`.
-- [ ] T006 Makefile targets:
+- [X] T006 Makefile targets:
   - `web-install` (`corepack enable && pnpm -C web install --frozen-lockfile`);
   - `web-build`, `web-dev`, `web-lint` (eslint and prettier check);
   - `web-typecheck` (`tsc --noEmit`, then regenerate `schema.d.ts` into a temp file and `diff`
@@ -70,7 +70,7 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
 
   Also: `install` calls `web-install`, `local-setup` calls `web-build`, `check` calls
   `web-check`, and `.PHONY` and `help` are updated.
-- [ ] T007 `.github/workflows/ci.yml`: `actions/setup-node@v4` (node-version-file
+- [X] T007 `.github/workflows/ci.yml`: `actions/setup-node@v4` (node-version-file
   `web/.nvmrc`, pnpm cache on `web/pnpm-lock.yaml`), `corepack enable`, then
   `pnpm -C web exec playwright install --with-deps chromium`, all before `make install` and
   `make check`.
@@ -81,7 +81,7 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
 
 ### Tests first
 
-- [ ] T008 [P] `tests/integration/api/test_response_shapes.py` (N-08). On the orchestration
+- [X] T008 [P] `tests/integration/api/test_response_shapes.py` (N-08). On the orchestration
   harness's scripted walk, use the patterns in `tests/integration/test_auth_api.py` and
   `tests/support/api.py`. The walk must cover:
   - use case submitted;
@@ -95,10 +95,10 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
   through a helper, and record the goldens with `--update-golden` **before** any model exists.
   Add the `--update-golden` option in `tests/integration/api/conftest.py` (`pytest_addoption`;
   off by default, so CI only compares). Commit the goldens in this task.
-- [ ] T009 [P] `tests/unit/api/test_openapi_fresh.py`: builds the app with test settings,
+- [X] T009 [P] `tests/unit/api/test_openapi_fresh.py`: builds the app with test settings,
   compares `app.openapi()` (sorted keys, 2-space indent) with `web/src/api/openapi.json`, and
   fails with "run `make openapi`" (N-09). It fails until T013.
-- [ ] T010 [P] `tests/integration/web/test_server.py`, covering every case in the "Tests" list of
+- [X] T010 [P] `tests/integration/web/test_server.py`, covering every case in the "Tests" list of
   contracts/web-server.md (proxy, header allowlists, streaming upload, 502 shape, SPA fallback,
   asset caching and 404, traversal refused, `/config.json`, `/health` with a missing build, the
   CSP and other headers on every answer, no CORS headers). Use a stub API Starlette app over
@@ -106,11 +106,11 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
 
 ### Platform contract (contracts/platform-contract.md)
 
-- [ ] T011 `src/adlc/api/schemas/__init__.py` and `src/adlc/api/schemas/base.py`:
+- [X] T011 `src/adlc/api/schemas/__init__.py` and `src/adlc/api/schemas/base.py`:
   `class ApiModel(BaseModel)` with `model_config = ConfigDict(extra="forbid")`, plus `JsonValue`
   re-exported from pydantic. Write a unit test showing an undeclared key raises
   (`tests/unit/api/test_api_model.py`).
-- [ ] T012 [P] Answer models, one module per router, field names exactly as today's keys:
+- [X] T012 [P] Answer models, one module per router, field names exactly as today's keys:
   - `src/adlc/api/schemas/runs.py`: run detail including `run`, `timer`, `spec`, `cost`,
     `artifacts`, `form`, `prerequisites`, `prior_rework`, `clarifications`, `approvals`,
     `waiver`, `activity`, `evidence`; decision and escalation answers.
@@ -126,7 +126,7 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
   cells, payloads, control details) is `JsonValue`. Shapes start from
   `specs/007-human-inbox/contracts/api.md` and
   `specs/013-lifecycle-dashboard/contracts/api-dashboard.md`, checked against the services.
-- [ ] T013 Set `response_model=` on the 25 routes in `src/adlc/api/routes/{artifacts,changes,
+- [X] T013 Set `response_model=` on the 25 routes in `src/adlc/api/routes/{artifacts,changes,
   dashboard,events,inbox,requests,runs,usecases}.py`. Add `responses=` documentation for the
   three raw routes:
   - attachment download: `application/octet-stream` with `Content-Disposition`;
@@ -134,13 +134,13 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
   - re-queue: 204.
 
   T008 must pass unchanged.
-- [ ] T014 `scripts/export_openapi.py` (`python -m scripts.export_openapi`): builds the app with
+- [X] T014 `scripts/export_openapi.py` (`python -m scripts.export_openapi`): builds the app with
   dummy settings, no database access. Run `make openapi` to commit `web/src/api/openapi.json` and
   `web/src/api/schema.d.ts`. T009 then passes.
 
 ### The ui process (contracts/web-server.md)
 
-- [ ] T015 `src/adlc/web/__init__.py`, `src/adlc/web/server.py`, `src/adlc/web/__main__.py`.
+- [X] T015 `src/adlc/web/__init__.py`, `src/adlc/web/server.py`, `src/adlc/web/__main__.py`.
   - `server.py` holds `create_app(settings: UiSettings, transport: httpx.AsyncBaseTransport |
     None = None) -> Starlette`. It implements every path and header in contracts/web-server.md:
     the streamed proxy via `httpx.AsyncClient`, both allowlists, 502 `unavailable`,
@@ -150,10 +150,10 @@ an unfinished task. Parity ids (P-nn, N-nn) refer to `contracts/parity.md`. Mark
   - Add the console script `adlc-web = "adlc.web.__main__:main"` in `pyproject.toml`.
 
   T010 passes.
-- [ ] T016 [P] `tests/unit/test_ui_boundary.py`: scan `src/adlc/web/` as well, allowing only
+- [X] T016 [P] `tests/unit/test_ui_boundary.py`: scan `src/adlc/web/` as well, allowing only
   `adlc.web` and `adlc.config`. Add `"adlc.web"` to the forbidden lists in
   `tests/unit/test_knowledge_boundary.py` and `tests/unit/tools/test_boundary.py` (P-27).
-- [ ] T017 [P] `src/adlc/web/README.md`: paths, settings, headers, boundary, how to build and run.
+- [X] T017 [P] `src/adlc/web/README.md`: paths, settings, headers, boundary, how to build and run.
 
 ### Web foundations
 

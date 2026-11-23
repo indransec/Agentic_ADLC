@@ -19,6 +19,7 @@ FORBIDDEN = (
     "adlc.api",
     "adlc.inbox",
     "adlc.ui",
+    "adlc.web",  # 022: the ui process
     "adlc.knowledge",
 )
 BRIDGE_FORBIDDEN = ("sqlalchemy", "psycopg", "adlc.db", "adlc.tools.enterprise", "litellm")

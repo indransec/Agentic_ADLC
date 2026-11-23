@@ -16,6 +16,7 @@ FORBIDDEN = (
     "adlc.api",
     "adlc.inbox",
     "adlc.ui",
+    "adlc.web",  # 022: the ui process
     "adlc.db",
     "sqlalchemy",
 )
