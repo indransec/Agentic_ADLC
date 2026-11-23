@@ -538,32 +538,45 @@ refresh; Journey refreshes on the configured interval.
 
 ### Tests
 
-- [ ] T056 [P] [US5] `web/src/pages/use-cases/use-cases-page.test.tsx` (P-19): the "Only mine"
+- [X] T056 [P] [US5] `web/src/pages/use-cases/use-cases-page.test.tsx` (P-19): the "Only mine"
   toggle (default on, kept in `?mine=`); use-case pick in `?usecase=`; runs with times and cost;
   open a run; "Open the journey view"; Verify shows checked records or "<n> break(s) found".
-- [ ] T057 [P] [US5] `web/src/pages/journey/journey-page.test.tsx` (P-22, P-23, N-05): the figure
+- [X] T057 [P] [US5] `web/src/pages/journey/journey-page.test.tsx` (P-22, P-23, N-05): the figure
   built from a journey fixture has one lane per terminal in the answer's order, a bar per run, and
   an arrow per arrow with its kind; the KPI strip shows "no data" where undefined; the escalations
   and exceptions panel; refetch every `dashboard_refresh_seconds` (fake timers, `/config.json`
   fixture); the selected use case is kept.
 
   Test the pure figure builder `buildJourneyFigure` directly.
-- [ ] T058 [P] [US5] `web/src/pages/activity/activity-page.test.tsx` (P-24) and
+- [X] T058 [P] [US5] `web/src/pages/activity/activity-page.test.tsx` (P-24) and
   `web/src/pages/portfolio/portfolio-page.test.tsx` (P-25): filters by use case, terminal, actor
   and step, kept in the address and surviving a refetch; portfolio KPIs by risk tier and status.
 
 ### Implementation
 
-- [ ] T059 [P] [US5] `web/src/pages/use-cases/use-cases-page.tsx`: port
+- [X] T059 [P] [US5] `web/src/pages/use-cases/use-cases-page.tsx`: port
   `src/adlc/ui/views/usecases.py`.
-- [ ] T060 [P] [US5] `web/src/pages/journey/build-figure.ts` (pure: port the figure logic of
+- [X] T060 [P] [US5] `web/src/pages/journey/build-figure.ts` (pure: port the figure logic of
   `src/adlc/ui/views/journey.py`, with lanes, bars, arrow shapes and annotations; colours from
   `status.ts`; no terminal names in code) and `web/src/pages/journey/journey-page.tsx` (Plotly
   basic bundle loaded lazily; KPI strip; panel; refresh from config; opening a run from a bar).
-- [ ] T061 [P] [US5] `web/src/pages/activity/activity-page.tsx` and
+- [X] T061 [P] [US5] `web/src/pages/activity/activity-page.tsx` and
   `web/src/pages/portfolio/portfolio-page.tsx`: port `src/adlc/ui/views/{activity,portfolio}.py`
   (the portfolio chart through the same lazy Plotly loader).
-- [ ] T062 [US5] Register the four pages in `web/src/nav/registry.ts`. T056 to T058 pass.
+- [X] T062 [US5] Register the four pages in `web/src/nav/registry.ts`. T056 to T058 pass.
+
+### Implementation notes (2026-11-23, US5)
+
+- **Figures are pure functions** (`build-figure.ts`, `build-split.ts`), tested directly. Component
+  tests replace the Plotly component. `e2e/delivery.spec.ts` renders the real charts in Chromium;
+  its console guard fails on any CSP violation, so the Plotly basic bundle is confirmed to work
+  under `script-src 'self'`.
+- **Plotly.js and margins.** Plotly.js does not turn on `automargin` the way Python Plotly's
+  template did, so both figures set it; without it the lane labels were clipped (seen on a
+  screenshot).
+- **Escaped chart text.** Plotly interprets some HTML tags in hover and annotation text, so any
+  person- or agent-written text in a figure (a rework cause) goes through `plotText()` first.
+- **Use-case runs** open from their own "Open" button, as Inbox items do.
 
 **Checkpoint**: parity rows P-19 and P-22 to P-25 are `passing`.
 

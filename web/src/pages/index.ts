@@ -30,3 +30,19 @@ registerPage(
   "waiver",
   lazy(() => import("./requests/waiver-page").then((m) => ({ default: m.WaiverPage }))),
 );
+registerPage(
+  "use-cases",
+  lazy(() => import("./use-cases/use-cases-page").then((m) => ({ default: m.UseCasesPage }))),
+);
+registerPage(
+  "journey",
+  lazy(() => import("./journey/journey-page").then((m) => ({ default: m.JourneyPage }))),
+);
+registerPage(
+  "activity",
+  lazy(() => import("./activity/activity-page").then((m) => ({ default: m.ActivityPage }))),
+);
+registerPage(
+  "portfolio",
+  lazy(() => import("./portfolio/portfolio-page").then((m) => ({ default: m.PortfolioPage }))),
+);
