@@ -60,7 +60,8 @@ In `.env`, beyond the `REPLACE_ME` values of `.env.example`:
 | `knowledge` | `uv run adlc-knowledge` | 8020 |
 | `tools` | `uv run adlc-tools` | 8030 |
 | `bridge` | `uv run adlc-pilot-bridge` | 8040 |
-| `ui` | `uv run streamlit run src/adlc/ui/app.py` | `ADLC_UI_PORT` (8501) |
+| `ui` | `uv run adlc-web` (the React web app, built by `make local`) | `ADLC_UI_PORT` (8501) |
+| `legacy-ui` | `uv run streamlit run src/adlc/ui/app.py` (until the 022 cutover) | `ADLC_LEGACY_UI_PORT` (8502) |
 | `pilot-dev` | `cd pilot && uv run pilot-host --env dev --port 8101` | 8101 |
 | `pilot-test` | `cd pilot && uv run pilot-host --env test --port 8102` | 8102 |
 | `pilot-prodsim` | `cd pilot && uv run pilot-host --env prod-sim --port 8103` | 8103 |
@@ -94,6 +95,29 @@ set -a; source .env; source deploy/local.env; set +a
    work arrives.
 4. The pilot: the five `pilot-*` lines of `deploy/Procfile.local`, each with its `PILOT_*`
    settings.
+
+## The demo without Docker
+
+The scripted demo (`demo/README.md`) runs on the local stack too. It walks the Incident Triage use
+case through T0–T9 with the agents' replies replayed from rehearsals: no model is called. Its
+driver runs its own orchestrator worker, so start the stack **without** the worker:
+
+```bash
+make local-no-worker          # terminal 1: every process of Procfile.local except orchestrator
+make demo-local-auto          # terminal 2: the driver takes every human step too
+make demo-local               # or: it tells you each human step and waits (presenter mode)
+make demo-local FROM_STEP=9   # resume after a stop
+```
+
+- **Data:** it writes to `data/local/adlc.db`. A database with earlier use cases works, but the
+  driver's worker also advances their due runs; for a clean run, stop everything and delete
+  `data/local/` first (it is recreated by `make local-setup`).
+- **Accounts:** the driver acts as the people in `ADLC_ACCOUNTS_FILE`; it needs an account for
+  every role the demo script names.
+- **Pilot faults:** applied with the pilot's operator tools from `pilot/`, against the local
+  prod-sim and traffic ports (`ADLC_BRIDGE_PILOT_PRODSIM_URL`, `ADLC_BRIDGE_PILOT_TRAFFIC_URL`).
+- **Afterwards:** stop `make local-no-worker` and start `make local` to get the worker back.
+- **Output:** printed, and kept in `demo-report/demo-<time>.log`.
 
 ## What differs from compose
 

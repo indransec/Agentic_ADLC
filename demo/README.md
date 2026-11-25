@@ -27,6 +27,9 @@ make demo             # presenter: the driver tells you each human step and wait
 make demo-live        # presenter, with the configured models instead of the rehearsed replies
 make demo FROM_STEP=9 # resume after a stop (the driver finds the use cases by name)
 
+# without Docker: make local-no-worker in one terminal, then (docs/run-without-docker.md)
+make demo-local-auto  # or make demo-local; FROM_STEP works the same
+
 make trace USECASE=UC-0001   # every decision linked to spec version, actor and hash; the chain
 make resilience              # restart mid-run, duplicate delivery, dead letter (demo env only)
 ```

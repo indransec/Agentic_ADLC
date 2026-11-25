@@ -59,6 +59,55 @@ From here the API's work is done. Everything else is the orchestrator's.
 | Evaluate monitors | `monitors.py` | Continuous terminals' monitors; a breached threshold raises `<terminal>.event.<name>` | `outbox_event`, `policy_decision` |
 | Heartbeat | `worker.py` | Liveness for `/health` | `orchestrator_heartbeat` |
 
+### What triggers the worker
+
+Nothing does. **The worker is a polling loop**: nothing calls or notifies it. The API (and the worker itself) only
+write rows; the worker finds them on its next round.
+
+```python
+# worker.py, started by `adlc-orchestrator run` (Procfile.local line or the orchestrator container)
+def run_forever(self, poll_interval, stop):
+    while not stop.is_set():
+        try:
+            self.run_once()            # one round
+        except Exception:
+            log.exception(...)         # logged; the failed step is retried next round
+        stop.wait(poll_interval)       # ADLC_POLL_INTERVAL (1 s)
+```
+
+**One round (`run_once`):**
+
+1. **Monitors** (`monitors.tick_if_due`), only every `ADLC_MONITOR_INTERVAL` (1 min): a breached threshold writes an
+   event to `outbox_event`. A failing monitor round never stops the worker.
+2. **`drain()`**, repeated until a pass changes nothing:
+   1. `outbox.drain()`: deliver every undelivered `outbox_event` row through the router (opens or signals runs).
+   2. `runs.advance()`, repeated while a run is due: lease one run in an automatic state (opened, building, checking,
+      reviewing, or with `controls_pending`) whose lease is free or expired, and run its step.
+   3. `timers.drain()`: fire every `timer` row whose time has passed.
+
+   One step creates work for the next (a run closes → an event → the next terminal opens → its prerequisites run),
+   so a single round can carry a use case through several steps. More than 10,000 passes without settling is an
+   error.
+3. **Heartbeat**: write `orchestrator_heartbeat` (read by `adlc-orchestrator health`, the `/health` checks and the
+   demo driver, which refuses to start while a worker's heartbeat is recent).
+
+**Where the work comes from:**
+
+| Source | Writes | Picked up by |
+|---|---|---|
+| API: submit a use case | `outbox_event` `usecase.submitted` | Outbox → T0 opens |
+| API: a person's decision closes a run | `outbox_event` `Tn.<status>` | Outbox → the next terminal opens |
+| API: rework, clarification answer, escalation completed, artifact edit, awaited action done | Run state, or `controls_pending` | `advance()` |
+| The worker itself | New runs, timers, events | The same round's `drain()` |
+| Time passing | Nothing: a `timer` row becomes due | `timers.drain()` |
+
+**Lease** (`ADLC_LEASE`, 5 min): `advance()` leases the run, releases the database connection, then runs the step
+(a model call can take minutes without holding a transaction), and applies the result with a version check. If the
+worker dies mid-step, the lease expires and a later round retries the step as an automatic retry. The lease also
+keeps two workers from running the same step.
+
+In practice a person's action in the UI starts the next automatic step within about one `ADLC_POLL_INTERVAL`.
+
 ### Routing an event (`router.py`)
 
 1. Ignore the event if the use case is no longer `active`.
@@ -215,7 +264,53 @@ verify` checks the hash chain and content (`verification_run`).
 | **Knowledge server** | `adlc.knowledge` | Bearer token; only the grounding scopes the spec declares; documents filtered by data class (fails closed) |
 | **Models** | `agents/gateway.py` | Only models approved for the run's data class; keys from the environment, never logged |
 
-## 9. Table map
+## 9. Concurrency
+
+### API requests: concurrent
+
+- **Many requests at once.** `adlc-api` is one uvicorn process; its endpoints are plain (non-async) functions, which
+  FastAPI runs in a thread pool (about 40 threads by default). Requests from different people and use cases run in
+  parallel.
+- **Reads never block.** The database runs in SQLite WAL mode: Inbox, run detail, Journey and dashboards read while
+  others write, and never block each other or the worker.
+- **Writes queue briefly.** Every change (submit, decide, answer, edit, approve) takes SQLite's single write lock
+  (`BEGIN IMMEDIATE`, set in `db/engine.py`). A second write, from another request or the worker, waits for the first,
+  up to `ADLC_DB_BUSY_TIMEOUT`. These transactions take milliseconds, so the queueing is not noticeable.
+- **Same run, two people.** The version check (`expected_version`) makes the second decision `409 stale`, recorded
+  nothing. Requests on different runs or use cases do not interfere.
+
+A person's action is saved at once; the automatic work it causes waits for the worker (below).
+
+### Worker: one step at a time
+
+- **One worker process never overlaps itself.** A round runs to completion, then waits `ADLC_POLL_INTERVAL`; a long
+  round only delays the next.
+- **Runs are not processed in parallel.** Each `advance()` leases **one** run, runs its step (prerequisites, agent,
+  controls or review) to completion, then leases the next due run, oldest first. While one use case's agent is in a
+  model call, other use cases' steps wait. Use cases interleave step by step; event delivery and timers are also one
+  at a time.
+- **One worker per database.** Compose starts one `orchestrator` container (no replicas); `make local` starts one
+  process. Nothing stops a second process from starting against the same file (the heartbeat only shows liveness),
+  for example `make local` and compose pointing at the same database. With two workers:
+
+| Work | Safe with two workers? | Why |
+|---|---|---|
+| Event delivery | Yes | Each event is taken under the write lock and marked processed in the same transaction; a repeat is skipped |
+| Automatic steps | Yes | A run is leased inside a locked transaction; results are applied with a version check (a late one is `stale`) |
+| Timers | Yes | Each due timer is taken and fired in one locked transaction |
+| Monitors | **No** | Each worker keeps its own schedule in memory, and the "was the previous result a breach?" check runs outside a write lock: both could raise the same event (e.g. two T9 runs for one drift) |
+| Demo driver | Protected | It refuses to start while a worker's heartbeat is recent |
+
+### Open options (not decided)
+
+1. **Refuse a second worker**: `adlc-orchestrator run` exits when another worker's heartbeat is recent, as the demo
+   driver does. Covers the monitor race.
+2. **Race-safe monitors**: check and record a breach inside one locked transaction.
+3. **Parallel steps**: run several leased steps at once in a small thread pool inside one worker (steps already run
+   without a database connection), or run several workers once monitors are race-safe. SQLite's single writer stays
+   the ceiling; writes are short.
+
+## 10. Table map
 
 | Area | Tables |
 |---|---|

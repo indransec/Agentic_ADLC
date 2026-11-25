@@ -13,9 +13,9 @@ COMPOSE := docker compose -f deploy/compose.yaml --env-file .env
 UV := uv run
 GITLEAKS_IMAGE := ghcr.io/gitleaks/gitleaks:v8.30.1
 
-.PHONY: help install up down status reset local local-setup migrate migrate-down phoenix lint typecheck test \
+.PHONY: help install up down status reset local local-no-worker local-setup migrate migrate-down phoenix lint typecheck test \
         migration-check secret-scan check spec-validate spec-register \
-        demo demo-auto demo-live demo-reset resilience trace \
+        demo demo-auto demo-live demo-reset demo-local demo-local-auto resilience trace \
         web-install web-browsers web-build web-dev web-lint web-typecheck web-test web-e2e web-check openapi api-docs
 
 # L5 spec validation compares with this git ref (override in the environment).
@@ -69,6 +69,12 @@ local-setup: .env
 local: local-setup
 	@echo "==> local"
 	$(HONCHO) -f deploy/Procfile.local -e .env,deploy/local.env -d . start
+
+# The same without the orchestrator worker: for make demo-local, whose driver runs its own.
+LOCAL_NO_WORKER = $(shell awk -F: '/^[a-z][a-z-]*:/ && $$1 != "orchestrator" {print $$1}' deploy/Procfile.local)
+local-no-worker: local-setup
+	@echo "==> local-no-worker"
+	$(HONCHO) -f deploy/Procfile.local -e .env,deploy/local.env -d . start $(LOCAL_NO_WORKER)
 
 # The trace collector without Docker (deploy/phoenix, its own uv project): UI and OTLP on :6006.
 phoenix:
@@ -224,6 +230,15 @@ demo-auto: .env
 demo-live: .env
 	@echo "==> demo-live"
 	$(UV) python -m scripts.demo --live --from-step $(FROM_STEP)
+
+# The demo without Docker: start make local-no-worker in another terminal first.
+demo-local: .env
+	@echo "==> demo-local"
+	@$(LOCAL_ENV); $(UV) python -m scripts.demo --local --from-step $(FROM_STEP)
+
+demo-local-auto: .env
+	@echo "==> demo-local-auto"
+	@$(LOCAL_ENV); $(UV) python -m scripts.demo --local --auto --from-step $(FROM_STEP)
 
 demo-reset: .env
 	@echo "==> demo-reset"

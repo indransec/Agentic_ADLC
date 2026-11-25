@@ -4,7 +4,7 @@ The platform drives an agentic use case through lifecycle terminals T0–T9: age
 
 | Path | Holds |
 | --- | --- |
-| `docs/` | Solution architecture (SA), Terminal Design Specification (TDS), build plan, [API reference](docs/api-reference.md) (generated: `make api-docs`), [how the platform works end to end](docs/codebase-flow.md), [the exception outcome](docs/exception-outcome.md) |
+| `docs/` | Solution architecture (SA), Terminal Design Specification (TDS), build plan, [API reference](docs/api-reference.md) (generated: `make api-docs`), [low-level design](docs/low-level-design.md), [how the platform works end to end](docs/codebase-flow.md), [the exception outcome](docs/exception-outcome.md) |
 | `specs/` | Spec Kit feature specs (Markdown). Owned by Spec Kit. |
 | `adlc-specs/` | ADLC terminal specs and shared catalogues (runtime YAML), e.g. `shared/roles.yaml` |
 | `src/adlc/` | Platform code, one module per layer |
