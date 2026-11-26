@@ -374,7 +374,8 @@ drain:       repeat { outbox.drain(); while runs.advance(); timers.drain() } unt
 2. Route = `registry.outcome_route(terminal, status, root_cause, spec_version)`.
 3. pass/exception: an `alternative` field, a template route (`${T9.….reentry_terminal}` resolved from artifacts), or
    a special destination (`continue`, terminating).
-4. pass: emitted values (`routing.emitted_values`: decision fields, artifacts, run values). Exception emits nothing.
+4. pass or exception: the outcome's own emitted values (`routing.emitted_values(..., status)`: decision fields, for an
+   exception the fields kept with its waiver; artifacts; run values). V-39 makes an exception emit at least what a pass does.
 5. rework: self-route or resolver (`target_terminal`).
 6. Ledger record (6.6); `profiles.on_close` (next `profile_version` on pass/exception with emitted values); notified
    bodies (board/external approvals recorded as notifications).

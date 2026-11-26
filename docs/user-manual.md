@@ -36,10 +36,12 @@ decision form, and dashboards of how every use case is progressing.
 | **Terminal** | One lifecycle stage, T0 to T9 (table below). Each is defined by a spec in `adlc-specs/terminals/`. |
 | **Run** | One pass through a terminal for a use case (`UC-0001/T1/run-2` is the second T1 run). A rework opens a new run. |
 | **Artifact** | Something a terminal produces: a table, a document, a file. Built by the agent; people can correct it before signing off. |
-| **Control** | A check on the artifacts (completeness, thresholds, policy rules). Blocking controls must pass, or be covered by an exception. |
+| **Control** | A check on the terminal's own artifacts (completeness, thresholds, policy rules), run before anyone can sign off. Blocking controls must pass, or be covered by an exception. |
+| **Prerequisite** | A check made when a terminal opens: the previous terminal ended with pass or exception, the evidence it handed forward exists, and environments and versions are as expected. An unmet one leaves the run **blocked**. |
+| **Emitted values** | What a terminal hands forward when it closes with pass or exception (for example T0's risk tier, T1's thresholds, T3's package hash). They are recorded in the ledger and the use case's profile, and later terminals check against them. |
 | **Reviewer recommendation** | The reviewer agent's view (pass or rework, with findings). People may disagree, with a reason. |
 | **Sign-off** | Passing a run. Some terminals need two or more approvers from different roles. |
-| **Risk tier** | Low, medium or high, set when T0 passes. It changes some sign-off rules, durations and assurance depth. |
+| **Risk tier** | Low, medium or high, set when T0 closes (pass or exception). It changes some sign-off rules, durations and assurance depth. |
 | **Ledger** | The tamper-evident record of every decision and its evidence. |
 
 ### The terminals and who signs them off
@@ -86,8 +88,21 @@ the person's roles; the web app only hides actions you cannot take.
 | --- | --- | --- |
 | **Pass** | The artifacts are good enough. | Any values the pass must record (for example the risk tier at T0). A reason if you disagree with a "rework" recommendation. |
 | **Rework** | Something must be redone. | A comment, and a **root cause** (requirement, design, architecture, implementation, control missing, missing evidence, ops gap, defect, readiness gap, environment, qualification). The root cause decides where the rework goes: for example an implementation defect found at T4 goes back to T3. A reason if you disagree with a "pass" recommendation. |
-| **Exception** | A gap is accepted for now. | The waiver details the terminal asks for (owner, expiry, compensating control). A waiver approver (another person) must approve it; T6 checks waivers again. |
+| **Exception** | A gap is accepted for now. | The waiver details the terminal asks for (owner, expiry, compensating control), and the same values a pass would record (for example the risk tier at T0). A waiver approver (another person) must approve it; T6 checks waivers again. |
 | **Terminate** | The use case should stop. | A comment or a reason. |
+
+**Why both controls and prerequisites?** Controls decide whether a terminal's own work is good
+enough to leave; the next terminal's prerequisites decide whether it may start. A prerequisite does
+not repeat the earlier controls: it checks that the earlier terminal ended with pass or exception and
+handed forward what is needed, plus anything that can change in between (such as which build is
+deployed in the test environment). A terminal can also open in other ways, for example after a
+rework or a re-entry from T9, and the prerequisites hold in every case.
+
+**What a pass or exception hands forward.** Each terminal's spec lists the values it emits. When
+you decide pass or exception, the form asks for any of them that no artifact already supplies (at
+T0, the risk tier). They become the evidence later terminals check, update the use case's profile,
+and at T0 set the risk tier for the rest of the lifecycle. An exception hands forward the same values
+as a pass: it accepts a gap in the checks, not missing results.
 
 A **clarification** is not a decision: the agent asks for missing information, the addressed role
 answers, and the same run continues without counting as a rework.
@@ -193,9 +208,10 @@ A run escalates after too many reworks or when it is late. The accountable role 
 
 ### Exceptions and waivers
 
-To accept a gap, an approver decides **Exception** with the waiver details. A different person with
-a waiver approver role (for example the risk owner) opens the **Waiver** item and approves or
-rejects it. Approved waivers are checked again at T6 and expire on their date.
+To accept a gap, an approver decides **Exception** with the waiver details and any values the
+terminal hands forward (asked for in the same form). A different person with a waiver approver role
+(for example the risk owner) opens the **Waiver** item and approves or rejects it; on approval the
+run closes and hands those values forward. Approved waivers are checked again at T6 and expire on their date.
 
 ### Change requests
 

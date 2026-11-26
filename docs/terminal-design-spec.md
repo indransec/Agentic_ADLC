@@ -1084,9 +1084,63 @@ terminal:
 
 ## 14. Cross-terminal evidence and routing map
 
-The lifecycle holds together because each terminal's `emits` become a later terminal's `prerequisites` and `controls`. Three values carry most of the weight: the T0 risk tier, the T1 thresholds and the T3 package hash.
+The lifecycle holds together because each terminal's `emits` become a later terminal's `prerequisites` and `controls`. Three values carry most of the weight: the T0 risk tier, the T1 thresholds and the T3 package hash. Three blocks do the work: a terminal's **controls** decide whether it may close, the next terminal's **prerequisites** decide whether that one may open, and the **emitted values** are what passes between them.
 
-**Prerequisites are not a copy of the previous terminal's controls.** Controls decide whether a terminal's own work is good enough to leave; the producing terminal owns them. Prerequisites decide whether a terminal may open: its inputs exist, carry an acceptable status and are bound to the right version; the consuming terminal owns them. So a terminal opened by `Tn.pass` or `Tn.exception` checks `Tn.status` and the evidence `Tn` emitted, and never re-runs `Tn`'s controls (an exception means some were waived on purpose; a waived control comes back through `recheck_at`, as a control of the later terminal). State that can change between terminals, such as the hash deployed in an environment, may be checked again. `adlc-spec validate` enforces both halves: V-37 (the opener's status is checked) and V-38 (no prerequisite restates another terminal's control on that terminal's own evidence). Because a terminal may open on either outcome, an exception declares its own `emits` with at least what the pass emits (V-39): it waives controls, not the hand-off.
+### 14.1 Controls and prerequisites: why a terminal needs both
+
+They answer different questions and belong to different terminals.
+
+| | Controls (in Tn) | Prerequisites (in Tn+1) |
+| --- | --- | --- |
+| Question | Is this terminal's work good enough to leave? | Is everything this terminal needs here, in an acceptable state, and the right version? |
+| What is checked | The content: rules over this terminal's own artifacts | Existence, status and version binding of inputs in the ledger and environments |
+| Owner | The producing terminal | The consuming terminal |
+| Example | `CTL-T3-03 scan_clean(T3.security_build_checks, "sast", ["critical", "high"])` | `PRE-T4-01 evidence_exists(T3.candidate_package.sha256)` |
+
+Controls in an earlier terminal do not make prerequisites redundant:
+
+1. **A terminal can open without the earlier controls passing.** T3 opens on `T2.exception` (some controls waived), on `T9.reentry.T3` (T2 did not run again) and on rework from T4, T5 and T7. The prerequisite is where the next terminal states which entry states it accepts, such as `T2.status in ["pass", "exception"]`.
+2. **Some inputs come from outside the previous terminal.** `env.dev` provisioned, `template.version` pinned, the golden dataset approved by the data owner: no earlier control produced them.
+3. **State changes between one terminal's close and the next one's open.** `PRE-T5-05 hash_matches(env.test, T3.candidate_package)` checks what the test environment runs now; T4's controls cannot promise that, because something may be deployed after T4 closes.
+4. **Prerequisites reach further back than one terminal.** T4 needs T1's thresholds; T8 needs T4's regression pack.
+5. **Each YAML stays self-contained.** The orchestrator opens a terminal from that terminal's spec and the ledger only. T4 states what it needs without knowing T3's control set, so T3 can change its controls without silently changing T4's entry gate.
+
+**Prerequisites are not a copy of the previous terminal's controls.** If T4 re-ran T3's SAST rule, the same rule would live in two specs and drift, a waiver granted at T3 would be overruled at T4, and T4 would judge work outside its purpose and authorities. So a prerequisite refers to the opener's **outcome and outputs** (its status, its emitted evidence and the version they are bound to), never to its control rules. The one deliberate overlap is a waived control's `recheck_at`: the control comes back on purpose at a named later terminal (T6, T8), as a **control** of that terminal, not as a prerequisite.
+
+`adlc-spec validate` enforces both halves:
+
+- **V-37**: a terminal opened by `Tn.pass` or `Tn.exception` has a prerequisite that checks `Tn.status` (as `evidence_ref`, in the condition, or through a terminal list such as `all_statuses_in`).
+- **V-38**: no prerequisite restates another terminal's control on that terminal's own evidence. A control that reads only other state (an environment hash, for example) may be repeated, because that state can change between terminals.
+
+### 14.2 Emitted values: what a terminal hands forward
+
+`outcome_model.<status>.emits` lists the values a terminal publishes when a run closes with that status. Only the forward outcomes emit: **pass**, and **exception**, which declares its own list. An exception waives controls, not the hand-off, so **V-39** requires an exception to emit at least what the pass emits; later terminals read the same values whichever outcome opened them.
+
+When a run closes with pass or exception, its emitted values:
+
+1. **Must be complete.** Each name is filled from a value the deciding person typed, else an artifact of that name (kept as a reference), else `artifact.column` from the artifact's first row, else a value the run already knows (`usecase_id`). A decision that leaves a name unfilled is refused; the decision form asks for those names (`typed_fields`, per outcome). An exception's typed values are kept with its waiver and emitted when the waiver is approved.
+2. **Are frozen in the ledger.** The closing ledger record stores them, and every artifact reference carries its version and content hash, so later terminals see exactly what was approved.
+3. **Update the use-case profile.** The close writes the next profile version: the previous values with the emitted names replaced. A run reads the version current when it opened. The profile feeds the agent's context pack, parameter resolution (a use-case value is used only when it is within the tier guardrail) and the `profile` evidence source.
+4. **Set the risk tier.** T0's `risk_tier` becomes the use case's tier, which selects tiering, sign-off rules, timelines and guardrail values in every later terminal.
+5. **Become evidence for later terminals.** When a later terminal reads `Tn.<name>`, it sees the emitted values with that run's artifacts laid over them (artifacts win). V-02 accepts `Tn.<name>` only if it is an artifact, an emitted value or a record field.
+
+Emitted values do not raise events; `Tn.pass` and `Tn.exception` come from the outcome itself.
+
+| Terminal | Emits (pass and exception) | Read by | Significance |
+| --- | --- | --- | --- |
+| T0 | `risk_tier`, `usecase_id` | orchestrator and policy engine | Sets the tier every later terminal depends on |
+| T1 | `eval_thresholds`, `rai_thresholds`, `kpis`, `autonomy_levels` | T4 (thresholds), T8 (RAI thresholds, KPIs), T6 (KPIs), T2 (autonomy) | The targets the agent is judged against later |
+| T2 | `design_decisions`, `tool_api_contracts`, `token_budget` | T3 (contracts), T4 and T8 (budget) | The build contract and the cost ceiling |
+| T3 | `candidate_package.sha256`, `build_manifest` | T4, T5, T6, T7 (hash), T9 (manifest) | Binds every later check and the deployment to one build |
+| T4 | `regression_pack`, `eval_baseline` | T7 (canary tolerance), T8, T9 | The baseline drift is measured against |
+| T5 | `assurance_attestation`, `residual_risk_register` | T6 (attestation signed) | Assurance sign-off reaching readiness |
+| T6 | `release_authorisation`, `rollout_plan`, `deployment_package` | T7 | What T7 may deploy, and how |
+| T7 | `registry_entry`, `prod_version` (no exception) | T8 (`is_live`) | Marks the agent live, so T8 can open |
+| T8, T9 | nothing | — | T8 continues; T9 routes by change class |
+
+`T2.design_decisions`, `T5.residual_risk_register`, `T6.rollout_plan` and `T7.prod_version` are not read by a later spec's prerequisites or controls. They still go to the ledger, the profile and the agents' context, and T6 reviews the whole T0–T5 ledger, so they are record values rather than gate inputs.
+
+### 14.3 Evidence and routing map
 
 | Terminal | Key evidence consumed | Key evidence emitted | Pass → | Rework → (root cause) | Agent never may |
 | --- | --- | --- | --- | --- | --- |
@@ -1368,6 +1422,8 @@ Req: Y = required · N = optional · C = conditional (the condition is in the de
 | V-08 | Every tiered value defines low, medium and high |
 | V-09 | `status_rights.agent` never contains pass, exception or terminate |
 | V-10 | Every playbook and checklist `ref` exists at the stated version |
+
+The toolkit adds rules after V-10 (the full list is in `specs/002-terminal-spec-toolkit/contracts/validation-rules.md`). Three of them guard the hand-off described in section 14: V-37 (a terminal checks its opener's status), V-38 (a prerequisite does not restate another terminal's control) and V-39 (an exception emits at least what the pass emits).
 
 ## Annex C – Terminal data model
 

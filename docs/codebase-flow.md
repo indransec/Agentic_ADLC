@@ -189,8 +189,8 @@ Specs never contain use-case values. Each run gets them from these sources:
 |---|---|---|---|
 | **Pinned spec versions** | Which version of each terminal this use case follows, for its whole life | Pinned at submission | `usecase_spec_pin` |
 | **Intake** | Name, free text, business owner (the submitter) | The submission | `usecase` |
-| **Risk tier** | Selects timelines, sign-off rules, tiering controls and guardrail values | Emitted by T0 on pass; `medium` until set | `usecase.risk_tier` |
-| **Use-case profile** | Values each terminal **emits** on pass (e.g. targets proposed by T1), versioned | Written at close | `profile_version` |
+| **Risk tier** | Selects timelines, sign-off rules, tiering controls and guardrail values | Emitted by T0 on pass or exception; `medium` until set | `usecase.risk_tier` |
+| **Use-case profile** | Values each terminal **emits** on pass or exception (e.g. targets proposed by T1), versioned | Written at close | `profile_version` |
 | **Parameters** (`param.<name>`) | Guardrail values for the tier, tightened by the profile where allowed (never loosened) | `guardrails.yaml` + profile; resolved when the run opens and **frozen** | `run_parameter_set` |
 | **Previous terminals' evidence** (`T<n>.…`) | Status, signers, waivers, artifacts, emitted values of each terminal's latest closed run | Earlier runs | `terminal_run`, `artifact_version`, `content_blob`, `ledger_record`, `sign_off`, `waiver` |
 | **Trigger context** | Why this run opened: rework comment, root cause, decision fields, re-entry terminal | The event that opened it | `terminal_run.trigger_context` |
@@ -216,7 +216,7 @@ person decides (API) ─► OrchestratorService.decide ─► engine.apply_in �
 |---|---|
 | Final status; cancels timers | `terminal_run`, `timer` |
 | Finds the route for the status (and root cause for rework) in the pinned spec | `spec_outcome_route` |
-| On **pass**: computes **emitted values** (decision fields, artifacts, run values) | |
+| On **pass** or **exception**: computes the outcome's **emitted values** (decision fields, kept with the waiver for an exception; artifacts; run values) | |
 | Writes the **ledger record**: each artifact's version and hash, emitted references, profile version, `bound_to`; hash-chained to the previous record | `ledger_record`, `content_blob` |
 | Writes the next **profile version** (pass or exception with emitted values) | `profile_version` |
 | Sets the use case's **risk tier** when one is emitted | `usecase` |
