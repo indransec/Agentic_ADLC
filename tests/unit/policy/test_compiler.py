@@ -37,5 +37,5 @@ def test_every_spec_rule_compiles() -> None:
         for t in bundle.usable_terminals()
         for check in (*spec_view.prerequisites(t.data), *spec_view.controls(t.data))
     ]
-    assert len(rules) == 112
+    assert len(rules) == 115  # + PRE-T4-06, PRE-T7-04, PRE-T8-04 (V-37)
     assert all(compile_rule(r).error is None for r in rules)
