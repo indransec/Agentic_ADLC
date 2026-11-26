@@ -58,7 +58,7 @@ terminal:
   outcome_model:
     pass: {route: T1, emits: [risk_tier]}
     rework: {route: T0, requires: [owner_comment]}
-    exception: {route: T1, requires: [waiver_owner, expiry, compensating_control]}
+    exception: {route: T1, requires: [waiver_owner, expiry, compensating_control], emits: [risk_tier]}
     escalate:
       when: run.rework_count > timeline.max_rework_cycles || run.age > timeline.escalate_after
       route: human_completion

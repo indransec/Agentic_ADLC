@@ -162,6 +162,7 @@ terminal:
     exception:
       when: no_critical_threshold_missed(T4.quality_vs_threshold, T4.rai_vs_threshold)
       route: T5
+      emits: [regression_pack, eval_baseline]
       requires: [waiver_owner, expiry, compensating_control]
       recheck_at: [T6, T8]
       description: only advisory or non-critical threshold missed

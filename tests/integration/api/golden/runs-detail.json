@@ -847,7 +847,12 @@
       "T8",
       "T9"
     ],
-    "typed_fields": [],
+    "typed_fields": {
+      "exception": [],
+      "pass": [],
+      "rework": [],
+      "terminate": []
+    },
     "waiver_pending": false
   },
   "ledger_record": null,
@@ -937,7 +942,7 @@
   },
   "spec": {
     "terminal_id": "T1",
-    "version": "2.0.0"
+    "version": "2.1.0"
   },
   "timeline": [
     {

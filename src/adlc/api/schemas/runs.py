@@ -64,8 +64,8 @@ class DecisionForm(ApiModel):
         description="Root causes that also need `target_terminal`"
     )
     target_terminals: list[str] = Field(description="The use case's pinned terminals")
-    typed_fields: list[str] = Field(
-        description="Values a pass or exception emits that the person types"
+    typed_fields: dict[str, list[str]] = Field(
+        description="Per outcome: emitted values no artifact supplies, typed in by the person"
     )
     alternatives: list[str] = Field(description="Alternative routes a pass may take")
     reason_required_unless: str | None = Field(

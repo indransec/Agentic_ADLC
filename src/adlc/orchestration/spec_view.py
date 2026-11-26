@@ -228,8 +228,9 @@ def outcome_not_allowed(spec: Spec, status: str) -> bool:
     return bool(outcome(spec, status).get("not_allowed"))
 
 
-def emits(spec: Spec) -> tuple[str, ...]:
-    return tuple(str(e) for e in _list(outcome(spec, "pass").get("emits")))
+def emits(spec: Spec, status: str = "pass") -> tuple[str, ...]:
+    """The values an outcome hands forward, as its own ``emits`` declares (V-39 for exception)."""
+    return tuple(str(e) for e in _list(outcome(spec, status).get("emits")))
 
 
 def rework_causes(spec: Spec) -> tuple[str, ...]:

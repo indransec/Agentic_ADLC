@@ -989,9 +989,11 @@ export interface components {
             target_terminals: string[];
             /**
              * Typed Fields
-             * @description Values a pass or exception emits that the person types
+             * @description Per outcome: emitted values no artifact supplies, typed in by the person
              */
-            typed_fields: string[];
+            typed_fields: {
+                [key: string]: string[];
+            };
             /**
              * Waiver Pending
              * @description A waiver awaits its approver

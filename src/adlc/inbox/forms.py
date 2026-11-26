@@ -48,7 +48,7 @@ def build_form(
             needs_target.append(cause)
 
     pass_route = registry.outcome_route(run.terminal_id, "pass", version=run.spec_version)
-    emitted = routing.emitted_values(spec, run.artifacts, {"usecase_id": run.usecase_id}, {})
+    attributes = {"usecase_id": run.usecase_id}
     at_sign_off = run.state == RunState.AWAITING_SIGN_OFF
     decider = rules.may_decide(actor, ctx) and not run.controls_pending
     terminate_roles = spec_view.outcome_set_by(spec, "terminate") or (
@@ -60,7 +60,10 @@ def build_form(
         "root_causes": causes,
         "target_terminal_for": needs_target,
         "target_terminals": sorted(pinned_terminals),
-        "typed_fields": list(emitted.missing),
+        "typed_fields": {
+            s: list(routing.emitted_values(spec, run.artifacts, attributes, {}, s).missing)
+            for s in outcomes
+        },
         "alternatives": list(pass_route.alternatives) if pass_route is not None else [],
         "reason_required_unless": (run.recommendation or {}).get("status"),
         "sign_off_role": rules.sign_off_role(actor, ctx) if at_sign_off else None,

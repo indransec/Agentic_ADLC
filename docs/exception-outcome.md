@@ -41,14 +41,15 @@ Some terminals use other fields in place of these:
 
 ## How it is granted: two people
 
-1. A sign-off person decides **exception** with the required fields, plus any value the terminal's pass `emits` that no
-   artifact supplies (for example `risk_tier` at T0): an exception waives controls, not the hand-off. The decision is
-   recorded, a waiver (W-n) is proposed, and the run stays in *awaiting sign-off*.
+1. A sign-off person decides **exception** with the required fields, plus any value the exception's own `emits` lists
+   that no artifact supplies (for example `risk_tier` at T0): an exception waives controls, not the hand-off. The
+   decision is recorded, a waiver (W-n) is proposed, and the run stays in *awaiting sign-off*.
 2. A **different** person with a waiver-approver role approves it on the Waiver page. The approver role is the
    exception's `set_by` role when the spec names one, otherwise the terminal's accountable roles.
    - **Approved:** the run closes with status `exception` and emits `Tn.exception`, which routes onward (usually
-     where a pass would go). It emits the same values a pass would, taken from the decision fields kept with the
-     waiver, so the use-case profile gets a new version and T0's `risk_tier` sets the use case's tier.
+     where a pass would go). It emits what `outcome_model.exception.emits` declares, taken from the decision fields
+     kept with the waiver, so the use-case profile gets a new version and T0's `risk_tier` sets the use case's tier.
+     Validation rule V-39 requires an exception to emit at least what the terminal's pass emits.
    - **Rejected:** the run returns to awaiting sign-off.
    - **An artifact is edited while the waiver is pending:** the waiver is withdrawn automatically, because the approver
      would otherwise approve content that changed after the waiver was proposed. Someone must decide exception again.

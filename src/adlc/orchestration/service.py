@@ -278,7 +278,7 @@ class OrchestratorService:
                     raise InvalidDecision("expiry must be in the future")
         if decision in ("pass", "exception"):
             emitted = routing.emitted_values(
-                spec, run.artifacts, {"usecase_id": run.usecase_id}, fields
+                spec, run.artifacts, {"usecase_id": run.usecase_id}, fields, decision
             )
             if emitted.missing:
                 raise InvalidDecision(f"a {decision} must supply {', '.join(emitted.missing)}")

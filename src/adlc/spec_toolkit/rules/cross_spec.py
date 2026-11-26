@@ -810,6 +810,28 @@ def v38_prerequisite_restates_control(ctx: Context) -> Iterator[Finding]:
             )
 
 
+@REGISTRY.rule("V-39", "L4", "error", "An exception emits at least what the terminal's pass emits")
+def v39_exception_emits(ctx: Context) -> Iterator[Finding]:
+    # An exception waives controls, not the hand-off: later terminals, the use-case profile and
+    # the risk tier read the same values whichever forward outcome closed the run.
+    for loaded in ctx.terminals():
+        outcomes = spec(loaded).get("outcome_model") or {}
+        passed, excepted = (outcomes.get(s) for s in _FORWARD_OUTCOMES)
+        if not isinstance(passed, dict) or not isinstance(excepted, dict):
+            continue
+        if excepted.get("not_allowed"):
+            continue
+        declared = {str(e) for e in excepted.get("emits") or []}
+        missing = [str(e) for e in passed.get("emits") or [] if str(e) not in declared]
+        if missing:
+            yield ctx.finding(
+                "V-39",
+                loaded.rel,
+                "/terminal/outcome_model/exception",
+                f"exception does not emit {', '.join(missing)}, which pass emits",
+            )
+
+
 # ---------------------------------------------------------------------------- V-18
 
 

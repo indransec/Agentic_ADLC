@@ -132,11 +132,11 @@ describe("decision form", () => {
     expect(screen.queryByLabelText("Reason")).toBeNull();
   });
 
-  it("exception asks for the same typed fields as a pass", async () => {
+  it("exception asks for the typed fields its own emits need", async () => {
     const seen = capture();
     show(
       runDetail((d) => {
-        d.form.typed_fields = ["risk_tier"];
+        d.form.typed_fields = { pass: ["risk_tier"], exception: ["risk_tier"] };
         d.form.outcomes = ["pass", "exception"];
         d.form.requires = { exception: [] };
       }),
@@ -153,7 +153,7 @@ describe("decision form", () => {
   it("pass asks for typed fields and offers alternative routes", async () => {
     const seen = capture();
     const detail = runDetail((d) => {
-      d.form.typed_fields = ["risk_tier"];
+      d.form.typed_fields = { pass: ["risk_tier"] };
       d.form.alternatives = ["T2b"];
     });
     show(detail);

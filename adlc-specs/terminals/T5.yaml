@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T5
     name: Trust, Risk & Assurance
-    version: "3.0.0"
+    version: "3.1.0"
     schema_version: "1.1.0"
     purpose: Is the agentic system safe and compliant for release?
     owner_role: adlc_coe
@@ -138,6 +138,7 @@ terminal:
     exception:
       set_by: [risk_owner]
       route: T6
+      emits: [assurance_attestation, residual_risk_register]
       requires: [risk_acceptance, expiry, compensating_control]
       recheck_at: [T6, T8]
     escalate:

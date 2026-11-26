@@ -67,7 +67,8 @@ def test_lifecycle_through_the_api(h: Harness, tmp_path: Path) -> None:
                 if role is None:
                     break
                 shown = api.get(role, f"/runs/{run_id}").json()
-                fields = {n: TYPED.get(n, f"{n} (typed)") for n in shown["form"]["typed_fields"]}
+                typed = shown["form"]["typed_fields"]["pass"]
+                fields = {n: TYPED.get(n, f"{n} (typed)") for n in typed}
                 answer = api.post(
                     role,
                     f"/runs/{run_id}/decisions",

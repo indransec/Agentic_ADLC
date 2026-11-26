@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T2
     name: Architecture & Design
-    version: "2.0.0"
+    version: "2.1.0"
     schema_version: "1.1.0"
     purpose: How should the agent operate?
     owner_role: adlc_coe
@@ -113,7 +113,7 @@ terminal:
     rework:
       route_by_root_cause: {design: T2, requirement: T1}
       requires: [owner_comment]
-    exception: {route: T3, requires: [waiver_owner, expiry, compensating_control]}
+    exception: {route: T3, requires: [waiver_owner, expiry, compensating_control], emits: [design_decisions, tool_api_contracts, token_budget]}
     escalate:
       when: run.rework_count > timeline.max_rework_cycles || run.age > timeline.escalate_after
       route: human_completion

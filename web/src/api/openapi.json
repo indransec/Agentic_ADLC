@@ -1000,12 +1000,15 @@
             "type": "array"
           },
           "typed_fields": {
-            "description": "Values a pass or exception emits that the person types",
-            "items": {
-              "type": "string"
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
             },
+            "description": "Per outcome: emitted values no artifact supplies, typed in by the person",
             "title": "Typed Fields",
-            "type": "array"
+            "type": "object"
           },
           "waiver_pending": {
             "description": "A waiver awaits its approver",

@@ -279,9 +279,8 @@ def decision_form(api: ApiClient, data: dict[str, Any], seen: int) -> None:
                 )
         for name in form["requires"].get(decision, []):
             body["fields"][name] = st.text_input(name.replace("_", " "), key=f"{name}:{key}")
-        if decision in ("pass", "exception"):  # an exception emits what a pass emits
-            for name in form["typed_fields"]:
-                body["fields"][name] = st.text_input(name.replace("_", " "), key=f"{name}:{key}")
+        for name in form["typed_fields"].get(decision, []):  # values the outcome emits
+            body["fields"][name] = st.text_input(name.replace("_", " "), key=f"{name}:{key}")
         if decision == "pass" and form["alternatives"]:
             alternative = st.selectbox(
                 "Alternative route", ["", *form["alternatives"]], key=f"alt:{key}"

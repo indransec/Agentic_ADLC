@@ -104,8 +104,9 @@ def emitted_values(
     artifacts: Mapping[str, Any],
     run_attributes: Mapping[str, Any],
     provided: Mapping[str, Any],
+    status: str = "pass",
 ) -> Emitted:
-    """Values a pass emits (FR-018a): decision fields, then artifacts, then known run values.
+    """Values an outcome emits (FR-018a): decision fields, then artifacts, then known run values.
 
     An emitted name that is an artifact is referenced; ``artifact.column`` takes the first row's
     value; any other name must be supplied by the deciding person unless the run already knows it.
@@ -113,7 +114,7 @@ def emitted_values(
     values: dict[str, Any] = {}
     missing: list[str] = []
     built = {a.id for a in spec_view.artifacts(spec) if a.built}
-    for name in spec_view.emits(spec):
+    for name in spec_view.emits(spec, status):
         artifact, _, column = name.partition(".")
         if name in provided and provided[name] not in (None, ""):
             values[name] = provided[name]

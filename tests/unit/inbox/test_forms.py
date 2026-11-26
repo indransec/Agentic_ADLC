@@ -113,16 +113,22 @@ def test_t1_form() -> None:
 
 
 def test_typed_values_and_resolver_causes() -> None:
-    """Values a pass emits that no artifact supplies are typed in; resolver routes need a target."""
+    """Values an outcome emits that no artifact supplies are typed in, per outcome (V-39);
+    resolver routes need a target."""
     for terminal in TERMINALS:
         entry = registry().entry(terminal)
         assert entry is not None
         role = sorted(ctx_for(entry.spec).rule_roles)[0]
         built = form(terminal, Actor("p", frozenset({role})))
         assert set(built["target_terminal_for"]) <= set(built["root_causes"])
-        assert isinstance(built["typed_fields"], list)
+        assert set(built["typed_fields"]) == set(built["outcomes"])
+        assert set(built["typed_fields"].get("pass", [])) <= set(
+            built["typed_fields"].get("exception", built["typed_fields"].get("pass", []))
+        )
     t0 = form("T0", Actor("p", frozenset({"business_owner"})))
-    assert "risk_tier" in t0["typed_fields"]
+    assert "risk_tier" in t0["typed_fields"]["pass"]
+    assert "risk_tier" in t0["typed_fields"]["exception"]
+    assert t0["typed_fields"]["rework"] == []
 
 
 def test_who_may_act() -> None:

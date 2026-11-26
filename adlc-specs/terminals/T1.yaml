@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T1
     name: Requirements & Outcome
-    version: "2.0.0"
+    version: "2.1.0"
     schema_version: "1.1.0"
     purpose: What exactly must the agent achieve?
     owner_role: adlc_coe
@@ -107,7 +107,7 @@ terminal:
     rework:
       route_by_root_cause: {requirement: T1, qualification: T0}
       requires: [owner_comment]
-    exception: {route: T2, requires: [waiver_owner, expiry, compensating_control]}
+    exception: {route: T2, requires: [waiver_owner, expiry, compensating_control], emits: [eval_thresholds, rai_thresholds, kpis, autonomy_levels]}
     escalate:
       when: run.rework_count > timeline.max_rework_cycles || run.age > timeline.escalate_after
       route: human_completion

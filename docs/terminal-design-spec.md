@@ -1086,7 +1086,7 @@ terminal:
 
 The lifecycle holds together because each terminal's `emits` become a later terminal's `prerequisites` and `controls`. Three values carry most of the weight: the T0 risk tier, the T1 thresholds and the T3 package hash.
 
-**Prerequisites are not a copy of the previous terminal's controls.** Controls decide whether a terminal's own work is good enough to leave; the producing terminal owns them. Prerequisites decide whether a terminal may open: its inputs exist, carry an acceptable status and are bound to the right version; the consuming terminal owns them. So a terminal opened by `Tn.pass` or `Tn.exception` checks `Tn.status` and the evidence `Tn` emitted, and never re-runs `Tn`'s controls (an exception means some were waived on purpose; a waived control comes back through `recheck_at`, as a control of the later terminal). State that can change between terminals, such as the hash deployed in an environment, may be checked again. `adlc-spec validate` enforces both halves: V-37 (the opener's status is checked) and V-38 (no prerequisite restates another terminal's control on that terminal's own evidence).
+**Prerequisites are not a copy of the previous terminal's controls.** Controls decide whether a terminal's own work is good enough to leave; the producing terminal owns them. Prerequisites decide whether a terminal may open: its inputs exist, carry an acceptable status and are bound to the right version; the consuming terminal owns them. So a terminal opened by `Tn.pass` or `Tn.exception` checks `Tn.status` and the evidence `Tn` emitted, and never re-runs `Tn`'s controls (an exception means some were waived on purpose; a waived control comes back through `recheck_at`, as a control of the later terminal). State that can change between terminals, such as the hash deployed in an environment, may be checked again. `adlc-spec validate` enforces both halves: V-37 (the opener's status is checked) and V-38 (no prerequisite restates another terminal's control on that terminal's own evidence). Because a terminal may open on either outcome, an exception declares its own `emits` with at least what the pass emits (V-39): it waives controls, not the hand-off.
 
 | Terminal | Key evidence consumed | Key evidence emitted | Pass → | Rework → (root cause) | Agent never may |
 | --- | --- | --- | --- | --- | --- |
@@ -1339,7 +1339,7 @@ Req: Y = required · N = optional · C = conditional (the condition is in the de
 | **outcome\_model** |  |  |  |  |
 | outcome\_model.\<status>.route | terminal id, event or template | C | — | Destination; required for pass |
 | outcome\_model.rework.route\_by\_root\_cause | map\<root\_cause, terminal> | C | — | Root-cause routing; required unless rework.route is set |
-| outcome\_model.\<status>.emits | list\<string> | N | — | Values published to the ledger for later terminals |
+| outcome\_model.\<status>.emits | list\<string> | N | — | Values published to the ledger for later terminals when the run closes with that status (pass or exception). An exception emits at least what the pass emits (V-39) |
 | outcome\_model.\<status>.requires | list\<string> | N | — | Mandatory fields when setting the status |
 | outcome\_model.\<status>.when | expr | C | — | Automatic condition; required for escalate |
 | outcome\_model.\<status>.set\_by | role or list\<role> | N | per status\_rights | Overrides who may set the status |
