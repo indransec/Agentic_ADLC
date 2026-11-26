@@ -518,9 +518,15 @@ class SqlTerminalRun:
                 )
                 continues = kind == "continue"
                 ends_lifecycle = kind == "terminating"
-        if status == "pass":
+        if status in ("pass", "exception"):
+            # An exception waives controls, not the hand-off: it emits what a pass emits. Its
+            # decision fields were kept with the waiver the approval closes.
+            provided = fields
+            if status == "exception" and run.pending_waiver_id is not None:
+                waiver = store.load_waiver(conn, run.pending_waiver_id) or {}
+                provided = {**dict(waiver.get("requires") or {}), **fields}
             attributes = {"usecase_id": run.usecase_id}
-            emitted = routing.emitted_values(entry.spec, run.artifacts, attributes, fields).values
+            emitted = routing.emitted_values(entry.spec, run.artifacts, attributes, provided).values
         if status == "rework" and route is not None:
             if route.destination == run.terminal_id:
                 open_terminal = run.terminal_id  # self-route (002 rule V-17)

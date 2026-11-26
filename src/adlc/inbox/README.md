@@ -10,7 +10,7 @@ Specification: `specs/007-human-inbox/`.
 | Module | Purpose |
 | --- | --- |
 | `rules.py` | Who may act. Still-needed sign-off roles (rule roles and required conditional roles, minus those already approved), clarification addressee, accountable roles, waiver approvers (the spec's `exception` set-by roles, else the accountable roles), artifact editors, CoE. `OrchestratorService` and `LedgerService` use the same functions, so an inbox item never offers an action the operation would refuse. |
-| `forms.py` | `build_form`: the decision form from the pinned spec. Outcomes from `status_rights.human` (minus disabled routes), required fields per outcome, root causes from the rework routes (and which need an owning terminal), values a pass emits that no artifact supplies, alternatives, the reviewer's recommendation (a different decision needs a reason), and whether the person may decide, terminate, edit or complete an escalation. |
+| `forms.py` | `build_form`: the decision form from the pinned spec. Outcomes from `status_rights.human` (minus disabled routes), required fields per outcome, root causes from the rework routes (and which need an owning terminal), values a pass emits that no artifact supplies (asked for an exception too), alternatives, the reviewer's recommendation (a different decision needs a reason), and whether the person may decide, terminate, edit or complete an escalation. |
 | `service.py` | `InboxService`: use cases ("mine" means submitted, or holding a role in one of its runs' terminals), the journey (runs, the 005 summary, the 006 cost), inbox items, the run detail, attachment lookup. |
 
 ## Inbox items

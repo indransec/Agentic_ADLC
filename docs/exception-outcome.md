@@ -41,12 +41,14 @@ Some terminals use other fields in place of these:
 
 ## How it is granted: two people
 
-1. A sign-off person decides **exception** with the required fields. The decision is recorded, a waiver (W-n) is
-   proposed, and the run stays in *awaiting sign-off*.
+1. A sign-off person decides **exception** with the required fields, plus any value the terminal's pass `emits` that no
+   artifact supplies (for example `risk_tier` at T0): an exception waives controls, not the hand-off. The decision is
+   recorded, a waiver (W-n) is proposed, and the run stays in *awaiting sign-off*.
 2. A **different** person with a waiver-approver role approves it on the Waiver page. The approver role is the
    exception's `set_by` role when the spec names one, otherwise the terminal's accountable roles.
    - **Approved:** the run closes with status `exception` and emits `Tn.exception`, which routes onward (usually
-     where a pass would go).
+     where a pass would go). It emits the same values a pass would, taken from the decision fields kept with the
+     waiver, so the use-case profile gets a new version and T0's `risk_tier` sets the use case's tier.
    - **Rejected:** the run returns to awaiting sign-off.
    - **An artifact is edited while the waiver is pending:** the waiver is withdrawn automatically, because the approver
      would otherwise approve content that changed after the waiver was proposed. Someone must decide exception again.
@@ -107,16 +109,11 @@ three have a clear answer, an exception fits; otherwise choose rework.
 
 ## Known gaps (as built)
 
-1. **An exception emits nothing.** `engine._close` computes emitted values only for `pass`, so an exception does not
-   update the use case profile. At **T0** this means `risk_tier` is never set. `engine.tier()` then falls back to
-   `"medium"` for every later terminal, which affects sign-off rules, timelines and tier-based controls. (T1's own
-   prerequisite still passes; it reads the artifact `T0.risk_classification.tier`, not the emitted value.) A
-   high-risk use case that leaves T0 by exception is treated as medium risk downstream.
-2. **`recheck_at` is stored but unused.** It is copied onto the waiver record, but no code reads it. The T6 and T8
+1. **`recheck_at` is stored but unused.** It is copied onto the waiver record, but no code reads it. The T6 and T8
    controls check every approved waiver, whatever its `recheck_at`.
-3. **Only the expiry date is re-checked.** Nothing re-tests whether the compensating control or risk acceptance still
+2. **Only the expiry date is re-checked.** Nothing re-tests whether the compensating control or risk acceptance still
    holds.
-4. **No warning at decision time.** When exception is chosen, the platform does not check whether the next
+3. **No warning at decision time.** When exception is chosen, the platform does not check whether the next
    terminal's prerequisites will be met; the person learns only when the next run blocks.
 
 ## Options (not decided)
@@ -128,4 +125,4 @@ three have a clear answer, an exception fits; otherwise choose rework.
    blocking prerequisite becomes a warning while the waiver is valid. More flexible, but it weakens the chain of
    evidence and needs spec changes plus a validation rule.
 
-Either option, and fixes for gaps 1 to 3, would be a separate Spec Kit feature.
+Either option, and fixes for gaps 1 and 2, would be a separate Spec Kit feature.

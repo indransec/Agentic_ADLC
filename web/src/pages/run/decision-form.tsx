@@ -75,7 +75,8 @@ export function DecisionForm({ detail, onStale, onRecorded }: DecisionFormProps)
   const needsReason =
     recommended !== null && decision !== "" && decision !== recommended && decision !== "terminate";
   const required = form.requires[decision] ?? [];
-  const typed = decision === "pass" ? form.typed_fields : [];
+  // An exception waives controls, not the hand-off: it supplies what a pass emits.
+  const typed = decision === "pass" || decision === "exception" ? form.typed_fields : [];
 
   function fieldInput(name: string) {
     return (

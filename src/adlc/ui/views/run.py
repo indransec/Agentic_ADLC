@@ -279,15 +279,15 @@ def decision_form(api: ApiClient, data: dict[str, Any], seen: int) -> None:
                 )
         for name in form["requires"].get(decision, []):
             body["fields"][name] = st.text_input(name.replace("_", " "), key=f"{name}:{key}")
-        if decision == "pass":
+        if decision in ("pass", "exception"):  # an exception emits what a pass emits
             for name in form["typed_fields"]:
                 body["fields"][name] = st.text_input(name.replace("_", " "), key=f"{name}:{key}")
-            if form["alternatives"]:
-                alternative = st.selectbox(
-                    "Alternative route", ["", *form["alternatives"]], key=f"alt:{key}"
-                )
-                if alternative:
-                    body["fields"]["alternative"] = alternative
+        if decision == "pass" and form["alternatives"]:
+            alternative = st.selectbox(
+                "Alternative route", ["", *form["alternatives"]], key=f"alt:{key}"
+            )
+            if alternative:
+                body["fields"]["alternative"] = alternative
         recommended = form["reason_required_unless"]
         if recommended and decision not in (recommended, "terminate"):
             st.caption(f"The reviewer recommended {recommended}; give your reason.")

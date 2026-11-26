@@ -132,6 +132,24 @@ describe("decision form", () => {
     expect(screen.queryByLabelText("Reason")).toBeNull();
   });
 
+  it("exception asks for the same typed fields as a pass", async () => {
+    const seen = capture();
+    show(
+      runDetail((d) => {
+        d.form.typed_fields = ["risk_tier"];
+        d.form.outcomes = ["pass", "exception"];
+        d.form.requires = { exception: [] };
+      }),
+    );
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole("radio", { name: "exception" }));
+    await user.type(screen.getByLabelText("risk tier"), "high");
+    await user.click(screen.getByRole("button", { name: "Submit decision" }));
+    await waitFor(() => {
+      expect(seen.body).toMatchObject({ fields: { risk_tier: "high" } });
+    });
+  });
+
   it("pass asks for typed fields and offers alternative routes", async () => {
     const seen = capture();
     const detail = runDetail((d) => {

@@ -276,12 +276,12 @@ class OrchestratorService:
                     raise InvalidDecision("expiry must be a date (YYYY-MM-DD)") from exc
                 if expiry <= self._now.date():
                     raise InvalidDecision("expiry must be in the future")
-        if decision == "pass":
+        if decision in ("pass", "exception"):
             emitted = routing.emitted_values(
                 spec, run.artifacts, {"usecase_id": run.usecase_id}, fields
             )
             if emitted.missing:
-                raise InvalidDecision(f"a pass must supply {', '.join(emitted.missing)}")
+                raise InvalidDecision(f"a {decision} must supply {', '.join(emitted.missing)}")
         if route.kind == "template":
             alternative = fields.get("alternative")
             if alternative:

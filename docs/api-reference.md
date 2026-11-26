@@ -1155,7 +1155,7 @@ What this person may decide and what each outcome needs (``adlc.inbox.forms``). 
 | `root_causes` | array of string | yes | Rework root causes to choose from |
 | `target_terminal_for` | array of string | yes | Root causes that also need `target_terminal` |
 | `target_terminals` | array of string | yes | The use case's pinned terminals |
-| `typed_fields` | array of string | yes | Values a pass needs the person to type |
+| `typed_fields` | array of string | yes | Values a pass or exception emits that the person types |
 | `alternatives` | array of string | yes | Alternative routes a pass may take |
 | `reason_required_unless` | string or null | yes | The reviewer's recommendation: any other decision needs a `reason` |
 | `sign_off_role` | string or null | yes | The role this person signs under |

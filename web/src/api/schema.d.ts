@@ -989,7 +989,7 @@ export interface components {
             target_terminals: string[];
             /**
              * Typed Fields
-             * @description Values a pass needs the person to type
+             * @description Values a pass or exception emits that the person types
              */
             typed_fields: string[];
             /**

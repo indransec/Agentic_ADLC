@@ -1,7 +1,10 @@
 """T022: the versioned use-case profile (US3; FR-013 to FR-015; SC-005)."""
 
+import pytest
+
 from adlc.ledger.profile import SqlProfileSource
 from adlc.orchestration.interfaces import EvalContext
+from adlc.orchestration.service import Actor, InvalidDecision
 from adlc.policy.factory import build_policy_engine
 from adlc.spec_toolkit.registry import SqlSpecRegistry
 from tests.support.db import PlatformDatabase
@@ -93,3 +96,34 @@ def test_profile_evidence_is_real(h: Harness) -> None:
         "profile.risk_tier == 'medium'", EvalContext("T2", "probe", t2, usecase)
     )
     assert result.passed and not result.synthetic
+
+
+T0_EXCEPTION = {
+    "waiver_owner": "business_owner-person",
+    "expiry": "2099-12-31",
+    "compensating_control": "manual review",
+}
+
+
+def test_exception_emits_like_a_pass(h: Harness) -> None:
+    """An exception waives controls, not the hand-off: T0's tier and profile still go forward."""
+    usecase = h.submit()
+    h.drain()
+    t0 = h.active(usecase, "T0").run_id
+    owner = person("business_owner")
+    with pytest.raises(InvalidDecision, match="risk_tier"):
+        h.service.decide(owner, t0, "exception", reason="r", fields=T0_EXCEPTION)
+    h.service.decide(
+        owner, t0, "exception", reason="r", fields={**T0_EXCEPTION, "risk_tier": "high"}
+    )
+    waiver = h.run(t0).pending_waiver_id
+    assert waiver is not None
+    h.service.decide_waiver(Actor("second-owner", frozenset({"business_owner"})), waiver, True)
+    h.drain()
+    assert h.run(t0).final_status == "exception"
+    assert h.sql("SELECT risk_tier FROM usecase WHERE usecase_id = :u", u=usecase)[0][0] == "high"
+    versions = _versions(h, usecase)
+    assert versions[-1][1]["risk_tier"] == "high"
+    assert versions[-1][2] == f"{usecase}/T0/run-1"
+    record = h.sql("SELECT content_json FROM ledger_record WHERE run_id = :r", r=t0)[0][0]
+    assert record["emitted"]["risk_tier"] == "high"

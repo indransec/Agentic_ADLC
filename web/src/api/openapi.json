@@ -1000,7 +1000,7 @@
             "type": "array"
           },
           "typed_fields": {
-            "description": "Values a pass needs the person to type",
+            "description": "Values a pass or exception emits that the person types",
             "items": {
               "type": "string"
             },
