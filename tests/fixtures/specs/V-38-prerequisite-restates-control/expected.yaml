@@ -1,0 +1,1 @@
+- {rule_id: V-38, file: terminals/T1.yaml, path_contains: /terminal/prerequisites/2/condition}

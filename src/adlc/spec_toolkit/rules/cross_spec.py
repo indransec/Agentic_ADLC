@@ -713,6 +713,103 @@ def v17_route_subscriptions(ctx: Context) -> Iterator[Finding]:
                 )
 
 
+# ---------------------------------------------------------------------------- V-37, V-38
+
+# Outcomes that open the next terminal on the forward path (SA §6). A terminal opened by one of
+# them must check that the opening terminal really ended so: its controls passed or were waived.
+_FORWARD_OUTCOMES = ("pass", "exception")
+
+
+def _status_checked(prerequisite: dict[str, Any], cats: Catalogues) -> set[str]:
+    """Terminals whose status this prerequisite checks (evidence_ref or condition)."""
+    checked: set[str] = set()
+    ref = str(prerequisite.get("evidence_ref") or "").split(".")
+    if len(ref) == 2 and TERMINAL_ID.match(ref[0]) and ref[1] == "status":
+        checked.add(ref[0])
+    parsed = _parsed(str(prerequisite.get("condition") or ""))
+    if parsed is None:
+        return checked
+    checked.update(r.root for r in parsed.refs if len(r.path) == 2 and r.path[1] == "status")
+    for call in parsed.calls:
+        predicate = cats.predicates.get(call.name)
+        if predicate is None or len(call.args) != len(predicate.params):
+            continue  # V-12, V-13
+        for arg, param in zip(call.args, predicate.params, strict=True):
+            if param.kind == "terminal_list":
+                checked.update(arg.items)
+    return checked
+
+
+@REGISTRY.rule(
+    "V-37", "L4", "error", "A terminal opened by a pass or exception checks the opener's status"
+)
+def v37_opener_status(ctx: Context) -> Iterator[Finding]:
+    cats = catalogues(ctx)
+    known = _known_terminals(ctx)
+    for loaded in ctx.terminals():
+        t = spec(loaded)
+        checked: set[str] = set()
+        for prerequisite in t.get("prerequisites") or []:
+            if isinstance(prerequisite, dict):
+                checked |= _status_checked(prerequisite, cats)
+        openers: dict[str, list[str]] = {}
+        for event in (t.get("trigger") or {}).get("on") or []:
+            parts = str(event).split(".")
+            if len(parts) == 2 and parts[0] in known and parts[1] in _FORWARD_OUTCOMES:
+                openers.setdefault(parts[0], []).append(str(event))
+        for opener, events in sorted(openers.items()):
+            if opener not in checked:
+                yield ctx.finding(
+                    "V-37",
+                    loaded.rel,
+                    "/terminal/prerequisites",
+                    f"opened by {' or '.join(events)}, but no prerequisite checks {opener}.status",
+                )
+
+
+def _normalised(text: str) -> str:
+    return re.sub(r"\s+", "", text)
+
+
+@REGISTRY.rule(
+    "V-38",
+    "L4",
+    "error",
+    "A prerequisite does not restate another terminal's control on that terminal's own evidence",
+)
+def v38_prerequisite_restates_control(ctx: Context) -> Iterator[Finding]:
+    # Controls that judge their own terminal's work, by normalised rule text.
+    judged: dict[str, tuple[str, str]] = {}
+    for loaded in ctx.terminals():
+        owner = terminal_id(loaded)
+        for control in (spec(loaded).get("controls") or {}).get("automated") or []:
+            if not isinstance(control, dict) or not isinstance(control.get("rule"), str):
+                continue
+            parsed = _parsed(control["rule"])
+            if (
+                parsed is not None
+                and owner is not None
+                and any(r.root == owner for r in parsed.refs)
+            ):
+                judged.setdefault(_normalised(control["rule"]), (owner, str(control.get("id"))))
+    for loaded in ctx.terminals():
+        me = terminal_id(loaded)
+        for i, prerequisite in enumerate(spec(loaded).get("prerequisites") or []):
+            if not isinstance(prerequisite, dict):
+                continue
+            match = judged.get(_normalised(str(prerequisite.get("condition") or "")))
+            if match is None or match[0] == me:
+                continue
+            owner, control_id = match
+            yield ctx.finding(
+                "V-38",
+                loaded.rel,
+                f"/terminal/prerequisites/{i}/condition",
+                f"{prerequisite.get('id')} restates {control_id}, which {owner} already enforces "
+                f"on its own evidence; check {owner}.status and its emitted evidence instead",
+            )
+
+
 # ---------------------------------------------------------------------------- V-18
 
 

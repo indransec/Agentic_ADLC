@@ -43,6 +43,8 @@ code list the same ids. Ids V-01 to V-10 keep their TDS Annex B.5 meaning.
 | V-29 | L4 | error | Every agent prompt reference resolves to a prompt file written for that agent (feature 006) | `prompt common-terminal-reviewer@1.0.0 not found` |
 | V-30 | L4 | error | Agent tool permissions use a known permission verb, or an MCP scope from the MCP registry (feature 006) | `permission frobnicate:kb uses an unknown verb or MCP scope` |
 | V-31 | L4 | error | A data-class resolver's `source` names a declared terminal artifact column (feature 006) | `resolver source T2.data_plan.class is not a declared artifact column` |
+| V-37 | L4 | error | A terminal whose `trigger.on` has `T<n>.pass` or `T<n>.exception` has a prerequisite that checks `T<n>.status` (as `evidence_ref`, in the condition, or as a `terminal_list` argument such as `all_statuses_in`). Prerequisites check the opener's outcome; they do not re-run its controls | `opened by T3.pass or T3.exception, but no prerequisite checks T3.status` |
+| V-38 | L4 | error | A prerequisite's condition is not the same rule (whitespace ignored) as another terminal's automated control on that terminal's own evidence: the consuming terminal checks the producer's status and emitted evidence instead of judging its work again. A control that checks only other evidence (for example an environment hash) may be repeated as a prerequisite, because that state can change between terminals | `PRE-T5-06 restates CTL-T4-04, which T4 already enforces on its own evidence` |
 
 Registration-time refusals (database or register code, not validation findings):
 

@@ -4,7 +4,7 @@ terminal:
   metadata:
     id: T8
     name: Operate & Observe
-    version: "3.0.0"
+    version: "3.1.0"
     schema_version: "1.1.0"
     purpose: Is the system operating as expected and can we trace its impact?
     owner_role: adlc_coe
@@ -28,6 +28,11 @@ terminal:
       evidence_ref: T4.regression_pack
       condition: is_frozen(T4.regression_pack)
       description: frozen
+      on_missing: block
+    - id: PRE-T8-04
+      evidence_ref: T7.status
+      condition: T7.status == "pass"
+      description: "pass (T7 allows no exception)"
       on_missing: block
   actors:
     agent: {id: t8-operations-agent, model_tier: standard}

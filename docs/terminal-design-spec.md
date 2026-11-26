@@ -1086,6 +1086,8 @@ terminal:
 
 The lifecycle holds together because each terminal's `emits` become a later terminal's `prerequisites` and `controls`. Three values carry most of the weight: the T0 risk tier, the T1 thresholds and the T3 package hash.
 
+**Prerequisites are not a copy of the previous terminal's controls.** Controls decide whether a terminal's own work is good enough to leave; the producing terminal owns them. Prerequisites decide whether a terminal may open: its inputs exist, carry an acceptable status and are bound to the right version; the consuming terminal owns them. So a terminal opened by `Tn.pass` or `Tn.exception` checks `Tn.status` and the evidence `Tn` emitted, and never re-runs `Tn`'s controls (an exception means some were waived on purpose; a waived control comes back through `recheck_at`, as a control of the later terminal). State that can change between terminals, such as the hash deployed in an environment, may be checked again. `adlc-spec validate` enforces both halves: V-37 (the opener's status is checked) and V-38 (no prerequisite restates another terminal's control on that terminal's own evidence).
+
 | Terminal | Key evidence consumed | Key evidence emitted | Pass → | Rework → (root cause) | Agent never may |
 | --- | --- | --- | --- | --- | --- |
 | T0 Intake | Free-text use case | risk\_tier, value\_hypothesis, RACI | T1 | T0 | Write outside T0 |

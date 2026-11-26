@@ -1,0 +1,1 @@
+- {file: terminals/T1.yaml, op: append, path: /terminal/prerequisites, value: {id: PRE-T1-03, evidence_ref: T0.risk_classification, condition: 'all_rows_in(T0.risk_classification, "tier", ["low", "medium", "high"])', on_missing: block}}
