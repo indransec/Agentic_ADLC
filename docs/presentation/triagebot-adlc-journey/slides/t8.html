@@ -1,0 +1,25 @@
+<section id="t8" class="story" data-transition="fade">
+<div class="story-head"><div><p class="eyebrow">T8 · Operations · Months 2 to 5</p><h2 class="story-title">Three good months, then a model upgrade causes drift</h2></div><p class="badge b-run">Event raised</p></div>
+<div class="cols">
+<div><p class="colhead">The story</p>
+<div class="who-row"><div class="avatar"><p class="ai">LI</p></div><div><p class="pn">Lin</p><p class="pr">SRE and service owner</p></div></div>
+<p class="story-text">TriageBot runs in production with monthly reviews, which Lin passes. In month 5 the model provider upgrades the underlying model. Routing quality slips below target. The drift monitor notices the breach and raises an operational event on its own.</p></div>
+<div><p class="colhead">On screen</p>
+<div class="screen"><div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><p class="bt">Activity · TriageBot</p></div>
+<div class="sbody">
+<div class="srow"><p class="k">Monthly reviews</p><p class="v">3 passed</p></div>
+<div class="srow"><p class="k">Online eval score</p><p class="v">Below target ✗</p></div>
+<div class="srow key"><p class="k">Monitor</p><p class="v">Drift · breached</p></div>
+<div class="srow"><p class="k">Event</p><p class="v mono">T8.event.drift</p></div>
+<div class="srow"><p class="k">Waiver expiry</p><p class="v">Warned 14 days ahead</p></div>
+</div></div></div>
+<div class="hood fragment"><p class="colhead hood-h">Under the hood</p>
+<div class="tag"><p class="tn">Monitors from the spec</p><p class="td">Thresholds are evaluated on real telemetry on a schedule</p></div>
+<div class="tag"><p class="tn">Events, not tickets</p><p class="td">A breach raises one event per episode, with the values it saw</p></div>
+<div class="tag"><p class="tn">Event routes</p><p class="td">The T8 spec sends drift to T9 for a change decision</p></div>
+</div>
+</div>
+<div class="path"><p class="pl">Review run</p><p class="st" style="--i:0">opened</p><p class="ar" style="--i:1">→</p><p class="st" style="--i:1">building</p><p class="ar" style="--i:2">→</p><p class="st" style="--i:2">checking</p><p class="ar" style="--i:3">→</p><p class="st" style="--i:3">reviewing</p><p class="ar" style="--i:4">→</p><p class="st hu" style="--i:4">sign-off</p><p class="ar" style="--i:5">→</p><p class="st o pass" style="--i:5">closed · pass</p><p class="ar" style="--i:6">·</p><p class="st o reentry" style="--i:6">event → T9</p></div>
+<div class="track"><p class="lbl">Journey</p><p class="t done">T0</p><p class="t done">T1</p><p class="t done">T2</p><p class="t done">T3</p><p class="t done">T4</p><p class="t done">T5</p><p class="t done">T6</p><p class="t done">T7</p><p class="t on">T8</p><p class="t">T9</p><p class="lap">Lap 1</p></div>
+<aside>Operations is continuous: T8 opens a new review run on a schedule, and the service owner signs each one. The model upgrade is not the team’s choice, which is exactly why the lifecycle needs a way to react to change from outside. In the demo, the driver swaps the pilot’s model to cause this drift for real.</aside>
+</section>

@@ -1,0 +1,25 @@
+<section id="t4-rework" class="story" data-transition="fade">
+<div class="story-head"><div><p class="eyebrow">T4 · Evaluation · Week 4 · Rework to T3</p><h2 class="story-title">Evaluation finds a defect, and Sana sends the build back to T3</h2></div><p class="badge b-rework">Rework → T3</p></div>
+<div class="cols">
+<div><p class="colhead">The story</p>
+<div class="who-row"><div class="avatar"><p class="ai">SA</p></div><div><p class="pn">Sana</p><p class="pr">QA and evaluation lead</p></div></div>
+<p class="story-text">The evaluation agent runs the golden dataset against the candidate. Under load, a tool call times out and incidents go unrouted. Sana chooses <b>rework</b> with root cause <b>implementation</b>, which routes the work back to <b>T3</b> with the defect log attached.</p></div>
+<div><p class="colhead">On screen</p>
+<div class="screen"><div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><p class="bt">Run · T4 · evaluation</p></div>
+<div class="sbody">
+<div class="srow"><p class="k">Golden dataset</p><p class="v">Run complete</p></div>
+<div class="srow"><p class="k">Routing quality</p><p class="v">Below threshold ✗</p></div>
+<div class="srow"><p class="k">Defect</p><p class="v">Tool timeout under load</p></div>
+<div class="srow key"><p class="k">Decision</p><p class="v">Rework · implementation</p></div>
+<div class="srow"><p class="k">Goes to</p><p class="v">T3, run 2</p></div>
+</div></div></div>
+<div class="hood fragment"><p class="colhead hood-h">Under the hood</p>
+<div class="tag"><p class="tn">T4.rework.implementation</p><p class="td">The root cause decides where the work goes: here, to an earlier terminal</p></div>
+<div class="tag"><p class="tn">Defect log</p><p class="td">Travels with the event into T3 run 2’s context pack</p></div>
+<div class="tag"><p class="tn">Thresholds from the profile</p><p class="td">Pass marks are the targets agreed at T1, not values in code</p></div>
+</div>
+</div>
+<div class="path"><p class="pl">Run 1</p><p class="st" style="--i:0">opened</p><p class="ar" style="--i:1">→</p><p class="st" style="--i:1">building</p><p class="ar" style="--i:2">→</p><p class="st" style="--i:2">checking</p><p class="ar" style="--i:3">→</p><p class="st" style="--i:3">reviewing</p><p class="ar" style="--i:4">→</p><p class="st hu" style="--i:4">sign-off</p><p class="ar" style="--i:5">→</p><p class="st o rework" style="--i:5">closed · rework → T3</p></div>
+<div class="track"><p class="lbl">Journey</p><p class="t done">T0</p><p class="t done">T1</p><p class="t done">T2</p><p class="t on">T3</p><p class="t on">T4</p><p class="t">T5</p><p class="t">T6</p><p class="t">T7</p><p class="t">T8</p><p class="t">T9</p><p class="lap">Lap 1</p></div>
+<aside>A rework can cross terminals. The root causes are a catalogue, and each one maps to the terminal that owns the fix: an implementation defect goes to build, a requirement gap to T1. In the journey chart this shows as an arrow backwards. The dashboard groups reworks by root cause so the portfolio can see which stage leaks most.</aside>
+</section>

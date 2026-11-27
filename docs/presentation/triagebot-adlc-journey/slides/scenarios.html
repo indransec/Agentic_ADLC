@@ -1,0 +1,17 @@
+<section id="scenarios">
+<p class="eyebrow">Scenarios</p>
+<h2 class="title">Nine paths a run can take, all handled by the same state machine</h2>
+<table class="stable rise" style="--i:1; font-size:24px">
+<tr><th style="width:24%">Scenario</th><th style="width:17%">Where it happened</th><th style="width:33%">Run states</th><th style="width:26%">Result</th></tr>
+<tr><td>One-shot pass</td><td>T0, T2, T6–T9</td><td>opened → building → checking → reviewing → sign-off</td><td>Pass; the next terminal opens</td></tr>
+<tr><td>Rework in place</td><td>T1</td><td>… sign-off → closed, rework</td><td>Run 2 gets the owner’s comment</td></tr>
+<tr><td>Rework to an earlier terminal</td><td>T4 → T3</td><td>… sign-off → closed, rework</td><td>The root cause picks the terminal</td></tr>
+<tr><td>Clarification</td><td>T2</td><td>building → clarification → building</td><td>Same run resumes; not a rework</td></tr>
+<tr><td>Escalation</td><td>T5</td><td>building → escalated</td><td>A person completes the run</td></tr>
+<tr><td>Exception with waiver</td><td>T5</td><td>escalated → sign-off → closed</td><td>Owner, expiry and safeguard recorded</td></tr>
+<tr><td>Rework limit reached</td><td>Second use case, T1</td><td>fourth rejection → escalated</td><td>A person takes over the run</td></tr>
+<tr><td>Prerequisite missing</td><td>Any terminal</td><td>opened → blocked</td><td>Waits until the evidence exists</td></tr>
+<tr><td>Event from operations</td><td>T8 → T9</td><td>review pass, then a drift event</td><td>Re-entry decided by change class</td></tr>
+</table>
+<aside>The first seven paths ran in the rehearsed demo; the rework-limit case is the demo’s second use case, whose T1 is rejected four times. Prerequisite blocking is covered by the platform’s tests rather than the demo. Engineers: a delivery that keeps failing goes to the dead-letter queue, which only the CoE role can see and replay.</aside>
+</section>

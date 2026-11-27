@@ -1,0 +1,34 @@
+<section id="dash-agent" class="dash" data-transition="fade">
+<div class="dhead"><div><p class="eyebrow">Dashboard · One agent · TriageBot, month 5</p><h2 class="dtitle">TriageBot is degraded: routing quality fell below target after the model upgrade</h2></div><p class="illus">Illustrative figures</p></div>
+<div class="tiles">
+<div class="tile" style="--i:0"><p class="tv">105</p><p class="tl">Days live</p><p class="tx">Since week 6</p></div>
+<div class="tile" style="--i:1"><p class="tv bad" style="font-size:56px; line-height:72px">Degraded</p><p class="tl">Health</p><p class="tx bad">1 monitor breached</p></div>
+<div class="tile" style="--i:2"><p class="tv">0.87</p><p class="tl">Routing accuracy, online eval</p><p class="tx bad">Target 0.90</p></div>
+<div class="tile" style="--i:3"><p class="tv">2.4s</p><p class="tl">p95 triage latency</p><p class="tx up">Within target</p></div>
+<div class="tile" style="--i:4"><p class="tv">L2</p><p class="tl">Autonomy level</p><p class="tx">Suggests; people confirm</p></div>
+<div class="tile" style="--i:5"><p class="tv">14d</p><p class="tl">Until the waiver expires</p><p class="tx warn">Warning sent</p></div>
+</div>
+<div class="panels" style="grid-template-columns:1.4fr 1fr">
+<div class="panel" style="--i:0"><p class="pht">Drift: weekly routing accuracy</p><p class="phs">Online evaluation on live traffic, weeks 1 to 14</p>
+<div style="position:relative; width:900px; height:240px; margin-top:16px">
+<svg aria-label="Weekly routing accuracy stays between 0.92 and 0.94 for ten weeks, then drops to 0.86–0.88 after the model upgrade, below the 0.90 target." style="position:absolute; left:0; top:0" width="900" height="240" viewBox="0 0 900 240">
+<line x1="0" y1="120" x2="900" y2="120" stroke="#E6A93E" stroke-width="3" stroke-dasharray="10 8"/>
+<line x1="628" y1="0" x2="628" y2="240" stroke="#F28B7E" stroke-width="3" stroke-dasharray="6 8"/>
+<polyline points="20,60 84,60 148,40 212,60 276,80 340,60 404,40 468,60 532,60 596,80 660,160 724,180 788,200 852,180" fill="none" stroke="#8CB8E8" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="1400" stroke-dashoffset="0"><animate attributeName="stroke-dashoffset" from="1400" to="0" dur="2.5s" begin="0s"/></polyline>
+<circle cx="852" cy="180" r="9" fill="#F28B7E"/>
+</svg>
+<p style="position:absolute; left:20px; top:128px; width:220px; font-size:24px; color:#E6A93E">Target 0.90</p>
+<p style="position:absolute; left:640px; top:4px; width:240px; font-size:24px; color:#F28B7E">Model upgrade</p>
+</div></div>
+<div class="panel" style="--i:1"><p class="pht">Monitors and signals</p><p class="phs">From the T8 spec, on live telemetry</p>
+<div class="mon">
+<div class="mrow"><p class="mk">Drift</p><p class="mv bad">Breached · event raised</p></div>
+<div class="mrow"><p class="mk">Latency</p><p class="mv up">OK</p></div>
+<div class="mrow"><p class="mk">Cost per incident</p><p class="mv up">Within budget</p></div>
+<div class="mrow"><p class="mk">Guardrail violations</p><p class="mv up">0</p></div>
+<div class="mrow"><p class="mk">Monthly reviews</p><p class="mv">3 passed</p></div>
+<div class="mrow"><p class="mk">Next step</p><p class="mv">T9 change impact</p></div>
+</div></div>
+</div>
+<aside>The same agent, at the moment of the drift on the T8 slide. Figures are illustrative. The data behind each panel already flows through the platform: online evaluation and latency from the observability stack, monitors and events from T8, the waiver from T5. Putting them on one health page is a proposed addition; today they live on the run, activity and journey pages.</aside>
+</section>

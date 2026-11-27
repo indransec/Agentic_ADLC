@@ -1,0 +1,25 @@
+<section id="t3t4-pass" class="story" data-transition="fade">
+<div class="story-head"><div><p class="eyebrow">T3 and T4 · Week 5 · Run 2 of each</p><h2 class="story-title">The fix gets a new hash, and the new hash is evaluated from scratch</h2></div><p class="badge b-pass">Both passed</p></div>
+<div class="cols">
+<div><p class="colhead">The story</p>
+<div class="who-row"><div class="avatar"><p class="ai">AR</p></div><div><p class="pn">Arjun and Sana</p><p class="pr">Build and evaluation</p></div></div>
+<p class="story-text">The build agent reads the defect log, adds a timeout and retry, and produces a new package. Nothing from the first evaluation carries over: T4 run 2 tests the <b>new hash</b> against the same thresholds. It meets them. Sana and Ravi pass it.</p></div>
+<div><p class="colhead">On screen</p>
+<div class="screen"><div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><p class="bt">Journey · T3 and T4</p></div>
+<div class="sbody">
+<div class="srow"><p class="k">T3 run 1</p><p class="v mono">sha256:7f3a… · pass</p></div>
+<div class="srow"><p class="k">T4 run 1</p><p class="v">Rework → T3</p></div>
+<div class="srow"><p class="k">T3 run 2</p><p class="v mono">sha256:b91d… · pass</p></div>
+<div class="srow key"><p class="k">T4 run 2</p><p class="v">Thresholds met · pass</p></div>
+<div class="srow"><p class="k">Approvals</p><p class="v">Sana ✓ · Ravi ✓</p></div>
+</div></div></div>
+<div class="hood fragment"><p class="colhead hood-h">Under the hood</p>
+<div class="tag"><p class="tn">New hash, new chain</p><p class="td">Evidence about the old package can never vouch for the new one</p></div>
+<div class="tag"><p class="tn">Run versions</p><p class="td">Ledger keys UC-0001/T3/run-2 and T4/run-2 sit beside run 1, never over it</p></div>
+<div class="tag"><p class="tn">First-pass yield</p><p class="td">T3’s first run passed; T4’s did not, and the KPI shows it</p></div>
+</div>
+</div>
+<div class="path"><p class="pl">T4 run 2</p><p class="st" style="--i:0">opened</p><p class="ar" style="--i:1">→</p><p class="st" style="--i:1">building</p><p class="ar" style="--i:2">→</p><p class="st" style="--i:2">checking</p><p class="ar" style="--i:3">→</p><p class="st" style="--i:3">reviewing</p><p class="ar" style="--i:4">→</p><p class="st hu" style="--i:4">sign-off</p><p class="ar" style="--i:5">→</p><p class="st o pass" style="--i:5">closed · pass</p></div>
+<div class="track"><p class="lbl">Journey</p><p class="t done">T0</p><p class="t done">T1</p><p class="t done">T2</p><p class="t on">T3</p><p class="t on">T4</p><p class="t">T5</p><p class="t">T6</p><p class="t">T7</p><p class="t">T8</p><p class="t">T9</p><p class="lap">Lap 1</p></div>
+<aside>Hashes shown are illustrative. Run versions are kept side by side in the ledger, so an auditor can see the first attempt, why it was sent back, and what changed. The T4 sign-off needs the QA lead and the product owner.</aside>
+</section>

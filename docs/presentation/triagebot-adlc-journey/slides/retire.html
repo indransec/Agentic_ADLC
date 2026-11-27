@@ -1,0 +1,25 @@
+<section id="retire" class="story" data-transition="fade">
+<div class="story-head"><div><p class="eyebrow">T8 → T9 · Retire · Month 24</p><h2 class="story-title">A new platform replaces TriageBot, and it is retired cleanly</h2></div><p class="badge b-retire">Lifecycle closed</p></div>
+<div class="cols">
+<div><p class="colhead">The story</p>
+<div class="who-row"><div class="avatar"><p class="ai">PR</p></div><div><p class="pn">Priya, Lin and the data owner</p><p class="pr">Three approvers</p></div></div>
+<p class="story-text">Two years on, the service desk moves to a new platform. Priya <b>terminates</b> TriageBot at T8, which opens T9 in <b>retire</b> mode. The agent follows the retirement procedure step by step. Business, service and data owners all approve, and the lifecycle closes.</p></div>
+<div><p class="colhead">On screen</p>
+<div class="screen"><div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><p class="bt">Run · T9 · retirement</p></div>
+<div class="sbody">
+<div class="srow"><p class="k">New traffic</p><p class="v">Disabled ✓</p></div>
+<div class="srow"><p class="k">In-flight incidents</p><p class="v">Handed off ✓</p></div>
+<div class="srow"><p class="k">Identity and secrets</p><p class="v">Revoked ✓</p></div>
+<div class="srow"><p class="k">Data and logs</p><p class="v">Disposed per retention ✓</p></div>
+<div class="srow key"><p class="k">Registry and CMDB</p><p class="v">Updated ✓</p></div>
+</div></div></div>
+<div class="hood fragment"><p class="colhead hood-h">Under the hood</p>
+<div class="tag"><p class="tn">tool_scopes_by_mode: retire</p><p class="td">Revoking identity and updating the CMDB are allowed only in this mode</p></div>
+<div class="tag"><p class="tn">Retirement controls</p><p class="td">Credentials revoked and dependants checked before anyone can pass</p></div>
+<div class="tag"><p class="tn">sign_off.by_mode: 3 owners</p><p class="td">Business, service and data owners must all approve</p></div>
+</div>
+</div>
+<div class="path"><p class="pl">Retire run</p><p class="st" style="--i:0">opened</p><p class="ar" style="--i:1">→</p><p class="st" style="--i:1">building</p><p class="ar" style="--i:2">→</p><p class="st" style="--i:2">checking</p><p class="ar" style="--i:3">→</p><p class="st" style="--i:3">reviewing</p><p class="ar" style="--i:4">→</p><p class="st hu" style="--i:4">sign-off · 3 of 3</p><p class="ar" style="--i:5">→</p><p class="st o pass" style="--i:5">closed · retired</p></div>
+<div class="track"><p class="lbl">Journey</p><p class="t done">T0</p><p class="t done">T1</p><p class="t done">T2</p><p class="t done">T3</p><p class="t done">T4</p><p class="t done">T5</p><p class="t done">T6</p><p class="t done">T7</p><p class="t done">T8</p><p class="t on">T9</p><p class="lap">Closed</p></div>
+<aside>Retirement is a governed step, not a switch-off. The agent gets the permissions it needs to dismantle itself only while in retire mode, and the closure report becomes the last ledger record.</aside>
+</section>

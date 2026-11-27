@@ -1,0 +1,36 @@
+<section id="runmodel">
+<p class="eyebrow">How a run works</p>
+<h2 class="title">Inside a terminal: one run, nine states</h2>
+<div class="smhost" style="margin-top:32px">
+<!-- G 0,40,240,120  H 284,40,240,120  A 0,260  B 284,260  C 568,260  D 852,260  E 1136,260  F 1420,260 (240x120)  I 1136,480,240,120 -->
+<div class="sm" style="left:0; top:40px; --i:7"><p class="sn">Blocked</p><p class="sw">prerequisite missing</p></div>
+<div class="sm hu" style="left:284px; top:40px; --i:8"><p class="sn">Clarification</p><p class="sw">a role answers</p></div>
+<div class="sm" style="left:0; top:260px; --i:0"><p class="sn">Opened</p><p class="sw">event received</p></div>
+<div class="sm" style="left:284px; top:260px; --i:1"><p class="sn">Building</p><p class="sw">agent works</p></div>
+<div class="sm" style="left:568px; top:260px; --i:2"><p class="sn">Checking</p><p class="sw">controls run</p></div>
+<div class="sm" style="left:852px; top:260px; --i:3"><p class="sn">Reviewing</p><p class="sw">reviewer agent</p></div>
+<div class="sm hu" style="left:1136px; top:260px; --i:4"><p class="sn">Sign-off</p><p class="sw">people decide</p></div>
+<div class="sm end" style="left:1420px; top:260px; --i:5"><p class="sn">Closed</p><p class="sw">outcome sealed</p></div>
+<div class="sm hu" style="left:1136px; top:480px; --i:9"><p class="sn">Escalated</p><p class="sw">a person takes over</p></div>
+<x-connector x1="240" y1="320" x2="284" y2="320"></x-connector>
+<x-connector x1="524" y1="320" x2="568" y2="320"></x-connector>
+<x-connector x1="808" y1="320" x2="852" y2="320"></x-connector>
+<x-connector x1="1092" y1="320" x2="1136" y2="320"></x-connector>
+<x-connector x1="1376" y1="320" x2="1420" y2="320"></x-connector>
+<x-connector x1="120" y1="260" x2="120" y2="160" head="both"></x-connector>
+<x-connector x1="404" y1="260" x2="404" y2="160" head="both"></x-connector>
+<x-connector x1="1256" y1="380" x2="1256" y2="480"></x-connector>
+<x-connector x1="1376" y1="540" x2="1540" y2="380" route="hv"></x-connector>
+<x-connector x1="688" y1="380" x2="688" y2="430" head="none"></x-connector>
+<x-connector x1="688" y1="430" x2="404" y2="430" head="none"></x-connector>
+<x-connector x1="404" y1="430" x2="404" y2="380"></x-connector>
+<p class="cl" style="left:420px; top:440px; width:400px">Controls fail: agent retries, up to 3</p>
+<p class="cl" style="left:1268px; top:396px; width:250px">Rework limit or age</p>
+<div class="cl" style="left:852px; top:24px; width:808px"><p style="font-size:26px; color:var(--ink); line-height:1.35">A person closes every run: <b>pass</b>, <b>rework</b>, <b>exception</b> with a waiver, or <b>terminate</b>. Past the retry cap the run <b>escalates</b>. At sign-off or when escalated, people can <b>edit</b> the agent’s artifacts, and the controls run again.</p></div>
+</div>
+<div class="smlegend fadein" style="--i:12">
+<div class="lg"><div class="sq"></div><p class="lt">Platform and agents drive it</p></div>
+<div class="lg"><div class="sq hu"></div><p class="lt">A person must act</p></div>
+</div>
+<aside>Walk the main row left to right: an event opens the run, the terminal’s agent builds the artifacts, the policy engine runs the spec’s controls, the reviewer agent recommends, and people sign off. Three side states: blocked only when a prerequisite is missing (a new event with the evidence reopens it; failing controls never block, they send the agent back to building), clarification when the agent needs an answer from a named role (the same run resumes, it is not a rework), and escalated when a limit is hit: the retry cap (timeline.max_auto_retries, 3 by default, shared by failed agent output, failed controls and interrupted steps), the rework limit, the run’s age, clarification rounds or SLA, or the token budget. At sign-off or escalated, an accountable or signing role can edit an artifact: a new version is saved, the controls re-run, and the human edit rate KPI counts it. Engineers: the states are RunState in orchestration/states.py (opened, blocked, building, awaiting_clarification, checking, reviewing, awaiting_sign_off, escalated, closed), and every transition is a recorded state change.</aside>
+</section>

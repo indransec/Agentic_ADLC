@@ -1,0 +1,39 @@
+<section id="arch-azure">
+<p class="eyebrow">A2 · Azure reference architecture</p>
+<h2 class="title">The same layers on Azure, private by default</h2>
+<div class="arch">
+<div class="zone"><p class="zh">People</p>
+<p class="chip2" style="--i:0">Entra ID sign-in (SSO)</p>
+<p class="chip2" style="--i:1">Web app or Azure Boards</p>
+<p class="chip2" style="--i:2">Roles from Entra app roles</p>
+</div>
+<div class="arrowcol"><x-shape kind="arrow-right"></x-shape></div>
+<div class="zone plat"><p class="zh">Platform spoke VNet</p>
+<div class="lrow" style="--i:0"><p class="lname">Edge</p><p class="lc">Front Door Premium + WAF (only public entry)</p></div>
+<div class="lrow" style="--i:1"><p class="lname">Experience</p><p class="lc">Container Apps: web app · Azure Boards</p></div>
+<div class="lrow" style="--i:2"><p class="lname">Orchestration</p><p class="lc">Worker apps · Service Bus Premium (sessions)</p></div>
+<div class="lrow" style="--i:3"><p class="lname">Agents</p><p class="lc">Agent workers (KEDA) · APIM AI gateway</p></div>
+<div class="lrow" style="--i:4"><p class="lname">Policy</p><p class="lc">API app · AI Content Safety · Entra app roles</p></div>
+<div class="lrow" style="--i:5"><p class="lname">Specs &amp; config</p><p class="lc">Specs in DevOps Repos · registered in database</p></div>
+<div class="lrow" style="--i:6"><p class="lname">Data &amp; evidence</p><p class="lc">PostgreSQL HA · Blob WORM · ledger digests</p></div>
+<div class="lrow" style="--i:7"><p class="lname">Integration</p><p class="lc">MCP servers on Container Apps via APIM</p></div>
+</div>
+<div class="arrowcol"><x-shape kind="arrow-right"></x-shape></div>
+<div style="display:flex; flex-direction:column; gap:12px">
+<div class="zone" style="flex:1"><p class="zh">Enterprise</p>
+<p class="chip2" style="--i:4">SharePoint, Confluence, AI Search</p>
+<p class="chip2" style="--i:5">ServiceNow ITSM, CMDB</p>
+<p class="chip2" style="--i:6">Entra ID, Microsoft Graph</p>
+<p class="chip2" style="--i:7">DevOps Pipelines, ACR</p>
+<p class="chip2" style="--i:8">Foundry models</p>
+</div>
+<div class="zone pilot"><p class="zh">Pilot VNet</p>
+<p class="chip2" style="--i:9">Container Apps envs, revision traffic split</p>
+</div>
+</div>
+</div>
+<div class="band"><p class="bh">Security</p><p class="bt2">Managed identities · Key Vault · Defender for Cloud · Purview · Azure Policy</p></div>
+<div class="band" style="margin-top:8px"><p class="bh">Observability</p><p class="bt2">Azure Monitor: Application Insights (OpenTelemetry) · Log Analytics · Managed Grafana</p></div>
+<p class="netnote fadein" style="--i:10">Private endpoints for every data service · the pilot VNet is reached only through the bridge · one Front Door entry</p>
+<aside>A reference mapping to typical enterprise Azure standards; confirm each choice with your cloud platform team. Hosting: Container Apps for web, API, workers and MCP servers (AKS if mandated); same images as the MVP. Events: the PostgreSQL outbox stays the source of truth; a relay publishes committed events to Service Bus Premium; the event router consumes with sessions keyed by use case so order holds; agent-step workers scale on queue length with KEDA, capped by model quota; timers and monitors run as one worker or a scheduled job. Data: PostgreSQL Flexible Server, zone-redundant, dedicated because it holds the ledger; evidence files in Blob Storage with versioning and WORM retention; optional digests to Azure Confidential Ledger. Models: API Management AI gateway in front of Microsoft Foundry, Claude first, Azure OpenAI as fallback, token limits per subscription. Identity: Entra ID OIDC for people, app roles mapped to roles.yaml, Microsoft Graph for the directory check, managed identities for services, Key Vault for the session secret and tool token key. Guardrails: AI Content Safety Prompt Shields; Foundry AI red teaming at T5. Source and CI: Azure DevOps Repos and Pipelines, deploy by image digest from ACR; Azure Boards for Phase 2. Pilot rollout: Container Apps revisions with traffic weights for canary; shadow needs request mirroring in API Management. Verify before presenting: Claude availability in Foundry for your region, MCP support in API Management, Entra Agent ID maturity for the agent registry.</aside>
+</section>

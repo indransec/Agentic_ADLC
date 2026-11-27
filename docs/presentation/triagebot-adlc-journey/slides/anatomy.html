@@ -1,0 +1,16 @@
+<section id="anatomy">
+<p class="eyebrow">Under the hood</p>
+<h2 class="title">Five parts of the platform take part in every run</h2>
+<div class="lanes4">
+<div class="comp rise" style="--i:0"><h3 class="cn">Orchestrator</h3><p class="cs mono">events · states</p><p class="cd">Opens a run when an event arrives, moves it through its states, routes the outcome to the next terminal.</p></div>
+<div class="comp rise" style="--i:1"><h3 class="cn">Terminal agent</h3><p class="cs mono">model · MCP tools</p><p class="cd">Gets a context pack: spec, profile, earlier evidence, playbooks. Calls only the tools its authorities allow.</p></div>
+<div class="comp rise" style="--i:2"><h3 class="cn">Policy engine</h3><p class="cs mono">controls · authorization</p><p class="cd">Checks prerequisites and controls from the spec, every tool call, and the run’s data ceiling.</p></div>
+<div class="comp rise" style="--i:3"><h3 class="cn">Reviewer agent</h3><p class="cs mono">checklist · recommend</p><p class="cd">An independent agent scores the checklist and recommends an outcome. It never decides.</p></div>
+<div class="comp hu rise" style="--i:4"><h3 class="cn">People</h3><p class="cs mono">inbox · board</p><p class="cd">Answer questions, edit artifacts, approve, and choose the outcome. Their decision closes the run.</p></div>
+</div>
+<div class="flowline fadein" style="--i:6">
+<p class="fl">Event</p><p class="fa">→</p><p class="fl">Run opened</p><p class="fa">→</p><p class="fl">Artifacts</p><p class="fa">→</p><p class="fl">Controls</p><p class="fa">→</p><p class="fl">Review</p><p class="fa">→</p><p class="fl">Decision</p><p class="fa">→</p><p class="fl">Ledger sealed</p>
+</div>
+<p class="lede rise" style="--i:7">Everything that happens is appended to the ledger and tied to the spec version, the actor and a content hash. Nothing can be edited or deleted afterwards.</p>
+<aside>Engineering slide. The orchestrator is a state machine on the database (ADR-01). Agents reach enterprise systems only through MCP servers, and authorization is deny by default. Controls are CEL rules written in the spec; a failed control sends the agent back to work, up to the spec’s retry cap (3 by default), then the run escalates. People can edit an artifact at sign-off or escalated; the edit is a new version and the controls run again before anyone decides. Ledger rows are append-only: database triggers refuse UPDATE and DELETE, and adlc-ledger verify detects any bypass. Tracing links every step by run id.</aside>
+</section>

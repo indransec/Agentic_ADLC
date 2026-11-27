@@ -1,0 +1,25 @@
+<section id="t6" class="story" data-transition="fade">
+<div class="story-head"><div><p class="eyebrow">T6 · Readiness · Week 6 · Pass</p><h2 class="story-title">Before release, the whole evidence chain is checked against one hash</h2></div><p class="badge b-pass">Authorised</p></div>
+<div class="cols">
+<div><p class="colhead">The story</p>
+<div class="who-row"><div class="avatar"><p class="ai">TO</p></div><div><p class="pn">Tom</p><p class="pr">Release manager</p></div></div>
+<p class="story-text">The readiness agent confirms that every earlier terminal closed, that evaluation and assurance cover the <b>same hash</b>, and that the waiver is valid. It raises a change request. Tom approves the change in his inbox; Tom, Lin and Priya sign off. The release is <b>authorised</b>.</p></div>
+<div><p class="colhead">On screen</p>
+<div class="screen"><div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><p class="bt">Inbox · change requests</p></div>
+<div class="sbody">
+<div class="srow"><p class="k">Evidence chain T0–T5</p><p class="v">Complete ✓</p></div>
+<div class="srow"><p class="k">Hash evaluated = assured</p><p class="v mono">b91d… ✓</p></div>
+<div class="srow"><p class="k">Waiver</p><p class="v">Valid until expiry ✓</p></div>
+<div class="srow key"><p class="k">Change request</p><p class="v">Approved by Tom</p></div>
+<div class="srow"><p class="k">Approvals</p><p class="v">3 of 3 ✓</p></div>
+</div></div></div>
+<div class="hood fragment"><p class="colhead hood-h">Under the hood</p>
+<div class="tag"><p class="tn">mcp:servicenow:change_create</p><p class="td">The change record is raised in the ITSM tool, not retyped by hand</p></div>
+<div class="tag"><p class="tn">Authorised hash</p><p class="td">Only the hash in the deployment package may go to production</p></div>
+<div class="tag"><p class="tn">sign_off: 3 roles · CAB by tier</p><p class="td">Release, service and business owners; the CAB only where the tier requires</p></div>
+</div>
+</div>
+<div class="path"><p class="pl">Run 1</p><p class="st" style="--i:0">opened</p><p class="ar" style="--i:1">→</p><p class="st" style="--i:1">building</p><p class="ar" style="--i:2">→</p><p class="st" style="--i:2">checking</p><p class="ar" style="--i:3">→</p><p class="st" style="--i:3">reviewing</p><p class="ar" style="--i:4">→</p><p class="st hu" style="--i:4">change approved</p><p class="ar" style="--i:5">→</p><p class="st hu" style="--i:5">sign-off</p><p class="ar" style="--i:6">→</p><p class="st o pass" style="--i:6">closed · pass</p></div>
+<div class="track"><p class="lbl">Journey</p><p class="t done">T0</p><p class="t done">T1</p><p class="t done">T2</p><p class="t done">T3</p><p class="t done">T4</p><p class="t done">T5</p><p class="t on">T6</p><p class="t">T7</p><p class="t">T8</p><p class="t">T9</p><p class="lap">Lap 1</p></div>
+<aside>T6 is where governance pays off: instead of a meeting that asks whether everything was done, the platform proves it from the ledger. The change request in the demo is a mocked ITSM tool. Engineers: the authorised hash is bound from the T6 deployment package; T7 can deploy nothing else.</aside>
+</section>

@@ -1,0 +1,28 @@
+<section id="cost" style="padding:128px 128px 160px">
+<p class="eyebrow">A3 · Running cost on Azure</p>
+<h2 class="title">About $1.5–2.5k a month on existing enterprise services; $4.5–7k standalone</h2>
+<div class="cbrow"><p class="cbl">Standalone, enterprise standard</p>
+<div class="cbar" style="--i:0"><div class="cseg" style="width:192px; background:#2B6CB0"></div><div class="cseg" style="width:145px; background:#1F7A6B"></div><div class="cseg" style="width:364px; background:#8CB8E8"></div><div class="cseg" style="width:187px; background:#A86400"></div><div class="cseg" style="width:208px; background:#6B4FA0"></div></div>
+<p class="cbt">$4.5–7k</p></div>
+<div class="cbrow"><p class="cbl">Lean tiers</p>
+<div class="cbar" style="--i:1"><div class="cseg" style="width:166px; background:#2B6CB0"></div><div class="cseg" style="width:128px; background:#1F7A6B"></div><div class="cseg" style="width:43px; background:#8CB8E8"></div><div class="cseg" style="width:176px; background:#A86400"></div><div class="cseg" style="width:208px; background:#6B4FA0"></div></div>
+<p class="cbt">$3–4k</p></div>
+<div class="cbrow"><p class="cbl">On existing enterprise services</p>
+<div class="cbar" style="--i:2"><div class="cseg" style="width:192px; background:#2B6CB0"></div><div class="cseg" style="width:135px; background:#1F7A6B"></div><div class="cseg" style="width:6px; background:#8CB8E8"></div><div class="cseg" style="width:80px; background:#A86400"></div></div>
+<p class="cbt">$1.5–2.5k</p></div>
+<div class="clegend fadein" style="--i:6">
+<div class="li"><div class="swatch" style="background:#2B6CB0"></div><p class="lt">Compute</p></div>
+<div class="li"><div class="swatch" style="background:#1F7A6B"></div><p class="lt">Data</p></div>
+<div class="li"><div class="swatch" style="background:#8CB8E8"></div><p class="lt">Edge, gateway, messaging</p></div>
+<div class="li"><div class="swatch" style="background:#A86400"></div><p class="lt">Security and operations</p></div>
+<div class="li"><div class="swatch" style="background:#6B4FA0"></div><p class="lt">Model tokens</p></div>
+</div>
+<div class="cards2">
+<div class="ccard" style="--i:0"><h3 class="ch">Not included</h3>
+<ul class="vlist" style="font-size:24px"><li>Hub network and firewall (landing zone)</li><li>Entra ID, Purview and Microsoft 365 licences</li><li>Each live agent’s own running cost</li><li>People’s time, where the savings are</li></ul></div>
+<div class="ccard" style="--i:1"><h3 class="ch">Check before committing</h3>
+<ul class="vlist" style="font-size:24px"><li>Which models your provisioned throughput covers</li><li>Token limits on shared capacity</li><li>Chargeback for shared services</li><li>Keep the ledger database dedicated</li></ul></div>
+</div>
+<p class="lfoot">Ballpark in USD per month at pay-as-you-go list prices; medium traffic: ~20 use cases, ~300 runs and ~50 users a month. Verify in the Azure Pricing Calculator.</p>
+<aside>Assumptions: about 20 use cases in the lifecycle with 8 live, 300 terminal runs a month, 50 named users, about 150k input and 30k output tokens per run on a Sonnet-class model, 60 to 100 GB of telemetry, 1 TB of evidence after a year, private endpoints everywhere and a zone-redundant database. Standalone midpoints: compute about $925 (platform apps and pilot environments), data about $700 (PostgreSQL HA, Blob, AI Search), edge, gateway and messaging about $1,750 (Front Door Premium, API Management Standard v2, Service Bus Premium), security and operations about $900 (Monitor, Defender, network, registry, DevOps, Key Vault), tokens about $1,000. Lean uses Front Door Standard, Service Bus Standard, API Management Basic v2 and AI Search Basic. On existing services, the platform pays only for its dedicated compute, database, storage, search and private endpoints, plus metered log ingestion and Defender; tokens are near zero if provisioned throughput has headroom. Reservations or a savings plan take 30 to 50 percent off database and compute. A live agent’s own tokens belong to its use case: TriageBot at about 1,000 incidents a day is roughly $500 to $800 a month on a Sonnet-class model.</aside>
+</section>

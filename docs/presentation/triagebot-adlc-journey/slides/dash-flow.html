@@ -1,0 +1,34 @@
+<section id="dash-flow" class="dash" data-transition="fade">
+<div class="dhead"><div><p class="eyebrow">Dashboard · Flow and quality</p><h2 class="dtitle">Requirements and evaluation cause most reworks; waiting for people costs most time</h2></div><p class="illus">Illustrative figures</p></div>
+<div class="panels3">
+<div class="panel" style="--i:0"><p class="pht">Reworks by root cause</p><p class="phs">19 in the last 90 days</p>
+<div class="hbars">
+<div class="hb"><p class="hk" style="width:170px">Requirement</p><div class="track2"><div class="fill" style="width:100%; background:var(--rework-l); --i:0"></div></div><p class="hv">7</p></div>
+<div class="hb"><p class="hk" style="width:170px">Implementation</p><div class="track2"><div class="fill" style="width:86%; background:var(--rework-l); --i:1"></div></div><p class="hv">6</p></div>
+<div class="hb"><p class="hk" style="width:170px">Design</p><div class="track2"><div class="fill" style="width:57%; background:var(--rework-l); --i:2"></div></div><p class="hv">4</p></div>
+<div class="hb"><p class="hk" style="width:170px">Data</p><div class="track2"><div class="fill" style="width:29%; background:var(--rework-l); --i:3"></div></div><p class="hv">2</p></div>
+</div></div>
+<div class="panel" style="--i:1"><p class="pht">Where elapsed time goes</p><p class="phs">Share of run time, all terminals</p>
+<div class="hbars">
+<div class="hb"><p class="hk" style="width:170px">People</p><div class="track2"><div class="fill" style="width:100%; background:var(--human-l); --i:0"></div></div><p class="hv">46%</p></div>
+<div class="hb"><p class="hk" style="width:170px">Agent</p><div class="track2"><div class="fill" style="width:46%; --i:1"></div></div><p class="hv">21%</p></div>
+<div class="hb"><p class="hk" style="width:170px">Clarification</p><div class="track2"><div class="fill" style="width:39%; background:var(--human-l); --i:2"></div></div><p class="hv">18%</p></div>
+<div class="hb"><p class="hk" style="width:170px">Reviewer</p><div class="track2"><div class="fill" style="width:20%; --i:3"></div></div><p class="hv">9%</p></div>
+<div class="hb"><p class="hk" style="width:170px">Blocked</p><div class="track2"><div class="fill" style="width:13%; background:var(--soft); --i:4"></div></div><p class="hv">6%</p></div>
+</div></div>
+<div class="panel" style="--i:2"><p class="pht">Lowest first-pass yield</p><p class="phs">By terminal, all use cases</p>
+<div class="hbars">
+<div class="hb"><p class="hk" style="width:170px">T1 Requirements</p><div class="track2"><div class="fill" style="width:55%; background:var(--escalate-l); --i:0"></div></div><p class="hv">55%</p></div>
+<div class="hb"><p class="hk" style="width:170px">T4 Evaluation</p><div class="track2"><div class="fill" style="width:60%; background:var(--escalate-l); --i:1"></div></div><p class="hv">60%</p></div>
+<div class="hb"><p class="hk" style="width:170px">T5 Assurance</p><div class="track2"><div class="fill" style="width:67%; --i:2"></div></div><p class="hv">67%</p></div>
+<div class="hb"><p class="hk" style="width:170px">T2 Design</p><div class="track2"><div class="fill" style="width:78%; --i:3"></div></div><p class="hv">78%</p></div>
+<div class="hb"><p class="hk" style="width:170px">T3 Build</p><div class="track2"><div class="fill" style="width:80%; --i:4"></div></div><p class="hv">80%</p></div>
+</div></div>
+</div>
+<div class="panels">
+<div class="panel" style="--i:3"><p class="pht">Reviewer–human agreement</p><p class="phs">How often people chose what the reviewer agent recommended</p><p class="tv" style="font-family:'Space Grotesk', Arial, sans-serif; font-size:72px; font-weight:700; margin-top:14px">84%</p></div>
+<div class="panel" style="--i:4"><p class="pht">Control first-time pass rate</p><p class="phs">Blocking controls passed at the agent’s first attempt</p><p class="tv" style="font-family:'Space Grotesk', Arial, sans-serif; font-size:72px; font-weight:700; margin-top:14px">91%</p></div>
+</div>
+<p class="dfoot">Each figure is a KPI the platform computes today; no value is shown as zero when nothing was measured.</p>
+<aside>The engineering and process view. Read it as a map of where to improve: most reworks start at requirements, and the largest share of elapsed time is waiting for people, not agents working. Figures are illustrative; every panel is an existing KPI in dashboard/kpis.py (reworks by root cause, time split, first-pass yield, reviewer–human agreement, control first-time pass rate).</aside>
+</section>

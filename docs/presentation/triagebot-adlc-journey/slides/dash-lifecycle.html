@@ -1,0 +1,28 @@
+<section id="dash-lifecycle" class="dash" data-transition="fade">
+<div class="dhead"><div><p class="eyebrow">Dashboard · One use case · Lifecycle KPIs</p><h2 class="dtitle">TriageBot’s lap 1 in the platform’s own numbers</h2></div><p class="illus real">From the rehearsed demo run</p></div>
+<div class="tiles">
+<div class="tile" style="--i:0"><p class="tv">13</p><p class="tl">Runs across 10 terminals</p><p class="tx">Submission to re-entry</p></div>
+<div class="tile" style="--i:1"><p class="tv">80%</p><p class="tl">First-pass yield</p><p class="tx up">8 of 10 terminals</p></div>
+<div class="tile" style="--i:2"><p class="tv">2</p><p class="tl">Reworks</p><p class="tx warn">T1, and T4 to T3</p></div>
+<div class="tile" style="--i:3"><p class="tv">1</p><p class="tl">Clarification</p><p class="tx">T2, data owner</p></div>
+<div class="tile" style="--i:4"><p class="tv">1</p><p class="tl">Escalation</p><p class="tx bad">T5, kill switch</p></div>
+<div class="tile" style="--i:5"><p class="tv">1</p><p class="tl">Exception with waiver</p><p class="tx">Risk owner approved</p></div>
+</div>
+<div class="panels">
+<div class="panel" style="--i:0"><p class="pht">Reworks by root cause</p><p class="phs">Each rework names the cause and the terminal that fixes it</p>
+<div class="hbars">
+<div class="hb"><p class="hk">Requirement · T1</p><div class="track2"><div class="fill" style="width:50%; background:var(--rework-l); --i:0"></div></div><p class="hv">1</p></div>
+<div class="hb"><p class="hk">Implementation · T3</p><div class="track2"><div class="fill" style="width:50%; background:var(--rework-l); --i:1"></div></div><p class="hv">1</p></div>
+</div>
+<p class="phs" style="margin-top:24px">The second use case in the demo shows the other end: four rejections at T1, then escalation to a person.</p></div>
+<div class="panel" style="--i:1"><p class="pht">How each number is defined</p><p class="phs">Formulas live in one place and every KPI has a definition</p>
+<div class="mon">
+<div class="mrow"><p class="mk">First-pass yield</p><p class="mv">First runs closed pass or exception</p></div>
+<div class="mrow"><p class="mk">Reworks</p><p class="mv">Rework decisions, by root cause</p></div>
+<div class="mrow"><p class="mk">Escalations</p><p class="mv">With terminal, run and trigger</p></div>
+<div class="mrow"><p class="mk">SLA adherence</p><p class="mv">Runs within the tier’s duration</p></div>
+</div></div>
+</div>
+<p class="dfoot">The demo runs on a compressed clock, so elapsed time and SLA adherence are left out here; in real time they come from the same records.</p>
+<aside>These counts are real: they come from the rehearsed end-to-end demo of the Incident Triage use case (demo report UC-0034, 13 November 2026). First-pass yield is 8 of 10 because T1 and T4 needed second runs; T5’s exception counts as a closed first run. Durations are not shown because the demo compresses time to seconds.</aside>
+</section>

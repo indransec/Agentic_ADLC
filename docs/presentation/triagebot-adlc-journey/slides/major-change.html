@@ -1,0 +1,25 @@
+<section id="major-change" class="story" data-transition="fade">
+<div class="story-head"><div><p class="eyebrow">T9 · Evolve · Run 2 · Month 9</p><h2 class="story-title">Priya wants TriageBot to resolve known incidents itself: a major change</h2></div><p class="badge b-reentry">Re-entry at T1</p></div>
+<div class="cols">
+<div><p class="colhead">The story</p>
+<div class="who-row"><div class="avatar"><p class="ai">PR</p></div><div><p class="pn">Priya</p><p class="pr">Business owner</p></div></div>
+<p class="story-text">The team trusts TriageBot now. Priya asks for a new capability: close password resets and known-error incidents without a person. That raises the agent’s <b>autonomy</b>, so the change agent classifies it as <b>major</b>. New requirements are needed: back to <b>T1</b>.</p></div>
+<div><p class="colhead">On screen</p>
+<div class="screen"><div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><p class="bt">Request a change</p></div>
+<div class="sbody">
+<p class="note">“Let TriageBot resolve password resets and known errors end to end.”</p>
+<div class="srow key"><p class="k">Change class</p><p class="v">Major · autonomy raised</p></div>
+<div class="srow"><p class="k">Autonomy level</p><p class="v">2 → 3 (tier cap 3)</p></div>
+<div class="srow"><p class="k">Re-entry</p><p class="v">T1 · full path</p></div>
+<p class="btn">Submit request</p>
+</div></div></div>
+<div class="hood fragment"><p class="colhead hood-h">Under the hood</p>
+<div class="tag"><p class="tn">change.requested</p><p class="td">A person’s request opens T9, just as a monitor’s event does</p></div>
+<div class="tag"><p class="tn">Autonomy guardrail</p><p class="td">The risk tier caps how much autonomy an agent may be given</p></div>
+<div class="tag"><p class="tn">Full path</p><p class="td">A major change repeats every terminal from T1 to T7</p></div>
+</div>
+</div>
+<div class="path"><p class="pl">Run 2</p><p class="st" style="--i:0">opened</p><p class="ar" style="--i:1">→</p><p class="st" style="--i:1">building</p><p class="ar" style="--i:2">→</p><p class="st" style="--i:2">checking</p><p class="ar" style="--i:3">→</p><p class="st" style="--i:3">reviewing</p><p class="ar" style="--i:4">→</p><p class="st hu" style="--i:4">sign-off</p><p class="ar" style="--i:5">→</p><p class="st o pass" style="--i:5">closed · pass</p><p class="ar" style="--i:6">→</p><p class="st o reentry" style="--i:6">re-entry T1</p></div>
+<div class="track"><p class="lbl">Journey</p><p class="t done">T0</p><p class="t done">T1</p><p class="t done">T2</p><p class="t done">T3</p><p class="t done">T4</p><p class="t done">T5</p><p class="t done">T6</p><p class="t done">T7</p><p class="t done">T8</p><p class="t on">T9</p><p class="lap">Lap 2</p></div>
+<aside>The loop back to requirements. Note for the audience: T9 already accepts the change.requested event; a Request a change button for people is a planned addition to the web app. The autonomy guardrail comes from the shared guardrails catalogue and grows with the risk tier; the levels shown are illustrative.</aside>
+</section>

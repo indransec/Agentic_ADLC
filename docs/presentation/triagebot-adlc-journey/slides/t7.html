@@ -1,0 +1,25 @@
+<section id="t7" class="story" data-transition="fade">
+<div class="story-head"><div><p class="eyebrow">T7 · Deployment · Week 6 · Live</p><h2 class="story-title">TriageBot goes live in stages, and operations accept the handover</h2></div><p class="badge b-pass">Live</p></div>
+<div class="cols">
+<div><p class="colhead">The story</p>
+<div class="who-row"><div class="avatar"><p class="ai">LI</p></div><div><p class="pn">Lin</p><p class="pr">SRE and service owner</p></div></div>
+<p class="story-text">The deployment agent rolls out the authorised hash, and only that hash, in stages: shadow, canary, then full, reading observability after each. Nothing breaches, and Lin approves the step to full rollout. The agent registers TriageBot in the agent registry and the CMDB. Tom and Lin sign off, and operations take it over.</p></div>
+<div><p class="colhead">On screen</p>
+<div class="screen"><div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><p class="bt">Run · T7 · rollout</p></div>
+<div class="sbody">
+<div class="srow"><p class="k">Deployed hash</p><p class="v mono">b91d… = authorised ✓</p></div>
+<div class="srow"><p class="k">Stage readings</p><p class="v">Match observability ✓</p></div>
+<div class="srow key"><p class="k">Full rollout</p><p class="v">Approved by Lin</p></div>
+<div class="srow"><p class="k">Agent registry, CMDB</p><p class="v">Registered ✓</p></div>
+<div class="srow"><p class="k">Handover</p><p class="v">Accepted ✓</p></div>
+</div></div></div>
+<div class="hood fragment"><p class="colhead hood-h">Under the hood</p>
+<div class="tag"><p class="tn">run:cd_pipeline.with_hash_only</p><p class="td">The pipeline takes a hash, never a branch, so nothing unreviewed ships</p></div>
+<div class="tag"><p class="tn">CTL-T7-08 stage metrics</p><p class="td">Each reading must equal what observability recorded in that stage</p></div>
+<div class="tag"><p class="tn">Soak by risk tier</p><p class="td">Canary gate for high (5%, 72h) and medium (10%, 24h); low tier soaks 4h</p></div>
+</div>
+</div>
+<div class="path"><p class="pl">Run 1</p><p class="st" style="--i:0">opened</p><p class="ar" style="--i:1">→</p><p class="st" style="--i:1">building · stages</p><p class="ar" style="--i:2">→</p><p class="st hu" style="--i:2">stage approval</p><p class="ar" style="--i:3">→</p><p class="st" style="--i:3">checking</p><p class="ar" style="--i:4">→</p><p class="st" style="--i:4">reviewing</p><p class="ar" style="--i:5">→</p><p class="st hu" style="--i:5">sign-off</p><p class="ar" style="--i:6">→</p><p class="st o pass" style="--i:6">closed · pass</p></div>
+<div class="track"><p class="lbl">Journey</p><p class="t done">T0</p><p class="t done">T1</p><p class="t done">T2</p><p class="t done">T3</p><p class="t done">T4</p><p class="t done">T5</p><p class="t done">T6</p><p class="t on">T7</p><p class="t">T8</p><p class="t">T9</p><p class="lap">Lap 1</p></div>
+<aside>TriageBot is low tier, so the canary-breach control (CTL-T7-04) does not gate it; the rehearsed run still steps through shadow, canary and full, and every reading is checked against observability. The platform files each reading under the traffic mode set last before it; a breach rolls back automatically and opens a rework routed by root cause. The agent registry is the enterprise catalogue of live agents (an MCP server, mocked in the MVP): T7 writes name, version, package hash, owner, status, autonomy level and dependants, and CTL-T7-09 checks the entry is really in the registry. From here the agent is in production and counts as live on the portfolio dashboard. In the MVP the deployment pipeline is simulated, and the registry and CMDB are mocks with the same tool scopes as the real systems.</aside>
+</section>

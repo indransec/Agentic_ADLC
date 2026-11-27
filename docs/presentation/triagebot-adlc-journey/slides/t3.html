@@ -1,0 +1,25 @@
+<section id="t3" class="story" data-transition="fade">
+<div class="story-head"><div><p class="eyebrow">T3 · Build · Week 3 · Run 1 · Pass</p><h2 class="story-title">The build agent turns the design into one package with one fingerprint</h2></div><p class="badge b-pass">Passed · hash issued</p></div>
+<div class="cols">
+<div><p class="colhead">The story</p>
+<div class="who-row"><div class="avatar"><p class="ai">AR</p></div><div><p class="pn">Arjun</p><p class="pr">Engineering lead</p></div></div>
+<p class="story-text">The build agent starts from the approved golden template, adapts it to the design, works on a feature branch and runs CI. The result is a <b>candidate package</b> with a content hash: from here on, every terminal talks about exactly this build. Arjun passes it.</p></div>
+<div><p class="colhead">On screen</p>
+<div class="screen"><div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><p class="bt">Run · T3 · build</p></div>
+<div class="sbody">
+<div class="srow"><p class="k">Branch</p><p class="v">feature/triagebot ✓</p></div>
+<div class="srow"><p class="k">CI pipeline</p><p class="v">Passed ✓</p></div>
+<div class="srow"><p class="k">Design conformance</p><p class="v">No deviation</p></div>
+<div class="srow key"><p class="k">Candidate package</p><p class="v mono">sha256:7f3a…</p></div>
+<div class="srow"><p class="k">Approval</p><p class="v">Arjun ✓</p></div>
+</div></div></div>
+<div class="hood fragment"><p class="colhead hood-h">Under the hood</p>
+<div class="tag"><p class="tn">mcp:git:branch_write · mcp:ci:run</p><p class="td">The only tools T3’s spec grants; calls reach the pilot side through one bridge</p></div>
+<div class="tag"><p class="tn">Content hash</p><p class="td">Later terminals bind to this hash; the agent cannot choose another</p></div>
+<div class="tag"><p class="tn">Conditional approver</p><p class="td">The architect must also sign only if the build deviates from the design</p></div>
+</div>
+</div>
+<div class="path"><p class="pl">Run 1</p><p class="st" style="--i:0">opened</p><p class="ar" style="--i:1">→</p><p class="st" style="--i:1">building</p><p class="ar" style="--i:2">→</p><p class="st" style="--i:2">checking</p><p class="ar" style="--i:3">→</p><p class="st" style="--i:3">reviewing</p><p class="ar" style="--i:4">→</p><p class="st hu" style="--i:4">sign-off</p><p class="ar" style="--i:5">→</p><p class="st o pass" style="--i:5">closed · pass</p></div>
+<div class="track"><p class="lbl">Journey</p><p class="t done">T0</p><p class="t done">T1</p><p class="t done">T2</p><p class="t on">T3</p><p class="t">T4</p><p class="t">T5</p><p class="t">T6</p><p class="t">T7</p><p class="t">T8</p><p class="t">T9</p><p class="lap">Lap 1</p></div>
+<aside>The hash is the thread that runs through the rest of the journey: T4 evaluates it, T5 assures it, T6 authorises it and T7 deploys only it. The hash shown is illustrative. Engineers: the platform binds the candidate and authorised hashes from evidence (bound_values in the MCP registry), so an agent cannot swap the package.</aside>
+</section>

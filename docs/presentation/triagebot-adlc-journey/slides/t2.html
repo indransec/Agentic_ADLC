@@ -1,0 +1,24 @@
+<section id="t2" class="story" data-transition="fade">
+<div class="story-head"><div><p class="eyebrow">T2 · Design · Weeks 2–3 · Clarification</p><h2 class="story-title">The architect agent asks a question mid-run, and the run waits for the answer</h2></div><p class="badge b-pass">Passed · no rework</p></div>
+<div class="cols">
+<div><p class="colhead">The story</p>
+<div class="who-row"><div class="avatar"><p class="ai">ME</p></div><div><p class="pn">Meera</p><p class="pr">Solution architect</p></div></div>
+<p class="story-text">The design depends on how long incident data is kept, and no document says. The agent pauses and asks the <b>data owner</b> directly. The answer arrives; the same run resumes and finishes the design. Meera and Vikram sign it off.</p></div>
+<div><p class="colhead">On screen</p>
+<div class="screen"><div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><p class="bt">Inbox · questions</p></div>
+<div class="sbody">
+<p class="note">“How long are incident records kept, and may the agent read closed incidents?”</p>
+<div class="srow"><p class="k">Addressed to</p><p class="v">Data owner</p></div>
+<div class="srow key"><p class="k">Status</p><p class="v">Answered · run resumed</p></div>
+<div class="srow"><p class="k">Approvals</p><p class="v">Architect ✓ · Security ✓</p></div>
+</div></div></div>
+<div class="hood fragment"><p class="colhead hood-h">Under the hood</p>
+<div class="tag"><p class="tn">awaiting_clarification</p><p class="td">The run waits on a named role, with its own SLA and round limit</p></div>
+<div class="tag"><p class="tn">Same run, no rework</p><p class="td">The answer joins the context; the rework count stays at zero</p></div>
+<div class="tag"><p class="tn">Clarification KPIs</p><p class="td">Rounds per role and the wait time are measured</p></div>
+</div>
+</div>
+<div class="path"><p class="pl">Run 1</p><p class="st" style="--i:0">opened</p><p class="ar" style="--i:1">→</p><p class="st" style="--i:1">building</p><p class="ar" style="--i:2">→</p><p class="st hu" style="--i:2">clarification</p><p class="ar" style="--i:3">→</p><p class="st" style="--i:3">building</p><p class="ar" style="--i:4">→</p><p class="st" style="--i:4">checking</p><p class="ar" style="--i:5">→</p><p class="st" style="--i:5">reviewing</p><p class="ar" style="--i:6">→</p><p class="st hu" style="--i:6">sign-off</p><p class="ar" style="--i:7">→</p><p class="st o pass" style="--i:7">closed · pass</p></div>
+<div class="track"><p class="lbl">Journey</p><p class="t done">T0</p><p class="t done">T1</p><p class="t on">T2</p><p class="t">T3</p><p class="t">T4</p><p class="t">T5</p><p class="t">T6</p><p class="t">T7</p><p class="t">T8</p><p class="t">T9</p><p class="lap">Lap 1</p></div>
+<aside>A question is not a failure. Asking the right person mid-run is cheaper than guessing and being sent back. The T0 spec allows two clarification rounds with a two-day SLA; each terminal sets its own. The path strip shows the loop: building, clarification, building again.</aside>
+</section>

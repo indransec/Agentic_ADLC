@@ -1,0 +1,45 @@
+<section id="arch">
+<p class="eyebrow">A1 · Architecture on a page</p>
+<h2 class="title">Seven layers and one governed path for every run</h2>
+<div class="arch">
+<div class="zone"><p class="zh">People</p>
+<p class="chip2" style="--i:0">Business owners</p>
+<p class="chip2" style="--i:1">Delivery roles</p>
+<p class="chip2" style="--i:2">CoE</p>
+<p class="chip2" style="--i:3">Auditors</p>
+</div>
+<div class="arrowcol"><x-shape kind="arrow-right"></x-shape></div>
+<div class="zone plat"><p class="zh">ADLC platform</p>
+<div class="lrow" style="--i:0"><p class="lname">Experience</p><p class="lc">Web app (intake, inbox, KPIs) · board</p><div class="nbs"><p class="nb" style="--i:3">4</p></div></div>
+<div class="lrow" style="--i:1"><p class="lname">Orchestration</p><p class="lc">Event router · run states · timers</p><div class="nbs"><p class="nb" style="--i:0">1</p><p class="nb" style="--i:5">6</p></div></div>
+<div class="lrow" style="--i:2"><p class="lname">Agents</p><p class="lc">T0–T9 agents · reviewer · model gateway</p><div class="nbs"><p class="nb" style="--i:1">2</p></div></div>
+<div class="lrow" style="--i:3"><p class="lname">Policy</p><p class="lc">Controls · access · sign-off</p><div class="nbs"><p class="nb" style="--i:2">3</p></div></div>
+<div class="lrow" style="--i:4"><p class="lname">Specs &amp; config</p><p class="lc">Terminal specs · guardrails · profiles</p><div class="nbs"></div></div>
+<div class="lrow" style="--i:5"><p class="lname">Data &amp; evidence</p><p class="lc">Run state · append-only ledger · files</p><div class="nbs"><p class="nb" style="--i:4">5</p></div></div>
+<div class="lrow" style="--i:6"><p class="lname">Integration</p><p class="lc">Tool gateway (MCP) · bridge to pilot</p><div class="nbs"></div></div>
+</div>
+<div class="arrowcol"><x-shape kind="arrow-right"></x-shape></div>
+<div style="display:flex; flex-direction:column; gap:12px">
+<div class="zone" style="flex:1"><p class="zh">Enterprise</p>
+<p class="chip2" style="--i:4">Knowledge, docs</p>
+<p class="chip2" style="--i:5">Source control, CI</p>
+<p class="chip2" style="--i:6">ITSM, CMDB</p>
+<p class="chip2" style="--i:7">Identity, directory</p>
+<p class="chip2" style="--i:8">Model providers</p>
+</div>
+<div class="zone pilot"><p class="zh">Pilot envs</p>
+<p class="chip2" style="--i:9">dev · test · prod</p>
+</div>
+</div>
+</div>
+<div class="band"><p class="bh">Observability</p><p class="bt2">Traces · run activity · KPI views · service health, across every layer</p></div>
+<div class="steps6">
+<div class="s6"><p class="nb" style="--i:0">1</p><p class="st6">An event opens a run</p></div>
+<div class="s6"><p class="nb" style="--i:1">2</p><p class="st6">The agent drafts, through gateways</p></div>
+<div class="s6"><p class="nb" style="--i:2">3</p><p class="st6">Controls check the result</p></div>
+<div class="s6"><p class="nb" style="--i:3">4</p><p class="st6">A person decides</p></div>
+<div class="s6"><p class="nb" style="--i:4">5</p><p class="st6">The ledger seals it</p></div>
+<div class="s6"><p class="nb" style="--i:5">6</p><p class="st6">The next event is routed</p></div>
+</div>
+<aside>Technology-agnostic view of the solution architecture (SA §4). People act only through the experience layer, the web app or the work tracker board. Agents act only through orchestration and policy, and reach models and tools only through gateways. Everything is recorded in the data and evidence layer. The pilot environments, where the agents being built run, sit outside the platform and are reached through a single bridge. The numbered path is one run, as in the journey slides. Each layer sits behind an interface (run state machine, evaluate and authorize, router, model gateway, MCP registry, identity provider), which is why the next slide can map it to Azure without changing the design.</aside>
+</section>

@@ -1,0 +1,32 @@
+<section id="dash-portfolio" class="dash" data-transition="fade">
+<div class="dhead"><div><p class="eyebrow">Dashboard · Platform portfolio</p><h2 class="dtitle">Five agents live from fourteen ideas, with most runs inside their SLA</h2></div><p class="illus">Illustrative figures</p></div>
+<div class="tiles">
+<div class="tile" style="--i:0"><p class="tv">14</p><p class="tl">Use cases in the lifecycle</p><p class="tx up">+3 this quarter</p></div>
+<div class="tile" style="--i:1"><p class="tv">5</p><p class="tl">Agents live in production</p><p class="tx up">+1 this quarter</p></div>
+<div class="tile" style="--i:2"><p class="tv">72%</p><p class="tl">First-pass yield, one-shot passes</p><p class="tx warn">Target 80%</p></div>
+<div class="tile" style="--i:3"><p class="tv">86%</p><p class="tl">SLA met: 112 of 130 runs</p><p class="tx warn">18 runs missed</p></div>
+<div class="tile" style="--i:4"><p class="tv">19</p><p class="tl">Reworks, last 90 days</p><p class="tx">Down from 26</p></div>
+<div class="tile" style="--i:5"><p class="tv">6</p><p class="tl">Escalations, last 90 days</p><p class="tx bad">2 still open</p></div>
+</div>
+<div class="panels">
+<div class="panel" style="--i:0"><p class="pht">Portfolio funnel</p><p class="phs">Use cases by the furthest terminal reached</p>
+<div class="hbars">
+<div class="hb"><p class="hk">Submitted</p><div class="track2"><div class="fill" style="width:100%; --i:0"></div></div><p class="hv">14</p></div>
+<div class="hb"><p class="hk">Qualified at T0</p><div class="track2"><div class="fill" style="width:79%; --i:1"></div></div><p class="hv">11</p></div>
+<div class="hb"><p class="hk">Designed, T1–T2</p><div class="track2"><div class="fill" style="width:64%; --i:2"></div></div><p class="hv">9</p></div>
+<div class="hb"><p class="hk">Built and proven</p><div class="track2"><div class="fill" style="width:50%; --i:3"></div></div><p class="hv">7</p></div>
+<div class="hb"><p class="hk">Live, T7–T8</p><div class="track2"><div class="fill" style="width:36%; background:var(--pass-l); --i:4"></div></div><p class="hv">5</p></div>
+<div class="hb"><p class="hk">Retired</p><div class="track2"><div class="fill" style="width:7%; background:var(--soft); --i:5"></div></div><p class="hv">1</p></div>
+</div></div>
+<div class="panel" style="--i:1"><p class="pht">Needs attention</p><p class="phs">What a CoE lead looks at first</p>
+<div class="mon">
+<div class="mrow"><p class="mk">SLA missed, by terminal</p><p class="mv warn">T5: 7 · T2: 5 · others: 6</p></div>
+<div class="mrow"><p class="mk">Escalation triggers</p><p class="mv">Rework limit 3 · agent stuck 2 · age 1</p></div>
+<div class="mrow"><p class="mk">Open waivers</p><p class="mv warn">4 · one expires in 14 days</p></div>
+<div class="mrow"><p class="mk">Live agents with a breached monitor</p><p class="mv bad">1 · TriageBot drift</p></div>
+<div class="mrow"><p class="mk">Dead letters</p><p class="mv up">0</p></div>
+</div></div>
+</div>
+<p class="dfoot">Platform KPIs pool the same records across use cases: counts and times are summed, rates pooled.</p>
+<aside>The portfolio view for leadership. The figures are illustrative, not from a live estate; each tile is a KPI the platform defines today (first-pass yield, SLA adherence, reworks, escalations), while the live-agent count and the funnel are proposed additions built on data the platform already holds. One-shot pass is first-pass yield: terminals whose first run closed pass or exception.</aside>
+</section>

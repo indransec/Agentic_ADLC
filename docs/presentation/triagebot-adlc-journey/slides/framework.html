@@ -1,0 +1,22 @@
+<section id="framework">
+<p class="eyebrow">The framework</p>
+<h2 class="title">Ten terminals, each answering one question before the agent may move on</h2>
+<div class="tmap">
+<div class="tcell rise" style="--i:0"><p class="tid">T0</p><p class="tname">Intake</p><p class="tq">Should we do this at all?</p></div>
+<div class="tcell rise" style="--i:1"><p class="tid">T1</p><p class="tname">Requirements</p><p class="tq">What must the agent achieve?</p></div>
+<div class="tcell rise" style="--i:2"><p class="tid">T2</p><p class="tname">Design</p><p class="tq">How should it operate?</p></div>
+<div class="tcell rise" style="--i:3"><p class="tid">T3</p><p class="tname">Build</p><p class="tq">Can we build it reproducibly?</p></div>
+<div class="tcell rise" style="--i:4"><p class="tid">T4</p><p class="tname">Evaluation</p><p class="tq">Does it behave as designed?</p></div>
+<div class="tcell rise" style="--i:5"><p class="tid">T5</p><p class="tname">Assurance</p><p class="tq">Is it safe and compliant?</p></div>
+<div class="tcell rise" style="--i:6"><p class="tid">T6</p><p class="tname">Readiness</p><p class="tq">Is production ready for it?</p></div>
+<div class="tcell rise" style="--i:7"><p class="tid">T7</p><p class="tname">Deployment</p><p class="tq">Can it go live safely?</p></div>
+<div class="tcell rise" style="--i:8"><p class="tid">T8</p><p class="tname">Operations</p><p class="tq">Is it working as expected?</p></div>
+<div class="tcell rise" style="--i:9"><p class="tid">T9</p><p class="tname">Evolve / Retire</p><p class="tq">Improve it, or retire it?</p></div>
+</div>
+<div class="rule-row fadein" style="--i:10">
+<p class="rr">Each terminal is a versioned spec, not code</p>
+<p class="rr">Every run ends in a person’s decision</p>
+<p class="rr">Every decision lands in the ledger</p>
+</div>
+<aside>The ten questions come straight from the terminal specs’ purpose lines. Specs live as YAML in adlc-specs and are versioned and pinned per run, so changing the process never needs a code change. Engineers: the spec defines prerequisites, actors, authorities, playbooks, controls, evidence, outcomes and the timeline.</aside>
+</section>

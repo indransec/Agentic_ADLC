@@ -1,0 +1,25 @@
+<section id="t5-exception" class="story" data-transition="fade">
+<div class="story-head"><div><p class="eyebrow">T5 · Assurance · Week 6 · Exception</p><h2 class="story-title">The gap is accepted on the record, with an owner, an expiry and a safeguard</h2></div><p class="badge b-exception">Exception · waiver</p></div>
+<div class="cols">
+<div><p class="colhead">The story</p>
+<div class="who-row"><div class="avatar"><p class="ai">NE</p></div><div><p class="pn">Vikram and Neha</p><p class="pr">Security officer, risk owner</p></div></div>
+<p class="story-text">Vikram does not pass and does not block. He records an <b>exception</b>: the kill switch will be tested right after go-live, and until then a manual shutdown runbook covers it. Neha, the risk owner, approves the <b>waiver</b>, which expires on a set date.</p></div>
+<div><p class="colhead">On screen</p>
+<div class="screen"><div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><p class="bt">Requests · waiver</p></div>
+<div class="sbody">
+<div class="srow"><p class="k">Gap</p><p class="v">Kill switch untested</p></div>
+<div class="srow"><p class="k">Waiver owner</p><p class="v">Neha · risk owner</p></div>
+<div class="srow"><p class="k">Compensating control</p><p class="v">Manual shutdown runbook</p></div>
+<div class="srow key"><p class="k">Expiry</p><p class="v">[date] · warned 14 days ahead</p></div>
+<div class="srow"><p class="k">Approval</p><p class="v">Neha ✓</p></div>
+</div></div></div>
+<div class="hood fragment"><p class="colhead hood-h">Under the hood</p>
+<div class="tag"><p class="tn">outcome: exception</p><p class="td">Allowed only with waiver owner, expiry and compensating control</p></div>
+<div class="tag"><p class="tn">Waiver approval</p><p class="td">A separate decision by the risk owner role, also in the ledger</p></div>
+<div class="tag"><p class="tn">Follows the agent</p><p class="td">T6 checks the waiver; T8 warns before it expires</p></div>
+</div>
+</div>
+<div class="path"><p class="pl">Run 1</p><p class="st o escalate" style="--i:0">escalated</p><p class="ar" style="--i:1">→</p><p class="st hu" style="--i:1">sign-off</p><p class="ar" style="--i:2">→</p><p class="st hu" style="--i:2">waiver approved</p><p class="ar" style="--i:3">→</p><p class="st o exception" style="--i:3">closed · exception</p></div>
+<div class="track"><p class="lbl">Journey</p><p class="t done">T0</p><p class="t done">T1</p><p class="t done">T2</p><p class="t done">T3</p><p class="t done">T4</p><p class="t on">T5</p><p class="t">T6</p><p class="t">T7</p><p class="t">T8</p><p class="t">T9</p><p class="lap">Lap 1</p></div>
+<aside>The exception outcome is how real organisations work: not everything can be proven up front, but nothing is waved through silently. Fill in the expiry date if you show this to a specific audience. First-pass yield counts an exception as a closed first run, alongside a pass.</aside>
+</section>

@@ -1,0 +1,25 @@
+<section id="t5-escalate" class="story" data-transition="fade">
+<div class="story-head"><div><p class="eyebrow">T5 · Assurance · Week 5 · Escalated</p><h2 class="story-title">The assurance agent hits a test it cannot run, and hands the run to a person</h2></div><p class="badge b-escalate">Escalated</p></div>
+<div class="cols">
+<div><p class="colhead">The story</p>
+<div class="who-row"><div class="avatar"><p class="ai">VI</p></div><div><p class="pn">Vikram</p><p class="pr">Security officer</p></div></div>
+<p class="story-text">Red-teaming, data-loss scans and controls all pass. But the <b>kill switch</b> can only be proven in production, which TriageBot has not reached. The agent does not guess: the run <b>escalates</b>, and Vikram completes the assessment himself.</p></div>
+<div><p class="colhead">On screen</p>
+<div class="screen"><div class="bar"><div class="dot"></div><div class="dot"></div><div class="dot"></div><p class="bt">Inbox · escalations</p></div>
+<div class="sbody">
+<div class="srow"><p class="k">Red-team tests</p><p class="v">Passed ✓</p></div>
+<div class="srow"><p class="k">DLP scan</p><p class="v">Clean ✓</p></div>
+<div class="srow key"><p class="k">Kill switch</p><p class="v">Not testable yet ✗</p></div>
+<div class="srow"><p class="k">Assigned to</p><p class="v">Security officer</p></div>
+<p class="btn">Complete escalation</p>
+</div></div></div>
+<div class="hood fragment"><p class="colhead hood-h">Under the hood</p>
+<div class="tag"><p class="tn">escalated → human_completion</p><p class="td">The agent stops; the accountable role finishes the run by hand</p></div>
+<div class="tag"><p class="tn">sign_off.by_tier</p><p class="td">Low tier: the security officer alone. High tier: four officers and the RAI board</p></div>
+<div class="tag"><p class="tn">Escalations KPI</p><p class="td">Counted with its terminal, run and trigger</p></div>
+</div>
+</div>
+<div class="path"><p class="pl">Run 1</p><p class="st" style="--i:0">opened</p><p class="ar" style="--i:1">→</p><p class="st" style="--i:1">building</p><p class="ar" style="--i:2">→</p><p class="st o escalate" style="--i:2">escalated</p><p class="ar" style="--i:3">→</p><p class="st hu" style="--i:3">a person completes it</p></div>
+<div class="track"><p class="lbl">Journey</p><p class="t done">T0</p><p class="t done">T1</p><p class="t done">T2</p><p class="t done">T3</p><p class="t done">T4</p><p class="t on">T5</p><p class="t">T6</p><p class="t">T7</p><p class="t">T8</p><p class="t">T9</p><p class="lap">Lap 1</p></div>
+<aside>Escalation is the safety valve: when an agent cannot finish honestly, a person takes over rather than the agent producing a confident guess. The risk tier set at T0 decides how heavy T5 is; this is why the tier matters so much.</aside>
+</section>
