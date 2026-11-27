@@ -13,6 +13,7 @@ files in this folder are its source, kept here for review and history.
 | `deck.json` | Slide order, sections and typefaces |
 | `deck.css` | Shared theme, layouts and motion |
 | `slides/<id>.html` | One slide each; speaker notes are in the closing `<aside>` |
+| `triagebot-adlc-journey.pptx` | The deck exported to PowerPoint: all 39 slides with speaker notes, no animations |
 
 The editable architecture diagrams behind appendix slides A1 and A2, and the event-processing view,
 are in `docs/diagrams/adlc-architecture-on-a-page.drawio`.
